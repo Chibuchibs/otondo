@@ -310,14 +310,14 @@
 </div>
 
 <script type="module">
-import { newGame, doAction, canDo, ACTIONS, shareText, MAX_DAY } from './game.js?v=20261011093746';
+import { newGame, doAction, canDo, ACTIONS, shareText, MAX_DAY } from './game.js?v=20261011101223';
 
 /* Kept here, not exported from game.js: a new cross-file export breaks any
    client holding a cached game.js after a deploy. */
 const ALLAWEE_NOTE = 'Allawee ₦77,000 — e never enter.';
 import { initNet, joinCamp, syncPlayer, platoonBoard, recentChat, postChat,
          postSuggestion, reportMessage, awardBoard, myAwards, laughChat,
-         online } from './net.js?v=20261011093746';
+         online } from './net.js?v=20261011101223';
 
 const $ = id => document.getElementById(id);
 const SKINS = ['#6b4423','#8d5524','#4a2c16','#a9714b','#5c3317'];
