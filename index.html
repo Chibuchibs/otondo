@@ -1,0 +1,937 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Otondo — survive camp</title>
+<meta name="description" content="You enter camp with ₦20,000 and allawee never enter. Survive 21 days of parade, bad beans, Man O War and Mami market — then find out where dem post you.">
+<meta name="theme-color" content="#0a7a43">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%23f5f1e4'/%3E%3Ccircle cx='16' cy='19' r='7' fill='%238d5524'/%3E%3Cpath d='M8 17a8 8 0 0 1 16 0c0 1-.7 1.6-1.6 1.6H9.6C8.7 18.6 8 18 8 17z' fill='%230a7a43'/%3E%3Crect x='7' y='15.6' width='18' height='2.6' rx='1.3' fill='%23065c32'/%3E%3C/svg%3E">
+
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Otondo">
+<meta property="og:title" content="Otondo — survive 21 days of camp">
+<meta property="og:description" content="You enter camp with ₦20,000 and allawee never enter. 21 days of parade, bad beans and Mami market — then find out where dem post you.">
+<meta property="og:url" content="https://otondo.ng/">
+<meta property="og:image" content="https://otondo.ng/share.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Three corps members in khaki walking a dusty road toward a sign reading YOUR PPA">
+
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Otondo — survive 21 days of camp">
+<meta name="twitter:description" content="You enter camp with ₦20,000 and allawee never enter. Then find out where dem post you.">
+<meta name="twitter:image" content="https://otondo.ng/share.png">
+<style>
+  :root{
+    --khaki:#9a8f5f; --khaki-dk:#6f6742; --khaki-lt:#b9ae7c;
+    --green:#0a7a43; --green-dk:#065c32; --green-lt:#d9ece1;
+    --cream:#f5f1e4; --dust:#e3d9bf; --ink:#221d12; --muted:#7a7257;
+    --red:#b0432f; --line:#ddd3b8; --white:#fbf9f2;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--cream);color:var(--ink);
+    font:16px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+    -webkit-text-size-adjust:100%}
+  .wrap{max-width:470px;margin:0 auto;padding:0 12px 34px}
+
+  header{display:flex;align-items:center;justify-content:space-between;gap:8px;
+    padding:14px 2px 10px}
+  h1{font-size:21px;margin:0;letter-spacing:.2em;text-transform:uppercase;font-weight:800}
+  h1 i{font-style:normal;color:var(--green)}
+  .day{font-weight:800;font-size:12px;letter-spacing:.1em;text-transform:uppercase;
+    color:var(--white);background:var(--green);padding:5px 10px;border-radius:99px}
+
+  /* ---------- walking scene ---------- */
+  .scene{position:relative;height:156px;margin:0 -12px 16px;overflow:hidden;
+    background:linear-gradient(#f7edd6 0%,#f2e4c6 62%,var(--dust) 62%,#d6caa8 100%)}
+  .sun{position:absolute;left:30px;top:12px;width:34px;height:34px;border-radius:50%;
+    background:#f3c969;box-shadow:0 0 0 9px rgba(243,201,105,.22)}
+  .road{position:absolute;left:0;right:0;bottom:0;height:62px;background:#cdc0a0;
+    border-top:3px solid #b8aa88}
+  .road::after{content:"";position:absolute;top:30px;left:0;right:0;height:3px;
+    background:repeating-linear-gradient(90deg,#e8ddc0 0 22px,transparent 22px 44px);
+    animation:road 1.1s linear infinite}
+  @keyframes road{to{transform:translateX(-44px)}}
+
+  .sign{position:absolute;right:14px;bottom:44px;z-index:3;text-align:center}
+  .sign b{display:block;background:var(--green);color:#fff;font-size:10px;font-weight:800;
+    letter-spacing:.1em;padding:5px 9px;border-radius:4px;white-space:nowrap}
+  .sign i{display:block;width:4px;height:26px;background:#8c7f5e;margin:0 auto}
+
+  .corper{position:absolute;bottom:4px;width:46px;height:86px;z-index:2;
+    animation:march linear infinite}
+  .vehicle{position:absolute;z-index:1;animation:drive linear infinite}
+  /* roadside stalls: furthest back, drifting slower than traffic (parallax).
+     Each signboard is an ad slot — swap SHOPS[].sign for a brand. */
+  .shop{position:absolute;z-index:0;animation:drive linear infinite}
+  @keyframes drive{from{left:-22%}to{left:118%}}
+  .wheel{animation:spin .5s linear infinite;transform-box:fill-box;
+    transform-origin:center}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  @keyframes march{from{left:-16%}to{left:112%}}
+  .corper .leg{animation:swingA .62s ease-in-out infinite;transform-origin:21px 45px}
+  .corper .leg2{animation:swingB .62s ease-in-out infinite;transform-origin:21px 45px}
+  .corper .arm{animation:swingB .62s ease-in-out infinite;transform-origin:20px 28px}
+  .corper .arm2{animation:swingA .62s ease-in-out infinite;transform-origin:24px 28px}
+  .corper .torso{animation:bob .31s ease-in-out infinite}
+  @keyframes swingA{0%,100%{transform:rotate(20deg)}50%{transform:rotate(-20deg)}}
+  @keyframes swingB{0%,100%{transform:rotate(-20deg)}50%{transform:rotate(20deg)}}
+  @keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-1.6px)}}
+
+  /* ---------- stats ---------- */
+  .stats{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px}
+  .stat{background:var(--white);border:1px solid var(--line);border-radius:12px;padding:9px 11px}
+  .stat b{display:block;font-size:10px;text-transform:uppercase;letter-spacing:.1em;
+    color:var(--muted);font-weight:800}
+  .stat span{font-size:19px;font-weight:800}
+  .bar{height:6px;background:var(--line);border-radius:3px;margin-top:6px;overflow:hidden}
+  .bar i{display:block;height:100%;background:var(--green);transition:width .25s}
+  .bar.low i{background:var(--red)}
+
+  .tag{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;
+    font-weight:700;margin-bottom:8px}
+  .actions{display:grid;gap:8px;margin-bottom:16px}
+  button{font:inherit;cursor:pointer}
+  /* iOS Safari colours button text with the system accent unless told
+     otherwise — without this the labels render blue on iPhone. */
+  .act{display:flex;align-items:center;gap:11px;width:100%;text-align:left;
+    background:var(--white);border:1px solid var(--line);border-left:5px solid var(--khaki);
+    border-radius:12px;padding:11px 13px;min-height:58px;
+    color:var(--ink);-webkit-text-fill-color:var(--ink);
+    font-family:inherit;-webkit-appearance:none;appearance:none}
+  .act:active{transform:scale(.99)}
+  .act:disabled{opacity:.4}
+  .act .ico{font-size:21px;line-height:1;width:26px;flex:none;font-weight:800;
+    color:var(--green-dk);display:flex;align-items:center;justify-content:center}
+  .act b{display:block;font-size:16px}
+  .act small{color:var(--muted);-webkit-text-fill-color:var(--muted);font-size:13px}
+
+  .primary{background:var(--green);color:#fff;border:0;border-radius:12px;
+    padding:15px;width:100%;font-size:17px;font-weight:800;letter-spacing:.02em}
+  .ghost{background:transparent;color:var(--khaki-dk);border:2px solid var(--line)}
+
+  .log{border-top:1px solid var(--line);padding-top:12px}
+  .log p{margin:0 0 9px;padding-left:11px;border-left:3px solid var(--line);font-size:15px}
+  .log p.ev{border-left-color:var(--red);font-style:italic}
+  .log p u{display:block;font-size:10px;color:var(--muted);text-decoration:none;
+    text-transform:uppercase;letter-spacing:.09em;font-weight:800}
+
+  /* ---------- ending card ---------- */
+  .card{background:linear-gradient(160deg,var(--green-dk),var(--green));color:#fff;
+    border-radius:18px;padding:20px 18px 0;text-align:center;overflow:hidden;
+    box-shadow:0 6px 24px rgba(10,122,67,.22)}
+  .card .kicker{font-size:10px;letter-spacing:.18em;opacity:.8;font-weight:800}
+  .card h2{margin:.25em 0 .1em;font-size:25px}
+  .card .meta{opacity:.9;font-size:13px}
+  .card .place{font-size:31px;font-weight:800;margin:.18em 0;line-height:1.08;
+    text-transform:uppercase}
+  .card .walk{position:relative;height:100px;margin:10px -18px 0;
+    background:linear-gradient(transparent 52%,rgba(0,0,0,.14) 52%)}
+  .card .walk .corper{bottom:2px;animation-duration:7s}
+  .intro p{margin:.3em 0 1.1em;font-size:16px}
+  input{font:inherit;width:100%;padding:14px;border:1px solid var(--line);
+    border-radius:12px;margin-bottom:10px;background:var(--white)}
+  .live{display:flex;align-items:center;gap:7px;font-size:12px;font-weight:700;
+    color:var(--muted);margin:-4px 0 12px;letter-spacing:.04em}
+  .live i{width:8px;height:8px;border-radius:50%;background:#bbb;flex:none}
+  .live.on i{background:#22c55e;box-shadow:0 0 0 3px rgba(34,197,94,.2)}
+
+  .tabs{display:flex;gap:6px;margin-bottom:12px}
+  .tabs button{flex:1;padding:9px 4px;font-size:13px;font-weight:800;letter-spacing:.05em;
+    text-transform:uppercase;background:transparent;border:2px solid var(--line);
+    border-radius:99px;color:var(--muted)}
+  .tabs button[aria-selected="true"]{background:var(--green);border-color:var(--green);color:#fff}
+
+  /* Four tabs now. PLATOONS is the widest word; shrink type before wrapping. */
+  @media (max-width:420px){ .tabs button{font-size:11px;letter-spacing:.02em;padding:9px 2px} }
+
+  /* ---------- awards ---------- */
+  .awards{list-style:none;margin:0;padding:0}
+  .award{display:flex;gap:11px;align-items:flex-start;padding:11px 10px;
+    border-top:1px solid var(--line)}
+  .award:first-child{border-top:0}
+  .award.mine{background:var(--green-lt);border-radius:12px;border-top-color:transparent}
+  .aem{font-size:22px;line-height:1.1;flex:none;width:26px;text-align:center}
+  .abody{display:flex;flex-direction:column;gap:1px;min-width:0}
+  .atitle{font-weight:800;font-size:14px}
+  .atitle .you{background:var(--green);color:#fff;font-size:9.5px;font-weight:800;
+    letter-spacing:.08em;padding:2px 6px;border-radius:99px;margin-left:5px;
+    vertical-align:1px}
+  .awho{font-size:14px}
+  .awho b{color:var(--green-dk)}
+  .awho em{font-style:normal;color:var(--muted);font-size:11px;font-weight:700}
+  .aval{color:var(--muted);font-size:12.5px}
+  .ablurb{font-size:11.5px;color:var(--muted)}
+  .nobody{color:var(--muted);font-size:13.5px;font-style:italic}
+
+  /* badges you are wearing, on the camp screen */
+  .badges{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 11px}
+  .badges:empty{display:none}
+  .badges span{display:inline-flex;align-items:center;gap:5px;background:var(--green-lt);
+    border:1px solid var(--green);color:var(--green-dk);font-size:11.5px;font-weight:800;
+    padding:4px 9px;border-radius:99px}
+
+  .board{width:100%;border-collapse:collapse;font-size:14px}
+  .board th{text-align:left;font-size:10px;letter-spacing:.09em;text-transform:uppercase;
+    color:var(--muted);padding:0 6px 7px}
+  .board td{padding:8px 6px;border-top:1px solid var(--line)}
+  .board tr.me td{background:var(--green-lt);font-weight:800}
+  .board .pl{font-weight:800}
+
+  .chatbox{background:var(--white);border:1px solid var(--line);border-radius:12px;
+    padding:10px;max-height:46vh;overflow-y:auto}
+  .msg{margin:0 0 8px;font-size:14.5px;line-height:1.35}
+  .msg b{color:var(--green-dk)}
+  .msg em{font-style:normal;color:var(--muted);font-size:11px;font-weight:700}
+  .flag{float:right;background:none;border:0;color:#c9c0a6;font-size:14px;
+    padding:0 2px;line-height:1}
+  .flag:hover{color:var(--red)}
+  .flag:disabled{color:#22c55e}
+  .laugh{float:right;background:none;border:0;font-size:13px;padding:0 7px 0 2px;
+    line-height:1;color:var(--muted);font-weight:800;font-family:inherit;
+    -webkit-text-fill-color:currentColor;-webkit-appearance:none;appearance:none}
+  .laugh span{margin-left:3px}
+  .laugh:disabled{opacity:.55}
+  .row{display:flex;gap:7px;margin-top:9px}
+  .row input{margin:0}
+  .row button{flex:none;padding:0 16px;background:var(--green);color:#fff;
+    border:0;border-radius:12px;font-weight:800}
+  .note{font-size:12px;color:var(--muted);margin:8px 2px 0}
+  footer{margin-top:26px;padding-top:14px;border-top:1px solid var(--line);
+    text-align:center;font-size:12.5px;color:var(--muted);line-height:1.7}
+  footer a{color:var(--green-dk);font-weight:700;text-decoration:none}
+  footer a:hover{text-decoration:underline}
+  footer .sep{opacity:.45;margin:0 6px}
+  .hidden{display:none!important}
+  @media (prefers-reduced-motion:reduce){*{animation:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header><h1>Oton<i>do</i></h1><div class="day" id="dayLbl"></div></header>
+
+  <div class="scene" id="scene">
+    <div class="sun"></div><div class="road"></div>
+    <div class="sign"><b>YOUR PPA →</b><i></i></div>
+  </div>
+
+  <section id="intro" class="intro">
+    <p><b>You don enter camp with ₦20,000.</b> That na the money you carry come —
+       allawee never enter. 21 days of parade, bad beans, Man O War and Mami
+       market. Build credibility, keep your belle full, make the money last.
+       Then find out where dem post you.</p>
+    <input id="name" maxlength="16" placeholder="Wetin be your name?" autocomplete="off">
+    <p class="note" id="nameNote" style="margin:-4px 2px 10px;min-height:1.1em"></p>
+    <button class="primary" id="start">Enter camp</button>
+  </section>
+
+  <section id="game" class="hidden">
+    <div class="stats">
+      <div class="stat"><b>Energy</b><span id="sEnergy"></span>
+        <div class="bar" id="bEnergy"><i></i></div></div>
+      <div class="stat"><b>Belle</b><span id="sBelle"></span>
+        <div class="bar" id="bBelle"><i></i></div></div>
+      <div class="stat"><b>Your money</b><span id="sMoney"></span></div>
+      <div class="stat"><b>Credibility</b><span id="sCred"></span></div>
+    </div>
+    <div class="live" id="live"><i></i><span>Single player</span></div>
+    <div class="tabs" role="tablist">
+      <button id="tabCamp"  aria-selected="true">Camp</button>
+      <button id="tabAwards" aria-selected="false">Awards</button>
+      <button id="tabBoard" aria-selected="false">Platoons</button>
+      <button id="tabChat"  aria-selected="false">Chat</button>
+    </div>
+
+    <div id="panelCamp">
+      <div class="badges" id="badges"></div>
+      <div class="tag" id="actLbl"></div>
+      <div class="actions" id="acts"></div>
+      <div class="log" id="log"></div>
+    </div>
+
+    <div id="panelAwards" class="hidden">
+      <ul class="awards" id="awardList"></ul>
+      <p class="note" id="awardNote">Loading the notice board…</p>
+    </div>
+
+    <div id="panelBoard" class="hidden">
+      <table class="board"><thead><tr>
+        <th>Platoon</th><th>Otondos</th><th>Avg cred.</th><th>Best</th>
+      </tr></thead><tbody id="boardBody"></tbody></table>
+      <p class="note" id="boardNote">Loading the parade ground…</p>
+    </div>
+
+    <div id="panelChat" class="hidden">
+      <div class="chatbox" id="chatBox"></div>
+      <div class="row">
+        <input id="chatIn" maxlength="140" placeholder="Say something to camp…">
+        <button id="chatSend">Send</button>
+      </div>
+      <p class="note" id="chatNote">Everybody in camp can see this. Be nice.</p>
+    </div>
+
+    <details style="margin-top:18px">
+      <summary class="tag" style="cursor:pointer">📮 Suggestion box</summary>
+      <p class="note">What should camp have that it does not have? Best ideas get
+         built — and credited on the notice board. Or mail
+         <a href="mailto:hello@otondo.ng?subject=Otondo%20idea"
+            style="color:var(--green-dk);font-weight:700">hello@otondo.ng</a>.</p>
+      <div class="row">
+        <input id="sugIn" maxlength="400" placeholder="Add…">
+        <button id="sugSend">Drop</button>
+      </div>
+      <p class="note" id="sugNote"></p>
+    </details>
+  </section>
+
+  <section id="ending" class="hidden">
+    <div class="card">
+      <div class="kicker">PASSING OUT PARADE</div>
+      <h2 id="eName"></h2>
+      <div class="meta" id="eMeta"></div>
+      <div class="kicker" style="margin-top:15px">POSTED TO</div>
+      <div class="place" id="ePlace"></div>
+      <div style="font-size:30px" id="eEmoji"></div>
+      <div class="meta" id="eAllawee" style="margin-top:6px;font-style:italic"></div>
+      <div class="walk" id="eWalk"></div>
+    </div>
+    <p class="tag" style="text-align:center;margin:12px 0 8px">Send am make dem laugh.</p>
+    <button class="primary" id="share">Share my posting</button>
+    <button class="primary ghost" id="again" style="margin-top:8px">Serve again</button>
+  </section>
+  <footer>
+    Advertise on Otondo — put your brand on the danfo, a Mami stall or the
+    camp notice board.<br>
+    <a href="mailto:hello@otondo.ng?subject=Advertising%20on%20Otondo">hello@otondo.ng</a>
+    <span class="sep">·</span>
+    <a href="mailto:hello@otondo.ng?subject=Otondo%20feedback">Send feedback</a>
+  </footer>
+</div>
+
+<script type="module">
+import { newGame, doAction, canDo, ACTIONS, shareText, MAX_DAY } from './game.js?v=20261011093746';
+
+/* Kept here, not exported from game.js: a new cross-file export breaks any
+   client holding a cached game.js after a deploy. */
+const ALLAWEE_NOTE = 'Allawee ₦77,000 — e never enter.';
+import { initNet, joinCamp, syncPlayer, platoonBoard, recentChat, postChat,
+         postSuggestion, reportMessage, awardBoard, myAwards, laughChat,
+         online } from './net.js?v=20261011093746';
+
+const $ = id => document.getElementById(id);
+const SKINS = ['#6b4423','#8d5524','#4a2c16','#a9714b','#5c3317'];
+const NAIRA = `<svg viewBox="0 0 26 20" width="25" height="19" aria-hidden="true"><rect x="1" y="9.5" width="24" height="9.5" rx="2" fill="#5f7f55"/><rect x="1.8" y="5.5" width="22.4" height="9.5" rx="2" fill="#6f9463"/><rect x="2.6" y="1.5" width="20.8" height="10" rx="2" fill="#0a7a43"/><rect x="4.4" y="3.1" width="17.2" height="6.8" rx="1.2" fill="none" stroke="#d9ece1" stroke-width=".8"/><text x="13" y="8.6" text-anchor="middle" font-size="7.4" font-weight="800" fill="#f7fbf8" font-family="system-ui,sans-serif">&#8358;</text></svg>`;
+const ICONS = {parade:'🎖️',mami:'🍜',hustle:NAIRA,manowar:'🧗',socialise:'🎤',dodge:'😴'};
+
+/* One corps member, drawn not loaded.
+   outfit 0 = full khaki  ·  1 = white crested tee + khaki trousers
+   outfit 2 = white tee under an open khaki shirt
+   No crest or wordmark: illegible at this size, and it is a federal mark. */
+function corper(skin, scale, speed, delay, outfit = 0){
+  const TEE = '#fbf9f2', TRIM = '#0a7a43', KHAKI = '#9a8f5f', KHAKI_D = '#8e8356';
+  const tee = outfit >= 1;
+
+  const torso = tee
+    ? `<rect x="14" y="28" width="18" height="25" rx="6" fill="${TEE}"/>
+       <rect x="14" y="28" width="18" height="2.6" rx="1.3" fill="${TRIM}"/>
+       <path d="M19.5 28h7l-3.5 4.5z" fill="${TRIM}"/>
+       <circle cx="23" cy="38" r="2.6" fill="${TRIM}" opacity=".85"/>`
+    : `<rect x="14" y="28" width="18" height="25" rx="6" fill="${KHAKI}"/>
+       <path d="M19.5 28h7l-3.5 11z" fill="${TEE}"/>`;
+
+  /* sleeves: white with a green cuff on the tee, plain khaki otherwise */
+  const arm = (x, shade) => tee
+    ? `<rect x="${x}" y="30" width="6" height="21" rx="3" fill="${TEE}"/>
+       <rect x="${x}" y="36.5" width="6" height="2.2" fill="${TRIM}"/>`
+    : `<rect x="${x}" y="30" width="6" height="21" rx="3" fill="${shade}"/>`;
+
+  /* outfit 2 wears the khaki shirt open over the tee */
+  const openShirt = outfit === 2
+    ? `<path d="M13.4 28.5h4.2v24h-4.2z" fill="${KHAKI_D}"/>
+       <path d="M28.4 28.5h4.2v24h-4.2z" fill="${KHAKI}"/>`
+    : '';
+
+  return `<svg class="corper" viewBox="0 0 46 86" aria-hidden="true" style="
+      animation-duration:${speed}s;animation-delay:${delay}s;
+      width:${46*scale}px;height:${86*scale}px">
+    <ellipse cx="23" cy="81" rx="12" ry="2.6" fill="rgba(0,0,0,.16)"/>
+    <g class="leg"><rect x="16" y="50" width="7.5" height="26" rx="3.4" fill="${KHAKI_D}"/>
+      <rect x="13.5" y="73" width="12" height="7" rx="3" fill="#443726"/></g>
+    <g class="leg2"><rect x="22.5" y="50" width="7.5" height="26" rx="3.4" fill="#7c7246"/>
+      <rect x="20.5" y="73" width="12" height="7" rx="3" fill="#33291b"/></g>
+    <g class="torso">
+      <g class="arm">${arm(10.5, KHAKI_D)}
+        <circle cx="13.5" cy="52" r="3.6" fill="${skin}"/></g>
+      <g class="arm2">${arm(29.5, '#a6996a')}
+        <circle cx="32.5" cy="52" r="3.6" fill="${skin}"/></g>
+      ${torso}${openShirt}
+      <rect x="14" y="44" width="18" height="3.6" rx="1" fill="#4a3f28"/>
+      <rect x="21.5" y="44" width="3.4" height="3.6" fill="#c9b36a"/>
+      <circle cx="23" cy="16" r="9.6" fill="${skin}"/>
+      <path d="M12.6 14.5a10.4 10.4 0 0 1 20.8 0c0 1.2-.8 2-2 2h-16.8c-1.2 0-2-.8-2-2z" fill="${TRIM}"/>
+      <rect x="11.6" y="13.4" width="22.8" height="3.1" rx="1.5" fill="#065c32"/>
+      <circle cx="23" cy="8.6" r="1.6" fill="#065c32"/>
+    </g></svg>`;
+}
+
+
+/* ---- Lagos traffic: danfo, keke, okada. Drawn, not loaded. ---- */
+const DANFO_Y = '#f2c413', DANFO_DK = '#1d1d1b', TYRE = '#2b2b2b', RIM = '#9aa0a6';
+
+function wheel(cx, cy, r){
+  return `<g class="wheel"><circle cx="${cx}" cy="${cy}" r="${r}" fill="${TYRE}"/>`
+       + `<circle cx="${cx}" cy="${cy}" r="${r*0.42}" fill="${RIM}"/>`
+       + `<rect x="${cx-r*0.08}" y="${cy-r*0.42}" width="${r*0.16}" height="${r*0.84}" fill="#6b7075"/></g>`;
+}
+
+/* yellow danfo with the black stripes */
+function danfo(){
+  return `<svg viewBox="0 0 92 40" aria-hidden="true">
+    <rect x="3" y="4" width="84" height="25" rx="4" fill="${DANFO_Y}"/>
+    <rect x="3" y="12" width="84" height="3.4" fill="${DANFO_DK}"/>
+    <rect x="3" y="22" width="84" height="3.4" fill="${DANFO_DK}"/>
+    <rect x="8" y="6.5" width="15" height="5" rx="1.4" fill="#cfe6f2"/>
+    <rect x="27" y="6.5" width="15" height="5" rx="1.4" fill="#cfe6f2"/>
+    <rect x="46" y="6.5" width="15" height="5" rx="1.4" fill="#cfe6f2"/>
+    <rect x="65" y="6.5" width="17" height="5" rx="1.4" fill="#cfe6f2"/>
+    <rect x="84" y="16" width="4" height="4" rx="1" fill="#e0523a"/>
+    ${wheel(20,30,6.4)}${wheel(70,30,6.4)}
+  </svg>`;
+}
+
+/* keke napep — Lagos yellow with the black stripe, black canopy */
+function keke(){
+  return `<svg viewBox="0 0 54 40" aria-hidden="true">
+    <path d="M13 14h30a6 6 0 0 1 6 6v9H9v-7a8 8 0 0 1 4-8z" fill="${DANFO_Y}"/>
+    <rect x="9" y="22" width="40" height="3.2" fill="${DANFO_DK}"/>
+    <path d="M12 15h11v7H10a6 6 0 0 1 2-7z" fill="#cfe6f2"/>
+    <path d="M11 14h34a3 3 0 0 0-3-5H15a4 4 0 0 0-4 5z" fill="${DANFO_DK}"/>
+    <circle cx="24" cy="18" r="3.4" fill="#6b4423"/>
+    <rect x="45" y="19" width="4" height="3.4" rx="1" fill="#e0523a"/>
+    ${wheel(15,30,5.6)}${wheel(43,30,5.6)}
+  </svg>`;
+}
+
+/* okada — dark bike, rider in a helmet */
+function okada(passenger){
+  return `<svg viewBox="0 0 60 42" aria-hidden="true">
+    <path d="M14 30h32l-5-9h-8l-4-5H18l-3 5h-5z" fill="#2f3337"/>
+    <rect x="23" y="18" width="14" height="3.6" rx="1.4" fill="#1d2023"/>
+    <path d="M44 21l5-6" stroke="#55595e" stroke-width="2.4" stroke-linecap="round"/>
+    <g>
+      <path d="M25 17h7l3 9H23z" fill="#2f6b4f"/>
+      <circle cx="29" cy="11" r="4.6" fill="#6b4423"/>
+      <path d="M24.4 11a4.6 4.6 0 0 1 9.2 0c0 .7-.5 1.2-1.2 1.2h-6.8c-.7 0-1.2-.5-1.2-1.2z" fill="#1d2023"/>
+    </g>
+    ${passenger ? `<g><path d="M17 19h7l3 8H15z" fill="#4a6fa5"/>
+      <circle cx="20.5" cy="13" r="4.2" fill="#8d5524"/>
+      <path d="M16.3 13a4.2 4.2 0 0 1 8.4 0c0 .6-.4 1-1 1h-6.4c-.6 0-1-.4-1-1z" fill="#2f3337"/></g>` : ''}
+    ${wheel(13,32,6.2)}${wheel(47,32,6.2)}
+  </svg>`;
+}
+
+
+/* ---- roadside Nigeria: what actually lines every road ----
+   Each `sign` is an ad slot: swap the text and body colour for a brand. */
+const SHOPS = [
+  { sign: 'FOOD JOINT',      w: 104, body: '#b9683f', roof: '#6d6450' },
+  { sign: 'ROASTED CORN',    w: 76,  body: '#8a6b3f', roof: '#5f5a38', stall: true },
+  { sign: 'PROVISION STORE', w: 112, body: '#4a6fa5', roof: '#6d6450' },
+  { sign: 'ELECTRONICS',     w: 110, body: '#2f6b4f', roof: '#5f5a38' },
+  { sign: 'FURNITURE',       w: 116, body: '#7d4b2c', roof: '#6d6450', furniture: true },
+];
+
+/* signboard: textLength forces any wording to fit, so a long brand name
+   never overflows the board */
+const board = (txt, x, y, w) =>
+  `<rect x="${x}" y="${y}" width="${w}" height="12" rx="2" fill="#f7f4ea"/>
+   <rect x="${x}" y="${y}" width="${w}" height="12" rx="2" fill="none"
+         stroke="#2e2a20" stroke-opacity=".35" stroke-width="1"/>
+   <text x="${x + w/2}" y="${y + 9}" text-anchor="middle" font-size="8.6"
+         font-weight="800" font-family="system-ui,sans-serif" fill="#241f14"
+         textLength="${w - 8}" lengthAdjust="spacingAndGlyphs">${txt}</text>`;
+
+function shop(cfg){
+  /* a corn seller is a brazier under an umbrella, not a building */
+  if (cfg.stall){
+    return `<svg viewBox="0 0 76 60" aria-hidden="true">
+      <path d="M8 30h60l-6-7H14z" fill="${cfg.roof}"/>
+      <rect x="36" y="30" width="3" height="20" fill="#6d6450"/>
+      <rect x="20" y="40" width="36" height="10" rx="1.5" fill="${cfg.body}"/>
+      <rect x="24" y="35" width="28" height="5" rx="2" fill="#3a3027"/>
+      <rect x="26" y="33" width="5" height="3" rx="1.2" fill="#e8c24a"/>
+      <rect x="33" y="33" width="5" height="3" rx="1.2" fill="#e0a832"/>
+      <rect x="40" y="33" width="5" height="3" rx="1.2" fill="#e8c24a"/>
+      ${board(cfg.sign, 10, 8, 56)}
+    </svg>`;
+  }
+  return `<svg viewBox="0 0 100 60" aria-hidden="true">
+    <rect x="8" y="22" width="84" height="34" rx="2" fill="${cfg.body}"/>
+    <path d="M3 22h94l-6-8H9z" fill="${cfg.roof}"/>
+    <rect x="16" y="32" width="26" height="24" fill="#2e2a20" opacity=".5"/>
+    <rect x="52" y="34" width="30" height="12" rx="1.5" fill="#efe7d2" opacity=".55"/>
+    ${cfg.furniture ? `
+      <rect x="54" y="44" width="13" height="12" rx="1" fill="#a9703f"/>
+      <rect x="54" y="40" width="13" height="4"  rx="1" fill="#8a5a31"/>
+      <rect x="70" y="46" width="12" height="10" rx="1" fill="#95633a"/>
+      <rect x="70" y="42" width="12" height="4"  rx="1" fill="#7d4b2c"/>` : ''}
+    ${board(cfg.sign, 10, 6, 80)}
+  </svg>`;
+}
+
+function roadside(el){
+  /* one shared duration keeps them evenly spaced forever; different
+     durations make them drift together and clump */
+  const CYCLE = 42;
+  const strip = SHOPS.map((cfg, i) =>
+    `<div class="shop" style="width:${Math.round(cfg.w*0.82)}px;bottom:50px;
+       animation-duration:${CYCLE}s;
+       animation-delay:${-(i * CYCLE / SHOPS.length)}s">${shop(cfg)}</div>`);
+  el.insertAdjacentHTML('beforeend', strip.join(''));
+}
+
+/* a danfo loaded past all reason — bags, jerrycans, a mattress */
+function danfoLoaded(){
+  return `<svg viewBox="0 0 92 62" aria-hidden="true">
+    <g transform="translate(0,22)">
+      <rect x="3" y="4" width="84" height="25" rx="4" fill="${DANFO_Y}"/>
+      <rect x="3" y="12" width="84" height="3.4" fill="${DANFO_DK}"/>
+      <rect x="3" y="22" width="84" height="3.4" fill="${DANFO_DK}"/>
+      <rect x="8" y="6.5" width="15" height="5" rx="1.4" fill="#cfe6f2"/>
+      <rect x="27" y="6.5" width="15" height="5" rx="1.4" fill="#cfe6f2"/>
+      <rect x="46" y="6.5" width="15" height="5" rx="1.4" fill="#cfe6f2"/>
+      <rect x="65" y="6.5" width="17" height="5" rx="1.4" fill="#cfe6f2"/>
+      ${wheel(20,30,6.4)}${wheel(70,30,6.4)}
+    </g>
+    <g>
+      <rect x="10" y="14" width="70" height="9" rx="2" fill="#8a6b3f"/>
+      <rect x="14" y="6"  width="26" height="9" rx="2" fill="#b9683f"/>
+      <rect x="42" y="4"  width="20" height="11" rx="2" fill="#5f7f55"/>
+      <rect x="64" y="8"  width="14" height="7" rx="2" fill="#4a6fa5"/>
+      <rect x="20" y="0"  width="30" height="6" rx="2" fill="#cfc3a2"/>
+      <path d="M12 14h68" stroke="#2e2a20" stroke-width="1.4" stroke-opacity=".6"/>
+    </g>
+  </svg>`;
+}
+
+function traffic(el){
+  /* far lane: smaller and higher up the road than the walkers, so the
+     traffic reads as behind them rather than beside them */
+  const fleet = [
+    { svg: danfo(),      w: 62, bottom: 28, speed: 8.0,  delay: -0.5 },
+    { svg: okada(true),  w: 42, bottom: 30, speed: 5.6,  delay: -3.6 },
+    { svg: keke(),       w: 44, bottom: 27, speed: 9.5,  delay: -6.6 },
+    { svg: okada(false), w: 38, bottom: 33, speed: 6.4,  delay: -9.4 },
+    { svg: danfoLoaded(), w: 66, bottom: 28, speed: 11.0, delay: -13.5 },
+  ];
+  el.insertAdjacentHTML('beforeend', fleet.map(v =>
+    `<div class="vehicle" style="width:${v.w}px;bottom:${v.bottom}px;
+       animation-duration:${v.speed}s;animation-delay:${v.delay}s">${v.svg}</div>`).join(''));
+}
+
+function fillScene(el, n, big){
+  const extra = el.querySelector('.sign') ? '' : '';
+  const OUTFITS = [1, 0, 2, 1];        // mostly the white tee, as in camp
+  const figs = Array.from({length:n}, (_,i) =>
+    corper(SKINS[i % SKINS.length],
+           big ? 1 : (0.66 + (i%3)*0.17),
+           big ? 7 : (10.5 + i*3.2),
+           big ? 0 : -(i * 4.7),
+           big ? 1 : OUTFITS[i % OUTFITS.length]));
+  el.insertAdjacentHTML('beforeend', figs.join('') + extra);
+}
+roadside($('scene'));
+traffic($('scene'));
+fillScene($('scene'), 4, false);
+
+let s = null;
+const SAVE = 'otondo:v1';
+try { const raw = localStorage.getItem(SAVE); if (raw) s = JSON.parse(raw); } catch {}
+function save(){ try { localStorage.setItem(SAVE, JSON.stringify(s)); } catch {} }
+
+/* A name is required. Without this everyone who skipped the field arrived as
+   "Otondo" and the chat filled with identical names. */
+function enterCamp(){
+  const input = $('name');
+  const name  = input.value.trim().replace(/\s+/g, ' ');
+  if (name.length < 2){
+    $('nameNote').textContent = name.length
+      ? 'Give us small more — two letters at least.'
+      : 'Abeg type your name first.';
+    input.focus();
+    return;
+  }
+  $('nameNote').textContent = '';
+  s = newGame(name); save(); render();
+  joinCamp(s.name, s.platoon).then(() => syncPlayer(s, { force: true }));
+}
+
+$('start').onclick = enterCamp;
+$('name').addEventListener('keydown', e => { if (e.key === 'Enter') enterCamp(); });
+$('name').addEventListener('input', () => { $('nameNote').textContent = ''; });
+$('again').onclick = () => { s = null; try{localStorage.removeItem(SAVE)}catch{}; render(); };
+
+/* ---------- the posting card as a real image ----------
+   WhatsApp is where this spreads, and WhatsApp forwards pictures, not text.
+   Draw the card to a canvas and hand the file to the native share sheet. */
+function drawCorper(x, cx, baseY, sc, skin){
+  const u = v => v * sc, K = '#9a8f5f', KD = '#8e8356', TEE = '#fbf9f2', G = '#0a7a43';
+  x.fillStyle = 'rgba(0,0,0,.18)';
+  x.beginPath(); x.ellipse(cx, baseY + u(3), u(14), u(3.5), 0, 0, 7); x.fill();
+  const r = (fx, a, b, w, h, rad) => { x.fillStyle = fx; x.beginPath();
+    x.roundRect(cx + u(a), baseY + u(b), u(w), u(h), u(rad)); x.fill(); };
+  r(KD, -9, -30, 7.5, 26, 3.4);  r('#7c7246', 2, -30, 7.5, 26, 3.4);   // legs
+  r('#443726', -11, -7, 12, 7, 3); r('#33291b', -4, -7, 12, 7, 3);     // boots
+  r(KD, -14, -58, 6, 21, 3);      r('#a6996a', 8, -58, 6, 21, 3);      // arms
+  r(TEE, -9, -60, 18, 25, 6);                                          // white tee
+  r(G,  -9, -60, 18, 2.6, 1.3);                                        // collar trim
+  r('#4a3f28', -9, -44, 18, 3.6, 1);                                   // belt
+  x.fillStyle = skin; x.beginPath(); x.arc(cx, baseY + u(-72), u(9.6), 0, 7); x.fill();
+  x.fillStyle = G; x.beginPath();                                      // cap
+  x.ellipse(cx, baseY + u(-74), u(10.4), u(7), 0, Math.PI, 0); x.fill();
+  r('#065c32', -11.4, -76.6, 22.8, 3.1, 1.5);
+}
+
+async function buildPostingImage(st){
+  const W = 1080, H = 1350;
+  const c = document.createElement('canvas'); c.width = W; c.height = H;
+  const x = c.getContext('2d');
+
+  const g = x.createLinearGradient(0, 0, W, H);
+  g.addColorStop(0, '#065c32'); g.addColorStop(1, '#0a7a43');
+  x.fillStyle = g; x.fillRect(0, 0, W, H);
+
+  const mid = W / 2;
+  x.textAlign = 'center'; x.fillStyle = '#fff';
+  const F = (sz, w = 800) => `${w} ${sz}px system-ui,-apple-system,"Segoe UI",Roboto,sans-serif`;
+
+  x.globalAlpha = .8; x.font = F(34, 700);
+  x.fillText('PASSING OUT PARADE', mid, 150);
+  x.globalAlpha = 1;
+
+  x.font = F(86); x.fillText(st.name, mid, 262);
+
+  x.globalAlpha = .92; x.font = F(38, 600);
+  x.fillText(`Platoon ${st.platoon} · Credibility ${st.cred}`, mid, 330);
+  x.fillText(`₦${st.money.toLocaleString()} · ${st.friends} friends`, mid, 386);
+  x.globalAlpha = 1;
+
+  x.globalAlpha = .8; x.font = F(34, 700);
+  x.fillText('POSTED TO', mid, 500); x.globalAlpha = 1;
+
+  /* shrink the place name until it fits the width */
+  let size = 128;
+  const place = st.posting.place.toUpperCase();
+  do { x.font = F(size); size -= 4; } while (x.measureText(place).width > W - 120 && size > 48);
+  x.fillText(place, mid, 610);
+
+  x.font = F(96, 400); x.fillText(st.posting.emoji, mid, 740);
+
+  x.globalAlpha = .9; x.font = `italic 600 40px system-ui,sans-serif`;
+  x.fillText('Allawee ₦77,000 — e never enter.', mid, 840);
+  x.globalAlpha = 1;
+
+  /* road strip + a corps member walking off to their PPA */
+  const roadY = H - 300;
+  x.fillStyle = 'rgba(0,0,0,.16)'; x.fillRect(0, roadY, W, 300);
+  x.fillStyle = 'rgba(255,255,255,.22)';
+  for (let i = 20; i < W; i += 130) x.fillRect(i, roadY + 196, 76, 10);
+  drawCorper(x, 250, roadY + 150, 2.1, '#8d5524');
+  drawCorper(x, 430, roadY + 150, 1.7, '#6b4423');
+  drawCorper(x, 580, roadY + 150, 1.4, '#4a2c16');
+
+  /* fillStyle is still the road-dash white here — reset it, or the one piece
+     of text that must survive a screenshot comes out nearly invisible. */
+  x.fillStyle = '#ffffff'; x.globalAlpha = 1;
+  x.textAlign = 'right'; x.font = F(52);
+  x.fillText('otondo.ng', W - 60, H - 64);
+
+  return new Promise(res => c.toBlob(res, 'image/png'));
+}
+
+$('share').onclick = async () => {
+  const btn = $('share'), label = btn.textContent;
+  btn.disabled = true; btn.textContent = 'Preparing…';
+  const text = shareText(s) + ' https://otondo.ng';
+  try {
+    const blob = await buildPostingImage(s);
+    const file = new File([blob], 'otondo-posting.png', { type: 'image/png' });
+
+    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+      await navigator.share({ files: [file], text });     // native sheet, picture and all
+      btn.textContent = label;
+    } else {
+      /* desktop and older browsers: save the picture, copy the words */
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url; a.download = 'otondo-posting.png'; a.click();
+      URL.revokeObjectURL(url);
+      try { await navigator.clipboard.writeText(text); } catch {}
+      btn.textContent = 'Saved ✓';
+    }
+  } catch (e) {
+    if (e && e.name === 'AbortError') { btn.textContent = label; }   // user cancelled
+    else {
+      try { await navigator.clipboard.writeText(text); btn.textContent = 'Copied ✓'; }
+      catch { prompt('Copy this:', text); btn.textContent = label; }
+    }
+  }
+  btn.disabled = false;
+};
+
+function bar(el, v){
+  el.firstElementChild.style.width = Math.max(0, Math.min(100, v)) + '%';
+  el.classList.toggle('low', v < 25);
+}
+
+function render(){
+  const intro = !s, over = s && s.phase === 'ending';
+  $('intro').classList.toggle('hidden', !intro);
+  $('game').classList.toggle('hidden', intro || over);
+  $('ending').classList.toggle('hidden', !over);
+  $('scene').classList.toggle('hidden', over);
+  $('dayLbl').textContent = s ? (over ? 'Camp over' : `Day ${s.day}/${MAX_DAY}`) : 'Not yet mobilised';
+  if (intro) return;
+
+  if (over){
+    $('eName').textContent = s.name;
+    $('eMeta').textContent = `Platoon ${s.platoon} · Credibility ${s.cred} · ₦${s.money.toLocaleString()} · ${s.friends} friends`;
+    $('ePlace').textContent = s.posting.place;
+    $('eEmoji').textContent = s.posting.emoji;
+    $('eAllawee').textContent = ALLAWEE_NOTE;
+    const w = $('eWalk');
+    if (!w.querySelector('.corper')) fillScene(w, 1, true);
+    return;
+  }
+
+  $('sEnergy').textContent = s.energy;
+  $('sBelle').textContent = s.belle;
+  $('sMoney').textContent = '₦' + s.money.toLocaleString();
+  $('sCred').textContent = s.cred;
+  bar($('bEnergy'), s.energy); bar($('bBelle'), s.belle);
+  $('actLbl').textContent = `Platoon ${s.platoon} · ${s.actionsLeft} action${s.actionsLeft===1?'':'s'} left today`;
+
+  const box = $('acts'); box.innerHTML = '';
+  for (const [key, a] of Object.entries(ACTIONS)){
+    const b = document.createElement('button');
+    b.className = 'act'; b.disabled = !canDo(s, key);
+    b.innerHTML = `<span class="ico">${ICONS[key]||'•'}</span>
+      <span><b>${a.label}</b><small>${a.hint}</small></span>`;
+    b.onclick = () => {
+      doAction(s, key); save(); render();
+      syncPlayer(s, { force: s.phase === 'ending' });
+    };
+    box.appendChild(b);
+  }
+
+  $('log').innerHTML = s.log.slice(0, 12).map(l =>
+    `<p class="${l.event ? 'ev' : ''}"><u>Day ${l.day}</u>${l.text}</p>`).join('');
+}
+
+/* ---------------- multiplayer ---------------- */
+const fmt = n => n.toLocaleString();
+
+function setLive(n){
+  const el = $('live');
+  const on = online();
+  el.classList.toggle('on', on);
+  el.lastElementChild.textContent = on
+    ? `${fmt(n)} otondo${n === 1 ? '' : 's'} in camp now`
+    : 'Single player';
+}
+
+function tab(which){
+  for (const [k, btn] of Object.entries({camp:$('tabCamp'), awards:$('tabAwards'),
+                                          board:$('tabBoard'), chat:$('tabChat')}))
+    btn.setAttribute('aria-selected', String(k === which));
+  $('panelCamp').classList.toggle('hidden',   which !== 'camp');
+  $('panelAwards').classList.toggle('hidden', which !== 'awards');
+  $('panelBoard').classList.toggle('hidden',  which !== 'board');
+  $('panelChat').classList.toggle('hidden',   which !== 'chat');
+  if (which === 'awards') drawAwards();
+  if (which === 'board')  drawBoard();
+  if (which === 'chat')   loadChat();
+}
+$('tabCamp').onclick   = () => tab('camp');
+$('tabAwards').onclick = () => tab('awards');
+$('tabBoard').onclick  = () => tab('board');
+$('tabChat').onclick   = () => tab('chat');
+
+async function drawBoard(){
+  const rows = await platoonBoard();
+  if (!rows || !rows.length){
+    $('boardNote').textContent = online()
+      ? 'No platoons yet. Be the first to earn credibility.'
+      : 'Platoon rankings need the camp server. Running single player.';
+    $('boardBody').innerHTML = ''; return;
+  }
+  $('boardNote').textContent = 'Updates every minute.';
+  $('boardBody').innerHTML = rows.map(r => `
+    <tr class="${s && r.platoon === s.platoon ? 'me' : ''}">
+      <td class="pl">Platoon ${r.platoon}</td><td>${fmt(r.members)}</td>
+      <td>${r.avg_cred}</td><td>${r.top_cred}</td></tr>`).join('');
+}
+
+const esc = t => String(t).replace(/[&<>"]/g, c =>
+  ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+/* Titles live here, not in the database, so the wording can change with a
+   deploy instead of a migration. Order is the order they are shown. */
+const AWARDS = [
+  { slug:'top',     emoji:'🏆',  title:'Top Corper',          blurb:'Best run that reached pass-out' },
+  { slug:'cred',    emoji:'🧠',  title:'Highest Credibility', blurb:'Who is leading camp right now' },
+  { slug:'money',   emoji:'💰',  title:'Best Money Manager',  blurb:'Most money left on the last day' },
+  { slug:'fit',     emoji:'💪',  title:'Fittest Corper',      blurb:'Man O War survived, no clinic' },
+  { slug:'funny',   emoji:'😂',  title:'Funniest Corper',     blurb:'Most laughs in camp chat' },
+  { slug:'platoon', emoji:'🎖️', title:'Best Platoon',        blurb:'Highest average credibility' },
+  { slug:'otondo',  emoji:'🤡',  title:'Otondo of the Week',  blurb:'Passed out by grace alone' },
+];
+
+let mine = [];
+function drawBadges(){
+  $('badges').innerHTML = mine.map(slug => {
+    const a = AWARDS.find(x => x.slug === slug);
+    return a ? `<span>${a.emoji} ${a.title}</span>` : '';
+  }).join('');
+}
+
+async function drawAwards(){
+  const [rows, held] = await Promise.all([awardBoard(), myAwards()]);
+  if (!rows){
+    $('awardNote').textContent = online()
+      ? 'Awards are loading. Try again in a moment.'
+      : 'Awards need the camp server. Running single player.';
+    $('awardList').innerHTML = ''; return;
+  }
+  mine = held || [];
+  drawBadges();
+  const by = {};
+  rows.forEach(r => { by[r.slug] = r; });
+
+  $('awardList').innerHTML = AWARDS.map(a => {
+    const w = by[a.slug];
+    const won = mine.includes(a.slug);
+    let who;
+    if (!w)                      who = '<span class="nobody">Nobody yet. E fit be you.</span>';
+    else if (a.slug === 'platoon')
+      who = `<b>Platoon ${w.platoon}</b> <span class="aval">${esc(w.value)}</span>`;
+    else
+      who = `<b>${esc(w.nickname)}</b> <em>P${w.platoon}</em> ` +
+            `<span class="aval">${esc(w.value)}</span>`;
+    return `<li class="award${won ? ' mine' : ''}">
+      <span class="aem">${a.emoji}</span>
+      <span class="abody">
+        <span class="atitle">${a.title}${won ? ' <span class="you">YOU</span>' : ''}</span>
+        <span class="awho">${who}</span>
+        <span class="ablurb">${a.blurb}</span>
+      </span></li>`;
+  }).join('');
+  $('awardNote').textContent =
+    'Updates every minute. Laugh at a message in Chat to crown the Funniest Corper.';
+}
+
+function addMsg(m, scroll = true){
+  const box = $('chatBox');
+  box.insertAdjacentHTML('beforeend',
+    `<p class="msg"><b>${esc(m.nickname)}</b> <em>P${m.platoon}</em>` +
+    `<button class="flag" data-id="${m.id}" title="Report">⚑</button>` +
+    `<button class="laugh" data-id="${m.id}" title="Funny">` +
+      `😂<span>${Number(m.laughs) || 0}</span></button>` +
+    `<br>${esc(m.body)}</p>`);
+  if (scroll) box.scrollTop = box.scrollHeight;
+}
+
+/* One handler for every message, now and in future */
+$('chatBox').addEventListener('click', async e => {
+  const laugh = e.target.closest('.laugh');
+  if (laugh){
+    if (laugh.disabled) return;
+    laugh.disabled = true;
+    const count  = laugh.querySelector('span');
+    const before = Number(count.textContent) || 0;
+    count.textContent = before + 1;          // optimistic: the tap must feel instant
+    const r = await laughChat(Number(laugh.dataset.id));
+    if (r !== 'ok'){
+      count.textContent = before;            // put it back, we were wrong
+      if (r === 'own')        note('You no fit laugh your own joke.');
+      else if (r === 'already') note('You don laugh that one already.');
+      else { laugh.disabled = false; note('Could not send that laugh.'); }
+    }
+    return;
+  }
+
+  const btn = e.target.closest('.flag');
+  if (!btn) return;
+  btn.disabled = true;
+  const r = await reportMessage(Number(btn.dataset.id));
+  if (r === 'hidden'){ btn.closest('.msg').remove(); note('Reported. Message removed.'); }
+  else if (r === 'reported'){ btn.textContent = '✓'; note('Reported. Thank you.'); }
+  else { btn.disabled = false; note('Could not report that.'); }
+});
+
+let chatLoaded = false;
+async function loadChat(){
+  if (chatLoaded) return;
+  const msgs = await recentChat(30);
+  if (!online()){
+    $('chatNote').textContent = 'Camp chat needs the server. Running single player.';
+    $('chatIn').disabled = $('chatSend').disabled = true; return;
+  }
+  chatLoaded = true;
+  $('chatBox').innerHTML = '';
+  msgs.forEach(m => addMsg(m, false));
+  $('chatBox').scrollTop = $('chatBox').scrollHeight;
+}
+
+const SAY = {
+  ok:        'Everybody in camp can see this. Be nice.',
+  cooldown:  'Easy — wait a few seconds before talking again.',
+  too_new:   'Give it one more day in camp.',
+  banned:    'You have been removed from camp chat.',
+  link:      'No links in camp chat.',
+  digits:    'No phone or account numbers in camp chat.',
+  word:      'That word is not allowed in camp.',
+  empty:     'Say something first.',
+  no_player: 'Enter camp before you talk.',
+  offline:   'Camp chat is unreachable right now.',
+};
+function note(t){ $('chatNote').textContent = t; }
+
+async function send(){
+  const v = $('chatIn').value.trim();
+  if (!v) return;
+  $('chatSend').disabled = true;
+  const r = await postChat(v);
+  $('chatSend').disabled = false;
+  if (r === 'ok') $('chatIn').value = '';
+  note(SAY[r] || 'Could not send that.');
+}
+$('chatSend').onclick = send;
+$('chatIn').addEventListener('keydown', e => { if (e.key === 'Enter') send(); });
+
+$('sugSend').onclick = async () => {
+  const v = $('sugIn').value.trim();
+  if (v.length < 3) { $('sugNote').textContent = 'Write a bit more.'; return; }
+  const ok = await postSuggestion(v);
+  $('sugNote').textContent = ok
+    ? 'Dropped in the box. Thank you.'
+    : 'Suggestion box needs the camp server. Noted locally instead.';
+  if (ok) $('sugIn').value = '';
+};
+
+initNet({
+  onPlayerCount: setLive,
+  onChatMessage: m => { if (chatLoaded) addMsg(m); },
+}).then(async ok => {
+  if (!ok){ setLive(0); console.info('[otondo] single-player mode'); return; }
+  /* Show any badge you are already wearing without making you open the tab —
+     a returning winner should see it the second the camp screen loads. */
+  mine = await myAwards();
+  drawBadges();
+});
+
+render();
+</script>
+</body>
+</html>
