@@ -65,13 +65,11 @@
   @keyframes sunBicep{0%,100%{transform:scale(1)}50%{transform:scale(1.25)}}
 
   .rain,.flash{position:absolute;inset:0;pointer-events:none;opacity:0}
-  /* Two layers at different weights and speeds — one sheet of identical lines
-     reads as a barcode, not rain. */
+  /* One light layer — the heavier sheet was reading as a downpour. */
   .rain{z-index:4;background:
-      repeating-linear-gradient(108deg,rgba(255,255,255,.50) 0 1px,transparent 1px 7px),
-      repeating-linear-gradient(104deg,rgba(255,255,255,.26) 0 1px,transparent 1px 13px)}
+      repeating-linear-gradient(104deg,rgba(255,255,255,.30) 0 1px,transparent 1px 9px)}
   .scene.w-storm .rain{opacity:1;animation:pour .38s linear infinite}
-  @keyframes pour{to{background-position:-13px 40px, -9px 28px}}
+  @keyframes pour{to{background-position:-9px 28px}}
   .flash{z-index:5;background:#fff}
   .scene.w-storm .flash{animation:flash 3.8s ease-in infinite}
   @keyframes flash{0%,80%{opacity:0}83%{opacity:.46}87%{opacity:.1}100%{opacity:0}}
@@ -406,14 +404,14 @@
 </div>
 
 <script type="module">
-import { newGame, doAction, canDo, ACTIONS, shareText, MAX_DAY } from './game.js?v=20261011202837';
+import { newGame, doAction, canDo, ACTIONS, shareText, MAX_DAY } from './game.js?v=20261011203842';
 
 /* Kept here, not exported from game.js: a new cross-file export breaks any
    client holding a cached game.js after a deploy. */
 const ALLAWEE_NOTE = 'Allawee ₦77,000 — e never enter.';
 import { initNet, joinCamp, syncPlayer, platoonBoard, recentChat, postChat,
          postSuggestion, reportMessage, awardBoard, myAwards, laughChat,
-         online } from './net.js?v=20261011202837';
+         online } from './net.js?v=20261011203842';
 
 const $ = id => document.getElementById(id);
 const SKINS = ['#6b4423','#8d5524','#4a2c16','#a9714b','#5c3317'];
