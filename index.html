@@ -180,6 +180,19 @@
   @keyframes shakuLean{0%,100%{transform:translateY(-1px) rotate(-6deg)}
                        50%{transform:translateY(-3px) rotate(6deg)}}
 
+  /* ---------- the boli run ----------
+     One of them breaks off, sprints to a food stall, eats, then catches back
+     up. Scaled down on arrival because the stalls sit further back. */
+  .corper.running{transition:transform .95s cubic-bezier(.3,.7,.4,1)}
+  .corper.running .leg,.corper.running .leg2,
+  .corper.running .arm,.corper.running .arm2{animation-duration:.26s}
+  .corper.running .torso{animation-duration:.13s}
+  .corper.munching .leg,.corper.munching .leg2{animation:none}
+  .corper.munching .torso{animation:munch .55s ease-in-out infinite}
+  .corper.munching .arm {animation:toMouth .55s ease-in-out infinite}
+  @keyframes munch{0%,100%{transform:translateY(0)}50%{transform:translateY(-2px)}}
+  @keyframes toMouth{0%,100%{transform:rotate(-104deg)}50%{transform:rotate(-128deg)}}
+
   /* ---------- stats ---------- */
   .stats{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px}
   .stat{background:var(--white);border:1px solid var(--line);border-radius:12px;padding:9px 11px}
@@ -485,14 +498,14 @@
 </div>
 
 <script type="module">
-import { newGame, doAction, canDo, ACTIONS, shareText, MAX_DAY } from './game.js?v=20261012073059';
+import { newGame, doAction, canDo, ACTIONS, shareText, MAX_DAY } from './game.js?v=20261012074552';
 
 /* Kept here, not exported from game.js: a new cross-file export breaks any
    client holding a cached game.js after a deploy. */
 const ALLAWEE_NOTE = 'Allawee ₦77,000 — e never enter.';
 import { initNet, joinCamp, syncPlayer, platoonBoard, recentChat, postChat,
          postSuggestion, reportMessage, awardBoard, myAwards, laughChat,
-         online } from './net.js?v=20261012073059';
+         online } from './net.js?v=20261012074552';
 
 const $ = id => document.getElementById(id);
 const SKINS = ['#6b4423','#8d5524','#4a2c16','#a9714b','#5c3317'];
@@ -655,12 +668,20 @@ function shop(cfg){
   </svg>`;
 }
 
+/* Shared so the boli run can work out exactly how fast a stall is moving.
+   @keyframes drive carries them from left:-22% to 118% — 140% of the scene
+   width — over SHOP_CYCLE seconds. */
+const SHOP_CYCLE = 42, SHOP_TRAVEL = 1.40;
+
 function roadside(el){
   /* one shared duration keeps them evenly spaced forever; different
      durations make them drift together and clump */
-  const CYCLE = 42;
+  const CYCLE = SHOP_CYCLE;
   const strip = SHOPS.map((cfg, i) =>
-    `<div class="shop" style="width:${Math.round(cfg.w*0.82)}px;bottom:50px;
+    /* tagged by sign, not by index, so swapping a board for a paying advert
+       does not silently send the runner to a furniture shop for lunch */
+    `<div class="shop"${/FOOD JOINT|ROASTED CORN/.test(cfg.sign) ? ' data-food="1"' : ''}
+       style="width:${Math.round(cfg.w*0.82)}px;bottom:50px;
        animation-duration:${CYCLE}s;
        animation-delay:${-(i * CYCLE / SHOPS.length)}s">${shop(cfg)}</div>`);
   el.insertAdjacentHTML('beforeend', strip.join(''));
@@ -764,11 +785,92 @@ function backToTrekking(){
 /* Legwork first, then shaku shaku, then back to the trek. */
 function danceBreak(){
   if (!stillWatching()) return;
+  if ($('scene').querySelector('.running, .munching')) return;  // let them eat
   lineUp();
   setTimeout(() => $('scene').classList.add('shaku'), DANCE_FOR / 2);
   setTimeout(backToTrekking, DANCE_FOR);
 }
 setTimeout(() => { danceBreak(); setInterval(danceBreak, DANCE_EVERY); }, 6000);
+
+/* ---------- the boli run ----------
+   Every so often one corper peels off to a food stall and catches back up.
+   Skipped during the dance, and skipped if no food stall is currently in frame
+   — running to a shop that is off-screen just looks like someone leaving. */
+const SNACK_EVERY = 23000, RUN_MS = 950, EAT_MS = 1500;
+
+/* Returns false when it could not go — the caller retries soon rather than
+   forfeiting a whole 23s turn. The dance and the run overlap often enough that
+   skipping meant the run almost never happened. */
+function snackRun(){
+  const sc = $('scene');
+  if (!stillWatching()) return true;
+  if (sc.classList.contains('dancing')) return false;
+  const box = sc.getBoundingClientRect();
+  /* Settle first. A dance that just ended leaves transforms unwinding for .7s,
+     and measuring mid-unwind gives a false origin — every offset computed from
+     it is then wrong by whatever was left on the clock. Clearing is safe here
+     because we already know no routine is running. */
+  const crew = [...sc.querySelectorAll('.corper')];
+  crew.forEach(p => { p.style.transition = 'none'; p.style.transform = 'none'; });
+  void sc.offsetWidth;
+  const place = el => {
+    const r = el.getBoundingClientRect();
+    const c = r.left - box.left + r.width / 2;
+    return { el, c, ok: c > box.width * 0.12 && c < box.width * 0.88 };
+  };
+  const stall  = [...sc.querySelectorAll('.shop[data-food]')].map(place).find(x => x.ok);
+  const runner = crew.map(place).find(x => x.ok);
+  crew.forEach(p => { p.style.transition = ''; });     // restore the CSS glide
+  if (!stall || !runner) return false;
+
+  const who = runner.el;
+  const home = runner.c;
+  stall.el.dataset.target = '1';                  // marked so it can be verified
+  who.style.animationPlayState = 'paused';        // drop out of the march
+  who.classList.add('running');
+
+  const stallNow = () => {
+    const r = stall.el.getBoundingClientRect();
+    return r.left - box.left + r.width / 2;
+  };
+  const park = x => {
+    who.style.transform = `translate(${Math.round(x - home)}px,-38px) scale(.8)`;
+  };
+
+  /* Dash to where the stall WILL be when they arrive. Its speed is exact —
+     140% of the scene width every SHOP_CYCLE seconds — so no sampling needed. */
+  const speed = (box.width * SHOP_TRAVEL) / (SHOP_CYCLE * 1000);   // px per ms
+  park(stallNow() + speed * RUN_MS);
+
+  let pin = 0;
+  setTimeout(() => {
+    who.classList.replace('running', 'munching');
+    /* Eating: pin to the stall every frame with the transition off, so they
+       stay with it as it drifts instead of being left behind. A single
+       predicted position cannot hold for a second and a half. */
+    who.style.transition = 'none';
+    const follow = () => { park(stallNow()); pin = requestAnimationFrame(follow); };
+    follow();
+  }, RUN_MS);
+
+  setTimeout(() => {
+    cancelAnimationFrame(pin);
+    who.style.transition = '';                    // glide back to the road
+    who.classList.replace('munching', 'running');
+    who.style.transform = '';
+  }, RUN_MS + EAT_MS);
+
+  setTimeout(() => {
+    who.classList.remove('running');
+    who.style.animationPlayState = '';            // rejoin the trek mid-stride
+    delete stall.el.dataset.target;
+  }, RUN_MS + EAT_MS + RUN_MS);
+  return true;
+}
+
+const scheduleSnack = delay =>
+  setTimeout(() => scheduleSnack(snackRun() ? SNACK_EVERY : 3500), delay);
+scheduleSnack(11000);
 
 /* Weather cycles on its own: sun -> storm -> wind. Long enough that each mood
    registers, short enough that nobody waits to see the next one. */
