@@ -146,6 +146,40 @@
   @keyframes swingB{0%,100%{transform:rotate(-20deg)}50%{transform:rotate(20deg)}}
   @keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-1.6px)}}
 
+  /* ---------- the dance break ----------
+     Zanku legwork: hop on one leg, kick the other out, arms pumping. The march
+     is PAUSED rather than cancelled, so when they fall back into step they
+     carry on from exactly where they stopped — no jump.
+     In unison on purpose: a line all hitting the same beat is the whole joke. */
+  .scene.dancing .corper{animation-play-state:paused}
+  .scene.dancing .leg  {animation:zankuA .42s ease-in-out infinite}
+  .scene.dancing .leg2 {animation:zankuB .42s ease-in-out infinite}
+  .scene.dancing .arm  {animation:pumpA  .42s ease-in-out infinite}
+  .scene.dancing .arm2 {animation:pumpB  .42s ease-in-out infinite}
+  .scene.dancing .torso{animation:hype   .21s ease-in-out infinite}
+  @keyframes zankuA{0%,100%{transform:rotate(-10deg)}
+                    28%{transform:rotate(42deg)}58%{transform:rotate(-18deg)}}
+  @keyframes zankuB{0%,100%{transform:rotate(12deg)}
+                    28%{transform:rotate(-20deg)}58%{transform:rotate(44deg)}}
+  @keyframes pumpA{0%,100%{transform:rotate(-40deg)}50%{transform:rotate(-72deg)}}
+  @keyframes pumpB{0%,100%{transform:rotate(36deg)}50%{transform:rotate(68deg)}}
+  @keyframes hype{0%,100%{transform:translateY(0)}50%{transform:translateY(-4px)}}
+
+  /* Second move: shaku shaku. Arms folded across the chest, elbows snapping,
+     body leaning side to side on a shuffle. Rules sit AFTER the zanku ones —
+     same specificity, so source order is what swaps the move. */
+  .scene.shaku .leg  {animation:shakuLegA .5s ease-in-out infinite}
+  .scene.shaku .leg2 {animation:shakuLegB .5s ease-in-out infinite}
+  .scene.shaku .arm  {animation:shakuArmA .25s ease-in-out infinite}
+  .scene.shaku .arm2 {animation:shakuArmB .25s ease-in-out infinite}
+  .scene.shaku .torso{animation:shakuLean .5s ease-in-out infinite}
+  @keyframes shakuLegA{0%,100%{transform:rotate(-7deg)}50%{transform:rotate(15deg)}}
+  @keyframes shakuLegB{0%,100%{transform:rotate(15deg)}50%{transform:rotate(-7deg)}}
+  @keyframes shakuArmA{0%,100%{transform:rotate(54deg)}50%{transform:rotate(80deg)}}
+  @keyframes shakuArmB{0%,100%{transform:rotate(-54deg)}50%{transform:rotate(-80deg)}}
+  @keyframes shakuLean{0%,100%{transform:translateY(-1px) rotate(-6deg)}
+                       50%{transform:translateY(-3px) rotate(6deg)}}
+
   /* ---------- stats ---------- */
   .stats{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px}
   .stat{background:var(--white);border:1px solid var(--line);border-radius:12px;padding:9px 11px}
@@ -451,14 +485,14 @@
 </div>
 
 <script type="module">
-import { newGame, doAction, canDo, ACTIONS, shareText, MAX_DAY } from './game.js?v=20261011204526';
+import { newGame, doAction, canDo, ACTIONS, shareText, MAX_DAY } from './game.js?v=20261012073059';
 
 /* Kept here, not exported from game.js: a new cross-file export breaks any
    client holding a cached game.js after a deploy. */
 const ALLAWEE_NOTE = 'Allawee ₦77,000 — e never enter.';
 import { initNet, joinCamp, syncPlayer, platoonBoard, recentChat, postChat,
          postSuggestion, reportMessage, awardBoard, myAwards, laughChat,
-         online } from './net.js?v=20261011204526';
+         online } from './net.js?v=20261012073059';
 
 const $ = id => document.getElementById(id);
 const SKINS = ['#6b4423','#8d5524','#4a2c16','#a9714b','#5c3317'];
@@ -685,6 +719,56 @@ function fillScene(el, n, big){
 roadside($('scene'));
 traffic($('scene'));
 fillScene($('scene'), 4, false);
+
+/* ---------- dance break ----------
+   Every so often the trek stops, everyone slides into a line, does legwork,
+   then carries on. The march animation is paused rather than removed, so the
+   walk resumes mid-stride instead of restarting from off-screen. */
+const DANCE_EVERY = 17000, DANCE_FOR = 8400;   // two moves, ~4.2s each
+const stillWatching = () =>
+  !window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+function lineUp(){
+  const sc = $('scene');
+  const crew = [...sc.querySelectorAll('.corper')];
+  if (!crew.length) return;
+  /* Freeze the march BEFORE measuring, and read every position before writing
+     any. Measuring inside the write loop samples each figure a few ms later
+     than the last, while they are still walking, and the line comes out
+     crooked. */
+  sc.classList.add('dancing');
+  const box = sc.getBoundingClientRect();
+  const gap = Math.min(64, box.width / (crew.length + 1));
+  const first = (box.width - gap * (crew.length - 1)) / 2;
+  /* Measure with the transition switched off and any previous offset cleared,
+     so we read where each figure actually IS. Reading a rect mid-glide returns
+     a transient position, and the line comes out with someone stranded. */
+  crew.forEach(p => { p.style.transition = 'none'; p.style.transform = 'none'; });
+  void sc.offsetWidth;                                   // force the reflow
+  const here = crew.map(p => {
+    const r = p.getBoundingClientRect();
+    return r.left - box.left + r.width / 2;
+  });
+  crew.forEach((p, i) => {
+    p.style.transition = '';                             // back to the CSS glide
+    p.style.transform = `translateX(${Math.round(first + gap * i - here[i])}px)`;
+  });
+}
+
+function backToTrekking(){
+  const sc = $('scene');
+  sc.classList.remove('dancing', 'shaku');          // march unpauses mid-stride
+  sc.querySelectorAll('.corper').forEach(p => { p.style.transform = ''; });
+}
+
+/* Legwork first, then shaku shaku, then back to the trek. */
+function danceBreak(){
+  if (!stillWatching()) return;
+  lineUp();
+  setTimeout(() => $('scene').classList.add('shaku'), DANCE_FOR / 2);
+  setTimeout(backToTrekking, DANCE_FOR);
+}
+setTimeout(() => { danceBreak(); setInterval(danceBreak, DANCE_EVERY); }, 6000);
 
 /* Weather cycles on its own: sun -> storm -> wind. Long enough that each mood
    registers, short enough that nobody waits to see the next one. */
