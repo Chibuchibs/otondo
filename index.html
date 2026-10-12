@@ -70,10 +70,25 @@
       repeating-linear-gradient(104deg,rgba(255,255,255,.30) 0 1px,transparent 1px 9px)}
   .scene.w-storm .rain{opacity:1;animation:pour .38s linear infinite}
   @keyframes pour{to{background-position:-9px 28px}}
+  /* Storm clouds. One fixed "head" that the lightning drops out of, plus two
+     drifting banks so the sky moves. Behind the rain, in front of the shops. */
+  .cloud{position:absolute;z-index:3;opacity:0;transition:opacity 1s ease}
+  .scene.w-storm .cloud{opacity:1}
+  .cloudDrift{animation:cloudDrift linear infinite}
+  @keyframes cloudDrift{from{left:-36%}to{left:118%}}
+  .cloudHead{left:46%;top:-8px}
+  .scene.w-storm .cloudHead{animation:loom 6s ease-in-out infinite}
+  @keyframes loom{0%,100%{transform:translateY(0) scale(1)}
+                  50%{transform:translateY(3px) scale(1.04)}}
+  /* the head lights up from inside a beat before the bolt drops */
+  .cloudGlow{opacity:0}
+  .scene.w-storm .cloudGlow{animation:cloudLit 3.8s ease-in infinite}
+  @keyframes cloudLit{0%,78%{opacity:0}80%{opacity:.85}83%{opacity:.2}86%{opacity:.6}92%,100%{opacity:0}}
+
   .flash{z-index:5;background:#fff}
   .scene.w-storm .flash{animation:flash 3.8s ease-in infinite}
   @keyframes flash{0%,80%{opacity:0}83%{opacity:.46}87%{opacity:.1}100%{opacity:0}}
-  .bolt{position:absolute;top:2px;left:56%;width:30px;opacity:0;z-index:5}
+  .bolt{position:absolute;top:26px;left:54%;width:27px;opacity:0;z-index:5}
   .scene.w-storm .bolt{animation:strike 3.8s ease-in infinite}
   @keyframes strike{0%,80%{opacity:0}82%{opacity:1}84%{opacity:.15}86%{opacity:1}92%,100%{opacity:0}}
 
@@ -286,6 +301,38 @@
       <path d="M20 35.5 q6 5.5 12 -1.5" stroke="#8a6a1f" stroke-width="2.2"
             stroke-linecap="round" fill="none"/>
     </svg>
+    <svg class="cloud cloudDrift" width="96" height="40" viewBox="0 0 120 50"
+         style="top:4px;animation-duration:26s" aria-hidden="true">
+      <g fill="#4a515c">
+        <ellipse cx="34" cy="30" rx="26" ry="15"/><ellipse cx="62" cy="24" rx="30" ry="19"/>
+        <ellipse cx="90" cy="31" rx="24" ry="14"/><rect x="12" y="30" width="96" height="14" rx="7"/>
+      </g>
+      <ellipse cx="58" cy="17" rx="19" ry="10" fill="#5a6370"/>
+    </svg>
+    <svg class="cloud cloudDrift" width="68" height="28" viewBox="0 0 120 50"
+         style="top:26px;animation-duration:17s;animation-delay:-8s" aria-hidden="true">
+      <g fill="#555e6a" opacity=".9">
+        <ellipse cx="34" cy="30" rx="26" ry="15"/><ellipse cx="62" cy="24" rx="30" ry="19"/>
+        <ellipse cx="90" cy="31" rx="24" ry="14"/><rect x="12" y="30" width="96" height="14" rx="7"/>
+      </g>
+    </svg>
+    <svg class="cloud cloudHead" width="128" height="52" viewBox="0 0 120 50"
+         style="position:absolute" aria-hidden="true">
+      <g fill="#3f4651">
+        <ellipse cx="34" cy="30" rx="26" ry="15"/><ellipse cx="62" cy="23" rx="31" ry="20"/>
+        <ellipse cx="90" cy="31" rx="24" ry="14"/><rect x="10" y="30" width="100" height="15" rx="7"/>
+      </g>
+      <ellipse cx="60" cy="15" rx="20" ry="11" fill="#4d5663"/>
+      <defs>
+        <radialGradient id="otondoGlow">
+          <stop offset="0%"   stop-color="#fff6c9" stop-opacity=".95"/>
+          <stop offset="55%"  stop-color="#ffeb9a" stop-opacity=".45"/>
+          <stop offset="100%" stop-color="#ffeb9a" stop-opacity="0"/>
+        </radialGradient>
+      </defs>
+      <ellipse class="cloudGlow" cx="60" cy="33" rx="32" ry="16"
+               fill="url(#otondoGlow)"/>
+    </svg>
     <div class="rain"></div>
     <svg class="bolt" viewBox="0 0 24 46" aria-hidden="true">
       <path d="M14 0 L4 26 h7 L8 46 L21 18 h-8 Z" fill="#fff8d6"
@@ -404,14 +451,14 @@
 </div>
 
 <script type="module">
-import { newGame, doAction, canDo, ACTIONS, shareText, MAX_DAY } from './game.js?v=20261011203842';
+import { newGame, doAction, canDo, ACTIONS, shareText, MAX_DAY } from './game.js?v=20261011204526';
 
 /* Kept here, not exported from game.js: a new cross-file export breaks any
    client holding a cached game.js after a deploy. */
 const ALLAWEE_NOTE = 'Allawee ₦77,000 — e never enter.';
 import { initNet, joinCamp, syncPlayer, platoonBoard, recentChat, postChat,
          postSuggestion, reportMessage, awardBoard, myAwards, laughChat,
-         online } from './net.js?v=20261011203842';
+         online } from './net.js?v=20261011204526';
 
 const $ = id => document.getElementById(id);
 const SKINS = ['#6b4423','#8d5524','#4a2c16','#a9714b','#5c3317'];
