@@ -45,8 +45,62 @@
   /* ---------- walking scene ---------- */
   .scene{position:relative;height:156px;margin:0 -12px 16px;overflow:hidden;
     background:linear-gradient(#f7edd6 0%,#f2e4c6 62%,var(--dust) 62%,#d6caa8 100%)}
-  .sun{position:absolute;left:30px;top:12px;width:34px;height:34px;border-radius:50%;
-    background:#f3c969;box-shadow:0 0 0 9px rgba(243,201,105,.22)}
+  /* ---------- weather over the trek ----------
+     Three moods on a loop: hot sun, storm, harmattan wind. The sun is the joke —
+     it flexes at you while you suffer under it. Everything is CSS off one class
+     on .scene, so the cycler is four lines of JS. */
+  .scene{transition:background 1.6s ease}
+  .scene.w-storm{background:linear-gradient(#6d7480 0%,#8a9098 62%,#8b846c 62%,#79715d 100%)}
+  .scene.w-wind {background:linear-gradient(#ecdcc2 0%,#ddcfb1 62%,#cabd99 62%,#b9ac88 100%)}
+
+  .sun{position:absolute;left:14px;top:2px;width:80px;height:60px;z-index:1;
+    transition:opacity .9s ease,transform .9s ease}
+  .scene:not(.w-sun) .sun{opacity:0;transform:translateY(-16px)}
+  .sunRays{animation:sunSpin 24s linear infinite;transform-origin:26px 30px}
+  @keyframes sunSpin{to{transform:rotate(360deg)}}
+  /* the flex: arm pumps up, bicep swells on the beat */
+  .sunArm{animation:sunFlex 1.6s ease-in-out infinite;transform-origin:38px 30px}
+  @keyframes sunFlex{0%,100%{transform:rotate(0)}50%{transform:rotate(-14deg)}}
+  .sunBicep{animation:sunBicep 1.6s ease-in-out infinite;transform-origin:50px 26px}
+  @keyframes sunBicep{0%,100%{transform:scale(1)}50%{transform:scale(1.25)}}
+
+  .rain,.flash{position:absolute;inset:0;pointer-events:none;opacity:0}
+  /* Two layers at different weights and speeds — one sheet of identical lines
+     reads as a barcode, not rain. */
+  .rain{z-index:4;background:
+      repeating-linear-gradient(108deg,rgba(255,255,255,.50) 0 1px,transparent 1px 7px),
+      repeating-linear-gradient(104deg,rgba(255,255,255,.26) 0 1px,transparent 1px 13px)}
+  .scene.w-storm .rain{opacity:1;animation:pour .38s linear infinite}
+  @keyframes pour{to{background-position:-13px 40px, -9px 28px}}
+  .flash{z-index:5;background:#fff}
+  .scene.w-storm .flash{animation:flash 3.8s ease-in infinite}
+  @keyframes flash{0%,80%{opacity:0}83%{opacity:.46}87%{opacity:.1}100%{opacity:0}}
+  .bolt{position:absolute;top:2px;left:56%;width:30px;opacity:0;z-index:5}
+  .scene.w-storm .bolt{animation:strike 3.8s ease-in infinite}
+  @keyframes strike{0%,80%{opacity:0}82%{opacity:1}84%{opacity:.15}86%{opacity:1}92%,100%{opacity:0}}
+
+  /* Tapered at both ends so they read as motion, not as white bars. */
+  .gust{position:absolute;height:2px;border-radius:2px;z-index:4;opacity:0;
+    background:linear-gradient(90deg,transparent,rgba(255,255,255,.85) 45%,transparent)}
+  .scene.w-wind .gust{animation:blow 1.25s linear infinite}
+  @keyframes blow{0%{left:-25%;opacity:0}12%{opacity:.95}100%{left:118%;opacity:0}}
+
+  /* Something for the wind to actually carry. A pure-water nylon tumbling down
+     the road says "big wind" better than any number of streaks. */
+  .debris{position:absolute;z-index:4;opacity:0}
+  .scene.w-wind .debris{animation:fly 2.2s linear infinite}
+  @keyframes fly{
+    0%  {left:-12%;opacity:0;transform:translateY(0) rotate(0)}
+    12% {opacity:1}
+    40% {transform:translateY(-18px) rotate(200deg)}
+    70% {transform:translateY(4px) rotate(400deg)}
+    100%{left:112%;opacity:0;transform:translateY(-6px) rotate(620deg)}
+  }
+
+  /* the people react: hunch into the rain, lean into the wind */
+  .corper{transition:transform .7s ease}
+  .scene.w-storm .corper{transform:rotate(2.5deg)}
+  .scene.w-wind  .corper{transform:rotate(-6deg)}
   .road{position:absolute;left:0;right:0;bottom:0;height:62px;background:#cdc0a0;
     border-top:3px solid #b8aa88}
   .road::after{content:"";position:absolute;top:30px;left:0;right:0;height:3px;
@@ -212,7 +266,49 @@
   <header><h1>Oton<i>do</i></h1><div class="day" id="dayLbl"></div></header>
 
   <div class="scene" id="scene">
-    <div class="sun"></div><div class="road"></div>
+    <svg class="sun" viewBox="0 0 80 60" aria-hidden="true">
+      <g class="sunRays" stroke="#f3c969" stroke-width="3" stroke-linecap="round">
+        <line x1="26" y1="6"  x2="26" y2="12"/><line x1="26" y1="48" x2="26" y2="54"/>
+        <line x1="2"  y1="30" x2="8"  y2="30"/><line x1="44" y1="30" x2="50" y2="30"/>
+        <line x1="9"  y1="13" x2="13" y2="17"/><line x1="39" y1="43" x2="43" y2="47"/>
+        <line x1="9"  y1="47" x2="13" y2="43"/><line x1="39" y1="17" x2="43" y2="13"/>
+      </g>
+      <circle cx="26" cy="30" r="15" fill="#f3c969"/>
+      <g class="sunArm">
+        <path d="M38 30 q8 2 12 -3" stroke="#f3c969" stroke-width="7"
+              stroke-linecap="round" fill="none"/>
+        <ellipse class="sunBicep" cx="50" cy="26" rx="7" ry="6" fill="#f3c969"/>
+        <path d="M56 24 L56 15" stroke="#f3c969" stroke-width="7" stroke-linecap="round"/>
+        <circle cx="56" cy="12" r="5.5" fill="#f3c969"/>
+      </g>
+      <path d="M17 24.5 L23 26.8" stroke="#9a7520" stroke-width="2.4" stroke-linecap="round"/>
+      <path d="M35 24.5 L29 26.8" stroke="#9a7520" stroke-width="2.4" stroke-linecap="round"/>
+      <ellipse cx="21" cy="30.5" rx="1.9" ry="2.3" fill="#8a6a1f"/>
+      <ellipse cx="31" cy="30.5" rx="1.9" ry="2.3" fill="#8a6a1f"/>
+      <path d="M20 35.5 q6 5.5 12 -1.5" stroke="#8a6a1f" stroke-width="2.2"
+            stroke-linecap="round" fill="none"/>
+    </svg>
+    <div class="rain"></div>
+    <svg class="bolt" viewBox="0 0 24 46" aria-hidden="true">
+      <path d="M14 0 L4 26 h7 L8 46 L21 18 h-8 Z" fill="#fff8d6"
+            stroke="#f3e08a" stroke-width="1.2"/>
+    </svg>
+    <div class="flash"></div>
+    <i class="gust" style="top:16px;width:58px;animation-delay:0s"></i>
+    <i class="gust" style="top:30px;width:40px;animation-delay:.35s"></i>
+    <i class="gust" style="top:52px;width:66px;animation-delay:.6s"></i>
+    <i class="gust" style="top:70px;width:34px;animation-delay:.95s"></i>
+    <svg class="debris" width="17" height="13" viewBox="0 0 17 13"
+         style="top:66px;animation-delay:.15s" aria-hidden="true">
+      <path d="M1 5 Q5 0 9.5 3 Q15 1 16 6.5 Q12 13 6.5 10.5 Q1 11.5 1 5 Z"
+            fill="rgba(255,255,255,.88)" stroke="#c4b793" stroke-width=".8"/>
+    </svg>
+    <svg class="debris" width="13" height="10" viewBox="0 0 17 13"
+         style="top:40px;animation-delay:1.3s" aria-hidden="true">
+      <path d="M1 5 Q5 0 9.5 3 Q15 1 16 6.5 Q12 13 6.5 10.5 Q1 11.5 1 5 Z"
+            fill="rgba(255,255,255,.72)" stroke="#c4b793" stroke-width=".9"/>
+    </svg>
+    <div class="road"></div>
     <div class="sign"><b>YOUR PPA →</b><i></i></div>
   </div>
 
@@ -310,14 +406,14 @@
 </div>
 
 <script type="module">
-import { newGame, doAction, canDo, ACTIONS, shareText, MAX_DAY } from './game.js?v=20261011101223';
+import { newGame, doAction, canDo, ACTIONS, shareText, MAX_DAY } from './game.js?v=20261011202837';
 
 /* Kept here, not exported from game.js: a new cross-file export breaks any
    client holding a cached game.js after a deploy. */
 const ALLAWEE_NOTE = 'Allawee ₦77,000 — e never enter.';
 import { initNet, joinCamp, syncPlayer, platoonBoard, recentChat, postChat,
          postSuggestion, reportMessage, awardBoard, myAwards, laughChat,
-         online } from './net.js?v=20261011101223';
+         online } from './net.js?v=20261011202837';
 
 const $ = id => document.getElementById(id);
 const SKINS = ['#6b4423','#8d5524','#4a2c16','#a9714b','#5c3317'];
@@ -544,6 +640,19 @@ function fillScene(el, n, big){
 roadside($('scene'));
 traffic($('scene'));
 fillScene($('scene'), 4, false);
+
+/* Weather cycles on its own: sun -> storm -> wind. Long enough that each mood
+   registers, short enough that nobody waits to see the next one. */
+const WEATHER = ['w-sun', 'w-storm', 'w-wind'];
+let wIdx = 0;
+function cycleWeather(){
+  const el = $('scene');
+  el.classList.remove(...WEATHER);
+  el.classList.add(WEATHER[wIdx]);
+  wIdx = (wIdx + 1) % WEATHER.length;
+}
+cycleWeather();
+setInterval(cycleWeather, 11000);
 
 let s = null;
 const SAVE = 'otondo:v1';
