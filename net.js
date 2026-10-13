@@ -2,10 +2,15 @@
    Every function is failure-tolerant on purpose: if Supabase is unset, slow,
    or down, the game must still be playable. Nothing here throws upward. */
 
-import { SUPABASE_URL, SUPABASE_ANON_KEY } from './config.js?v=20261013125700';
+import { SUPABASE_URL, SUPABASE_ANON_KEY } from './config.js?v=20261013130304';
 
 const TOKEN_KEY = 'otondo:token';
 let sb = null, token = null, channel = null;
+
+/* What we broadcast about ourselves to everyone else in camp. Nickname and
+   platoon only — both are already public in chat and on the awards board.
+   The token NEVER goes in here; presence is readable by every client. */
+let me = null;
 let onCount = () => {}, onChat = () => {};
 
 export const online = () => !!sb;
@@ -38,11 +43,42 @@ function subscribe() {
         p => { try { onChat(p.new); } catch {} })
     .subscribe(async status => {
       if (status !== 'SUBSCRIBED') return;
-      await channel.track({ at: Date.now() });
+      await channel.track({ ...(me || {}), at: Date.now() });
       /* report immediately — presence only re-syncs when someone joins or
          leaves, so without this the count can sit stale at nothing */
       try { onCount(Object.keys(channel.presenceState()).length); } catch {}
     });
+}
+
+/* Call whenever the player's name, platoon or day changes. Re-tracking
+   replaces the previous payload for this connection.
+   Returns false if the channel is not joined yet, so the caller knows to try
+   again rather than assuming it landed — track() before the join silently
+   does nothing, and the player then never appears in anyone's list. */
+export function setPresence(info) {
+  me = info ? {
+    nick:    String(info.nick || '').slice(0, 16),
+    platoon: Number(info.platoon) || 0,
+    day:     Number(info.day) || 0,
+  } : null;
+  if (!channel || channel.state !== 'joined') return false;
+  try { channel.track({ ...(me || {}), at: Date.now() }); return true; }
+  catch { return false; }
+}
+
+/* Everyone currently connected. Entries without a nickname are people still on
+   the start screen — counted, but they have nothing to show yet. */
+export function campRoster() {
+  if (!channel) return [];
+  try {
+    /* One entry per connection. presenceState() maps each key to an ARRAY of
+       payloads and re-tracking appends to it — flattening counted the same
+       person once per update (14 rows against a count of 3). Take the latest. */
+    return Object.values(channel.presenceState())
+      .filter(metas => metas && metas.length)
+      .map(metas => metas[metas.length - 1])
+      .map(p => ({ nick: p.nick || null, platoon: p.platoon || null, day: p.day || null }));
+  } catch { return []; }
 }
 
 export async function joinCamp(nickname, platoon) {

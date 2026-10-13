@@ -250,6 +250,18 @@
     color:var(--muted);margin:-4px 0 12px;letter-spacing:.04em}
   .live i{width:8px;height:8px;border-radius:50%;background:#bbb;flex:none}
   .live.on i{background:#22c55e;box-shadow:0 0 0 3px rgba(34,197,94,.2)}
+  .live.on{cursor:pointer;user-select:none}
+  .live.on span{text-decoration:underline dotted;text-underline-offset:3px}
+  .live.on::after{content:"▾";font-size:10px;opacity:.6;transition:transform .2s}
+  .live.on[aria-expanded="true"]::after{transform:rotate(180deg)}
+  .who{background:var(--white);border:1px solid var(--line);border-radius:12px;
+    padding:10px 12px;margin:-4px 0 12px;max-height:34vh;overflow-y:auto}
+  .who p{margin:0 0 6px;font-size:14px}
+  .who p:last-child{margin-bottom:0}
+  .who b{color:var(--green-dk)}
+  .who em{font-style:normal;color:var(--muted);font-size:11px;font-weight:700;
+    margin-left:5px}
+  .who .none{color:var(--muted);font-size:13px;font-style:italic}
 
   .tabs{display:flex;gap:6px;margin-bottom:12px}
   .tabs button{flex:1;padding:9px 4px;font-size:13px;font-weight:800;letter-spacing:.05em;
@@ -423,7 +435,9 @@
       <div class="stat"><b>Your money</b><span id="sMoney"></span></div>
       <div class="stat"><b>Credibility</b><span id="sCred"></span></div>
     </div>
-    <div class="live" id="live"><i></i><span>Single player</span></div>
+    <div class="live" id="live" role="button" tabindex="0"
+         aria-expanded="false" aria-controls="whoList"><i></i><span>Single player</span></div>
+    <div class="who hidden" id="whoList"></div>
     <div class="tabs" role="tablist">
       <button id="tabCamp"  aria-selected="true">Camp</button>
       <button id="tabAwards" aria-selected="false">Awards</button>
@@ -498,14 +512,14 @@
 </div>
 
 <script type="module">
-import { newGame, doAction, canDo, ACTIONS, shareText, MAX_DAY } from './game.js?v=20261013125700';
+import { newGame, doAction, canDo, ACTIONS, shareText, MAX_DAY } from './game.js?v=20261013130304';
 
 /* Kept here, not exported from game.js: a new cross-file export breaks any
    client holding a cached game.js after a deploy. */
 const ALLAWEE_NOTE = 'Allawee ₦77,000 — e never enter.';
 import { initNet, joinCamp, syncPlayer, platoonBoard, recentChat, postChat,
          postSuggestion, reportMessage, awardBoard, myAwards, laughChat,
-         online } from './net.js?v=20261013125700';
+         setPresence, campRoster, online } from './net.js?v=20261013130304';
 
 const $ = id => document.getElementById(id);
 const SKINS = ['#6b4423','#8d5524','#4a2c16','#a9714b','#5c3317'];
@@ -1067,6 +1081,7 @@ function render(){
     return;
   }
 
+  pushPresence();
   $('sEnergy').textContent = s.energy;
   $('sBelle').textContent = s.belle;
   $('sMoney').textContent = '₦' + s.money.toLocaleString();
@@ -1098,9 +1113,48 @@ function setLive(n){
   const el = $('live');
   const on = online();
   el.classList.toggle('on', on);
-  el.lastElementChild.textContent = on
+  el.querySelector('span').textContent = on
     ? `${fmt(n)} otondo${n === 1 ? '' : 's'} in camp now`
     : 'Single player';
+  if (!on){ $('whoList').classList.add('hidden'); el.setAttribute('aria-expanded','false'); }
+  else if (!$('whoList').classList.contains('hidden')) drawWho();
+}
+
+/* Tap the live count to see who is actually in camp. Only what is already
+   public elsewhere: nickname, platoon, day. */
+function drawWho(){
+  const all   = campRoster();
+  const named = all.filter(p => p.nick);
+  const gate  = all.length - named.length;
+  const rows  = named.map(p =>
+    `<p><b>${esc(p.nick)}</b><em>Platoon ${p.platoon}</em><em>day ${p.day}</em></p>`).join('');
+  $('whoList').innerHTML =
+    (rows || '<p class="none">Nobody has given a name yet.</p>') +
+    (gate ? `<p class="none">+${gate} still at the gate</p>` : '');
+}
+
+function toggleWho(){
+  if (!online()) return;
+  const hidden = $('whoList').classList.toggle('hidden');
+  $('live').setAttribute('aria-expanded', String(!hidden));
+  if (!hidden) drawWho();
+}
+$('live').onclick = toggleWho;
+$('live').addEventListener('keydown', e => {
+  if (e.key === 'Enter' || e.key === ' '){ e.preventDefault(); toggleWho(); }
+});
+
+/* Tell the rest of camp who we are — only when something actually changed, so
+   we are not broadcasting on every render. */
+let shown = '';
+function pushPresence(){
+  if (!s) return;
+  const sig = `${s.name}|${s.platoon}|${s.day}`;
+  if (sig === shown) return;
+  /* Only remember it as sent if it actually went out — early in the session the
+     channel may not have joined yet, and a silently-dropped first attempt would
+     otherwise never be retried. */
+  if (setPresence({ nick: s.name, platoon: s.platoon, day: s.day })) shown = sig;
 }
 
 function tab(which){
@@ -1291,6 +1345,7 @@ initNet({
      a returning winner should see it the second the camp screen loads. */
   mine = await myAwards();
   drawBadges();
+  pushPresence();          // a resumed save is already in camp
 });
 
 render();
