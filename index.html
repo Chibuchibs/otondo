@@ -498,14 +498,14 @@
 </div>
 
 <script type="module">
-import { newGame, doAction, canDo, ACTIONS, shareText, MAX_DAY } from './game.js?v=20261012074552';
+import { newGame, doAction, canDo, ACTIONS, shareText, MAX_DAY } from './game.js?v=20261013125700';
 
 /* Kept here, not exported from game.js: a new cross-file export breaks any
    client holding a cached game.js after a deploy. */
 const ALLAWEE_NOTE = 'Allawee ₦77,000 — e never enter.';
 import { initNet, joinCamp, syncPlayer, platoonBoard, recentChat, postChat,
          postSuggestion, reportMessage, awardBoard, myAwards, laughChat,
-         online } from './net.js?v=20261012074552';
+         online } from './net.js?v=20261013125700';
 
 const $ = id => document.getElementById(id);
 const SKINS = ['#6b4423','#8d5524','#4a2c16','#a9714b','#5c3317'];
@@ -517,7 +517,11 @@ const ICONS = {parade:'🎖️',mami:'🍜',hustle:NAIRA,manowar:'🧗',socialis
    outfit 2 = white tee under an open khaki shirt
    No crest or wordmark: illegible at this size, and it is a federal mark. */
 function corper(skin, scale, speed, delay, outfit = 0){
-  const TEE = '#fbf9f2', TRIM = '#0a7a43', KHAKI = '#9a8f5f', KHAKI_D = '#8e8356';
+  const TEE = '#fbf9f2', TRIM = '#0a7a43';
+  const BOOT = '#e0762a', BOOT_D = '#c96620';      // the orange jungle boots
+  /* The trousers are green, not khaki-brown — that and the cargo pockets are
+     what make the kit read as NYSC at a glance. */
+  const TROU = '#8aa863', TROU_D = '#7b9856', POCKET = '#6d8a4b', BELT = '#5f7a42';
   const tee = outfit >= 1;
 
   const torso = tee
@@ -525,7 +529,7 @@ function corper(skin, scale, speed, delay, outfit = 0){
        <rect x="14" y="28" width="18" height="2.6" rx="1.3" fill="${TRIM}"/>
        <path d="M19.5 28h7l-3.5 4.5z" fill="${TRIM}"/>
        <circle cx="23" cy="38" r="2.6" fill="${TRIM}" opacity=".85"/>`
-    : `<rect x="14" y="28" width="18" height="25" rx="6" fill="${KHAKI}"/>
+    : `<rect x="14" y="28" width="18" height="25" rx="6" fill="#93b06d"/>
        <path d="M19.5 28h7l-3.5 11z" fill="${TEE}"/>`;
 
   /* sleeves: white with a green cuff on the tee, plain khaki otherwise */
@@ -536,30 +540,38 @@ function corper(skin, scale, speed, delay, outfit = 0){
 
   /* outfit 2 wears the khaki shirt open over the tee */
   const openShirt = outfit === 2
-    ? `<path d="M13.4 28.5h4.2v24h-4.2z" fill="${KHAKI_D}"/>
-       <path d="M28.4 28.5h4.2v24h-4.2z" fill="${KHAKI}"/>`
+    ? `<path d="M13.4 28.5h4.2v24h-4.2z" fill="#7b9856"/>
+       <path d="M28.4 28.5h4.2v24h-4.2z" fill="#8aa863"/>`
     : '';
 
   return `<svg class="corper" viewBox="0 0 46 86" aria-hidden="true" style="
       animation-duration:${speed}s;animation-delay:${delay}s;
       width:${46*scale}px;height:${86*scale}px">
     <ellipse cx="23" cy="81" rx="12" ry="2.6" fill="rgba(0,0,0,.16)"/>
-    <g class="leg"><rect x="16" y="50" width="7.5" height="26" rx="3.4" fill="${KHAKI_D}"/>
-      <rect x="13.5" y="73" width="12" height="7" rx="3" fill="#443726"/></g>
-    <g class="leg2"><rect x="22.5" y="50" width="7.5" height="26" rx="3.4" fill="#7c7246"/>
-      <rect x="20.5" y="73" width="12" height="7" rx="3" fill="#33291b"/></g>
+    <g class="leg"><rect x="16" y="50" width="7.5" height="26" rx="3.4" fill="${TROU_D}"/>
+      <rect x="16.3" y="58.5" width="5" height="6.4" rx="1.2" fill="${POCKET}"/>
+      <rect x="13.5" y="73" width="12" height="7" rx="3" fill="${BOOT}"/>
+      <rect x="13.5" y="77.6" width="12" height="2.4" rx="1.2" fill="#2a2520"/></g>
+    <g class="leg2"><rect x="22.5" y="50" width="7.5" height="26" rx="3.4" fill="${TROU}"/>
+      <rect x="24.2" y="58.5" width="5" height="6.4" rx="1.2" fill="${POCKET}"/>
+      <rect x="20.5" y="73" width="12" height="7" rx="3" fill="${BOOT_D}"/>
+      <rect x="20.5" y="77.6" width="12" height="2.4" rx="1.2" fill="#1f1b17"/></g>
     <g class="torso">
-      <g class="arm">${arm(10.5, KHAKI_D)}
+      <g class="arm">${arm(10.5, '#7f9c5c')}
         <circle cx="13.5" cy="52" r="3.6" fill="${skin}"/></g>
-      <g class="arm2">${arm(29.5, '#a6996a')}
+      <g class="arm2">${arm(29.5, '#93b06d')}
         <circle cx="32.5" cy="52" r="3.6" fill="${skin}"/></g>
       ${torso}${openShirt}
-      <rect x="14" y="44" width="18" height="3.6" rx="1" fill="#4a3f28"/>
-      <rect x="21.5" y="44" width="3.4" height="3.6" fill="#c9b36a"/>
+      <rect x="14" y="44" width="18" height="3.6" rx="1" fill="${BELT}"/>
+      <rect x="21.5" y="44" width="3.4" height="3.6" rx=".6" fill="#d7dbd0"/>
       <circle cx="23" cy="16" r="9.6" fill="${skin}"/>
-      <path d="M12.6 14.5a10.4 10.4 0 0 1 20.8 0c0 1.2-.8 2-2 2h-16.8c-1.2 0-2-.8-2-2z" fill="${TRIM}"/>
-      <rect x="11.6" y="13.4" width="22.8" height="3.1" rx="1.5" fill="#065c32"/>
-      <circle cx="23" cy="8.6" r="1.6" fill="#065c32"/>
+      <!-- white crown, green round the back and along the peak. No wordmark or
+           crest: at this size it would be an illegible smudge, and the agency's
+           insignia on the kit would imply an affiliation the game does not have. -->
+      <path d="M12.6 14.5a10.4 10.4 0 0 1 20.8 0c0 1.2-.8 2-2 2h-16.8c-1.2 0-2-.8-2-2z" fill="${TEE}"/>
+      <path d="M27.4 6.2a10.4 10.4 0 0 1 6 8.3c0 1.2-.8 2-2 2h-4z" fill="${TRIM}"/>
+      <rect x="11.6" y="13.4" width="22.8" height="3.1" rx="1.5" fill="${TRIM}"/>
+      <circle cx="23" cy="8.6" r="1.5" fill="${TRIM}"/>
     </g></svg>`;
 }
 
@@ -921,16 +933,26 @@ function drawCorper(x, cx, baseY, sc, skin){
   x.beginPath(); x.ellipse(cx, baseY + u(3), u(14), u(3.5), 0, 0, 7); x.fill();
   const r = (fx, a, b, w, h, rad) => { x.fillStyle = fx; x.beginPath();
     x.roundRect(cx + u(a), baseY + u(b), u(w), u(h), u(rad)); x.fill(); };
-  r(KD, -9, -30, 7.5, 26, 3.4);  r('#7c7246', 2, -30, 7.5, 26, 3.4);   // legs
-  r('#443726', -11, -7, 12, 7, 3); r('#33291b', -4, -7, 12, 7, 3);     // boots
-  r(KD, -14, -58, 6, 21, 3);      r('#a6996a', 8, -58, 6, 21, 3);      // arms
+  r('#7b9856', -9, -30, 7.5, 26, 3.4); r('#8aa863', 2, -30, 7.5, 26, 3.4);  // green trousers
+  r('#6d8a4b', -8.7, -21.5, 5, 6.4, 1.2);
+  r('#6d8a4b',  2.7, -21.5, 5, 6.4, 1.2);                              // cargo pockets
+  r('#e0762a', -11, -7, 12, 7, 3); r('#c96620', -4, -7, 12, 7, 3);     // orange boots
+  r('#2a2520', -11, -2.4, 12, 2.4, 1.2);
+  r('#1f1b17', -4,  -2.4, 12, 2.4, 1.2);                               // soles
+  /* White sleeves with a green cuff — the share card was still drawing khaki
+     arms while the figure on screen wears the tee. */
+  r(TEE, -14, -58, 6, 21, 3);     r(TEE, 8, -58, 6, 21, 3);            // sleeves
+  r(G,   -14, -51.5, 6, 2.2, 0);  r(G,  8, -51.5, 6, 2.2, 0);          // cuffs
   r(TEE, -9, -60, 18, 25, 6);                                          // white tee
   r(G,  -9, -60, 18, 2.6, 1.3);                                        // collar trim
-  r('#4a3f28', -9, -44, 18, 3.6, 1);                                   // belt
+  r('#5f7a42', -9, -44, 18, 3.6, 1);                                   // webbing belt
+  r('#d7dbd0', -1.5, -44, 3.4, 3.6, .6);                               // buckle
   x.fillStyle = skin; x.beginPath(); x.arc(cx, baseY + u(-72), u(9.6), 0, 7); x.fill();
-  x.fillStyle = G; x.beginPath();                                      // cap
+  x.fillStyle = TEE; x.beginPath();                                    // white cap
   x.ellipse(cx, baseY + u(-74), u(10.4), u(7), 0, Math.PI, 0); x.fill();
-  r('#065c32', -11.4, -76.6, 22.8, 3.1, 1.5);
+  x.fillStyle = G; x.beginPath();                                      // green back
+  x.ellipse(cx, baseY + u(-74), u(10.4), u(7), 0, Math.PI * 1.74, 0); x.fill();
+  r(G, -11.4, -76.6, 22.8, 3.1, 1.5);                                  // green peak
 }
 
 async function buildPostingImage(st){
