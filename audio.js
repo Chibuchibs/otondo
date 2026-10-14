@@ -15,7 +15,22 @@ export const BAR  = BEAT * 4;            // 2.2857s
 const BARS = 8;                          // one full dance cycle per loop
 const STEPS_PER_BAR = 16;
 const LOOP_SECONDS = BAR * BARS;
-const LEVEL = 0.22;
+const LEVEL = 0.20;
+
+/* An arrangement, not eight copies of one bar. It also tracks what is on
+   screen: bars 0-3 are the dance break, so the groove is full; bars 4-7 are
+   the walk, so it thins out and lets the ear rest. That is what stops it
+   feeling relentless. */
+const ARR = [
+  { kick:1, clap:1, shaker:1, open:1, bass:1, lead:0 },           // 0 legwork
+  { kick:1, clap:1, shaker:1, open:1, bass:1, lead:1 },           // 1
+  { kick:1, clap:1, shaker:1, open:1, bass:1, lead:0 },           // 2 shaku
+  { kick:1, clap:1, shaker:1, open:1, bass:1, lead:1, fill:1 },   // 3
+  { kick:1, clap:0, shaker:1, open:0, bass:1, lead:0, half:1 },   // 4 walking
+  { kick:1, clap:0, shaker:0, open:0, bass:1, lead:0 },           // 5 breathe
+  { kick:1, clap:1, shaker:1, open:0, bass:1, lead:0, half:1 },   // 6
+  { kick:1, clap:0, shaker:1, open:1, bass:0, lead:0, fill:1 },   // 7 turnaround
+];
 
 /* A 16-step bar. The syncopated kick and offbeat shaker are what make this read
    as Afrobeats rather than a generic four-to-the-floor. */
@@ -23,7 +38,8 @@ const KICK   = [1,0,0,0, 0,0,1,0, 0,0,1,0, 0,0,0,0];
 const CLAP   = [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0];
 const SHAKER = [0,1,0,1, 0,1,0,1, 0,1,0,1, 0,1,0,1];
 const OPEN   = [0,0,0,0, 0,0,0,1, 0,0,0,0, 0,0,0,1];
-const BASS   = [55.00,0,0,0, 0,0,65.41,0, 0,0,73.42,0, 0,0,0,0];
+/* An octave up from where this started: 55Hz is inaudible on a phone. */
+const BASS   = [110.00,0,0,0, 0,0,130.81,0, 0,0,146.83,0, 0,0,0,0];
 const LEAD   = [0,0,0,440.00, 0,0,0,0, 523.25,0,0,0, 0,0,587.33,0];
 
 let el = null, url = null, ready = null, playing = false;
@@ -35,20 +51,37 @@ function env(g, at, a, d, peak) {
   g.gain.linearRampToValueAtTime(peak, at + a);
   g.gain.linearRampToValueAtTime(0.0001, at + a + d);
 }
+/* Everything here is tuned for a PHONE SPEAKER. A small driver reproduces
+   almost nothing below ~400Hz, so the old kick (42-140Hz) and bass (55-73Hz)
+   were inaudible and all that reached the ear was filtered white noise — which
+   is exactly what static sounds like. */
 function kick(c, out, at) {
   const o = c.createOscillator(), g = c.createGain();
-  o.frequency.setValueAtTime(140, at);
-  o.frequency.exponentialRampToValueAtTime(42, at + 0.12);
-  env(g, at, 0.004, 0.26, 0.95);
-  o.connect(g).connect(out); o.start(at); o.stop(at + 0.32);
+  o.frequency.setValueAtTime(150, at);
+  o.frequency.exponentialRampToValueAtTime(55, at + 0.11);
+  env(g, at, 0.004, 0.24, 0.85);
+  o.connect(g).connect(out); o.start(at); o.stop(at + 0.3);
+  /* A midrange click so the kick still lands on a speaker that cannot move
+     any air below 400Hz. */
+  const k = c.createOscillator(), kg = c.createGain();
+  k.type = 'triangle'; k.frequency.setValueAtTime(420, at);
+  env(kg, at, 0.002, 0.05, 0.42);
+  k.connect(kg).connect(out); k.start(at); k.stop(at + 0.06);
 }
+
+/* Band-passed rather than high-passed: a narrow band reads as a struck
+   percussion "tss", a wide high shelf reads as hiss. */
 function noise(c, out, at, dur, hz, q, peak) {
   const n = Math.max(1, Math.floor(c.sampleRate * dur));
   const buf = c.createBuffer(1, n, c.sampleRate);
   const d = buf.getChannelData(0);
-  for (let i = 0; i < n; i++) d[i] = (Math.random() * 2 - 1) * (1 - i / n);
+  for (let i = 0; i < n; i++) {
+    const fade = Math.pow(1 - i / n, 2.2);        // sharper decay, less tail
+    d[i] = (Math.random() * 2 - 1) * fade;
+  }
   const src = c.createBufferSource(); src.buffer = buf;
-  const f = c.createBiquadFilter(); f.type = 'highpass'; f.frequency.value = hz; f.Q.value = q;
+  const f = c.createBiquadFilter();
+  f.type = 'bandpass'; f.frequency.value = hz; f.Q.value = q;
   const g = c.createGain(); env(g, at, 0.002, dur, peak);
   src.connect(f).connect(g).connect(out); src.start(at);
 }
@@ -57,6 +90,15 @@ function tone(c, out, at, hz, dur, peak, type) {
   o.type = type; o.frequency.setValueAtTime(hz, at);
   env(g, at, 0.008, dur, peak);
   o.connect(g).connect(out); o.start(at); o.stop(at + dur + 0.05);
+}
+
+/* The bass fundamental sits where a phone speaker cannot go, so it is layered
+   with a quieter octave and twelfth. Headphones get the weight, a phone gets
+   the harmonics — which is how the ear reconstructs the missing fundamental. */
+function bassNote(c, out, at, hz, dur, peak) {
+  tone(c, out, at, hz,       dur,        peak,        'triangle');
+  tone(c, out, at, hz * 2,   dur * 0.85, peak * 0.55, 'triangle');
+  tone(c, out, at, hz * 3,   dur * 0.6,  peak * 0.22, 'triangle');
 }
 
 function wav(buf) {
@@ -85,17 +127,35 @@ function build() {
     if (!OAC || !AC) throw new Error('no web audio');
     const rate = 44100;
     const c = new OAC(1, Math.ceil(rate * LOOP_SECONDS), rate);
-    const out = c.createGain(); out.gain.value = LEVEL; out.connect(c.destination);
+    const out = c.createGain(); out.gain.value = LEVEL;
+    /* Takes the glare off the hats and the lead so it sits behind the game
+       rather than on top of it. */
+    const soft = c.createBiquadFilter();
+    soft.type = 'lowpass'; soft.frequency.value = 9000; soft.Q.value = 0.3;
+    out.connect(soft).connect(c.destination);
+
     const stepDur = BEAT / 4;
     for (let b = 0; b < BARS; b++) {
+      const a = ARR[b];
       for (let i = 0; i < STEPS_PER_BAR; i++) {
         const at = b * BAR + i * stepDur;
-        if (KICK[i])   kick(c, out, at);
-        if (CLAP[i])   noise(c, out, at, 0.14, 1400, 1.2, 0.34);
-        if (SHAKER[i]) noise(c, out, at, 0.035, 6500, 0.8, i % 4 === 1 ? 0.14 : 0.08);
-        if (OPEN[i])   noise(c, out, at, 0.19, 5200, 0.6, 0.11);
-        if (BASS[i])   tone(c, out, at, BASS[i], 0.34, 0.5, 'triangle');
-        if (LEAD[i])   tone(c, out, at, LEAD[i], 0.22, 0.09, 'square');
+        if (a.kick && KICK[i])   kick(c, out, at);
+        if (a.clap && CLAP[i])   noise(c, out, at, 0.10, 1500, 2.2, 0.34);
+        /* `half` drops the shaker to quarter-notes — the every-eighth pattern
+           is what made it feel relentless over a long session. */
+        if (a.shaker && SHAKER[i] && (!a.half || i % 4 === 1))
+          noise(c, out, at, 0.022, 4200, 3.0, i % 4 === 1 ? 0.10 : 0.055);
+        if (a.open && OPEN[i])   noise(c, out, at, 0.13, 4800, 2.0, 0.08);
+        if (a.bass && BASS[i])   bassNote(c, out, at, BASS[i], 0.32, 0.34);
+        /* Triangle, not square: the square wave was the harshest thing in it. */
+        if (a.lead && LEAD[i])   tone(c, out, at, LEAD[i], 0.26, 0.11, 'triangle');
+      }
+      /* A fill on the last beat turns the bar over instead of just repeating. */
+      if (a.fill) {
+        for (const k of [12, 14, 15]) {
+          noise(c, out, b * BAR + k * stepDur, 0.05, 2600, 2.5, 0.14);
+        }
+        kick(c, out, b * BAR + 14 * stepDur);
       }
     }
     const rendered = await c.startRendering();
