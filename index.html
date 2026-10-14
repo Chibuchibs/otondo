@@ -216,6 +216,19 @@
     font-family:inherit;-webkit-appearance:none;appearance:none}
   .act:active{transform:scale(.99)}
   .act:disabled{opacity:.4}
+  /* Locked actions stay on screen with the day they open. Seeing what is
+     coming is the whole reason to play another day. */
+  .act.locked{opacity:1;border-style:dashed;background:transparent}
+  .act.locked b,.act.locked small{color:var(--muted);-webkit-text-fill-color:var(--muted)}
+  .act.locked .ico{filter:grayscale(1);opacity:.5}
+  .act .when{margin-left:auto;flex:none;background:var(--green-lt);color:var(--green-dk);
+    font-size:10.5px;font-weight:800;letter-spacing:.06em;padding:4px 8px;border-radius:99px}
+  .phases{display:flex;gap:4px;margin:0 0 10px}
+  .phases span{flex:1;height:4px;border-radius:99px;background:var(--line)}
+  .phases span.done{background:var(--green)}
+  .phases span.now{background:var(--green);box-shadow:0 0 0 2px var(--green-lt)}
+  .upnext{font-size:12px;color:var(--muted);margin:2px 2px 14px;text-align:center}
+  .upnext b{color:var(--green-dk)}
   .act .ico{font-size:21px;line-height:1;width:26px;flex:none;font-weight:800;
     color:var(--green-dk);display:flex;align-items:center;justify-content:center}
   .act b{display:block;font-size:16px}
@@ -447,8 +460,10 @@
 
     <div id="panelCamp">
       <div class="badges" id="badges"></div>
+      <div class="phases" id="phases"></div>
       <div class="tag" id="actLbl"></div>
       <div class="actions" id="acts"></div>
+      <p class="upnext" id="upnext"></p>
       <div class="log" id="log"></div>
     </div>
 
@@ -512,19 +527,28 @@
 </div>
 
 <script type="module">
-import { newGame, doAction, canDo, ACTIONS, shareText, MAX_DAY } from './game.js?v=20261013172634';
+import { newGame, doAction, canDo, unlocked, ACTIONS, phaseOf, nextUnlock,
+         shareText, MAX_DAY } from './game.js?v=20261013173850';
 
 /* Kept here, not exported from game.js: a new cross-file export breaks any
    client holding a cached game.js after a deploy. */
 const ALLAWEE_NOTE = 'Allawee ₦77,000 — e never enter.';
 import { initNet, joinCamp, syncPlayer, platoonBoard, recentChat, postChat,
          postSuggestion, reportMessage, awardBoard, myAwards, laughChat,
-         setPresence, campRoster, online } from './net.js?v=20261013172634';
+         setPresence, campRoster, online } from './net.js?v=20261013173850';
 
 const $ = id => document.getElementById(id);
 const SKINS = ['#6b4423','#8d5524','#4a2c16','#a9714b','#5c3317'];
 const NAIRA = `<svg viewBox="0 0 26 20" width="25" height="19" aria-hidden="true"><rect x="1" y="9.5" width="24" height="9.5" rx="2" fill="#5f7f55"/><rect x="1.8" y="5.5" width="22.4" height="9.5" rx="2" fill="#6f9463"/><rect x="2.6" y="1.5" width="20.8" height="10" rx="2" fill="#0a7a43"/><rect x="4.4" y="3.1" width="17.2" height="6.8" rx="1.2" fill="none" stroke="#d9ece1" stroke-width=".8"/><text x="13" y="8.6" text-anchor="middle" font-size="7.4" font-weight="800" fill="#f7fbf8" font-family="system-ui,sans-serif">&#8358;</text></svg>`;
-const ICONS = {parade:'🎖️',mami:'🍜',hustle:NAIRA,manowar:'🧗',socialise:'🎤',dodge:'😴'};
+/* Phase strip under the stats — four bars, one per week of camp. */
+const PHASE_LIST = [
+  { name:'Registration',   from:1,  to:3  },
+  { name:'Drills & SAED',  from:4,  to:10 },
+  { name:'Competitions',   from:11, to:17 },
+  { name:'Passing out',    from:18, to:21 },
+];
+const ICONS = {register:'📋',parade:'🎖️',mami:'🍜',hustle:NAIRA,manowar:'🧗',
+               socialise:'🎤',saed:'🧰',sports:'⚽',social:'🎭',rehearse:'🥁',dodge:'😴'};
 
 /* One corps member, drawn not loaded.
    outfit 0 = full khaki  ·  1 = white crested tee + khaki trousers
@@ -1097,20 +1121,35 @@ function render(){
   $('sMoney').textContent = '₦' + s.money.toLocaleString();
   $('sCred').textContent = s.cred;
   bar($('bEnergy'), s.energy); bar($('bBelle'), s.belle);
-  $('actLbl').textContent = `Platoon ${s.platoon} · ${s.actionsLeft} action${s.actionsLeft===1?'':'s'} left today`;
+  const ph = phaseOf(s.day);
+  $('phases').innerHTML = PHASE_LIST.map(p =>
+    `<span class="${p.name === ph.name ? 'now' : (s.day > p.to ? 'done' : '')}"
+           title="${p.name} · days ${p.from}-${p.to}"></span>`).join('');
+  $('actLbl').textContent =
+    `${ph.name} · Platoon ${s.platoon} · ${s.actionsLeft} action${s.actionsLeft===1?'':'s'} left`;
 
   const box = $('acts'); box.innerHTML = '';
   for (const [key, a] of Object.entries(ACTIONS)){
+    const open = unlocked(s, key);
+    const gone = !open && (a.to || MAX_DAY) < s.day;        // registration has closed
+    if (gone) continue;
     const b = document.createElement('button');
-    b.className = 'act'; b.disabled = !canDo(s, key);
+    b.className = 'act' + (open ? '' : ' locked');
+    b.disabled = !canDo(s, key);
     b.innerHTML = `<span class="ico">${ICONS[key]||'•'}</span>
-      <span><b>${a.label}</b><small>${a.hint}</small></span>`;
-    b.onclick = () => {
+      <span><b>${a.label}</b><small>${a.hint}</small></span>` +
+      (open ? '' : `<span class="when">DAY ${a.from}</span>`);
+    if (open) b.onclick = () => {
       doAction(s, key); save(); render();
       syncPlayer(s, { force: s.phase === 'ending' });
     };
     box.appendChild(b);
   }
+
+  const nx = nextUnlock(s);
+  $('upnext').innerHTML = nx
+    ? `Day ${nx.day}: <b>${esc(nx.what)}</b>`
+    : 'Everything is open. Finish strong.';
 
   $('log').innerHTML = s.log.slice(0, 12).map(l =>
     `<p class="${l.event ? 'ev' : ''}"><u>Day ${l.day}</u>${l.text}</p>`).join('');

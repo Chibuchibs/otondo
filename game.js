@@ -3,12 +3,41 @@
 export const MAX_DAY = 21;
 export const ACTIONS_PER_DAY = 2;
 
+/* Camp has a shape, and so does this. Six actions available from day one meant
+   a player had seen everything the game does by day 3 — which is exactly where
+   the average run stopped. Actions now open on a schedule, and the ones still
+   locked stay VISIBLE with the day they unlock. */
+export const PHASES = [
+  { from: 1,  to: 3,  name: 'Registration' },
+  { from: 4,  to: 10, name: 'Drills & SAED' },
+  { from: 11, to: 17, name: 'Competitions' },
+  { from: 18, to: 21, name: 'Passing out' },
+];
+export const phaseOf = day =>
+  PHASES.find(p => day >= p.from && day <= p.to) || PHASES[PHASES.length - 1];
+
 const clamp = (n, lo = 0, hi = 100) => Math.max(lo, Math.min(hi, n));
 const pick = (rng, arr) => arr[Math.floor(rng() * arr.length)];
 const chance = (rng, p) => rng() < p;
 
 /* ---------- actions ---------- */
 export const ACTIONS = {
+  register: {
+    label: 'Join the registration queue',
+    hint: 'Documents, kit, platoon posting. Hours of it.',
+    from: 1, to: 3,
+    run(s, rng) {
+      const got = pick(rng, [
+        'collected your khaki and two white tees',
+        'collected jungle boots one size too big',
+        'finally got your camp ID card',
+        'did your medical screening',
+      ]);
+      const cred = 2 + Math.floor(rng() * 4);
+      apply(s, { energy: -14, belle: -8, cred });
+      return `Three hours for queue. You ${got}. +${cred} credibility.`;
+    },
+  },
   parade: {
     label: 'Fall in for parade',
     hint: 'Hot sun. Soldier watching.',
@@ -55,6 +84,7 @@ export const ACTIONS = {
   manowar: {
     label: 'Man O War drill',
     hint: 'Big credibility. Bigger risk.',
+    from: 4,
     run(s, rng) {
       if (chance(rng, 0.22)) {
         s.injured = true;
@@ -75,6 +105,70 @@ export const ACTIONS = {
       const cred = 4 + Math.floor(rng() * 6);
       apply(s, { energy: -8, cred });
       return `You joined the gist. Platoon ${s.platoon} knows your name now. +${cred} credibility.`;
+    },
+  },
+  saed: {
+    label: 'SAED class',
+    hint: 'Learn a trade. Materials cost ₦.',
+    from: 4, cost: 700,
+    run(s, rng) {
+      const skill = pick(rng, ['bead making', 'soap making', 'photography',
+                               'catering', 'ICT', 'fashion design', 'barbing']);
+      /* A skill pays, but only after you have sat through enough of it. */
+      s.saed = (s.saed || 0) + 1;
+      spend(s, 700 + Math.floor(rng() * 400));      // materials
+      const cred = 2 + Math.floor(rng() * 3);
+      let line = `SAED: ${skill}. You actually learned something. +${cred} credibility.`;
+      if (s.saed >= 3) {
+        const pay = 900 + Math.floor(rng() * 900);
+        s.money += pay;
+        line = `SAED: ${skill}. You sold your first one for ₦${pay.toLocaleString()}.`;
+      }
+      apply(s, { energy: -10, cred });
+      return line;
+    },
+  },
+  sports: {
+    label: 'Inter-platoon sports',
+    hint: 'Football, volleyball, tug of war. For your platoon.',
+    from: 11,
+    run(s, rng) {
+      const game = pick(rng, ['football', 'volleyball', 'table tennis', 'tug of war']);
+      if (chance(rng, 0.45)) {
+        const cred = 8 + Math.floor(rng() * 7);
+        s.friends += 1;
+        apply(s, { energy: -20, belle: -10, cred });
+        return `Platoon ${s.platoon} win the ${game}. Dem carry you for shoulder. +${cred} credibility.`;
+      }
+      const cred = 3 + Math.floor(rng() * 4);
+      apply(s, { energy: -18, belle: -10, cred });
+      return `Una lose the ${game} by one point. You still try. +${cred} credibility.`;
+    },
+  },
+  social: {
+    label: 'Social night',
+    hint: 'Talent show, Mr Macho, Miss Camp. Costs small.',
+    from: 11, cost: 400,
+    run(s, rng) {
+      if (chance(rng, 0.3)) {
+        apply(s, { energy: -12, cred: -6 });
+        return 'You go up for talent night and forget the words. Camp no forget.';
+      }
+      const cred = 6 + Math.floor(rng() * 6);
+      spend(s, 400 + Math.floor(rng() * 500));      // minerals at the stand
+      s.friends += 2;
+      apply(s, { energy: -12, belle: -6, cred });
+      return `Social night. You danced and the whole camp hail you. +${cred} credibility.`;
+    },
+  },
+  rehearse: {
+    label: 'Rehearse passing out',
+    hint: 'Final parade. Get the march right.',
+    from: 18,
+    run(s, rng) {
+      const cred = 5 + Math.floor(rng() * 5);
+      apply(s, { energy: -15, belle: -8, cred });
+      return `Rehearsal for the passing out parade. Your line finally straight. +${cred} credibility.`;
     },
   },
   dodge: {
@@ -156,6 +250,23 @@ const EVENTS = [
   { id: 'same_slippers', text: 'Camp market open. Now everybody for hostel get the same slippers.', fx: s => { spend(s, 1200); apply(s, { cred: 1 }); } },
 ];
 
+/* Fixed days, so there is something to look forward to rather than 21 days of
+   the same random draw. These override the random event entirely. */
+const MILESTONES = {
+  3:  { text: 'SWEARING-IN. You raise your right hand before the Chief Judge and swear to serve. Na now you be corper proper.',
+        fx: s => { apply(s, { cred: 10, energy: -8 }); } },
+  7:  { text: 'First week don finish. Camp commandant hail everybody for assembly.',
+        fx: s => { apply(s, { cred: 6 }); s.friends += 1; } },
+  10: { text: 'MID-CAMP SPORTS FINAL. Whole camp gather for the field. Platoon war.',
+        fx: s => { apply(s, { cred: 6, energy: -12 }); s.friends += 1; } },
+  14: { text: 'CULTURAL CARNIVAL. Platoon levy for attire — everybody drop. Camp turn colour.',
+        fx: s => { spend(s, 2500); apply(s, { cred: 9, energy: -10, belle: -6 }); s.friends += 2; } },
+  17: { text: 'MISS CAMP & MR MACHO night. Dem crown winners. You shout till your voice cut.',
+        fx: s => { apply(s, { cred: 7, energy: -8 }); s.friends += 1; } },
+  20: { text: 'FINAL REHEARSAL for passing out. Dem hand out posting letters tomorrow.',
+        fx: s => { apply(s, { cred: 5, energy: -10 }); } },
+};
+
 /* ---------- postings ---------- */
 const POSTINGS = {
   soft: ['Lagos — Victoria Island', 'Abuja — Central Area', 'Port Harcourt GRA', 'Ibadan — Bodija', 'Your own home state'],
@@ -178,17 +289,26 @@ export function newGame(name, rng = Math.random) {
     day: 1,
     actionsLeft: ACTIONS_PER_DAY,
     energy: 80, belle: 70, money: 20000, cred: 0,
-    friends: 0, drills: 0, injured: false, punished: false,
+    friends: 0, drills: 0, saed: 0, injured: false, punished: false,
     phase: 'day',
     log: [],
     posting: null,
   };
 }
 
+/* Separate from canDo on purpose: the UI needs to SHOW a locked action and the
+   day it opens. Hiding them is what made the game look finished on day 3. */
+export function unlocked(s, key) {
+  const a = ACTIONS[key];
+  if (!a) return false;
+  return s.day >= (a.from || 1) && s.day <= (a.to || MAX_DAY);
+}
+
 export function canDo(s, key) {
   const a = ACTIONS[key];
   if (!a) return false;
   if (s.phase !== 'day' || s.actionsLeft <= 0) return false;
+  if (!unlocked(s, key)) return false;
   if (a.cost && s.money < a.cost) return false;
   if (key === 'manowar' && s.injured) return false;
   return true;
@@ -204,10 +324,11 @@ export function doAction(s, key, rng = Math.random) {
 }
 
 function endDay(s, rng) {
-  const ev = pick(rng, EVENTS);
+  const ms = MILESTONES[s.day];
+  const ev = ms || pick(rng, EVENTS);
   const line = typeof ev.text === 'function' ? ev.text(s, rng) : ev.text;
   ev.fx(s, rng);
-  s.log.unshift({ day: s.day, text: line, event: true });
+  s.log.unshift({ day: s.day, text: line, event: true, milestone: !!ms });
 
   /* No allawee inside camp. The ₦77,000 is paid 25th-30th into an account you
      only register once you get here — so it lands AFTER you pass out. You spend
@@ -229,6 +350,20 @@ function endDay(s, rng) {
     s.day += 1;
     s.actionsLeft = ACTIONS_PER_DAY;
   }
+}
+
+/* What the player has to look forward to. Drives the line under the actions —
+   "Man O War opens day 4" is the whole reason to come back tomorrow. */
+export function nextUnlock(s) {
+  const future = Object.entries(ACTIONS)
+    .filter(([, a]) => (a.from || 1) > s.day)
+    .sort((a, b) => (a[1].from || 1) - (b[1].from || 1));
+  if (future.length) {
+    const [, a] = future[0];
+    return { day: a.from, what: a.label };
+  }
+  const ms = Object.keys(MILESTONES).map(Number).filter(d => d > s.day).sort((a, b) => a - b);
+  return ms.length ? { day: ms[0], what: 'Something big' } : null;
 }
 
 export function shareText(s) {
