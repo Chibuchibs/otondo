@@ -152,11 +152,11 @@
      carry on from exactly where they stopped — no jump.
      In unison on purpose: a line all hitting the same beat is the whole joke. */
   .scene.dancing .corper{animation-play-state:paused}
-  .scene.dancing .leg  {animation:zankuA .42s ease-in-out infinite}
-  .scene.dancing .leg2 {animation:zankuB .42s ease-in-out infinite}
-  .scene.dancing .arm  {animation:pumpA  .42s ease-in-out infinite}
-  .scene.dancing .arm2 {animation:pumpB  .42s ease-in-out infinite}
-  .scene.dancing .torso{animation:hype   .21s ease-in-out infinite}
+  .scene.dancing .leg  {animation:zankuA var(--beat,.42s) ease-in-out infinite}
+  .scene.dancing .leg2 {animation:zankuB var(--beat,.42s) ease-in-out infinite}
+  .scene.dancing .arm  {animation:pumpA  var(--beat,.42s) ease-in-out infinite}
+  .scene.dancing .arm2 {animation:pumpB  var(--beat,.42s) ease-in-out infinite}
+  .scene.dancing .torso{animation:hype   calc(var(--beat,.42s)/2) ease-in-out infinite}
   @keyframes zankuA{0%,100%{transform:rotate(-10deg)}
                     28%{transform:rotate(42deg)}58%{transform:rotate(-18deg)}}
   @keyframes zankuB{0%,100%{transform:rotate(12deg)}
@@ -168,11 +168,11 @@
   /* Second move: shaku shaku. Arms folded across the chest, elbows snapping,
      body leaning side to side on a shuffle. Rules sit AFTER the zanku ones —
      same specificity, so source order is what swaps the move. */
-  .scene.shaku .leg  {animation:shakuLegA .5s ease-in-out infinite}
-  .scene.shaku .leg2 {animation:shakuLegB .5s ease-in-out infinite}
-  .scene.shaku .arm  {animation:shakuArmA .25s ease-in-out infinite}
-  .scene.shaku .arm2 {animation:shakuArmB .25s ease-in-out infinite}
-  .scene.shaku .torso{animation:shakuLean .5s ease-in-out infinite}
+  .scene.shaku .leg  {animation:shakuLegA var(--beat,.5s) ease-in-out infinite}
+  .scene.shaku .leg2 {animation:shakuLegB var(--beat,.5s) ease-in-out infinite}
+  .scene.shaku .arm  {animation:shakuArmA calc(var(--beat,.5s)/2) ease-in-out infinite}
+  .scene.shaku .arm2 {animation:shakuArmB calc(var(--beat,.5s)/2) ease-in-out infinite}
+  .scene.shaku .torso{animation:shakuLean var(--beat,.5s) ease-in-out infinite}
   @keyframes shakuLegA{0%,100%{transform:rotate(-7deg)}50%{transform:rotate(15deg)}}
   @keyframes shakuLegB{0%,100%{transform:rotate(15deg)}50%{transform:rotate(-7deg)}}
   @keyframes shakuArmA{0%,100%{transform:rotate(54deg)}50%{transform:rotate(80deg)}}
@@ -266,6 +266,10 @@
   .live.on{cursor:pointer;user-select:none}
   .live.on span{text-decoration:underline dotted;text-underline-offset:3px}
   .live.on::after{content:"▾";font-size:10px;opacity:.6;transition:transform .2s}
+  .snd{background:transparent;border:2px solid var(--line);border-radius:99px;
+    width:38px;height:30px;font-size:14px;line-height:1;flex:none;padding:0;
+    color:var(--muted);-webkit-text-fill-color:currentColor}
+  .snd.on{border-color:var(--green);background:var(--green-lt)}
   .live.on[aria-expanded="true"]::after{transform:rotate(180deg)}
   .who{background:var(--white);border:1px solid var(--line);border-radius:12px;
     padding:10px 12px;margin:-4px 0 12px;max-height:34vh;overflow-y:auto}
@@ -348,7 +352,10 @@
 </head>
 <body>
 <div class="wrap">
-  <header><h1>Oton<i>do</i></h1><div class="day" id="dayLbl"></div></header>
+  <header><h1>Oton<i>do</i></h1>
+    <button class="snd" id="snd" aria-pressed="false"
+            title="Camp groove">🔇</button>
+    <div class="day" id="dayLbl"></div></header>
 
   <div class="scene" id="scene">
     <svg class="sun" viewBox="0 0 80 60" aria-hidden="true">
@@ -528,14 +535,19 @@
 
 <script type="module">
 import { newGame, doAction, canDo, unlocked, ACTIONS, phaseOf, nextUnlock,
-         shareText, MAX_DAY } from './game.js?v=20261013180422';
+         shareText, MAX_DAY } from './game.js?v=20261013185146';
 
 /* Kept here, not exported from game.js: a new cross-file export breaks any
    client holding a cached game.js after a deploy. */
 const ALLAWEE_NOTE = 'Allawee ₦77,000 — e never enter.';
 import { initNet, joinCamp, syncPlayer, platoonBoard, recentChat, postChat,
          postSuggestion, reportMessage, awardBoard, myAwards, laughChat,
-         setPresence, campRoster, online } from './net.js?v=20261013180422';
+         setPresence, campRoster, online } from './net.js?v=20261013185146';
+import { startMusic, stopMusic, musicOn, BEAT, BAR } from './audio.js?v=20261013185146';
+
+/* Every dance animation is expressed in beats, so the steps are on-tempo
+   whether or not the sound is playing — and genuinely on the beat when it is. */
+document.documentElement.style.setProperty('--beat', BEAT + 's');
 
 const $ = id => document.getElementById(id);
 const SKINS = ['#6b4423','#8d5524','#4a2c16','#a9714b','#5c3317'];
@@ -795,7 +807,8 @@ fillScene($('scene'), 4, false);
    Every so often the trek stops, everyone slides into a line, does legwork,
    then carries on. The march animation is paused rather than removed, so the
    walk resumes mid-stride instead of restarting from off-screen. */
-const DANCE_EVERY = 17000, DANCE_FOR = 8400;   // two moves, ~4.2s each
+/* 8 bars a cycle: 2 bars legwork, 2 bars shaku, 4 bars walking. */
+const DANCE_EVERY = BAR * 8 * 1000, DANCE_FOR = BAR * 4 * 1000;
 const stillWatching = () =>
   !window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
@@ -837,10 +850,63 @@ function danceBreak(){
   if (!stillWatching()) return;
   if ($('scene').querySelector('.running, .munching')) return;  // let them eat
   lineUp();
+  if (musicOn()) return;        // the bar clock drives the rest
   setTimeout(() => $('scene').classList.add('shaku'), DANCE_FOR / 2);
   setTimeout(backToTrekking, DANCE_FOR);
 }
-setTimeout(() => { danceBreak(); setInterval(danceBreak, DANCE_EVERY); }, 6000);
+/* Off by default on purpose: most arrivals come from TikTok with their own
+   music already playing, and hijacking that costs more players than it wins. */
+const SND_KEY = 'otondo:sound';
+async function toggleSound(){
+  const btn = $('snd');
+  if (musicOn()){
+    stopMusic();
+    startDanceTimers();                       // hand the dance back to the clock
+    btn.textContent = '🔇'; btn.classList.remove('on');
+    btn.setAttribute('aria-pressed', 'false');
+    try { localStorage.setItem(SND_KEY, '0'); } catch {}
+    return;
+  }
+  const ok = await startMusic(onMusicBar);
+  if (!ok) return;
+  clearInterval(danceTimer);                  // the bar clock takes over
+  barNo = 0;
+  btn.textContent = '🔊'; btn.classList.add('on');
+  btn.setAttribute('aria-pressed', 'true');
+  try { localStorage.setItem(SND_KEY, '1'); } catch {}
+}
+$('snd').onclick = toggleSound;
+
+/* Browsers will not start audio without a gesture, so a remembered preference
+   cannot auto-play on load. Instead it arms itself and starts on whatever the
+   player touches first — which honours the choice without ambushing anyone. */
+try {
+  if (localStorage.getItem(SND_KEY) === '1') {
+    const arm = () => {
+      document.removeEventListener('pointerdown', arm);
+      if (!musicOn()) toggleSound();
+    };
+    document.addEventListener('pointerdown', arm, { once: true });
+  }
+} catch {}
+
+let danceTimer = null;
+function startDanceTimers(){
+  clearInterval(danceTimer);
+  danceTimer = setInterval(danceBreak, DANCE_EVERY);
+}
+setTimeout(() => { danceBreak(); startDanceTimers(); }, 6000);
+
+/* With the music on the dance hangs off bar lines instead of a timer, so it
+   cannot drift away from the beat however long the page is left open. */
+let barNo = 0;                 // `bar` is already the stat-meter helper
+function onMusicBar(){
+  barNo = (barNo + 1) % 8;
+  const sc = $('scene');
+  if (barNo === 0) danceBreak();
+  else if (barNo === 2 && sc.classList.contains('dancing')) sc.classList.add('shaku');
+  else if (barNo === 4) backToTrekking();
+}
 
 /* ---------- the boli run ----------
    Every so often one corper peels off to a food stall and catches back up.
