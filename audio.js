@@ -107,7 +107,12 @@ export function startMusic(onBarCallback) {
     nextNoteAt = ctx.currentTime + 0.12;
     running = true;
     run();
-    master.gain.exponentialRampToValueAtTime(0.22, ctx.currentTime + 0.8);
+    /* Linear from an explicit start value: iOS is unreliable with exponential
+       ramps that begin at a near-zero level and can leave the gain stuck. */
+    const now = ctx.currentTime;
+    master.gain.cancelScheduledValues(now);
+    master.gain.setValueAtTime(0.0001, now);
+    master.gain.linearRampToValueAtTime(0.22, now + 0.6);
     return true;
   } catch (e) { console.warn('[otondo] no audio:', e.message); return false; }
 }
@@ -124,7 +129,12 @@ export function stopMusic() {
   if (!running) return;
   running = false;
   clearTimeout(timer); timer = null;
-  try { master.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.3); } catch {}
+  try {
+    const now = ctx.currentTime;
+    master.gain.cancelScheduledValues(now);
+    master.gain.setValueAtTime(master.gain.value, now);
+    master.gain.linearRampToValueAtTime(0.0001, now + 0.25);
+  } catch {}
 }
 
 export const musicOn  = () => running;

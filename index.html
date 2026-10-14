@@ -566,15 +566,15 @@
 
 <script type="module">
 import { newGame, doAction, canDo, unlocked, ACTIONS, phaseOf, nextUnlock,
-         shareText, MAX_DAY } from './game.js?v=20261013185840';
+         shareText, MAX_DAY } from './game.js?v=20261013190357';
 
 /* Kept here, not exported from game.js: a new cross-file export breaks any
    client holding a cached game.js after a deploy. */
 const ALLAWEE_NOTE = 'Allawee ₦77,000 — e never enter.';
 import { initNet, joinCamp, syncPlayer, platoonBoard, recentChat, postChat,
          postSuggestion, reportMessage, awardBoard, myAwards, laughChat,
-         setPresence, campRoster, online } from './net.js?v=20261013185840';
-import { startMusic, stopMusic, musicOn, audioState, BEAT, BAR } from './audio.js?v=20261013185840';
+         setPresence, campRoster, online } from './net.js?v=20261013190357';
+import { startMusic, stopMusic, musicOn, audioState, BEAT, BAR } from './audio.js?v=20261013190357';
 
 /* Every dance animation is expressed in beats, so the steps are on-tempo
    whether or not the sound is playing — and genuinely on the beat when it is. */
@@ -914,17 +914,21 @@ window.otondoAudio = audioState;      // for checking a silent phone
 
 /* Shown once per device the first time the music is started. */
 function soundHint(){
-  try { if (localStorage.getItem('otondo:sndtip')) return; } catch {}
+  /* Shown on the first few plays rather than once: a single appearance is far
+     too easy to miss, and then the silence looks like a plain bug again. */
+  let seen = 0;
+  try { seen = Number(localStorage.getItem('otondo:sndtip')) || 0; } catch {}
+  if (seen >= 3) return;
   setTimeout(() => {
     const st = audioState();
     const tip = document.createElement('div');
     tip.className = 'sndtip';
     tip.textContent = st.ctx === 'running'
-      ? 'No sound? Check the silent switch on the side of your phone.'
-      : 'Your browser blocked the sound. Tap the button again.';
+      ? 'Playing. No sound? Turn off the silent switch on the side of your phone.'
+      : `Sound blocked (${st.ctx}). Tap the button once more.`;
     document.body.appendChild(tip);
-    setTimeout(() => tip.remove(), 6000);
-    try { localStorage.setItem('otondo:sndtip', '1'); } catch {}
+    setTimeout(() => tip.remove(), 7000);
+    try { localStorage.setItem('otondo:sndtip', String(seen + 1)); } catch {}
   }, 700);
 }
 
