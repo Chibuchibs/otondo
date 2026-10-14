@@ -566,15 +566,15 @@
 
 <script type="module">
 import { newGame, doAction, canDo, unlocked, ACTIONS, phaseOf, nextUnlock,
-         shareText, MAX_DAY } from './game.js?v=20261013190357';
+         shareText, MAX_DAY } from './game.js?v=20261013190809';
 
 /* Kept here, not exported from game.js: a new cross-file export breaks any
    client holding a cached game.js after a deploy. */
 const ALLAWEE_NOTE = 'Allawee ₦77,000 — e never enter.';
 import { initNet, joinCamp, syncPlayer, platoonBoard, recentChat, postChat,
          postSuggestion, reportMessage, awardBoard, myAwards, laughChat,
-         setPresence, campRoster, online } from './net.js?v=20261013190357';
-import { startMusic, stopMusic, musicOn, audioState, BEAT, BAR } from './audio.js?v=20261013190357';
+         setPresence, campRoster, online } from './net.js?v=20261013190809';
+import { startMusic, stopMusic, musicOn, audioState, BEAT, BAR } from './audio.js?v=20261013190809';
 
 /* Every dance animation is expressed in beats, so the steps are on-tempo
    whether or not the sound is playing — and genuinely on the beat when it is. */
@@ -902,7 +902,6 @@ function toggleSound(){
   const ok = startMusic(onMusicBar);
   if (!ok) return;
   clearInterval(danceTimer);                  // the bar clock takes over
-  barNo = 0;
   btn.classList.add('on');
   btn.setAttribute('aria-pressed', 'true');
   btn.setAttribute('aria-label', 'Stop the camp groove');
@@ -954,13 +953,13 @@ setTimeout(() => { danceBreak(); startDanceTimers(); }, 6000);
 
 /* With the music on the dance hangs off bar lines instead of a timer, so it
    cannot drift away from the beat however long the page is left open. */
-let barNo = 0;                 // `bar` is already the stat-meter helper
-function onMusicBar(){
-  barNo = (barNo + 1) % 8;
+/* The bar index comes straight off the audio element's clock, so the routine
+   cannot drift from the music no matter how long the page is left open. */
+function onMusicBar(b){
   const sc = $('scene');
-  if (barNo === 0) danceBreak();
-  else if (barNo === 2 && sc.classList.contains('dancing')) sc.classList.add('shaku');
-  else if (barNo === 4) backToTrekking();
+  if (b === 0) danceBreak();
+  else if (b === 2 && sc.classList.contains('dancing')) sc.classList.add('shaku');
+  else if (b === 4) backToTrekking();
 }
 
 /* ---------- the boli run ----------
