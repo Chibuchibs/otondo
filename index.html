@@ -512,14 +512,14 @@
 </div>
 
 <script type="module">
-import { newGame, doAction, canDo, ACTIONS, shareText, MAX_DAY } from './game.js?v=20261013130304';
+import { newGame, doAction, canDo, ACTIONS, shareText, MAX_DAY } from './game.js?v=20261013172634';
 
 /* Kept here, not exported from game.js: a new cross-file export breaks any
    client holding a cached game.js after a deploy. */
 const ALLAWEE_NOTE = 'Allawee ₦77,000 — e never enter.';
 import { initNet, joinCamp, syncPlayer, platoonBoard, recentChat, postChat,
          postSuggestion, reportMessage, awardBoard, myAwards, laughChat,
-         setPresence, campRoster, online } from './net.js?v=20261013130304';
+         setPresence, campRoster, online } from './net.js?v=20261013172634';
 
 const $ = id => document.getElementById(id);
 const SKINS = ['#6b4423','#8d5524','#4a2c16','#a9714b','#5c3317'];
@@ -911,6 +911,16 @@ function cycleWeather(){
 cycleWeather();
 setInterval(cycleWeather, 11000);
 
+/* Where this player came from — an ad links to otondo.ng/?r=nl. Stored rather
+   than read at join time because people often arrive, look around, and only
+   type a name on a later visit by which point the query string is long gone. */
+const SRC_KEY = 'otondo:src';
+try {
+  const r = new URLSearchParams(location.search).get('r');
+  if (r) localStorage.setItem(SRC_KEY, r.replace(/[^a-zA-Z0-9_-]/g, '').slice(0, 24));
+} catch {}
+const cameFrom = () => { try { return localStorage.getItem(SRC_KEY); } catch { return null; } };
+
 let s = null;
 const SAVE = 'otondo:v1';
 try { const raw = localStorage.getItem(SAVE); if (raw) s = JSON.parse(raw); } catch {}
@@ -930,7 +940,7 @@ function enterCamp(){
   }
   $('nameNote').textContent = '';
   s = newGame(name); save(); render();
-  joinCamp(s.name, s.platoon).then(() => syncPlayer(s, { force: true }));
+  joinCamp(s.name, s.platoon, cameFrom()).then(() => syncPlayer(s, { force: true }));
 }
 
 $('start').onclick = enterCamp;

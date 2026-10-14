@@ -2,7 +2,7 @@
    Every function is failure-tolerant on purpose: if Supabase is unset, slow,
    or down, the game must still be playable. Nothing here throws upward. */
 
-import { SUPABASE_URL, SUPABASE_ANON_KEY } from './config.js?v=20261013130304';
+import { SUPABASE_URL, SUPABASE_ANON_KEY } from './config.js?v=20261013172634';
 
 const TOKEN_KEY = 'otondo:token';
 let sb = null, token = null, channel = null;
@@ -81,11 +81,11 @@ export function campRoster() {
   } catch { return []; }
 }
 
-export async function joinCamp(nickname, platoon) {
+export async function joinCamp(nickname, platoon, source) {
   if (!sb) return null;
   try {
     const { data, error } = await sb.rpc('join_camp',
-      { p_nickname: nickname, p_platoon: platoon });
+      { p_nickname: nickname, p_platoon: platoon, p_source: source || null });
     if (error) throw error;
     token = data;
     try { localStorage.setItem(TOKEN_KEY, token); } catch {}
