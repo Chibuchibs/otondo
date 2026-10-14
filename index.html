@@ -266,10 +266,27 @@
   .live.on{cursor:pointer;user-select:none}
   .live.on span{text-decoration:underline dotted;text-underline-offset:3px}
   .live.on::after{content:"▾";font-size:10px;opacity:.6;transition:transform .2s}
-  .snd{background:transparent;border:2px solid var(--line);border-radius:99px;
-    width:38px;height:30px;font-size:14px;line-height:1;flex:none;padding:0;
-    color:var(--muted);-webkit-text-fill-color:currentColor}
-  .snd.on{border-color:var(--green);background:var(--green-lt)}
+  /* A round play button, drawn as SVG rather than an emoji — the muted-speaker
+     emoji renders differently on every platform and reads as "broken" as often
+     as "off". Play/pause is understood everywhere. */
+  .snd{display:inline-flex;align-items:center;justify-content:center;flex:none;
+    width:34px;height:34px;padding:0;margin-left:auto;border-radius:50%;
+    background:transparent;border:2px solid var(--green);color:var(--green)}
+  .snd svg{width:15px;height:15px;display:block}
+  .snd .pause,.snd.on .play{display:none}
+  .snd.on .pause{display:block}
+  .snd.on{background:var(--green);color:#fff;border-color:var(--green)}
+  /* the bars only move while it is actually playing — that is the signal */
+  .snd .eq{display:none}
+  .snd.on .eq{display:flex;gap:2px;align-items:flex-end;height:13px}
+  .snd.on .pause{display:none}
+  .snd .eq i{width:2.5px;background:currentColor;border-radius:1px;
+    animation:eqb .7s ease-in-out infinite}
+  .snd .eq i:nth-child(1){height:6px;animation-delay:-.2s}
+  .snd .eq i:nth-child(2){height:13px;animation-delay:-.45s}
+  .snd .eq i:nth-child(3){height:9px}
+  @keyframes eqb{0%,100%{transform:scaleY(.42)}50%{transform:scaleY(1)}}
+  .snd i{transform-origin:bottom}
   .live.on[aria-expanded="true"]::after{transform:rotate(180deg)}
   .who{background:var(--white);border:1px solid var(--line);border-radius:12px;
     padding:10px 12px;margin:-4px 0 12px;max-height:34vh;overflow-y:auto}
@@ -354,7 +371,12 @@
 <div class="wrap">
   <header><h1>Oton<i>do</i></h1>
     <button class="snd" id="snd" aria-pressed="false"
-            title="Camp groove">🔇</button>
+            aria-label="Play the camp groove" title="Camp groove">
+      <svg class="play" viewBox="0 0 16 16" aria-hidden="true">
+        <path d="M4 2.6 13 8l-9 5.4z" fill="currentColor"/>
+      </svg>
+      <span class="eq" aria-hidden="true"><i></i><i></i><i></i></span>
+    </button>
     <div class="day" id="dayLbl"></div></header>
 
   <div class="scene" id="scene">
@@ -535,15 +557,15 @@
 
 <script type="module">
 import { newGame, doAction, canDo, unlocked, ACTIONS, phaseOf, nextUnlock,
-         shareText, MAX_DAY } from './game.js?v=20261013185146';
+         shareText, MAX_DAY } from './game.js?v=20261013185442';
 
 /* Kept here, not exported from game.js: a new cross-file export breaks any
    client holding a cached game.js after a deploy. */
 const ALLAWEE_NOTE = 'Allawee ₦77,000 — e never enter.';
 import { initNet, joinCamp, syncPlayer, platoonBoard, recentChat, postChat,
          postSuggestion, reportMessage, awardBoard, myAwards, laughChat,
-         setPresence, campRoster, online } from './net.js?v=20261013185146';
-import { startMusic, stopMusic, musicOn, BEAT, BAR } from './audio.js?v=20261013185146';
+         setPresence, campRoster, online } from './net.js?v=20261013185442';
+import { startMusic, stopMusic, musicOn, BEAT, BAR } from './audio.js?v=20261013185442';
 
 /* Every dance animation is expressed in beats, so the steps are on-tempo
    whether or not the sound is playing — and genuinely on the beat when it is. */
@@ -862,8 +884,9 @@ async function toggleSound(){
   if (musicOn()){
     stopMusic();
     startDanceTimers();                       // hand the dance back to the clock
-    btn.textContent = '🔇'; btn.classList.remove('on');
+    btn.classList.remove('on');
     btn.setAttribute('aria-pressed', 'false');
+    btn.setAttribute('aria-label', 'Play the camp groove');
     try { localStorage.setItem(SND_KEY, '0'); } catch {}
     return;
   }
@@ -871,8 +894,9 @@ async function toggleSound(){
   if (!ok) return;
   clearInterval(danceTimer);                  // the bar clock takes over
   barNo = 0;
-  btn.textContent = '🔊'; btn.classList.add('on');
+  btn.classList.add('on');
   btn.setAttribute('aria-pressed', 'true');
+  btn.setAttribute('aria-label', 'Stop the camp groove');
   try { localStorage.setItem(SND_KEY, '1'); } catch {}
 }
 $('snd').onclick = toggleSound;
