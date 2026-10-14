@@ -557,15 +557,15 @@
 
 <script type="module">
 import { newGame, doAction, canDo, unlocked, ACTIONS, phaseOf, nextUnlock,
-         shareText, MAX_DAY } from './game.js?v=20261013185442';
+         shareText, MAX_DAY } from './game.js?v=20261013185625';
 
 /* Kept here, not exported from game.js: a new cross-file export breaks any
    client holding a cached game.js after a deploy. */
 const ALLAWEE_NOTE = 'Allawee ₦77,000 — e never enter.';
 import { initNet, joinCamp, syncPlayer, platoonBoard, recentChat, postChat,
          postSuggestion, reportMessage, awardBoard, myAwards, laughChat,
-         setPresence, campRoster, online } from './net.js?v=20261013185442';
-import { startMusic, stopMusic, musicOn, BEAT, BAR } from './audio.js?v=20261013185442';
+         setPresence, campRoster, online } from './net.js?v=20261013185625';
+import { startMusic, stopMusic, musicOn, audioState, BEAT, BAR } from './audio.js?v=20261013185625';
 
 /* Every dance animation is expressed in beats, so the steps are on-tempo
    whether or not the sound is playing — and genuinely on the beat when it is. */
@@ -879,7 +879,7 @@ function danceBreak(){
 /* Off by default on purpose: most arrivals come from TikTok with their own
    music already playing, and hijacking that costs more players than it wins. */
 const SND_KEY = 'otondo:sound';
-async function toggleSound(){
+function toggleSound(){
   const btn = $('snd');
   if (musicOn()){
     stopMusic();
@@ -890,7 +890,7 @@ async function toggleSound(){
     try { localStorage.setItem(SND_KEY, '0'); } catch {}
     return;
   }
-  const ok = await startMusic(onMusicBar);
+  const ok = startMusic(onMusicBar);
   if (!ok) return;
   clearInterval(danceTimer);                  // the bar clock takes over
   barNo = 0;
@@ -900,6 +900,7 @@ async function toggleSound(){
   try { localStorage.setItem(SND_KEY, '1'); } catch {}
 }
 $('snd').onclick = toggleSound;
+window.otondoAudio = audioState;      // for checking a silent phone
 
 /* Browsers will not start audio without a gesture, so a remembered preference
    cannot auto-play on load. Instead it arms itself and starts on whatever the

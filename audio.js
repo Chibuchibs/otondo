@@ -79,26 +79,46 @@ function run() {
   timer = setTimeout(run, TICK);
 }
 
-/* Must be called from a click — browsers refuse audio otherwise. */
-export async function startMusic(onBarCallback) {
+/* Must be called from a tap, and everything that matters has to happen
+   SYNCHRONOUSLY inside it. iOS only unlocks audio for work done in the gesture
+   itself — an `await` before the first node is created hands control back to
+   the event loop and Safari silently refuses to make a sound. */
+export function startMusic(onBarCallback) {
   if (running) return true;
   try {
     ctx = ctx || new (window.AudioContext || window.webkitAudioContext)();
-    if (ctx.state === 'suspended') await ctx.resume();
+
+    /* The iOS unlock: play one silent sample immediately. Without this the
+       context reports "running" while producing nothing at all. */
+    const blip = ctx.createBufferSource();
+    blip.buffer = ctx.createBuffer(1, 1, 22050);
+    blip.connect(ctx.destination);
+    blip.start(0);
+
     if (!master) {
       master = ctx.createGain();
       master.gain.value = 0.0001;
       master.connect(ctx.destination);
     }
+    ctx.resume();                      // deliberately not awaited
+
     onBar = onBarCallback || onBar;
     step = 0;
-    nextNoteAt = ctx.currentTime + 0.08;
+    nextNoteAt = ctx.currentTime + 0.12;
     running = true;
     run();
-    master.gain.exponentialRampToValueAtTime(0.22, ctx.currentTime + 0.8);   // fade in
+    master.gain.exponentialRampToValueAtTime(0.22, ctx.currentTime + 0.8);
     return true;
   } catch (e) { console.warn('[otondo] no audio:', e.message); return false; }
 }
+
+/* For diagnosing a phone that stays silent. */
+export const audioState = () => ({
+  ctx: ctx ? ctx.state : 'none',
+  running,
+  time: ctx ? +ctx.currentTime.toFixed(2) : 0,
+  gain: master ? +master.gain.value.toFixed(4) : 0,
+});
 
 export function stopMusic() {
   if (!running) return;
