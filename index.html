@@ -287,6 +287,15 @@
   .snd .eq i:nth-child(3){height:9px}
   @keyframes eqb{0%,100%{transform:scaleY(.42)}50%{transform:scaleY(1)}}
   .snd i{transform-origin:bottom}
+  /* iOS mutes Web Audio with the hardware side switch and gives the page no way
+     to detect it — silence looks identical to a bug. Say so once, rather than
+     leaving people to assume it is broken. */
+  .sndtip{position:fixed;left:50%;transform:translateX(-50%);bottom:18px;z-index:50;
+    background:var(--ink);color:#fff;font-size:13px;font-weight:600;line-height:1.35;
+    padding:10px 14px;border-radius:12px;max-width:min(320px,88vw);text-align:center;
+    box-shadow:0 8px 28px rgba(0,0,0,.28);animation:tipIn .25s ease}
+  @keyframes tipIn{from{opacity:0;transform:translate(-50%,8px)}
+                   to{opacity:1;transform:translate(-50%,0)}}
   .live.on[aria-expanded="true"]::after{transform:rotate(180deg)}
   .who{background:var(--white);border:1px solid var(--line);border-radius:12px;
     padding:10px 12px;margin:-4px 0 12px;max-height:34vh;overflow-y:auto}
@@ -557,15 +566,15 @@
 
 <script type="module">
 import { newGame, doAction, canDo, unlocked, ACTIONS, phaseOf, nextUnlock,
-         shareText, MAX_DAY } from './game.js?v=20261013185625';
+         shareText, MAX_DAY } from './game.js?v=20261013185840';
 
 /* Kept here, not exported from game.js: a new cross-file export breaks any
    client holding a cached game.js after a deploy. */
 const ALLAWEE_NOTE = 'Allawee ₦77,000 — e never enter.';
 import { initNet, joinCamp, syncPlayer, platoonBoard, recentChat, postChat,
          postSuggestion, reportMessage, awardBoard, myAwards, laughChat,
-         setPresence, campRoster, online } from './net.js?v=20261013185625';
-import { startMusic, stopMusic, musicOn, audioState, BEAT, BAR } from './audio.js?v=20261013185625';
+         setPresence, campRoster, online } from './net.js?v=20261013185840';
+import { startMusic, stopMusic, musicOn, audioState, BEAT, BAR } from './audio.js?v=20261013185840';
 
 /* Every dance animation is expressed in beats, so the steps are on-tempo
    whether or not the sound is playing — and genuinely on the beat when it is. */
@@ -897,10 +906,27 @@ function toggleSound(){
   btn.classList.add('on');
   btn.setAttribute('aria-pressed', 'true');
   btn.setAttribute('aria-label', 'Stop the camp groove');
+  soundHint();
   try { localStorage.setItem(SND_KEY, '1'); } catch {}
 }
 $('snd').onclick = toggleSound;
 window.otondoAudio = audioState;      // for checking a silent phone
+
+/* Shown once per device the first time the music is started. */
+function soundHint(){
+  try { if (localStorage.getItem('otondo:sndtip')) return; } catch {}
+  setTimeout(() => {
+    const st = audioState();
+    const tip = document.createElement('div');
+    tip.className = 'sndtip';
+    tip.textContent = st.ctx === 'running'
+      ? 'No sound? Check the silent switch on the side of your phone.'
+      : 'Your browser blocked the sound. Tap the button again.';
+    document.body.appendChild(tip);
+    setTimeout(() => tip.remove(), 6000);
+    try { localStorage.setItem('otondo:sndtip', '1'); } catch {}
+  }, 700);
+}
 
 /* Browsers will not start audio without a gesture, so a remembered preference
    cannot auto-play on load. Instead it arms itself and starts on whatever the
