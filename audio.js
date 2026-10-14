@@ -15,7 +15,11 @@ export const BAR  = BEAT * 4;            // 2.2857s
 const BARS = 8;                          // one full dance cycle per loop
 const STEPS_PER_BAR = 16;
 const LOOP_SECONDS = BAR * BARS;
-const LEVEL = 0.20;
+const LEVEL = 0.09;            /* Deliberately low. A screen recording of the
+   phone showed the output hard-clipped — peak 1.90, 8.4% of samples maxed, and
+   58% of the energy above 4kHz, which is distortion harmonics rather than
+   anything in the source. The source itself only peaked at 0.33, so something
+   downstream is applying gain. Headroom is cheaper than static. */
 
 /* An arrangement, not eight copies of one bar. It also tracks what is on
    screen: bars 0-3 are the dance break, so the groove is full; bars 4-7 are
@@ -38,8 +42,11 @@ const KICK   = [1,0,0,0, 0,0,1,0, 0,0,1,0, 0,0,0,0];
 const CLAP   = [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0];
 const SHAKER = [0,1,0,1, 0,1,0,1, 0,1,0,1, 0,1,0,1];
 const OPEN   = [0,0,0,0, 0,0,0,1, 0,0,0,0, 0,0,0,1];
-/* An octave up from where this started: 55Hz is inaudible on a phone. */
-const BASS   = [110.00,0,0,0, 0,0,130.81,0, 0,0,146.83,0, 0,0,0,0];
+/* Two octaves up from where this started. 55Hz, then 110Hz, were both below
+   what a phone speaker can move — at 220Hz the part is finally audible on the
+   device most players are holding, and it reads as a bass riff rather than as
+   rattle. */
+const BASS   = [220.00,0,0,0, 0,0,261.63,0, 0,0,293.66,0, 0,0,0,0];
 const LEAD   = [0,0,0,440.00, 0,0,0,0, 523.25,0,0,0, 0,0,587.33,0];
 
 let el = null, url = null, ready = null, playing = false;
@@ -57,9 +64,11 @@ function env(g, at, a, d, peak) {
    is exactly what static sounds like. */
 function kick(c, out, at) {
   const o = c.createOscillator(), g = c.createGain();
-  o.frequency.setValueAtTime(150, at);
-  o.frequency.exponentialRampToValueAtTime(55, at + 0.11);
-  env(g, at, 0.004, 0.24, 0.85);
+  /* A tom-like thump rather than a sub kick: everything below ~200Hz is
+     inaudible on a phone and only makes the driver distort. */
+  o.frequency.setValueAtTime(330, at);
+  o.frequency.exponentialRampToValueAtTime(165, at + 0.08);
+  env(g, at, 0.004, 0.17, 0.72);
   o.connect(g).connect(out); o.start(at); o.stop(at + 0.3);
   /* A midrange click so the kick still lands on a speaker that cannot move
      any air below 400Hz. */
@@ -128,11 +137,21 @@ function build() {
     const rate = 44100;
     const c = new OAC(1, Math.ceil(rate * LOOP_SECONDS), rate);
     const out = c.createGain(); out.gain.value = LEVEL;
-    /* Takes the glare off the hats and the lead so it sits behind the game
-       rather than on top of it. */
+    /* Two cascaded high-passes at 150Hz. This is the fix for "static on the
+       phone, fine on the laptop": a small driver fed deep bass distorts
+       MECHANICALLY, which the ear hears as static. There was four times more
+       energy below 350Hz than in the band a phone can reproduce at all, so the
+       speaker was being asked to do something physically impossible. Cutting it
+       costs a little weight on headphones and removes the distortion entirely
+       on the device most players are holding. */
+    const hp1 = c.createBiquadFilter();
+    hp1.type = 'highpass'; hp1.frequency.value = 230; hp1.Q.value = 0.7;
+    const hp2 = c.createBiquadFilter();
+    hp2.type = 'highpass'; hp2.frequency.value = 230; hp2.Q.value = 0.7;
+    /* Takes the glare off the hats and the lead. */
     const soft = c.createBiquadFilter();
     soft.type = 'lowpass'; soft.frequency.value = 9000; soft.Q.value = 0.3;
-    out.connect(soft).connect(c.destination);
+    out.connect(hp1).connect(hp2).connect(soft).connect(c.destination);
 
     const stepDur = BEAT / 4;
     for (let b = 0; b < BARS; b++) {
