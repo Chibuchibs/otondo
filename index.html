@@ -528,14 +528,14 @@
 
 <script type="module">
 import { newGame, doAction, canDo, unlocked, ACTIONS, phaseOf, nextUnlock,
-         shareText, MAX_DAY } from './game.js?v=20261013173850';
+         shareText, MAX_DAY } from './game.js?v=20261013180422';
 
 /* Kept here, not exported from game.js: a new cross-file export breaks any
    client holding a cached game.js after a deploy. */
 const ALLAWEE_NOTE = 'Allawee ₦77,000 — e never enter.';
 import { initNet, joinCamp, syncPlayer, platoonBoard, recentChat, postChat,
          postSuggestion, reportMessage, awardBoard, myAwards, laughChat,
-         setPresence, campRoster, online } from './net.js?v=20261013173850';
+         setPresence, campRoster, online } from './net.js?v=20261013180422';
 
 const $ = id => document.getElementById(id);
 const SKINS = ['#6b4423','#8d5524','#4a2c16','#a9714b','#5c3317'];
@@ -964,13 +964,27 @@ function enterCamp(){
   }
   $('nameNote').textContent = '';
   s = newGame(name); save(); render();
-  joinCamp(s.name, s.platoon, cameFrom()).then(() => syncPlayer(s, { force: true }));
+  mine = [];                       // clear before the round-trip, not after
+  drawBadges();
+  joinCamp(s.name, s.platoon, cameFrom()).then(async () => {
+    syncPlayer(s, { force: true });
+    /* A new run means a new player row and a new token, so whatever badges the
+       previous run earned are no longer ours. Ask the server, never assume. */
+    mine = await myAwards();
+    drawBadges();
+  });
 }
 
 $('start').onclick = enterCamp;
 $('name').addEventListener('keydown', e => { if (e.key === 'Enter') enterCamp(); });
 $('name').addEventListener('input', () => { $('nameNote').textContent = ''; });
-$('again').onclick = () => { s = null; try{localStorage.removeItem(SAVE)}catch{}; render(); };
+$('again').onclick = () => {
+  s = null;
+  mine = [];                       // last run's badges are not this run's
+  drawBadges();
+  try { localStorage.removeItem(SAVE); } catch {}
+  render();
+};
 
 /* ---------- the posting card as a real image ----------
    WhatsApp is where this spreads, and WhatsApp forwards pictures, not text.
