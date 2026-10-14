@@ -379,7 +379,15 @@
 <body>
 <div class="wrap">
   <header><h1>Oton<i>do</i></h1>
-    <button class="snd" id="snd" aria-pressed="false"
+    <!-- Hidden, not deleted. The synthesised loop plays cleanly on desktop but
+         iOS renders it as static: proven not to be cache (fresh query string),
+         not amplitude (still static at less than half level), and not the
+         silent switch. A screen recording of the phone measured peak 1.90 with
+         8.4% of samples clipped and 58% of the energy above 4kHz — distortion
+         harmonics, not anything present in the source, which peaks at 0.33.
+         The remaining suspect is iOS mishandling the generated WAV blob.
+         Shown again once there is a real recorded loop to play. -->
+    <button class="snd hidden" id="snd" aria-pressed="false"
             aria-label="Play the camp groove" title="Camp groove">
       <svg class="play" viewBox="0 0 16 16" aria-hidden="true">
         <path d="M4 2.6 13 8l-9 5.4z" fill="currentColor"/>
@@ -566,15 +574,15 @@
 
 <script type="module">
 import { newGame, doAction, canDo, unlocked, ACTIONS, phaseOf, nextUnlock,
-         shareText, MAX_DAY } from './game.js?v=20261013191715';
+         shareText, MAX_DAY } from './game.js?v=20261013192426';
 
 /* Kept here, not exported from game.js: a new cross-file export breaks any
    client holding a cached game.js after a deploy. */
 const ALLAWEE_NOTE = 'Allawee ₦77,000 — e never enter.';
 import { initNet, joinCamp, syncPlayer, platoonBoard, recentChat, postChat,
          postSuggestion, reportMessage, awardBoard, myAwards, laughChat,
-         setPresence, campRoster, online } from './net.js?v=20261013191715';
-import { startMusic, stopMusic, musicOn, audioState, BEAT, BAR } from './audio.js?v=20261013191715';
+         setPresence, campRoster, online } from './net.js?v=20261013192426';
+import { startMusic, stopMusic, musicOn, audioState, BEAT, BAR } from './audio.js?v=20261013192426';
 
 /* Every dance animation is expressed in beats, so the steps are on-tempo
    whether or not the sound is playing — and genuinely on the beat when it is. */
