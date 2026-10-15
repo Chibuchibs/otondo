@@ -471,14 +471,10 @@
 <body>
 <div class="wrap">
   <header><h1>Oton<i>do</i></h1>
-    <!-- Hidden, not deleted. The synthesised loop plays cleanly on desktop but
-         iOS renders it as static: proven not to be cache (fresh query string),
-         not amplitude (still static at less than half level), and not the
-         silent switch. A screen recording of the phone measured peak 1.90 with
-         8.4% of samples clipped and 58% of the energy above 4kHz — distortion
-         harmonics, not anything present in the source, which peaks at 0.33.
-         The remaining suspect is iOS mishandling the generated WAV blob.
-         Shown again once there is a real recorded loop to play. -->
+    <!-- Starts hidden and is revealed by audioSupported(), which is false on an
+         iPhone too old for navigator.audioSession — there both paths are
+         known-bad (silent through Web Audio, static through the WAV detour),
+         and a play button that yields static is worse than none. -->
     <button class="snd hidden" id="snd" aria-pressed="false"
             aria-label="Play the camp groove" title="Camp groove">
       <svg class="play" viewBox="0 0 16 16" aria-hidden="true">
@@ -673,18 +669,18 @@
 
 <script type="module">
 import { newGame, doAction, canDo, unlocked, ACTIONS, phaseOf, nextUnlock,
-         shareText, MAX_DAY } from './game.js?v=20261015141804';
+         shareText, MAX_DAY } from './game.js?v=20261015142802';
 
 /* Kept here, not exported from game.js: a new cross-file export breaks any
    client holding a cached game.js after a deploy. */
 const ALLAWEE_NOTE = 'Allawee ₦77,000 — e never enter.';
 import { initNet, joinCamp, syncPlayer, platoonBoard, recentChat, postChat,
          postSuggestion, reportMessage, awardBoard, myAwards, laughChat,
-         setPresence, campRoster, renameMe, online } from './net.js?v=20261015141804';
-import { startMusic, stopMusic, musicOn, audioState, BEAT, BAR } from './audio.js?v=20261015141804';
+         setPresence, campRoster, renameMe, online } from './net.js?v=20261015142802';
+import { startMusic, stopMusic, musicOn, audioState, audioSupported, BEAT, BAR } from './audio.js?v=20261015142802';
 import { playHoop, playPenalty, playQuiz, playRegister, playParade,
          playMami, playHustle, playManOWar, playSaed, playSocial,
-         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261015141804';
+         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261015142802';
 
 /* Every dance animation is expressed in beats, so the steps are on-tempo
    whether or not the sound is playing — and genuinely on the beat when it is. */
@@ -1027,6 +1023,7 @@ function danceBreak(){
 /* Off by default on purpose: most arrivals come from TikTok with their own
    music already playing, and hijacking that costs more players than it wins. */
 const SND_KEY = 'otondo:sound';
+if (audioSupported()) $('snd').classList.remove('hidden');
 function toggleSound(){
   const btn = $('snd');
   if (musicOn()){
@@ -1061,8 +1058,11 @@ function soundHint(){
     const st = audioState();
     const tip = document.createElement('div');
     tip.className = 'sndtip';
+    /* The silent-switch advice is gone: the playback category deliberately
+       ignores that switch, so naming it would send players to a control that
+       does nothing. Volume is the only thing left for them to check. */
     tip.textContent = st.ctx === 'running'
-      ? 'Playing. No sound? Turn off the silent switch on the side of your phone.'
+      ? 'Playing. No sound? Turn your volume up.'
       : `Sound blocked (${st.ctx}). Tap the button once more.`;
     document.body.appendChild(tip);
     setTimeout(() => tip.remove(), 7000);

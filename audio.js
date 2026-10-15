@@ -1,12 +1,22 @@
 /* Otondo — the camp groove.
-   Still synthesised, nothing licensed and nothing downloaded. But it is now
-   RENDERED OFFLINE to a WAV in memory and played through an <audio> element
-   rather than straight out of Web Audio.
-   Why: on iOS, raw Web Audio routes to the ringer channel — it reports itself
-   as running, the scheduler ticks, the UI shows playing, and the phone stays
-   silent regardless of the mute switch or the volume. A media element uses the
-   playback channel instead, the same one YouTube and Spotify use. The player
-   asked for sound by tapping play, so playback is the right channel.
+   Synthesised, nothing licensed and nothing downloaded. Rendered once offline
+   into an AudioBuffer and looped straight out of a live AudioContext.
+
+   The iOS story, because it cost two attempts:
+   Web Audio defaults to the AMBIENT category, which on iPhone is the ringer
+   channel — the context reports itself running, the scheduler ticks, the UI
+   shows playing, and the phone stays silent. The first fix was to render to a
+   WAV and play a media element, which uses the playback channel; that got
+   sound out but it arrived as STATIC.
+   The real fix is navigator.audioSession.type = 'playback' (iOS 16.4+), which
+   puts Web Audio itself on the playback channel. Measured on an iPhone
+   (iOS 18.7, Safari 26.6) with otondo.ng/audiotest.html: the identical beep was
+   SILENT without it and CLEAN with it, and the full groove was clean too.
+
+   Where there is no audioSession, there is no safe path on iOS: plain Web Audio
+   is silent and the WAV detour is the thing that produced the static. So the
+   button is HIDDEN on those devices rather than offering a player something
+   broken. Everywhere else (desktop, Android) plain Web Audio is fine.
    Off by default. */
 
 export const BPM  = 105;
@@ -49,7 +59,7 @@ const OPEN   = [0,0,0,0, 0,0,0,1, 0,0,0,0, 0,0,0,1];
 const BASS   = [220.00,0,0,0, 0,0,261.63,0, 0,0,293.66,0, 0,0,0,0];
 const LEAD   = [0,0,0,440.00, 0,0,0,0, 523.25,0,0,0, 0,0,587.33,0];
 
-let el = null, url = null, ready = null, playing = false;
+let ctx = null, node = null, startedAt = 0, playing = false;
 let onBar = () => {}, raf = 0, lastBar = -1;
 
 /* ---------- rendering ---------- */
@@ -110,21 +120,6 @@ function bassNote(c, out, at, hz, dur, peak) {
   tone(c, out, at, hz * 3,   dur * 0.6,  peak * 0.22, 'triangle');
 }
 
-function wav(buf) {
-  const n = buf.length, d = buf.getChannelData(0);
-  const ab = new ArrayBuffer(44 + n * 2), v = new DataView(ab);
-  const str = (o, s) => { for (let i = 0; i < s.length; i++) v.setUint8(o + i, s.charCodeAt(i)); };
-  str(0, 'RIFF'); v.setUint32(4, 36 + n * 2, true); str(8, 'WAVEfmt ');
-  v.setUint32(16, 16, true); v.setUint16(20, 1, true); v.setUint16(22, 1, true);
-  v.setUint32(24, buf.sampleRate, true); v.setUint32(28, buf.sampleRate * 2, true);
-  v.setUint16(32, 2, true); v.setUint16(34, 16, true);
-  str(36, 'data'); v.setUint32(40, n * 2, true);
-  for (let i = 0; i < n; i++) {
-    const s = Math.max(-1, Math.min(1, d[i]));
-    v.setInt16(44 + i * 2, s < 0 ? s * 0x8000 : s * 0x7fff, true);
-  }
-  return new Blob([ab], { type: 'audio/wav' });
-}
 
 /* OfflineAudioContext needs no user gesture, so the loop is built up front and
    the tap only has to call play() — which must stay synchronous on iOS. */
@@ -186,55 +181,102 @@ export function renderLoop() {
   return renderedLoop;
 }
 
-function build() {
-  if (ready) return ready;
-  ready = (async () => {
-    const rendered = await renderLoop();
-    url = URL.createObjectURL(wav(rendered));
-    el = document.createElement('audio');
-    el.src = url; el.loop = true; el.preload = 'auto';
-    el.setAttribute('playsinline', '');      // iOS: do not hand off to a player
-    el.style.display = 'none';
-    document.body.appendChild(el);
-    return el;
-  })().catch(e => { console.warn('[otondo] audio build failed:', e.message); return null; });
-  return ready;
-}
-build();                                   // start rendering immediately
+/* Warm the render immediately. OfflineAudioContext needs no user gesture, so
+   by the time anybody taps, the loop is already a finished AudioBuffer and the
+   tap only has to open an AudioContext. */
+renderLoop().catch(e => console.warn('[otondo] audio build failed:', e.message));
 
-/* The dance hangs off the element's own clock, so it cannot drift from the music
-   however long the page stays open. */
+/* THE iOS FIX. Web Audio defaults to the ambient category, which on iPhone
+   means the ringer channel: the context reports itself running, the scheduler
+   ticks, and the phone stays silent. Declaring 'playback' moves it to the same
+   channel YouTube and Spotify use.
+   Measured on an iPhone (iOS 18.7, Safari 26.6) with otondo.ng/audiotest.html:
+   the identical beep was SILENT without this line and CLEAN with it. It is the
+   whole reason the old code rendered to a WAV and played a media element —
+   that detour is what produced the static, and this replaces it. */
+function claimPlayback() {
+  try { if (navigator.audioSession) navigator.audioSession.type = 'playback'; }
+  catch {}
+}
+
+/* iPads have reported themselves as Macs since iPadOS 13, so the touch-point
+   count is the tell rather than the platform string. */
+const isIOS = () =>
+  /iPad|iPhone|iPod/.test(navigator.platform || '') ||
+  (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1) ||
+  /iPhone|iPad|iPod/.test(navigator.userAgent);
+
+/* Whether to offer sound at all. On an iPhone without audioSession both
+   available paths are known-bad — silent one way, static the other — and a
+   play button that produces static is worse than no play button. */
+export const audioSupported = () => {
+  const AC = window.AudioContext || window.webkitAudioContext;
+  if (!AC) return false;
+  if (isIOS() && !navigator.audioSession) return false;
+  return true;
+};
+
+/* Must run inside the tap: iOS only lets a context start from a gesture. */
+function openCtx() {
+  const AC = window.AudioContext || window.webkitAudioContext;
+  if (!AC) return null;
+  claimPlayback();
+  if (!ctx) ctx = new AC();
+  if (ctx.state === 'suspended') ctx.resume();
+  return ctx;
+}
+
+/* The dance hangs off the audio clock, so it cannot drift from the music
+   however long the page stays open. ctx.currentTime is sample-accurate —
+   better than the media element's currentTime it replaces. */
 function watch() {
-  if (!playing || !el) return;
-  const b = Math.floor(el.currentTime / BAR) % BARS;
+  if (!playing || !ctx) return;
+  const t = ctx.currentTime - startedAt;
+  const b = Math.floor(t / BAR) % BARS;
   if (b !== lastBar) { lastBar = b; try { onBar(b); } catch {} }
   raf = requestAnimationFrame(watch);
 }
 
-/* Call from a tap. play() is issued synchronously when the loop is ready. */
+/* Call from a tap. The context is opened synchronously; the buffer is already
+   rendered, so the await resolves on the same microtask in practice. */
 export function startMusic(onBarCallback) {
   onBar = onBarCallback || onBar;
-  if (!el) { build().then(e => { if (e) { e.play().catch(() => {}); begin(); } }); return true; }
-  el.currentTime = 0;
-  const p = el.play();
-  if (p && p.catch) p.catch(e => console.warn('[otondo] play refused:', e.message));
-  begin();
+  const c = openCtx();
+  if (!c) return false;
+  renderLoop().then(buf => {
+    if (!buf) return;
+    stopNode();
+    node = c.createBufferSource();
+    node.buffer = buf;
+    node.loop = true;
+    node.connect(c.destination);
+    startedAt = c.currentTime;
+    node.start();
+    playing = true; lastBar = -1;
+    cancelAnimationFrame(raf); watch();
+  }).catch(e => console.warn('[otondo] play failed:', e.message));
   return true;
 }
-function begin() { playing = true; lastBar = -1; cancelAnimationFrame(raf); watch(); }
+
+function stopNode() {
+  if (!node) return;
+  try { node.stop(); } catch {}
+  try { node.disconnect(); } catch {}
+  node = null;
+}
 
 export function stopMusic() {
   playing = false;
   cancelAnimationFrame(raf);
-  try { el && el.pause(); } catch {}
+  stopNode();
 }
 
 export const musicOn = () => playing;
 
 export const audioState = () => ({
-  ctx: el ? (playing && !el.paused ? 'running' : 'ready') : 'building',
+  ctx: ctx ? ctx.state : 'building',
   running: playing,
-  time: el ? +el.currentTime.toFixed(2) : 0,
+  time: ctx && playing ? +((ctx.currentTime - startedAt) % LOOP_SECONDS).toFixed(2) : 0,
   gain: LEVEL,
-  via: 'media element',
+  via: 'web audio' + (navigator.audioSession ? ' + playback category' : ''),
 });
