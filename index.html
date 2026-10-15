@@ -673,18 +673,18 @@
 
 <script type="module">
 import { newGame, doAction, canDo, unlocked, ACTIONS, phaseOf, nextUnlock,
-         shareText, MAX_DAY } from './game.js?v=20261015135815';
+         shareText, MAX_DAY } from './game.js?v=20261015141234';
 
 /* Kept here, not exported from game.js: a new cross-file export breaks any
    client holding a cached game.js after a deploy. */
 const ALLAWEE_NOTE = 'Allawee ₦77,000 — e never enter.';
 import { initNet, joinCamp, syncPlayer, platoonBoard, recentChat, postChat,
          postSuggestion, reportMessage, awardBoard, myAwards, laughChat,
-         setPresence, campRoster, renameMe, online } from './net.js?v=20261015135815';
-import { startMusic, stopMusic, musicOn, audioState, BEAT, BAR } from './audio.js?v=20261015135815';
+         setPresence, campRoster, renameMe, online } from './net.js?v=20261015141234';
+import { startMusic, stopMusic, musicOn, audioState, BEAT, BAR } from './audio.js?v=20261015141234';
 import { playHoop, playPenalty, playQuiz, playRegister, playParade,
          playMami, playHustle, playManOWar, playSaed, playSocial,
-         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261015135815';
+         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261015141234';
 
 /* Every dance animation is expressed in beats, so the steps are on-tempo
    whether or not the sound is playing — and genuinely on the beat when it is. */
@@ -1213,8 +1213,14 @@ function save(){ try { localStorage.setItem(SAVE, JSON.stringify(s)); } catch {}
    day 5 and the rate did not move when the mini-games landed — the form was
    the last thing between a visitor and a game. Everyone starts as
    "Otondo 4821" and claims a real name when it actually matters. */
-const autoName = () => `Otondo ${1000 + Math.floor(Math.random() * 9000)}`;
-const isAutoName = n => /^Otondo \d{4}$/.test(n || '');
+/* "Fresh Otondo 836" — camp slang rather than a queue ticket, but still
+   obviously not your name, which is the nudge to tap "pick a name". Three
+   digits because nicknames are capped at 16 characters server-side and
+   "Fresh Otondo " already spends 13 of them. */
+const autoName = () => `Fresh Otondo ${100 + Math.floor(Math.random() * 900)}`;
+/* Still matches the old "Otondo 4821" names: players carrying one from before
+   this change must keep being treated as unnamed, or they are never asked. */
+const isAutoName = n => /^(Fresh )?Otondo \d{3,4}$/.test(n || '');
 
 /* The server row is created on the first COMPLETED action, not on page load.
    Creating it on arrival would turn `players` from "someone who played" into
