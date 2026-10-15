@@ -284,6 +284,21 @@
   .hus-item em{font-style:normal;font-size:11.5px;color:var(--muted);
     -webkit-text-fill-color:var(--muted)}
   .hus-item:disabled{opacity:.4}
+  .saed-grid,.soc-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+  .saed-step,.soc-move{padding:15px 8px;border:2px solid var(--line);border-radius:12px;
+    background:var(--white);font-family:inherit;font-size:14px;font-weight:800;
+    color:var(--ink);-webkit-text-fill-color:var(--ink);transition:background .12s}
+  .saed-step.lit{background:var(--green);color:#fff;-webkit-text-fill-color:#fff;
+    border-color:var(--green)}
+  .soc-move.right{border-color:var(--green);background:var(--green-lt)}
+  .soc-move.wrong{border-color:var(--red);opacity:.75}
+  .soc-call{font-size:24px;font-weight:800;text-align:center;margin:4px 0 10px;
+    color:var(--green-dk)}
+  .dodge-clock{font-size:42px;font-weight:800;text-align:center;letter-spacing:.04em;
+    margin:6px 0 4px;font-variant-numeric:tabular-nums}
+  .dodge-btn{display:block;width:100%;margin-top:10px;padding:14px;
+    background:var(--green);color:#fff;border:0;border-radius:12px;
+    font-family:inherit;font-weight:800;font-size:16px}
   .mg-skip{display:block;margin:10px auto 0;background:none;border:0;
     color:var(--muted);font-size:12px;text-decoration:underline;font-family:inherit}
   .act .ico{font-size:21px;line-height:1;width:26px;flex:none;font-weight:800;
@@ -637,17 +652,18 @@
 
 <script type="module">
 import { newGame, doAction, canDo, unlocked, ACTIONS, phaseOf, nextUnlock,
-         shareText, MAX_DAY } from './game.js?v=20261015131316';
+         shareText, MAX_DAY } from './game.js?v=20261015132911';
 
 /* Kept here, not exported from game.js: a new cross-file export breaks any
    client holding a cached game.js after a deploy. */
 const ALLAWEE_NOTE = 'Allawee ₦77,000 — e never enter.';
 import { initNet, joinCamp, syncPlayer, platoonBoard, recentChat, postChat,
          postSuggestion, reportMessage, awardBoard, myAwards, laughChat,
-         setPresence, campRoster, online } from './net.js?v=20261015131316';
-import { startMusic, stopMusic, musicOn, audioState, BEAT, BAR } from './audio.js?v=20261015131316';
+         setPresence, campRoster, online } from './net.js?v=20261015132911';
+import { startMusic, stopMusic, musicOn, audioState, BEAT, BAR } from './audio.js?v=20261015132911';
 import { playHoop, playPenalty, playQuiz, playRegister, playParade,
-         playMami, playHustle } from './minigames.js?v=20261015131316';
+         playMami, playHustle, playManOWar, playSaed, playSocial,
+         playDodge } from './minigames.js?v=20261015132911';
 
 /* Every dance animation is expressed in beats, so the steps are on-tempo
    whether or not the sound is playing — and genuinely on the beat when it is. */
@@ -1451,6 +1467,10 @@ const GAMES = {
   parade:   [playParade],
   mami:     [playMami],
   hustle:   [playHustle],
+  manowar:  [playManOWar],
+  saed:     [playSaed],
+  social:   [playSocial],
+  dodge:    [playDodge],
 };
 
 async function takeAction(key, a){

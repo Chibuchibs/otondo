@@ -74,17 +74,19 @@ export const ACTIONS = {
   },
   manowar: {
     label: 'Man O War drill',
-    hint: 'Big credibility. Bigger risk.',
-    run(s, rng) {
-      if (chance(rng, 0.22)) {
+    hint: 'Cross the rope bridge without falling.',
+    play: 'manowar',
+    run(s, rng, res) {
+      const sc = res ? res.score : (chance(rng, 0.22) ? 0.2 : 0.75);
+      if ((res ? res.fell > 2 : sc < 0.3) && chance(rng, 0.45)) {
         s.injured = true;
         apply(s, { energy: -30, cred: 4 });
-        return 'You tried the rope and landed badly. Clinic case. Still, credibility.';
+        return `${res ? res.detail : 'You landed badly.'} Clinic case. Still, credibility.`;
       }
-      const cred = 14 + Math.floor(rng() * 8);
       s.drills = (s.drills || 0) + 1;        // survived ones only — see awards.sql
+      const cred = 6 + Math.round(sc * 16);
       apply(s, { energy: -28, belle: -14, cred });
-      return `You climbed, crawled and survived Man O War. +${cred} credibility.`;
+      return `${res ? res.detail : 'You climbed, crawled and survived.'} +${cred} credibility.`;
     },
   },
   socialise: {
@@ -101,21 +103,21 @@ export const ACTIONS = {
     label: 'SAED class',
     hint: 'Learn a trade. Materials cost ₦.',
     cost: 700,
-    run(s, rng) {
-      const skill = pick(rng, ['bead making', 'soap making', 'photography',
-                               'catering', 'ICT', 'fashion design', 'barbing']);
-      /* A skill pays, but only after you have sat through enough of it. */
+    play: 'saed',
+    run(s, rng, res) {
+      const sc = res ? res.score : 0.5;
+      /* A skill pays, but only once you have sat through enough of it. */
       s.saed = (s.saed || 0) + 1;
       spend(s, 700 + Math.floor(rng() * 400));      // materials
-      const cred = 2 + Math.floor(rng() * 3);
-      let line = `SAED: ${skill}. You actually learned something. +${cred} credibility.`;
-      if (s.saed >= 3) {
-        const pay = 900 + Math.floor(rng() * 900);
+      const cred = 2 + Math.round(sc * 9);
+      let line = res ? res.detail : 'SAED class. You learned something.';
+      if (s.saed >= 3 && sc >= 0.5) {
+        const pay = Math.round((700 + rng() * 900) * (0.6 + sc));
         s.money += pay;
-        line = `SAED: ${skill}. You sold your first one for ₦${pay.toLocaleString()}.`;
+        line += ` You sold your first one for ₦${pay.toLocaleString()}.`;
       }
       apply(s, { energy: -10, cred });
-      return line;
+      return `${line} +${cred} credibility.`;
     },
   },
   sports: {
@@ -156,18 +158,16 @@ export const ACTIONS = {
   },
   social: {
     label: 'Social night',
-    hint: 'Talent show, Mr Macho, Miss Camp. Costs small.',
+    hint: 'MC calls the step. Do am sharp sharp.',
     cost: 400,
-    run(s, rng) {
-      if (chance(rng, 0.3)) {
-        apply(s, { energy: -12, cred: -6 });
-        return 'You go up for talent night and forget the words. Camp no forget.';
-      }
-      const cred = 6 + Math.floor(rng() * 6);
+    play: 'social',
+    run(s, rng, res) {
+      const sc = res ? res.score : 0.5;
       spend(s, 400 + Math.floor(rng() * 500));      // minerals at the stand
-      s.friends += 2;
+      const cred = Math.round(-4 + sc * 18);        // freeze and it costs you
+      s.friends += sc >= 0.5 ? 2 : 0;
       apply(s, { energy: -12, belle: -6, cred });
-      return `Social night. You danced and the whole camp hail you. +${cred} credibility.`;
+      return `${res ? res.detail : 'You danced at social night.'} ${cred >= 0 ? '+' : ''}${cred} credibility.`;
     },
   },
   rehearse: {
@@ -182,15 +182,17 @@ export const ACTIONS = {
   },
   dodge: {
     label: 'Dodge and sleep',
-    hint: 'Sweet. Until they catch you.',
-    run(s, rng) {
-      if (chance(rng, 0.3)) {
-        apply(s, { energy: 16, cred: -14 });
+    hint: 'Hit snooze. See how far you push it.',
+    play: 'dodge',
+    run(s, rng, res) {
+      if (res && res.caught) {
         s.punished = true;
-        return 'Soldier found you in mufti. Frog jump. Your name spoiled. -14 credibility.';
+        apply(s, { energy: 16, cred: -14 });
+        return `${res.detail} -14 credibility.`;
       }
-      apply(s, { energy: 26, belle: -6, cred: -5 });
-      return 'You slept through parade and nobody noticed. Sweet.';
+      const sc = res ? res.score : 0.6;
+      apply(s, { energy: 10 + Math.round(sc * 22), belle: -6, cred: -Math.round(2 + sc * 5) });
+      return res ? res.detail : 'You slept through parade and nobody noticed.';
     },
   },
 };

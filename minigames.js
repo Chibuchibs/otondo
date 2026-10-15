@@ -694,6 +694,334 @@ export function playHustle(host) {
   });
 }
 
+/* ----------------------------------------------------------- man o war ---- */
+/* The rope bridge. You advance automatically; the bridge swings under you and
+   you tap the low side to counter. Lean too far and you are in the net. */
+export function playManOWar(host) {
+  return new Promise(resolve => {
+    const W = 320, H = 240, LEN = 100;
+    host.innerHTML = `
+      <div class="mg">
+        <p class="mg-top"><b>Man O War</b><span id="mgInfo">0%</span></p>
+        <canvas id="mgCanvas" width="${W}" height="${H}"></canvas>
+        <p class="mg-hint">Tap the side you are falling towards.</p>
+      </div>`;
+    const cv = host.querySelector('#mgCanvas'), x = cv.getContext('2d');
+    const info = host.querySelector('#mgInfo');
+
+    let pos = 0, tilt = 0, vel = 0, done = false, wobbles = 0, fell = 0;
+    let push = 0, t0 = performance.now();
+
+    function draw() {
+      x.clearRect(0, 0, W, H);
+      x.fillStyle = '#cfe3f2'; x.fillRect(0, 0, W, H);
+      x.fillStyle = '#7fa864'; x.fillRect(0, 186, W, H - 186);
+
+      // towers and ropes
+      x.strokeStyle = '#8c7f5e'; x.lineWidth = 7;
+      x.beginPath(); x.moveTo(22, 186); x.lineTo(22, 66); x.stroke();
+      x.beginPath(); x.moveTo(W - 22, 186); x.lineTo(W - 22, 66); x.stroke();
+      const sag = (p) => 112 + Math.sin(p * Math.PI) * 26 + tilt * 14;
+      x.strokeStyle = '#c9b183'; x.lineWidth = 4;
+      for (const off of [0, 44]) {
+        x.beginPath();
+        for (let i = 0; i <= 20; i++){ const p = i / 20;
+          const yy = sag(p) - off; i ? x.lineTo(22 + p * (W - 44), yy) : x.moveTo(22, yy); }
+        x.stroke();
+      }
+      x.lineWidth = 2;
+      for (let i = 1; i < 10; i++){ const p = i / 10;
+        x.beginPath(); x.moveTo(22 + p*(W-44), sag(p)); x.lineTo(22 + p*(W-44), sag(p)-44); x.stroke(); }
+
+      // the climber, leaning with the bridge
+      const px = 22 + (pos / LEN) * (W - 44), py = sag(pos / LEN);
+      x.save(); x.translate(px, py); x.rotate(tilt * 0.5);
+      x.fillStyle = '#8aa863'; x.fillRect(-6, -18, 12, 18);
+      x.fillStyle = '#93b06d'; x.fillRect(-8, -36, 16, 20);
+      x.fillStyle = '#5f7a42'; x.fillRect(-8, -36, 16, 2.4);
+      x.fillStyle = '#8d5524'; x.beginPath(); x.arc(0, -43, 7, 0, 7); x.fill();
+      x.fillStyle = '#93b06d'; x.beginPath(); x.ellipse(0, -46, 8, 5.5, 0, Math.PI, 0); x.fill();
+      x.fillStyle = '#e0762a'; x.fillRect(-7, -3, 14, 4);
+      x.restore();
+
+      // balance meter
+      x.fillStyle = 'rgba(0,0,0,.1)'; x.fillRect(60, 206, W - 120, 12);
+      x.fillStyle = '#d9ece1'; x.fillRect(W/2 - 22, 206, 44, 12);
+      x.fillStyle = Math.abs(tilt) > 0.72 ? '#b0432f' : '#0a7a43';
+      x.fillRect(W/2 + tilt * (W - 120) / 2 - 3, 202, 6, 20);
+      x.fillStyle = '#7a7257'; x.font = '700 10px system-ui, sans-serif';
+      x.fillText('LEFT', 24, 216); x.fillText('RIGHT', W - 52, 216);
+    }
+
+    function tick() {
+      if (done || !cv.isConnected) return;
+      const now = performance.now(), dt = Math.min(50, now - t0); t0 = now;
+      const k = dt / 16.7;
+      /* The bridge pushes you around on its own; your taps are the only thing
+         resisting it. */
+      vel += (Math.random() - 0.5) * 0.012 * k + push;
+      push = 0;
+      vel *= 0.97;
+      tilt += vel * k;
+      if (Math.abs(tilt) > 1) {
+        tilt = Math.sign(tilt); vel = 0; fell++;
+        pos = Math.max(0, pos - 8);         // slip back, do not end the run
+        tilt *= 0.3;
+      }
+      if (Math.abs(tilt) > 0.72) wobbles++;
+      pos += 0.22 * k;
+      info.textContent = Math.min(100, Math.round(pos)) + '%';
+      if (pos >= LEN) return finish();
+      draw();
+      requestAnimationFrame(tick);
+    }
+
+    const lean = dir => { push = dir * 0.055; };
+    const tap = e => {
+      e.preventDefault();
+      const r = cv.getBoundingClientRect();
+      lean(((e.clientX - r.left) / r.width) < 0.5 ? -1 : 1);
+    };
+    cv.addEventListener('pointerdown', tap);
+    const key = e => {
+      if (e.key === 'ArrowLeft')  { e.preventDefault(); lean(-1); }
+      if (e.key === 'ArrowRight') { e.preventDefault(); lean(1); }
+    };
+    window.addEventListener('keydown', key);
+
+    function finish() {
+      done = true;
+      cv.removeEventListener('pointerdown', tap);
+      window.removeEventListener('keydown', key);
+      const sc = Math.max(0.15, 1 - fell * 0.18 - wobbles / 900);
+      const line = fell === 0 ? 'Across without one slip. Instructor nod.'
+                 : fell <= 2  ? 'You wobbled but you crossed.'
+                 :              'You fell into the net more than once. You still finish.';
+      resolve({ score: Math.min(1, sc), detail: `Rope bridge: ${line}`, fell });
+    }
+    tick();
+  });
+}
+
+/* ---------------------------------------------------------------- saed ---- */
+/* Pick a trade, then prove you were paying attention: the instructor shows a
+   sequence and you repeat it. */
+const TRADES = [
+  { n:'Fashion & design',   tools:['Fabric','Scissors','Needle','Tape'] },
+  { n:'Catering',           tools:['Flour','Whisk','Oven','Icing'] },
+  { n:'ICT & digital',      tools:['Laptop','Router','Code','Data'] },
+  { n:'Beauty & cosmetics', tools:['Brush','Palette','Mirror','Gele'] },
+  { n:'Agribusiness',       tools:['Seed','Feed','Water','Harvest'] },
+  { n:'Photography',        tools:['Camera','Lens','Light','Edit'] },
+];
+
+export function playSaed(host) {
+  return new Promise(resolve => {
+    const ROUNDS = 4;
+    const trade = TRADES[Math.floor(Math.random() * TRADES.length)];
+    let round = 0, right = 0, seq = [], input = [], showing = false;
+
+    host.innerHTML = `<div class="mg">
+      <p class="mg-top"><b>SAED: ${trade.n}</b><span id="mgInfo"></span></p>
+      <p class="mg-hint" id="saedFb" style="margin:0 2px 10px">Watch the order, then repeat it.</p>
+      <div class="saed-grid" id="saedGrid"></div></div>`;
+    const grid = host.querySelector('#saedGrid'), info = host.querySelector('#mgInfo');
+    const fb = host.querySelector('#saedFb');
+
+    const paint = () => {
+      grid.innerHTML = trade.tools.map((t, i) =>
+        `<button class="saed-step" data-i="${i}">${t}</button>`).join('');
+    };
+
+    async function show() {
+      showing = true;
+      info.textContent = `Step ${round + 1} of ${ROUNDS}`;
+      fb.textContent = 'Watch…';
+      seq = Array.from({ length: round + 2 },
+        () => Math.floor(Math.random() * trade.tools.length));
+      await new Promise(r => setTimeout(r, 500));
+      for (const i of seq) {
+        const b = grid.querySelector(`[data-i="${i}"]`);
+        b.classList.add('lit');
+        await new Promise(r => setTimeout(r, 460));
+        b.classList.remove('lit');
+        await new Promise(r => setTimeout(r, 190));
+      }
+      fb.textContent = 'Now you.';
+      input = []; showing = false;
+    }
+
+    grid.addEventListener('click', e => {
+      const b = e.target.closest('.saed-step');
+      if (!b || showing) return;
+      const i = +b.dataset.i;
+      b.classList.add('lit'); setTimeout(() => b.classList.remove('lit'), 170);
+      input.push(i);
+      const n = input.length - 1;
+      if (input[n] !== seq[n]) { fb.textContent = 'Wrong order. Next one.'; return next(false); }
+      if (input.length === seq.length) { right++; fb.textContent = 'Correct.'; return next(true); }
+    });
+
+    function next() {
+      round++;
+      setTimeout(() => {
+        if (round >= ROUNDS) {
+          const line = right === ROUNDS ? `You mastered ${trade.n.toLowerCase()}. Instructor impressed.`
+                     : right >= 2       ? `You picked up some ${trade.n.toLowerCase()}.`
+                     :                    `You slept through most of ${trade.n.toLowerCase()}.`;
+          resolve({ score: right / ROUNDS, detail: `SAED: ${line}` });
+          return;
+        }
+        show();
+      }, 800);
+    }
+
+    paint(); show();
+  });
+}
+
+/* -------------------------------------------------------- social night ---- */
+/* The MC calls a move and you have to do it before the music moves on. Gets
+   faster every round. */
+const MOVES = ['Zanku', 'Shaku Shaku', 'Gwara Gwara', 'Legwork', 'Soapy', 'Shoki'];
+
+export function playSocial(host) {
+  return new Promise(resolve => {
+    const ROUNDS = 8;
+    let round = 0, hit = 0, want = '', deadline = 0, raf = 0, locked = false;
+
+    host.innerHTML = `<div class="mg">
+      <p class="mg-top"><b>Social night</b><span id="mgInfo"></span></p>
+      <p class="soc-call" id="socCall"></p>
+      <div class="reg-bar"><i id="socFill"></i></div>
+      <div class="soc-grid" id="socGrid"></div>
+      <p class="mg-hint" id="socFb">MC go call the step. Do am sharp sharp.</p></div>`;
+    const call = host.querySelector('#socCall'), grid = host.querySelector('#socGrid');
+    const info = host.querySelector('#mgInfo'), fb = host.querySelector('#socFb');
+    const fill = host.querySelector('#socFill');
+
+    function go() {
+      locked = false;
+      const limit = Math.max(900, 2200 - round * 170);     // the music speeds up
+      want = MOVES[Math.floor(Math.random() * MOVES.length)];
+      info.textContent = `${round + 1} of ${ROUNDS} · ${hit} hit`;
+      call.textContent = want + '!';
+      const opts = [...MOVES].sort(() => Math.random() - 0.5).slice(0, 4);
+      if (!opts.includes(want)) opts[0] = want;
+      grid.innerHTML = opts.sort(() => Math.random() - 0.5)
+        .map(m => `<button class="soc-move" data-m="${m}">${m}</button>`).join('');
+      deadline = performance.now() + limit;
+      cancelAnimationFrame(raf);
+      const sweep = () => {
+        const left = Math.max(0, deadline - performance.now());
+        fill.style.width = (100 * left / limit) + '%';
+        if (left <= 0) return answer(null);
+        raf = requestAnimationFrame(sweep);
+      };
+      sweep();
+    }
+
+    function answer(m) {
+      if (locked) return;
+      locked = true;
+      cancelAnimationFrame(raf);
+      const good = m === want;
+      if (good) hit++;
+      fb.textContent = good ? 'Yes! Camp dey hail you.' : m ? 'Wrong step.' : 'Too slow.';
+      grid.querySelectorAll('.soc-move').forEach(b => {
+        b.disabled = true;
+        if (b.dataset.m === want) b.classList.add('right');
+        else if (b.dataset.m === m) b.classList.add('wrong');
+      });
+      setTimeout(() => {
+        round++;
+        if (round >= ROUNDS) {
+          const line = hit >= 7 ? 'You carried the night. Everybody dey record you.'
+                     : hit >= 4 ? 'You held your own on the floor.'
+                     : hit >= 1 ? 'You tried, but the MC fast pass you.'
+                     :            'You froze. Camp no forget.';
+          resolve({ score: hit / ROUNDS, detail: `Social night: ${line}` });
+          return;
+        }
+        fb.textContent = '\u00a0';
+        go();
+      }, 650);
+    }
+
+    grid.addEventListener('click', e => {
+      const b = e.target.closest('.soc-move');
+      if (b && !b.disabled) answer(b.dataset.m);
+    });
+    go();
+  });
+}
+
+/* --------------------------------------------------------------- dodge ---- */
+/* Press your luck. Every snooze buys sleep and raises the odds the soldier
+   finds you in mufti. Five gets you the full dodge — if you last. */
+export function playDodge(host) {
+  return new Promise(resolve => {
+    const TARGET = 5;
+    let snoozes = 0, risk = 0, over = false;
+
+    host.innerHTML = `<div class="mg">
+      <p class="mg-top"><b>4:30am bugle</b><span id="mgInfo"></span></p>
+      <div class="dodge-clock" id="dodgeClock">04:30</div>
+      <p class="mg-hint" id="dodgeFb" style="min-height:2.4em">Bugle don blow. Snooze am?</p>
+      <div class="reg-bar"><i id="dodgeRisk" style="background:#b0432f;width:0%"></i></div>
+      <button class="dodge-btn" id="dodgeSnooze">Hit snooze</button>
+      <button class="mami-done" id="dodgeUp" style="background:var(--muted);margin-top:7px">Get up and go</button>
+      </div>`;
+    const info = host.querySelector('#mgInfo'), fb = host.querySelector('#dodgeFb');
+    const clock = host.querySelector('#dodgeClock'), bar = host.querySelector('#dodgeRisk');
+
+    const paint = () => {
+      info.textContent = `${snoozes} of ${TARGET} snoozed`;
+      clock.textContent = '04:' + String(30 + snoozes * 9).padStart(2, '0');
+      bar.style.width = Math.round(risk * 100) + '%';
+    };
+
+    host.querySelector('#dodgeSnooze').onclick = () => {
+      if (over) return;
+      snoozes++;
+      risk = Math.min(0.95, risk + 0.17 + Math.random() * 0.07);
+      paint();
+      if (Math.random() < risk) {
+        over = true;
+        fb.textContent = 'Soldier find you for mufti. Frog jump.';
+        setTimeout(() => resolve({
+          score: 0,
+          detail: `You snoozed ${snoozes} times and got caught. Frog jump for everybody to see.`,
+          caught: true,
+        }), 900);
+        return;
+      }
+      fb.textContent = snoozes >= TARGET
+        ? 'Five times. You dodged the whole parade.'
+        : 'Nobody notice. Sleep sweet.';
+      if (snoozes >= TARGET) {
+        over = true;
+        setTimeout(() => resolve({
+          score: 1, detail: 'You snoozed five times and dodged parade completely. Sweet.',
+        }), 900);
+      }
+    };
+
+    host.querySelector('#dodgeUp').onclick = () => {
+      if (over) return;
+      over = true;
+      resolve({
+        score: snoozes / TARGET,
+        detail: snoozes === 0
+          ? 'You got up at the first bugle like a good corper.'
+          : `You snoozed ${snoozes} time${snoozes === 1 ? '' : 's'} then got up before they caught you.`,
+      });
+    };
+
+    paint();
+  });
+}
+
 /* ---------------------------------------------------------------- quiz ---- */
 /* Deliberately general Nigerian knowledge rather than NYSC trivia — the camp
    framing is already everywhere else, and this has to be answerable by anyone. */
