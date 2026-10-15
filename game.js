@@ -131,7 +131,10 @@ export const ACTIONS = {
   sports: {
     label: 'Inter-platoon sports',
     hint: 'Football or basketball. You actually play this one.',
-    from: 11,
+    /* Open from day one. Gating this behind day 11 meant almost nobody ever
+       discovered the game is playable — the average run stopped at day 3.
+       The hook has to be reachable in the first session. */
+    from: 1,
     play: 'sport',                    // the UI picks football or hoop at random
     run(s, rng, res) {
       /* Falls back to a roll if the mini-game could not load, so a failed
