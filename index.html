@@ -272,6 +272,11 @@
   .mami-item em{font-style:normal;font-size:11.5px;color:var(--muted);
     -webkit-text-fill-color:var(--muted)}
   .mami-item:disabled{opacity:.45}
+  .mg-out{text-align:center;padding:6px 2px 2px}
+  .out-verdict{font-size:19px;font-weight:800;line-height:1.25;margin:10px 0 0}
+  .out-detail{font-size:14px;color:var(--muted);margin:9px 0 0}
+  .out-nudge{font-size:14.5px;line-height:1.45;margin:16px 0 2px;padding:11px 13px;
+    background:var(--cream);border:2px solid var(--line);border-radius:12px}
   .mami-done{display:block;width:100%;margin-top:10px;padding:11px;
     background:var(--green);color:#fff;border:0;border-radius:12px;
     font-family:inherit;font-weight:800;font-size:15px}
@@ -668,18 +673,18 @@
 
 <script type="module">
 import { newGame, doAction, canDo, unlocked, ACTIONS, phaseOf, nextUnlock,
-         shareText, MAX_DAY } from './game.js?v=20261015152403';
+         shareText, MAX_DAY } from './game.js?v=20261015152624';
 
 /* Kept here, not exported from game.js: a new cross-file export breaks any
    client holding a cached game.js after a deploy. */
 const ALLAWEE_NOTE = 'Allawee ₦77,000 — e never enter.';
 import { initNet, joinCamp, syncPlayer, platoonBoard, recentChat, postChat,
          postSuggestion, reportMessage, awardBoard, myAwards, laughChat,
-         setPresence, campRoster, renameMe, online } from './net.js?v=20261015152403';
-import { startMusic, stopMusic, musicOn, audioState, audioSupported, BEAT, BAR } from './audio.js?v=20261015152403';
+         setPresence, campRoster, renameMe, online } from './net.js?v=20261015152624';
+import { startMusic, stopMusic, musicOn, audioState, audioSupported, BEAT, BAR } from './audio.js?v=20261015152624';
 import { playHoop, playPenalty, playQuiz, playRegister, playParade,
          playMami, playHustle, playManOWar, playSaed, playSocial,
-         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261015152403';
+         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261015152624';
 
 /* Every dance animation is expressed in beats, so the steps are on-tempo
    whether or not the sound is playing — and genuinely on the beat when it is. */
@@ -1547,7 +1552,7 @@ const GAMES = {
 async function takeAction(key, a){
   let result = null;
   if (a.play && GAMES[a.play]){
-    try { result = await runMiniGame(GAMES[a.play]); }
+    try { result = await runMiniGame(GAMES[a.play], key); }
     catch (e) { console.warn('[otondo] mini-game failed:', e.message); }
   }
   doAction(s, key, Math.random, result);
@@ -1556,7 +1561,63 @@ async function takeAction(key, a){
   syncPlayer(s, { force: s.phase === 'ending' });
 }
 
-function runMiniGame(list){
+/* A game used to end the instant it resolved — the modal just vanished, which
+   read as the thing crashing rather than finishing. Now it signs off: what you
+   did, then a line pointing at something else to go and do.
+   The nudge is picked from REAL state, so it is never a lie. Telling somebody
+   with a full belle to go and eat is the fastest way to make the voice feel
+   generated. Urgency first: hunger and tiredness outrank a taunt. */
+const VERDICTS = {
+  good: ['Correct! Dem no born you yesterday.',
+         'You show yourself. Platoon dey hail you.',
+         'See as you sabi. Camp don meet correct person.'],
+  mid:  ['E manage. Soldier no go shout today.',
+         'You try small. Small more.',
+         'Na manage you manage am, but e pass fail.'],
+  poor: ['Chai. Make we no talk about am.',
+         'E no work. Camp hard, no be your fault.',
+         'Otondo things. You go learn.'],
+};
+
+const NUDGES = [
+  { to:'mami',      when:s => s.belle < 35,
+    text:'Go Mami market \u2014 e be like say hunger dey catch you.' },
+  { to:'dodge',     when:s => s.energy < 30,
+    text:'Your body don tire. Go sleep before your leg report you.' },
+  { to:'hustle',    when:s => s.money < 2000,
+    text:'Pocket don dry. Go hustle, allawee never enter.' },
+  { to:'manowar',   when:(s, sc) => sc >= 0.75 && !s.injured,
+    text:'Carry that your energy go Man O War \u2014 if dem born you well.' },
+  { to:'socialise', when:s => (s.friends || 0) < 3,
+    text:'You dey waka alone like JJC. Go gist with your platoon.' },
+  { to:'sports',    when:(s, sc) => sc >= 0.6,
+    text:'Dem dey call your platoon for sports. Go represent.' },
+  { to:'saed',      when:() => true,
+    text:'Go SAED class. Skill no dey kill person.' },
+  { to:'quiz',      when:() => true,
+    text:'Camp quiz dey tonight. Show dem say you read book.' },
+  { to:'parade',    when:() => true,
+    text:'Soldier dey find you for parade ground.' },
+];
+
+const pick = a => a[Math.floor(Math.random() * a.length)];
+
+/* The sign-off runs BEFORE doAction, so the action being played is still
+   counted as available. A nudge therefore needs actionsLeft > 1 — otherwise it
+   sends somebody to Mami market on an action they are about to spend, and the
+   row is locked by the time the modal closes. */
+function signOff(score, justPlayed){
+  const band = score >= 0.75 ? 'good' : score >= 0.4 ? 'mid' : 'poor';
+  const verdict = pick(VERDICTS[band]);
+  if (s.actionsLeft <= 1)
+    return { verdict, nudge: 'Na your last strength for today. Sleep, tomorrow go come.' };
+  const affordable = k => !ACTIONS[k].cost || s.money >= ACTIONS[k].cost;
+  const n = NUDGES.find(x =>
+    x.to !== justPlayed && unlocked(s, x.to) && affordable(x.to) && x.when(s, score));
+  return { verdict, nudge: n ? n.text : '' };
+}
+
+function runMiniGame(list, actionKey){
   const wrap = $('mgwrap'), host = $('mghost'), skip = $('mgSkip');
   wrap.classList.remove('hidden');
   /* Shuffle so neither game is always the one you are offered first. */
@@ -1572,6 +1633,20 @@ function runMiniGame(list){
       resolve(r);
     };
 
+    /* Skipping goes straight through — a verdict on a game you did not play
+       would be nonsense. */
+    const outro = r => {
+      const { verdict, nudge } = signOff(r.score || 0, actionKey);
+      host.innerHTML = `<div class="mg mg-out">
+        <p class="out-verdict">${esc(verdict)}</p>
+        ${r.detail ? `<p class="out-detail">${esc(r.detail)}</p>` : ''}
+        ${nudge ? `<p class="out-nudge">${esc(nudge)}</p>` : ''}
+        <button class="mami-done" id="outGo">Continue</button></div>`;
+      skip.textContent = '';
+      skip.onclick = null;
+      host.querySelector('#outGo').onclick = () => finish(r);
+    };
+
     const start = () => {
       const mine = ++run;                 // ignore a superseded game resolving late
       host.innerHTML = '';
@@ -1582,7 +1657,7 @@ function runMiniGame(list){
         : () => finish({ score: 0, detail: 'You sat this one out.' });
       /* The live state goes in so a game can price against real money and hand
          back exactly what was spent or earned. */
-      order[idx](host, s).then(r => { if (mine === run) finish(r); });
+      order[idx](host, s).then(r => { if (mine === run) outro(r); });
     };
     start();
   });
