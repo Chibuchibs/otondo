@@ -130,9 +130,9 @@ export const ACTIONS = {
   },
   sports: {
     label: 'Inter-platoon sports',
-    hint: 'Shoot for your platoon. You actually play this one.',
+    hint: 'Football or basketball. You actually play this one.',
     from: 11,
-    play: 'hoop',                     // the UI runs the mini-game first
+    play: 'sport',                    // the UI picks football or hoop at random
     run(s, rng, res) {
       /* Falls back to a roll if the mini-game could not load, so a failed
          module never blocks a day's action. */

@@ -605,16 +605,16 @@
 
 <script type="module">
 import { newGame, doAction, canDo, unlocked, ACTIONS, phaseOf, nextUnlock,
-         shareText, MAX_DAY } from './game.js?v=20261015112932';
+         shareText, MAX_DAY } from './game.js?v=20261015113332';
 
 /* Kept here, not exported from game.js: a new cross-file export breaks any
    client holding a cached game.js after a deploy. */
 const ALLAWEE_NOTE = 'Allawee ₦77,000 — e never enter.';
 import { initNet, joinCamp, syncPlayer, platoonBoard, recentChat, postChat,
          postSuggestion, reportMessage, awardBoard, myAwards, laughChat,
-         setPresence, campRoster, online } from './net.js?v=20261015112932';
-import { startMusic, stopMusic, musicOn, audioState, BEAT, BAR } from './audio.js?v=20261015112932';
-import { playHoop, playQuiz } from './minigames.js?v=20261015112932';
+         setPresence, campRoster, online } from './net.js?v=20261015113332';
+import { startMusic, stopMusic, musicOn, audioState, BEAT, BAR } from './audio.js?v=20261015113332';
+import { playHoop, playPenalty, playQuiz } from './minigames.js?v=20261015113332';
 
 /* Every dance animation is expressed in beats, so the steps are on-tempo
    whether or not the sound is playing — and genuinely on the beat when it is. */
@@ -1379,7 +1379,12 @@ function pushPresence(){
 
 /* Actions carrying a `play` run the mini-game first and hand its score to the
    state machine, so what you get is earned rather than rolled. */
-const GAMES = { hoop: playHoop, quiz: playQuiz };
+const GAMES = {
+  quiz: playQuiz,
+  /* Inter-platoon sports is football OR basketball, decided on the spot — so
+     the same action is not the same game twice running. */
+  sport: host => (Math.random() < 0.55 ? playPenalty : playHoop)(host),
+};
 
 async function takeAction(key, a){
   let result = null;

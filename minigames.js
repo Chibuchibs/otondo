@@ -129,6 +129,152 @@ export function playHoop(host) {
   });
 }
 
+/* ------------------------------------------------------------- penalty ---- */
+/* The skill is anticipation, not luck: the keeper never stops moving, and the
+   ball takes long enough to arrive that you must shoot where he WILL be, not
+   where he is. Three penalties, one tap each. */
+export function playPenalty(host) {
+  return new Promise(resolve => {
+    const W = 320, H = 240, KICKS = 3;
+    const GL = 54, GR = 266, GT = 46, GB = 132;      // goal mouth
+    host.innerHTML = `
+      <div class="mg">
+        <p class="mg-top"><b>Penalty spot</b><span id="mgInfo">Kick 1 of ${KICKS}</span></p>
+        <canvas id="mgCanvas" width="${W}" height="${H}"></canvas>
+        <p class="mg-hint">Tap where you want it. The keeper no dey sleep.</p>
+      </div>`;
+    const cv = host.querySelector('#mgCanvas'), x = cv.getContext('2d');
+    const info = host.querySelector('#mgInfo');
+
+    let kick = 0, scored = 0, done = false, t = 0;
+    let keeper = (GL + GR) / 2, dir = 1, speed = 2.3;
+    let ball = null, msg = '', msgT = 0, lunge = 0, reach = 0;
+
+    const newKick = () => {
+      ball = null;
+      speed = 2.1 + Math.random() * 1.4;             // a different keeper each time
+      dir = Math.random() < 0.5 ? 1 : -1;
+      /* How far he can throw himself, decided before the kick and unknown to
+         you. Without a dive the corners were nearly free — 3/3 every time by
+         just always aiming wide. */
+      reach = 30 + Math.random() * 50;      // 30-80: even the far post is not safe
+      lunge = 0;
+      info.textContent = `Kick ${Math.min(kick + 1, KICKS)} of ${KICKS} · ${scored} scored`;
+    };
+    newKick();
+
+    function draw() {
+      x.clearRect(0, 0, W, H);
+      x.fillStyle = '#cfe3f2'; x.fillRect(0, 0, W, H);            // sky
+      x.fillStyle = '#7fa864'; x.fillRect(0, GB, W, H - GB);      // pitch
+      x.strokeStyle = 'rgba(255,255,255,.5)'; x.lineWidth = 2;
+      x.beginPath(); x.moveTo(0, GB + 34); x.lineTo(W, GB + 34); x.stroke();
+
+      // goal frame
+      x.strokeStyle = '#fbf9f2'; x.lineWidth = 6;
+      x.beginPath(); x.moveTo(GL, GB); x.lineTo(GL, GT);
+      x.lineTo(GR, GT); x.lineTo(GR, GB); x.stroke();
+      // net
+      x.strokeStyle = 'rgba(255,255,255,.45)'; x.lineWidth = 1;
+      for (let i = GL + 10; i < GR; i += 16) {
+        x.beginPath(); x.moveTo(i, GT + 3); x.lineTo(i, GB - 2); x.stroke();
+      }
+      for (let j = GT + 12; j < GB; j += 14) {
+        x.beginPath(); x.moveTo(GL + 3, j); x.lineTo(GR - 3, j); x.stroke();
+      }
+
+      // the keeper, in green
+      const ky = GB - 40, kx = keeper + lunge;                    // lunge shows the save
+      x.fillStyle = '#0a7a43';
+      x.fillRect(kx - 13, ky, 26, 34);                            // body
+      x.fillRect(kx - 26, ky + 4, 13, 7);                         // arms out
+      x.fillRect(kx + 13, ky + 4, 13, 7);
+      x.fillStyle = '#8d5524';
+      x.beginPath(); x.arc(kx, ky - 9, 9, 0, 7); x.fill();        // head
+
+      // the taker
+      x.fillStyle = '#8aa863'; x.fillRect(150, H - 46, 14, 26);
+      x.fillStyle = '#fbf9f2'; x.fillRect(148, H - 66, 18, 22);
+      x.fillStyle = '#8d5524'; x.beginPath(); x.arc(157, H - 74, 9, 0, 7); x.fill();
+      x.fillStyle = '#fbf9f2'; x.beginPath();
+      x.ellipse(157, H - 78, 10, 7, 0, Math.PI, 0); x.fill();
+      x.fillStyle = '#0a7a43'; x.fillRect(146, H - 80, 22, 3);
+
+      if (ball) {
+        x.fillStyle = '#fbf9f2'; x.beginPath(); x.arc(ball.x, ball.y, 7, 0, 7); x.fill();
+        x.strokeStyle = '#333'; x.lineWidth = 1.4; x.stroke();
+      } else {
+        x.fillStyle = '#fbf9f2'; x.beginPath(); x.arc(170, H - 24, 7, 0, 7); x.fill();
+        x.strokeStyle = '#333'; x.lineWidth = 1.4; x.stroke();
+      }
+
+      if (msg && t < msgT + 55) {
+        x.fillStyle = msg === 'GOAL!' ? '#0a7a43' : '#b0432f';
+        x.font = '700 22px system-ui, sans-serif'; x.textAlign = 'center';
+        x.fillText(msg, W / 2, 30);
+        x.textAlign = 'left';
+      }
+    }
+
+    function tick() {
+      if (done) return;
+      t++;
+      keeper += dir * speed;
+      if (keeper < GL + 22) { keeper = GL + 22; dir = 1; }
+      if (keeper > GR - 22) { keeper = GR - 22; dir = -1; }
+
+      if (ball) {
+        ball.p += 0.035;
+        ball.x = ball.x0 + (ball.tx - ball.x0) * ball.p;
+        ball.y = ball.y0 + (ball.ty - ball.y0) * ball.p;
+        if (ball.p >= 1) {
+          const gap = Math.abs(keeper - ball.tx);
+          const saved = gap <= reach + 26;
+          lunge = saved ? Math.sign(ball.tx - keeper) * Math.min(reach, gap) : 0;
+          if (saved) { msg = 'SAVED'; }
+          else { scored++; msg = 'GOAL!'; }
+          msgT = t;
+          ball = null;
+          kick++;
+          setTimeout(() => { lunge = 0; }, 700);
+          if (kick >= KICKS) { setTimeout(finish, 900); done = false; }
+          else setTimeout(newKick, 850);
+        }
+      }
+      draw();
+      requestAnimationFrame(tick);
+    }
+
+    function shoot(px, py) {
+      if (ball || kick >= KICKS) return;
+      const tx = Math.max(GL + 12, Math.min(GR - 12, px));
+      const ty = Math.max(GT + 12, Math.min(GB - 8, py));
+      ball = { x0: 170, y0: H - 24, x: 170, y: H - 24, tx, ty, p: 0 };
+    }
+
+    const tap = e => {
+      e.preventDefault();
+      const r = cv.getBoundingClientRect();
+      const cx = (e.clientX - r.left) * (W / r.width);
+      const cy = (e.clientY - r.top)  * (H / r.height);
+      shoot(cx, cy);
+    };
+    cv.addEventListener('pointerdown', tap);
+
+    function finish() {
+      done = true;
+      cv.removeEventListener('pointerdown', tap);
+      const line = scored === KICKS ? 'Hat-trick. Keeper no see am at all.'
+                 : scored === 2    ? 'Two goals. Striker material.'
+                 : scored === 1    ? 'One goal. Manage am.'
+                 :                   'Keeper save everything. Chai.';
+      resolve({ score: scored / KICKS, detail: `${scored}/${KICKS} penalties. ${line}` });
+    }
+
+    tick();
+  });
+}
+
 /* ---------------------------------------------------------------- quiz ---- */
 /* Deliberately general Nigerian knowledge rather than NYSC trivia — the camp
    framing is already everywhere else, and this has to be answerable by anyone. */
