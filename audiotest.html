@@ -42,7 +42,7 @@ the chat.</p>
 <button class="copy" id="copy">Copy result</button>
 
 <script type="module">
-import { renderLoop, BAR } from './audio.js?v=20261015141658';
+import { renderLoop, BAR } from './audio.js?v=20261015141804';
 
 /* Each test isolates ONE layer. Read as a grid: if the sine is clean through
    Web Audio but static through the WAV element, the WAV decode is at fault; if
@@ -155,8 +155,13 @@ async function run(id) {
 document.addEventListener('click', async e => {
   const p = e.target.closest('[data-play]');
   if (p) {
+    p.textContent = 'Playing ' + p.dataset.play + '…';
     try { await run(p.dataset.play); }
     catch (err) { log('ERROR ' + p.dataset.play + ': ' + err.message); }
+    /* Refresh the readout here too — the context only exists once something
+       has played, so reporting before the first tap says nothing useful. */
+    report();
+    setTimeout(() => { p.textContent = 'Play ' + p.dataset.play; }, 5000);
     return;
   }
   const v = e.target.closest('[data-v]');
