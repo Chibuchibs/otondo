@@ -605,16 +605,16 @@
 
 <script type="module">
 import { newGame, doAction, canDo, unlocked, ACTIONS, phaseOf, nextUnlock,
-         shareText, MAX_DAY } from './game.js?v=20261015113428';
+         shareText, MAX_DAY } from './game.js?v=20261015114001';
 
 /* Kept here, not exported from game.js: a new cross-file export breaks any
    client holding a cached game.js after a deploy. */
 const ALLAWEE_NOTE = 'Allawee ₦77,000 — e never enter.';
 import { initNet, joinCamp, syncPlayer, platoonBoard, recentChat, postChat,
          postSuggestion, reportMessage, awardBoard, myAwards, laughChat,
-         setPresence, campRoster, online } from './net.js?v=20261015113428';
-import { startMusic, stopMusic, musicOn, audioState, BEAT, BAR } from './audio.js?v=20261015113428';
-import { playHoop, playPenalty, playQuiz } from './minigames.js?v=20261015113428';
+         setPresence, campRoster, online } from './net.js?v=20261015114001';
+import { startMusic, stopMusic, musicOn, audioState, BEAT, BAR } from './audio.js?v=20261015114001';
+import { playHoop, playPenalty, playQuiz } from './minigames.js?v=20261015114001';
 
 /* Every dance animation is expressed in beats, so the steps are on-tempo
    whether or not the sound is playing — and genuinely on the beat when it is. */
@@ -637,7 +637,7 @@ const ICONS = {register:'📋',parade:'🎖️',mami:'🍜',hustle:NAIRA,manowar
    outfit 0 = full khaki  ·  1 = white crested tee + khaki trousers
    outfit 2 = white tee under an open khaki shirt
    No crest or wordmark: illegible at this size, and it is a federal mark. */
-function corper(skin, scale, speed, delay, outfit = 0){
+function corper(skin, scale, speed, delay, outfit = 0, carry = 0){
   const TEE = '#fbf9f2', TRIM = '#0a7a43';
   const BOOT = '#e0762a', BOOT_D = '#c96620';      // the orange jungle boots
   /* The trousers are green, not khaki-brown — that and the cargo pockets are
@@ -645,13 +645,31 @@ function corper(skin, scale, speed, delay, outfit = 0){
   const TROU = '#8aa863', TROU_D = '#7b9856', POCKET = '#6d8a4b', BELT = '#5f7a42';
   const tee = outfit >= 1;
 
+  /* Shoulder tabs. Tiny, but epaulettes are the single detail that makes a
+     shirt read as a uniform rather than as a green top — and they survive being
+     drawn 30px wide. Not on the tee: vests do not have them. */
+  const epaulettes = tee && outfit !== 2 ? '' :
+    `<rect x="13" y="28.4" width="6" height="2.6" rx="1.3" fill="#5f7a42"/>
+     <rect x="27" y="28.4" width="6" height="2.6" rx="1.3" fill="#5f7a42"/>`;
+
+  /* Buttoned chest pockets with flaps — the other giveaway of a service shirt.
+     Only on the FULL shirt: on the open-shirt outfit the panels are narrow
+     side strips, so the pockets ended up floating on the white tee beneath. */
+  const pockets = outfit !== 0 ? '' :
+    `<rect x="15.6" y="34" width="5.6" height="5.4" rx="1" fill="#7f9c5c"/>
+     <rect x="15.6" y="33.4" width="5.6" height="2" rx="1" fill="#6d8a4b"/>
+     <rect x="24.8" y="34" width="5.6" height="5.4" rx="1" fill="#7f9c5c"/>
+     <rect x="24.8" y="33.4" width="5.6" height="2" rx="1" fill="#6d8a4b"/>`;
+
   const torso = tee
     ? `<rect x="14" y="28" width="18" height="25" rx="6" fill="${TEE}"/>
        <rect x="14" y="28" width="18" height="2.6" rx="1.3" fill="${TRIM}"/>
        <path d="M19.5 28h7l-3.5 4.5z" fill="${TRIM}"/>
-       <circle cx="23" cy="38" r="2.6" fill="${TRIM}" opacity=".85"/>`
+       <circle cx="23" cy="37.5" r="3.1" fill="${TRIM}" opacity=".9"/>
+       <circle cx="23" cy="37.5" r="1.3" fill="${TEE}" opacity=".85"/>`
     : `<rect x="14" y="28" width="18" height="25" rx="6" fill="#93b06d"/>
-       <path d="M19.5 28h7l-3.5 11z" fill="${TEE}"/>`;
+       <path d="M19.5 28h7l-3.5 11z" fill="${TEE}"/>
+       <rect x="22.6" y="30" width="0.9" height="22" fill="#7f9c5c"/>`;
 
   /* sleeves: white with a green cuff on the tee, plain khaki otherwise */
   const arm = (x, shade) => tee
@@ -671,18 +689,25 @@ function corper(skin, scale, speed, delay, outfit = 0){
     <ellipse cx="23" cy="81" rx="12" ry="2.6" fill="rgba(0,0,0,.16)"/>
     <g class="leg"><rect x="16" y="50" width="7.5" height="26" rx="3.4" fill="${TROU_D}"/>
       <rect x="16.3" y="58.5" width="5" height="6.4" rx="1.2" fill="${POCKET}"/>
+      <rect x="15" y="69.5" width="9" height="5" rx="1.6" fill="${BOOT}"/>
       <rect x="13.5" y="73" width="12" height="7" rx="3" fill="${BOOT}"/>
       <rect x="13.5" y="77.6" width="12" height="2.4" rx="1.2" fill="#2a2520"/></g>
     <g class="leg2"><rect x="22.5" y="50" width="7.5" height="26" rx="3.4" fill="${TROU}"/>
       <rect x="24.2" y="58.5" width="5" height="6.4" rx="1.2" fill="${POCKET}"/>
+      <rect x="22" y="69.5" width="9" height="5" rx="1.6" fill="${BOOT_D}"/>
       <rect x="20.5" y="73" width="12" height="7" rx="3" fill="${BOOT_D}"/>
       <rect x="20.5" y="77.6" width="12" height="2.4" rx="1.2" fill="#1f1b17"/></g>
     <g class="torso">
       <g class="arm">${arm(10.5, '#7f9c5c')}
         <circle cx="13.5" cy="52" r="3.6" fill="${skin}"/></g>
       <g class="arm2">${arm(29.5, '#93b06d')}
-        <circle cx="32.5" cy="52" r="3.6" fill="${skin}"/></g>
-      ${torso}${openShirt}
+        <circle cx="32.5" cy="52" r="3.6" fill="${skin}"/>
+        ${carry === 1 ? `<path d="M29 56h7l-.9 8h-5.2z" fill="#cf5b4a"/>
+             <rect x="28.6" y="55" width="7.8" height="1.8" rx=".9" fill="#b14b3c"/>
+             <path d="M30 55c0-2 5-2 5 0" stroke="#b14b3c" stroke-width="1" fill="none"/>`
+          : carry === 2 ? `<rect x="29.2" y="55" width="6.6" height="7.5" rx="1.4" fill="#4a6fa5"/>
+             <rect x="29.2" y="57" width="6.6" height="1.6" fill="#3b5a86"/>` : ''}</g>
+      ${torso}${openShirt}${pockets}${epaulettes}
       <rect x="14" y="44" width="18" height="3.6" rx="1" fill="${BELT}"/>
       <rect x="21.5" y="44" width="3.4" height="3.6" rx=".6" fill="#d7dbd0"/>
       <circle cx="23" cy="16" r="9.6" fill="${skin}"/>
@@ -862,12 +887,16 @@ function traffic(el){
 function fillScene(el, n, big){
   const extra = el.querySelector('.sign') ? '' : '';
   const OUTFITS = [1, 0, 2, 1];        // mostly the white tee, as in camp
+  /* A little carried kit on some of them: the camp bucket and the kit bag are
+     as much a part of the look as the khaki. */
+  const CARRY = [0, 1, 0, 2];
   const figs = Array.from({length:n}, (_,i) =>
     corper(SKINS[i % SKINS.length],
            big ? 1 : (0.66 + (i%3)*0.17),
            big ? 7 : (10.5 + i*3.2),
            big ? 0 : -(i * 4.7),
-           big ? 1 : OUTFITS[i % OUTFITS.length]));
+           big ? 1 : OUTFITS[i % OUTFITS.length],
+           big ? 0 : CARRY[i % CARRY.length]));
   el.insertAdjacentHTML('beforeend', figs.join('') + extra);
 }
 roadside($('scene'));

@@ -44,12 +44,23 @@ export function playHoop(host) {
         x.beginPath(); x.moveTo(hoopX + i * 6, 88); x.lineTo(hoopX + i * 3, 108); x.stroke();
       }
 
-      // the shooter
-      x.fillStyle = '#8aa863'; x.fillRect(38, H - 96, 16, 42);     // trousers
-      x.fillStyle = '#fbf9f2'; x.fillRect(36, H - 126, 20, 32);    // tee
+      // the shooter, in the same sports kit
+      x.fillStyle = '#fbf9f2'; x.fillRect(37, H - 96, 18, 17);     // white shorts
+      x.fillStyle = '#0a7a43'; x.fillRect(37, H - 96, 18, 2.4);    // waistband
+      x.fillStyle = '#8d5524'; x.fillRect(39, H - 79, 7, 7);       // bare thigh
+      x.fillRect(48, H - 79, 7, 7);
+      x.fillStyle = '#fbf9f2'; x.fillRect(39, H - 72, 7, 7);       // white socks
+      x.fillRect(48, H - 72, 7, 7);
+      x.fillStyle = '#f2efe4'; x.fillRect(37, H - 66, 10, 5);      // trainers
+      x.fillRect(47, H - 66, 10, 5);
+      x.fillStyle = '#5a5a5a'; x.fillRect(37, H - 62, 10, 2);      // soles
+      x.fillRect(47, H - 62, 10, 2);
+      x.fillStyle = '#fbf9f2'; x.fillRect(36, H - 126, 20, 32);    // vest
+      x.fillStyle = '#0a7a43'; x.fillRect(36, H - 126, 20, 2.6);   // collar
+      x.beginPath(); x.arc(46, H - 114, 3.4, 0, 7); x.fill();      // crest
       x.fillStyle = '#8d5524'; x.beginPath(); x.arc(46, H - 136, 11, 0, 7); x.fill();
-      x.fillStyle = '#fbf9f2'; x.beginPath();
-      x.ellipse(46, H - 140, 12, 8, 0, Math.PI, 0); x.fill();      // white cap
+      x.fillStyle = '#fbf9f2'; x.beginPath();                      // white cap
+      x.ellipse(46, H - 140, 12, 8, 0, Math.PI, 0); x.fill();
       x.fillStyle = '#0a7a43'; x.fillRect(33, H - 143, 26, 4);
 
       if (ball) { x.fillStyle = '#e0762a'; x.beginPath(); x.arc(ball.x, ball.y, 8, 0, 7); x.fill();
@@ -157,7 +168,12 @@ export function playPenalty(host) {
       /* How far he can throw himself, decided before the kick and unknown to
          you. Without a dive the corners were nearly free — 3/3 every time by
          just always aiming wide. */
-      reach = 30 + Math.random() * 50;      // 30-80: even the far post is not safe
+      /* 15-40. The previous 30-80 was a genuine bug: save radius is reach+26,
+         so a high roll gave him 106px either side against a 188px goal — near
+         the middle he covered the WHOLE goal and no shot could score. At 15-40
+         there is never an unwinnable kick, and shooting the corners scores
+         about three times in four. */
+      reach = 15 + Math.random() * 25;
       lunge = 0;
       info.textContent = `Kick ${Math.min(kick + 1, KICKS)} of ${KICKS} · ${scored} scored`;
     };
@@ -192,11 +208,23 @@ export function playPenalty(host) {
       x.fillStyle = '#8d5524';
       x.beginPath(); x.arc(kx, ky - 9, 9, 0, 7); x.fill();        // head
 
-      // the taker
-      x.fillStyle = '#8aa863'; x.fillRect(150, H - 46, 14, 26);
-      x.fillStyle = '#fbf9f2'; x.fillRect(148, H - 66, 18, 22);
+      /* Sports kit, not the khaki: camp PT and matches are played in the white
+         crested vest and white shorts, with canvas shoes. */
+      x.fillStyle = '#fbf9f2'; x.fillRect(149, H - 46, 16, 15);     // white shorts
+      x.fillStyle = '#0a7a43'; x.fillRect(149, H - 46, 16, 2);      // waistband
+      x.fillStyle = '#8d5524'; x.fillRect(150, H - 31, 6, 5);       // bare thigh
+      x.fillRect(158, H - 31, 6, 5);
+      x.fillStyle = '#fbf9f2'; x.fillRect(150, H - 26, 6, 5);       // white socks
+      x.fillRect(158, H - 26, 6, 5);
+      x.fillStyle = '#f2efe4'; x.fillRect(148, H - 22, 9, 4);       // trainers
+      x.fillRect(157, H - 22, 9, 4);
+      x.fillStyle = '#5a5a5a'; x.fillRect(148, H - 19, 9, 1.6);     // soles
+      x.fillRect(157, H - 19, 9, 1.6);
+      x.fillStyle = '#fbf9f2'; x.fillRect(148, H - 66, 18, 22);     // vest
+      x.fillStyle = '#0a7a43'; x.fillRect(148, H - 66, 18, 2.4);    // collar
+      x.beginPath(); x.arc(157, H - 56, 3, 0, 7); x.fill();         // crest
       x.fillStyle = '#8d5524'; x.beginPath(); x.arc(157, H - 74, 9, 0, 7); x.fill();
-      x.fillStyle = '#fbf9f2'; x.beginPath();
+      x.fillStyle = '#fbf9f2'; x.beginPath();                        // white cap
       x.ellipse(157, H - 78, 10, 7, 0, Math.PI, 0); x.fill();
       x.fillStyle = '#0a7a43'; x.fillRect(146, H - 80, 22, 3);
 
