@@ -6,7 +6,7 @@
 /* ---------------------------------------------------------------- hoop ---- */
 export function playHoop(host) {
   return new Promise(resolve => {
-    const W = 320, H = 240, SHOTS = 3;
+    const W = 320, H = 240, SHOTS = 5;
     host.innerHTML = `
       <div class="mg">
         <p class="mg-top"><b>Camp court</b><span id="mgInfo">Shot 1 of ${SHOTS}</span></p>
@@ -16,12 +16,20 @@ export function playHoop(host) {
     const cv = host.querySelector('#mgCanvas'), x = cv.getContext('2d');
     const info = host.querySelector('#mgInfo');
 
-    let shot = 0, made = 0, power = 0, rising = true, charging = false;
+    let shot = 0, made = 0, made0 = 0, charging = false, chargeFrom = 0;
     let ball = null, hoopX = 0, done = false;
+    /* Same fix as the parade: the meter used to fill per frame, so it charged
+       at double speed on a 120Hz screen. */
+    const CHARGE = 1100;                 // ms for a full up-and-down sweep
+    const powerNow = () => {
+      if (!charging) return 0;
+      const u = ((performance.now() - chargeFrom) % CHARGE) / CHARGE;
+      return u < 0.5 ? u * 2 : 2 - u * 2;
+    };
 
     const newShot = () => {
       hoopX = 190 + Math.random() * 90;      // the distance changes every time
-      power = 0; rising = true; ball = null;
+      charging = false; ball = null;
       info.textContent = `Shot ${Math.min(shot + 1, SHOTS)} of ${SHOTS} · ${made} in`;
     };
     newShot();
@@ -69,18 +77,16 @@ export function playHoop(host) {
 
       // power meter
       x.fillStyle = 'rgba(0,0,0,.12)'; x.fillRect(16, 18, 120, 12);
-      x.fillStyle = power > .82 ? '#c0392b' : '#0a7a43';
-      x.fillRect(16, 18, 120 * power, 12);
+      const p = powerNow();
+      x.fillStyle = p > .82 ? '#c0392b' : '#0a7a43';
+      x.fillRect(16, 18, 120 * p, 12);
       x.strokeStyle = 'rgba(0,0,0,.25)'; x.lineWidth = 1; x.strokeRect(16, 18, 120, 12);
     }
 
     function tick() {
-      if (done) return;
-      if (charging) {
-        power += rising ? 0.018 : -0.018;   // ~0.9s a sweep: tight, not twitchy
-        if (power >= 1) { power = 1; rising = false; }
-        if (power <= 0) { power = 0; rising = true; }
-      }
+      /* Bail if the canvas has been removed — switching to the other game
+         detaches it, and without this the old loop runs forever. */
+      if (done || !cv.isConnected) return;
       if (ball) {
         ball.x += ball.vx; ball.y += ball.vy; ball.vy += 0.42;
         /* Counted on the way DOWN only, so a flat drive through the ring does
@@ -106,19 +112,22 @@ export function playHoop(host) {
          bottom quarter of the meter — charge to mid-power, as anyone naturally
          would, and the ball always sailed over. This puts the sweet spot at
          0.44-0.72, mid-bar, with ~17% of the meter scoring. */
-      const v = 5 + power * 5.5;
+      const v = 5 + lastPower * 5.5;
       ball = { x: 62, y: H - 112, vx: v * 0.76, vy: -v * 0.86, scored: false };
     }
 
-    const down = e => { e.preventDefault(); if (!ball) { charging = true; } };
-    const up   = e => { e.preventDefault(); if (charging) { charging = false; shoot(); } };
+    let lastPower = 0;
+    const down = e => { e.preventDefault();
+      if (!ball) { charging = true; chargeFrom = performance.now(); } };
+    const up   = e => { e.preventDefault();
+      if (charging) { lastPower = powerNow(); charging = false; shoot(); } };
     cv.addEventListener('pointerdown', down);
     window.addEventListener('pointerup', up);
     const key = e => {
       if (e.code !== 'Space' && e.key !== ' ') return;
       e.preventDefault();
-      if (e.type === 'keydown' && !ball && !charging) charging = true;
-      if (e.type === 'keyup'   && charging) { charging = false; shoot(); }
+      if (e.type === 'keydown' && !ball && !charging) { charging = true; chargeFrom = performance.now(); }
+      if (e.type === 'keyup'   && charging) { lastPower = powerNow(); charging = false; shoot(); }
     };
     window.addEventListener('keydown', key);
     window.addEventListener('keyup', key);
@@ -130,10 +139,229 @@ export function playHoop(host) {
       window.removeEventListener('keydown', key);
       window.removeEventListener('keyup', key);
       const line = made === SHOTS ? 'You no miss at all. Camp dey hail you.'
-                 : made === 2    ? 'Two out of three. Solid.'
-                 : made === 1    ? 'One in. You try small.'
-                 :                 'You miss all three. Na so e dey start.';
+                 : made >= 3     ? 'Sharp shooter.'
+                 : made >= 1     ? 'You try small.'
+                 :                 'You miss everything. Na so e dey start.';
       resolve({ score: made / SHOTS, detail: `${made}/${SHOTS} baskets. ${line}` });
+    }
+
+    tick();
+  });
+}
+
+/* -------------------------------------------------------- registration ---- */
+/* Collect your kit off the counter before the queue moves on. The items shuffle
+   every round, so it is attention rather than muscle memory. */
+const KIT = [
+  { id:'bag',   name:'kit bag',
+    svg:`<rect x="7" y="16" width="26" height="20" rx="3" fill="#4a6fa5"/>
+         <rect x="7" y="21" width="26" height="4" fill="#3b5a86"/>
+         <path d="M15 16v-3a5 5 0 0 1 10 0v3" stroke="#3b5a86" stroke-width="2.5" fill="none"/>` },
+  { id:'khaki', name:'khaki uniform',
+    svg:`<rect x="10" y="12" width="20" height="26" rx="3" fill="#93b06d"/>
+         <path d="M16 12h8l-4 7z" fill="#fbf9f2"/>
+         <rect x="9" y="14" width="5" height="3" rx="1.5" fill="#5f7a42"/>
+         <rect x="26" y="14" width="5" height="3" rx="1.5" fill="#5f7a42"/>` },
+  { id:'boots', name:'jungle boots',
+    svg:`<rect x="6" y="22" width="13" height="9" rx="2" fill="#e0762a"/>
+         <rect x="6" y="29" width="13" height="3" rx="1.5" fill="#2a2520"/>
+         <rect x="21" y="22" width="13" height="9" rx="2" fill="#c96620"/>
+         <rect x="21" y="29" width="13" height="3" rx="1.5" fill="#1f1b17"/>` },
+  { id:'card',  name:'camp ID card',
+    svg:`<rect x="8" y="14" width="24" height="18" rx="2.5" fill="#fbf9f2" stroke="#ddd3b8" stroke-width="1.5"/>
+         <circle cx="15" cy="21" r="3.5" fill="#8d5524"/>
+         <rect x="21" y="19" width="8" height="2" fill="#b9ae7c"/>
+         <rect x="21" y="23" width="8" height="2" fill="#b9ae7c"/>` },
+  { id:'sheet', name:'camp itinerary',
+    svg:`<rect x="10" y="11" width="20" height="26" rx="2" fill="#fbf9f2" stroke="#ddd3b8" stroke-width="1.5"/>
+         <rect x="13" y="16" width="14" height="2" fill="#0a7a43"/>
+         <rect x="13" y="21" width="14" height="2" fill="#b9ae7c"/>
+         <rect x="13" y="26" width="10" height="2" fill="#b9ae7c"/>` },
+];
+
+export function playRegister(host) {
+  return new Promise(resolve => {
+    const ROUNDS = 4, LIMIT = 3400;
+    const order = [...KIT].sort(() => Math.random() - 0.5).slice(0, ROUNDS);
+    let i = 0, got = 0, timer = null, deadline = 0, raf = 0;
+
+    host.innerHTML = `<div class="mg">
+      <p class="mg-top"><b>Camp registration</b><span id="mgInfo"></span></p>
+      <p class="reg-ask" id="regAsk"></p>
+      <div class="reg-bar"><i id="regFill"></i></div>
+      <div class="reg-grid" id="regGrid"></div>
+      <p class="mg-hint" id="regFb">Three hours for queue. Grab the right thing.</p></div>`;
+    const ask = host.querySelector('#regAsk'), grid = host.querySelector('#regGrid');
+    const info = host.querySelector('#mgInfo'), fb = host.querySelector('#regFb');
+    const fill = host.querySelector('#regFill');
+
+    function round() {
+      const want = order[i];
+      const shown = [...KIT].sort(() => Math.random() - 0.5).slice(0, 4);
+      if (!shown.find(k => k.id === want.id)) shown[0] = want;
+      shown.sort(() => Math.random() - 0.5);
+      info.textContent = `${i + 1} of ${ROUNDS} · ${got} collected`;
+      ask.textContent = `Collect your ${want.name}`;
+      grid.innerHTML = shown.map(k =>
+        `<button class="reg-item" data-id="${k.id}">
+           <svg viewBox="0 0 40 48" aria-hidden="true">${k.svg}</svg>
+           <span>${k.name}</span></button>`).join('');
+      deadline = performance.now() + LIMIT;
+      cancelAnimationFrame(raf);
+      const sweep = () => {
+        const left = Math.max(0, deadline - performance.now());
+        fill.style.width = (100 * left / LIMIT) + '%';
+        if (left <= 0) { pick(null); return; }
+        raf = requestAnimationFrame(sweep);
+      };
+      sweep();
+    }
+
+    function pick(id) {
+      cancelAnimationFrame(raf);
+      clearTimeout(timer);
+      const want = order[i];
+      const right = id === want.id;
+      if (right) got++;
+      grid.querySelectorAll('.reg-item').forEach(b => {
+        b.disabled = true;
+        if (b.dataset.id === want.id) b.classList.add('right');
+        else if (b.dataset.id === id) b.classList.add('wrong');
+      });
+      fb.textContent = right ? 'Got it.' : id ? `That is not it.` : 'Queue moved on. Gone.';
+      timer = setTimeout(() => {
+        i++;
+        if (i >= ROUNDS) {
+          const line = got === ROUNDS ? 'Full kit collected. You don enter camp proper.'
+                     : got >= 2       ? `You collected ${got} of ${ROUNDS}. Manage like that.`
+                     :                  'You barely collected anything. Queue win you.';
+          resolve({ score: got / ROUNDS, detail: line });
+          return;
+        }
+        fb.textContent = '\u00a0';
+        round();
+      }, 800);
+    }
+
+    grid.addEventListener('click', e => {
+      const b = e.target.closest('.reg-item');
+      if (b && !b.disabled) pick(b.dataset.id);
+    });
+    round();
+  });
+}
+
+/* ------------------------------------------------------------- parade ----- */
+/* Marching is a rhythm problem. Tap as the marker crosses the green band to
+   take a step in time; mistime it and you break step and lose ground. */
+export function playParade(host) {
+  return new Promise(resolve => {
+    const W = 320, H = 240, STEPS = 12;
+    host.innerHTML = `
+      <div class="mg">
+        <p class="mg-top"><b>Morning parade</b><span id="mgInfo">0 of ${STEPS} steps</span></p>
+        <canvas id="mgCanvas" width="${W}" height="${H}"></canvas>
+        <p class="mg-hint">Tap in step as the marker hits the green.</p>
+      </div>`;
+    const cv = host.querySelector('#mgCanvas'), x = cv.getContext('2d');
+    const info = host.querySelector('#mgInfo');
+
+    let steps = 0, missed = 0, done = false, flash = 0, flashGood = false;
+    const BAND = 0.16;                   // half-width of the in-step window
+    /* Driven by the CLOCK, not the frame count. Per-frame movement ran twice as
+       fast on a 120Hz phone as on a 60Hz one, and froze entirely whenever the
+       browser throttled frames — which made the parade unwinnable. */
+    const SWEEP = 1500;                  // ms for one there-and-back
+    const t0 = performance.now();
+    const marker = () => {
+      const u = ((performance.now() - t0) % SWEEP) / SWEEP;
+      return u < 0.5 ? u * 2 : 2 - u * 2;
+    };
+
+    function draw() {
+      x.clearRect(0, 0, W, H);
+      x.fillStyle = '#e8f0f6'; x.fillRect(0, 0, W, H);
+      // the sun, because the sun is the point
+      x.fillStyle = '#f3c969'; x.beginPath(); x.arc(286, 30, 20, 0, 7); x.fill();
+      x.strokeStyle = 'rgba(243,201,105,.55)'; x.lineWidth = 3;
+      for (let a = 0; a < 8; a++){ const r = a * Math.PI / 4;
+        x.beginPath(); x.moveTo(286 + Math.cos(r) * 25, 30 + Math.sin(r) * 25);
+        x.lineTo(286 + Math.cos(r) * 32, 30 + Math.sin(r) * 32); x.stroke(); }
+      x.fillStyle = '#c9b88e'; x.fillRect(0, 150, W, H - 150);     // parade ground
+
+      // A and B markers
+      x.fillStyle = '#0a7a43'; x.fillRect(16, 128, 4, 34);
+      x.fillRect(W - 24, 128, 4, 34);
+      x.font = '700 11px system-ui, sans-serif'; x.fillText('A', 14, 124); x.fillText('B', W - 27, 124);
+
+      // the squad, advancing with every good step
+      /* Start far enough in that the rear of the squad is not clipped off the
+         left edge — at 24 the third figure sat at -6. */
+      const px = 52 + (W - 104) * (steps / STEPS);
+      for (let n = 0; n < 3; n++){
+        const bx = px - n * 14, sway = Math.sin((steps + n) * 1.6) * 2;
+        x.fillStyle = '#8aa863'; x.fillRect(bx - 5, 136 + sway, 10, 16);
+        x.fillStyle = '#fbf9f2'; x.fillRect(bx - 6, 120 + sway, 12, 17);
+        x.fillStyle = '#0a7a43'; x.fillRect(bx - 6, 120 + sway, 12, 2.4);
+        x.fillStyle = '#8d5524'; x.beginPath(); x.arc(bx, 114 + sway, 6, 0, 7); x.fill();
+        x.fillStyle = '#fbf9f2'; x.beginPath();
+        x.ellipse(bx, 112 + sway, 7, 5, 0, Math.PI, 0); x.fill();
+        x.fillStyle = '#e0762a'; x.fillRect(bx - 6, 150 + sway, 12, 4);
+      }
+
+      // rhythm bar
+      const by = 196, bw = W - 48;
+      x.fillStyle = 'rgba(0,0,0,.1)'; x.fillRect(24, by, bw, 16);
+      x.fillStyle = '#d9ece1';
+      x.fillRect(24 + bw * (0.5 - BAND), by, bw * BAND * 2, 16);
+      x.fillStyle = '#0a7a43';
+      x.fillRect(24 + bw * marker() - 2, by - 4, 4, 24);
+      x.strokeStyle = 'rgba(0,0,0,.18)'; x.lineWidth = 1; x.strokeRect(24, by, bw, 16);
+
+      if (flash > 0) {
+        x.fillStyle = flashGood ? '#0a7a43' : '#b0432f';
+        x.font = '700 18px system-ui, sans-serif'; x.textAlign = 'center';
+        x.fillText(flashGood ? 'IN STEP' : 'OUT OF STEP', W / 2, 178);
+        x.textAlign = 'left';
+        flash--;
+      }
+    }
+
+    function tick() {
+      if (done || !cv.isConnected) return;
+      draw();
+      requestAnimationFrame(tick);
+    }
+
+    function step() {
+      if (done) return;
+      const good = Math.abs(marker() - 0.5) <= BAND;
+      flash = 26; flashGood = good;
+      /* A miss costs you the step but never takes one back. Decrementing meant
+         anyone tapping off the beat went backwards and could never reach B at
+         all — the score already punishes sloppiness. */
+      if (good) steps++; else missed++;
+      info.textContent = `${steps} of ${STEPS} steps`;
+      if (steps >= STEPS) finish();
+    }
+
+    const tap = e => { e.preventDefault(); step(); };
+    cv.addEventListener('pointerdown', tap);
+    const key = e => { if (e.code === 'Space' || e.key === ' ') { e.preventDefault(); step(); } };
+    window.addEventListener('keydown', key);
+
+    /* A floor on the score: reaching B at all is worth something, and a parade
+       you can fail outright would just be annoying. */
+    function finish() {
+      done = true;
+      cv.removeEventListener('pointerdown', tap);
+      window.removeEventListener('keydown', key);
+      const sc = Math.max(0.25, 1 - missed / 14);
+      const line = missed === 0 ? 'Perfect step from A to B. Soldier nod at you.'
+                 : missed <= 3  ? 'You reached B, mostly in step.'
+                 : missed <= 7  ? 'You wobbled but you got there.'
+                 :                'Soldier shout your name twice. You still reach.';
+      resolve({ score: sc, detail: `Parade: ${line}` });
     }
 
     tick();
@@ -146,7 +374,7 @@ export function playHoop(host) {
    where he is. Three penalties, one tap each. */
 export function playPenalty(host) {
   return new Promise(resolve => {
-    const W = 320, H = 240, KICKS = 3;
+    const W = 320, H = 240, KICKS = 5;
     const GL = 54, GR = 266, GT = 46, GB = 132;      // goal mouth
     host.innerHTML = `
       <div class="mg">
@@ -245,7 +473,7 @@ export function playPenalty(host) {
     }
 
     function tick() {
-      if (done) return;
+      if (done || !cv.isConnected) return;
       t++;
       keeper += dir * speed;
       if (keeper < GL + 22) { keeper = GL + 22; dir = 1; }
@@ -292,9 +520,9 @@ export function playPenalty(host) {
     function finish() {
       done = true;
       cv.removeEventListener('pointerdown', tap);
-      const line = scored === KICKS ? 'Hat-trick. Keeper no see am at all.'
-                 : scored === 2    ? 'Two goals. Striker material.'
-                 : scored === 1    ? 'One goal. Manage am.'
+      const line = scored === KICKS ? 'Perfect. Keeper no see am at all.'
+                 : scored >= 3     ? 'Striker material.'
+                 : scored >= 1     ? 'Manage am.'
                  :                   'Keeper save everything. Chai.';
       resolve({ score: scored / KICKS, detail: `${scored}/${KICKS} penalties. ${line}` });
     }

@@ -24,27 +24,26 @@ const chance = (rng, p) => rng() < p;
 export const ACTIONS = {
   register: {
     label: 'Join the registration queue',
-    hint: 'Documents, kit, platoon posting. Hours of it.',
+    hint: 'Collect your kit before the queue moves on.',
     from: 1, to: 3,
-    run(s, rng) {
-      const got = pick(rng, [
-        'collected your khaki and two white tees',
-        'collected jungle boots one size too big',
-        'finally got your camp ID card',
-        'did your medical screening',
-      ]);
-      const cred = 2 + Math.floor(rng() * 4);
+    play: 'register',
+    run(s, rng, res) {
+      const sc = res ? res.score : 0.5;
+      const cred = 2 + Math.round(sc * 8);
+      if (sc >= 0.99) s.friends += 1;
       apply(s, { energy: -14, belle: -8, cred });
-      return `Three hours for queue. You ${got}. +${cred} credibility.`;
+      return `${res ? res.detail : 'You queued for hours.'} +${cred} credibility.`;
     },
   },
   parade: {
     label: 'Fall in for parade',
-    hint: 'Hot sun. Soldier watching.',
-    run(s, rng) {
-      const cred = 6 + Math.floor(rng() * 5);
+    hint: 'March A to B in step. Hot sun. Soldier watching.',
+    play: 'parade',
+    run(s, rng, res) {
+      const sc = res ? res.score : 0.6;
+      const cred = 4 + Math.round(sc * 12);
       apply(s, { energy: -18, belle: -12, cred });
-      return `You stood for parade under that sun. +${cred} credibility.`;
+      return `${res ? res.detail : 'You stood for parade under that sun.'} +${cred} credibility.`;
     },
   },
   mami: {
@@ -84,7 +83,6 @@ export const ACTIONS = {
   manowar: {
     label: 'Man O War drill',
     hint: 'Big credibility. Bigger risk.',
-    from: 4,
     run(s, rng) {
       if (chance(rng, 0.22)) {
         s.injured = true;
@@ -110,7 +108,7 @@ export const ACTIONS = {
   saed: {
     label: 'SAED class',
     hint: 'Learn a trade. Materials cost ₦.',
-    from: 4, cost: 700,
+    cost: 700,
     run(s, rng) {
       const skill = pick(rng, ['bead making', 'soap making', 'photography',
                                'catering', 'ICT', 'fashion design', 'barbing']);
@@ -149,7 +147,6 @@ export const ACTIONS = {
   quiz: {
     label: 'Camp quiz night',
     hint: 'Five questions. Nigeria, culture, history.',
-    from: 6,
     play: 'quiz',
     run(s, rng, res) {
       const sc = res ? res.score : rng() * 0.6;
@@ -168,7 +165,7 @@ export const ACTIONS = {
   social: {
     label: 'Social night',
     hint: 'Talent show, Mr Macho, Miss Camp. Costs small.',
-    from: 11, cost: 400,
+    cost: 400,
     run(s, rng) {
       if (chance(rng, 0.3)) {
         apply(s, { energy: -12, cred: -6 });
