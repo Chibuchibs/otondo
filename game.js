@@ -91,12 +91,14 @@ export const ACTIONS = {
   },
   socialise: {
     label: 'Socialise',
-    hint: 'NCCF, variety night, platoon gist',
-    run(s, rng) {
-      s.friends += 1;
-      const cred = 4 + Math.floor(rng() * 6);
+    hint: 'Camp gist. Say the right thing.',
+    play: 'socialise',
+    run(s, rng, res) {
+      const sc = res ? res.score : 0.6;
+      s.friends += res ? (res.friends || 0) : 1;
+      const cred = 2 + Math.round(sc * 10);
       apply(s, { energy: -8, cred });
-      return `You joined the gist. Platoon ${s.platoon} knows your name now. +${cred} credibility.`;
+      return `${res ? res.detail : 'You joined the gist.'} +${cred} credibility.`;
     },
   },
   saed: {
@@ -172,12 +174,14 @@ export const ACTIONS = {
   },
   rehearse: {
     label: 'Rehearse passing out',
-    hint: 'Final parade. Get the march right.',
+    hint: 'Obey the drill. Mind the trick commands.',
     from: 18,
-    run(s, rng) {
-      const cred = 5 + Math.floor(rng() * 5);
+    play: 'rehearse',
+    run(s, rng, res) {
+      const sc = res ? res.score : 0.6;
+      const cred = 3 + Math.round(sc * 14);
       apply(s, { energy: -15, belle: -8, cred });
-      return `Rehearsal for the passing out parade. Your line finally straight. +${cred} credibility.`;
+      return `${res ? res.detail : 'Rehearsal for the passing out parade.'} +${cred} credibility.`;
     },
   },
   dodge: {

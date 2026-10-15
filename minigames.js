@@ -1022,6 +1022,187 @@ export function playDodge(host) {
   });
 }
 
+/* ----------------------------------------------------------- socialise ---- */
+/* Camp gist. Someone says something and you pick your reply. There is no
+   factual answer here — it is about reading the room, which is why it is
+   scored on friends made rather than on being right. */
+const GIST = [
+  { say: 'Platoon mate: "Abeg, borrow me 2k. I go pay you after allawee."',
+    opts: [
+      ['"My brother, I don tell you — allawee never enter for me too."', 2],
+      ['"Take am. No pay me back."', 1],
+      ['"Who are you again?"', 0] ] },
+  { say: 'Somebody from your platoon: "You dey come NCCF tonight?"',
+    opts: [
+      ['"I dey come. Save space for me."', 2],
+      ['"Depends. Dem go share food?"', 1],
+      ['"No. I dey sleep."', 0] ] },
+  { say: 'Corper beside you at Mami: "This indomie no sweet at all."',
+    opts: [
+      ['"Na the hunger dey sweet, no be the indomie."', 2],
+      ['"Try the boli side. Madam sabi."', 1],
+      ['"Then why you dey chop am?"', 0] ] },
+  { say: 'Your bunkmate at 2am: "You dey awake? I no fit sleep."',
+    opts: [
+      ['"Same. Make we gist small."', 2],
+      ['"Count the ceiling. Na so I take dey do."', 1],
+      ['"Bugle go blow by 4:30. Abeg."', 0] ] },
+  { say: 'Platoon leader: "We need one person for the drama for social night."',
+    opts: [
+      ['"I fit try. Wetin be the role?"', 2],
+      ['"Give am to Chidi. He get mouth."', 1],
+      ['"Count me out completely."', 0] ] },
+  { say: 'Somebody: "Which state you think dem go post you?"',
+    opts: [
+      ['"Anywhere wey get network, I don happy."', 2],
+      ['"I dey pray for Lagos but I dey prepare for Zamfara."', 2],
+      ['"I no wan talk about am."', 0] ] },
+  { say: 'Soldier pass. Corper beside you whisper: "Oga dey look us."',
+    opts: [
+      ['Straighten up and say nothing.', 2],
+      ['Whisper back: "Make we just dey move."', 1],
+      ['Laugh out loud.', 0] ] },
+];
+
+export function playSocialise(host) {
+  return new Promise(resolve => {
+    const N = 5;
+    const picked = [...GIST].sort(() => Math.random() - 0.5).slice(0, N);
+    let i = 0, points = 0, locked = false;
+
+    host.innerHTML = `<div class="mg">
+      <p class="mg-top"><b>Camp gist</b><span id="mgInfo"></span></p>
+      <p class="gist-say" id="gistSay"></p>
+      <div class="gist-opts" id="gistOpts"></div>
+      <p class="mg-hint" id="gistFb">Read the room.</p></div>`;
+    const say = host.querySelector('#gistSay'), opts = host.querySelector('#gistOpts');
+    const info = host.querySelector('#mgInfo'), fb = host.querySelector('#gistFb');
+
+    const esc = t => String(t).replace(/[&<>"]/g, c =>
+      ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+    function render() {
+      const it = picked[i];
+      info.textContent = `${i + 1} of ${N}`;
+      say.textContent = it.say;
+      const shuffled = [...it.opts].sort(() => Math.random() - 0.5);
+      opts.innerHTML = shuffled.map(([t, v], n) =>
+        `<button class="gist-opt" data-v="${v}">${esc(t)}</button>`).join('');
+      locked = false;
+    }
+
+    opts.addEventListener('click', e => {
+      const b = e.target.closest('.gist-opt');
+      if (!b || locked) return;
+      locked = true;
+      const v = +b.dataset.v;
+      points += v;
+      opts.querySelectorAll('.gist-opt').forEach(x => x.disabled = true);
+      b.classList.add(v === 2 ? 'right' : v === 1 ? 'okay' : 'wrong');
+      fb.textContent = v === 2 ? 'That landed well.'
+                     : v === 1 ? 'Fair enough.'
+                     :           'Awkward. Dem look you somehow.';
+      setTimeout(() => {
+        i++;
+        if (i >= N) {
+          const sc = points / (N * 2);
+          const line = sc >= 0.85 ? 'Everybody for your platoon sabi you now.'
+                     : sc >= 0.5  ? 'You made small friends.'
+                     : sc >= 0.25 ? 'You said the wrong thing a few times.'
+                     :              'You should have kept quiet.';
+          resolve({ score: sc, detail: `Camp gist: ${line}`, friends: Math.round(sc * 3) });
+          return;
+        }
+        fb.textContent = '\u00a0';
+        render();
+      }, 850);
+    });
+
+    render();
+  });
+}
+
+/* ------------------------------------------------------------ rehearse ---- */
+/* Passing-out drill. Obey the command — unless it is "AS YOU WERE", which means
+   stand still. The trap is doing something when you should do nothing. */
+const DRILL = ['ATTENTION', 'AT EASE', 'RIGHT TURN', 'LEFT TURN', 'SALUTE'];
+
+export function playRehearse(host) {
+  return new Promise(resolve => {
+    const N = 10;
+    let i = 0, good = 0, cmd = '', locked = false, deadline = 0, raf = 0, hold = false;
+
+    host.innerHTML = `<div class="mg">
+      <p class="mg-top"><b>Passing-out drill</b><span id="mgInfo"></span></p>
+      <p class="soc-call" id="drillCmd"></p>
+      <div class="reg-bar"><i id="drillFill"></i></div>
+      <div class="soc-grid" id="drillGrid"></div>
+      <button class="mami-done" id="drillStill" style="background:var(--muted);margin-top:7px">Stand still</button>
+      <p class="mg-hint" id="drillFb">Obey the command. "As you were" means do nothing.</p></div>`;
+    const cmdEl = host.querySelector('#drillCmd'), grid = host.querySelector('#drillGrid');
+    const info = host.querySelector('#mgInfo'), fb = host.querySelector('#drillFb');
+    const fill = host.querySelector('#drillFill');
+
+    function go() {
+      locked = false;
+      hold = Math.random() < 0.3;                 // roughly one in three is a trap
+      cmd = hold ? 'AS YOU WERE' : DRILL[Math.floor(Math.random() * DRILL.length)];
+      const limit = Math.max(1100, 2200 - i * 110);
+      info.textContent = `${i + 1} of ${N} · ${good} right`;
+      cmdEl.textContent = cmd;
+      grid.innerHTML = DRILL.map(d =>
+        `<button class="soc-move" data-d="${d}">${d}</button>`).join('');
+      deadline = performance.now() + limit;
+      cancelAnimationFrame(raf);
+      const sweep = () => {
+        const left = Math.max(0, deadline - performance.now());
+        fill.style.width = (100 * left / limit) + '%';
+        if (left <= 0) return answer(hold ? 'STILL' : null);   // standing still is the default
+        raf = requestAnimationFrame(sweep);
+      };
+      sweep();
+    }
+
+    function answer(given) {
+      if (locked) return;
+      locked = true;
+      cancelAnimationFrame(raf);
+      const want = hold ? 'STILL' : cmd;
+      const ok = given === want;
+      if (ok) good++;
+      fb.textContent = ok ? 'Correct.'
+        : hold ? 'You moved on "as you were". Sergeant saw that.'
+        : given ? 'Wrong movement.' : 'Too slow.';
+      grid.querySelectorAll('.soc-move').forEach(b => {
+        b.disabled = true;
+        if (!hold && b.dataset.d === cmd) b.classList.add('right');
+        else if (b.dataset.d === given) b.classList.add('wrong');
+      });
+      setTimeout(() => {
+        i++;
+        if (i >= N) {
+          const sc = good / N;
+          const line = sc >= 0.9 ? 'Your line was the sharpest on the ground.'
+                     : sc >= 0.6 ? 'You held the drill together.'
+                     : sc >= 0.3 ? 'Sergeant made the whole platoon start again. Twice.'
+                     :             'You were a step behind the whole rehearsal.';
+          resolve({ score: sc, detail: `Rehearsal: ${line}` });
+          return;
+        }
+        fb.textContent = '\u00a0';
+        go();
+      }, 700);
+    }
+
+    grid.addEventListener('click', e => {
+      const b = e.target.closest('.soc-move');
+      if (b && !b.disabled) answer(b.dataset.d);
+    });
+    host.querySelector('#drillStill').onclick = () => { if (!locked) answer('STILL'); };
+    go();
+  });
+}
+
 /* ---------------------------------------------------------------- quiz ---- */
 /* Deliberately general Nigerian knowledge rather than NYSC trivia — the camp
    framing is already everywhere else, and this has to be answerable by anyone. */
