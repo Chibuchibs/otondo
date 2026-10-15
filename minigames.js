@@ -556,15 +556,82 @@ export function playPenalty(host) {
    finite. Every plate fills you and empties your pocket. Walk away when you
    have had enough — or keep eating and find out. */
 const MAMI = [
-  { n:'Indomie and egg',      p:1200, f:30, c:'#e8a33d' },
-  { n:'Boli and groundnut',   p:700,  f:20, c:'#b9683f' },
-  { n:'Soaked garri + milk',  p:600,  f:22, c:'#efe6cd' },
-  { n:'Cold minerals',        p:400,  f:10, c:'#c94f4f' },
-  { n:'Suya, one stick',      p:900,  f:18, c:'#8c4a2f' },
-  { n:'Amala and ewedu',      p:1300, f:32, c:'#6d5a3f' },
-  { n:'Fried rice',           p:1500, f:34, c:'#d9c88a' },
-  { n:'Puff puff, four',      p:500,  f:14, c:'#d79a4e' },
+  { n:'Indomie and egg',      p:1200, f:30, k:'indomie' },
+  { n:'Boli and groundnut',   p:700,  f:20, k:'boli'    },
+  { n:'Soaked garri + milk',  p:600,  f:22, k:'garri'   },
+  { n:'Cold minerals',        p:400,  f:10, k:'mineral' },
+  { n:'Suya, one stick',      p:900,  f:18, k:'suya'    },
+  { n:'Amala and ewedu',      p:1300, f:32, k:'amala'   },
+  { n:'Fried rice',           p:1500, f:34, k:'rice'    },
+  { n:'Puff puff, four',      p:500,  f:14, k:'puff'    },
 ];
+
+/* Each dish drawn rather than shown as a coloured disc, in the same flat style
+   as JOB_ART. Worth the lines: the menu is the only place the player chooses
+   with their own money, and "Amala and ewedu" has to be recognisable at 34px
+   to anyone who has eaten it. Shared bowl and plate parts are composed in so
+   the dishes sit on the same crockery. */
+const BOWL = `<path d="M7 21c0 6.8 5.8 12 13 12s13-5.2 13-12z" fill="#e4dcc8"/>`;
+const RIM  = `<rect x="5" y="18.6" width="30" height="3.6" rx="1.8" fill="#cfc4aa"/>`;
+const PLATE = `<ellipse cx="20" cy="26.5" rx="14" ry="6.3" fill="#eae3d1"/>
+               <ellipse cx="20" cy="25.4" rx="11.4" ry="4.8" fill="#dcd3ba"/>`;
+
+const MAMI_ART = {
+  /* Noodle mound heaped above the rim, egg sitting on top of it. */
+  indomie: `<path d="M9 19.2c1.4-5.1 5.7-7.8 11-7.8s9.6 2.7 11 7.8z" fill="#e8b14e"/>
+    <path d="M12.2 18.2c1.1-2.7 3-4.2 5.5-4.7M20.4 13.3c2.6.3 4.5 1.8 5.8 4.4"
+      stroke="#c8882c" stroke-width="1.3" fill="none" stroke-linecap="round"/>
+    <ellipse cx="23.6" cy="14.6" rx="6" ry="4.2" fill="#fbf7ec"/>
+    <circle cx="23.6" cy="14.6" r="2.4" fill="#f0b429"/>${BOWL}${RIM}`,
+
+  /* Roasted plantain with the char lines from the grill, groundnuts beside. */
+  boli: `<rect x="7.5" y="18.6" width="19.5" height="10" rx="5" fill="#d2963c"/>
+    <path d="M12 19.4v8.4M17 19v9.2M22 19.4v8.4"
+      stroke="#8a5a21" stroke-width="1.5" stroke-linecap="round"/>
+    <ellipse cx="30.4" cy="24.4" rx="2.5" ry="3.3" fill="#c9a06a"/>
+    <ellipse cx="29.6" cy="29.4" rx="2.5" ry="3.3" fill="#b98f59"/>`,
+
+  /* Granules showing through, milk pooled on one side. */
+  garri: `<ellipse cx="20" cy="19.8" rx="13" ry="4.6" fill="#f1e8d1"/>
+    <ellipse cx="16.6" cy="19.4" rx="5.2" ry="2.5" fill="#fdfcf8"/>
+    <circle cx="25" cy="18.6" r=".9" fill="#d9ca9f"/><circle cx="27.4" cy="20.6" r=".8" fill="#d9ca9f"/>
+    <circle cx="22.6" cy="21.4" r=".8" fill="#d9ca9f"/><circle cx="12.4" cy="21.2" r=".8" fill="#d9ca9f"/>
+    ${BOWL}${RIM}`,
+
+  /* A capped bottle, sweating. */
+  mineral: `<rect x="16.8" y="6.4" width="6.4" height="3.2" rx="1" fill="#9aa3ad"/>
+    <path d="M15.2 15.6c0-1.4 1.2-1.8 1.2-2.6v-3.4h7.2v3.4c0 .8 1.2 1.2 1.2 2.6V31a2.2 2.2 0 0 1-2.2 2.2h-5.2A2.2 2.2 0 0 1 15.2 31z" fill="#c94f4f"/>
+    <rect x="15.2" y="20.4" width="9.6" height="5.6" fill="#fbf7ec"/>
+    <rect x="15.2" y="22.6" width="9.6" height="1.4" fill="#c94f4f"/>`,
+
+  /* One stick, three pieces, pepper on the outside. */
+  suya: `<rect x="19" y="5.6" width="2" height="29" rx="1" fill="#b08a56"/>
+    <rect x="11" y="9.6" width="18" height="6.4" rx="2.6" fill="#8c4a2f"/>
+    <rect x="11" y="17.4" width="18" height="6.4" rx="2.6" fill="#9b5433"/>
+    <rect x="11" y="25.2" width="18" height="6.4" rx="2.6" fill="#8c4a2f"/>
+    <circle cx="15" cy="12.4" r=".9" fill="#cf5a2c"/><circle cx="24.6" cy="13.6" r=".9" fill="#cf5a2c"/>
+    <circle cx="16.4" cy="20.6" r=".9" fill="#cf5a2c"/><circle cx="25" cy="28.4" r=".9" fill="#cf5a2c"/>
+    <circle cx="14.6" cy="28.8" r=".9" fill="#cf5a2c"/>`,
+
+  /* The mound and the soup beside it, which is how it arrives. */
+  amala: `${PLATE}<path d="M9.6 25.2c0-4.3 3-7.4 6.8-7.4s6.8 3.1 6.8 7.4z" fill="#584431"/>
+    <ellipse cx="27" cy="24.2" rx="5.4" ry="3.1" fill="#4e7a35"/>
+    <ellipse cx="26.2" cy="23.4" rx="2.4" ry="1.3" fill="#5f9142"/>`,
+
+  /* Pale grains with the vegetables showing. */
+  rice: `${PLATE}<path d="M8.8 25c0-4.9 5-8.8 11.2-8.8S31.2 20.1 31.2 25z" fill="#e3d49a"/>
+    <circle cx="15" cy="21.4" r="1.3" fill="#5d8a3a"/><circle cx="24.6" cy="20.6" r="1.3" fill="#5d8a3a"/>
+    <circle cx="19.6" cy="18.6" r="1.2" fill="#d2823c"/><circle cx="27" cy="23.4" r="1.2" fill="#d2823c"/>
+    <circle cx="12.6" cy="23.6" r="1.2" fill="#5d8a3a"/>`,
+
+  /* Four, because that is what the label says. */
+  puff: `<circle cx="14" cy="15.6" r="6.3" fill="#d79a4e"/>
+    <circle cx="26" cy="15.6" r="6.3" fill="#c98f43"/>
+    <circle cx="14" cy="26.4" r="6.3" fill="#c98f43"/>
+    <circle cx="26" cy="26.4" r="6.3" fill="#d79a4e"/>
+    <path d="M11.4 13c.9-1.1 2-1.7 3.2-1.8M23.4 23.8c.9-1.1 2-1.7 3.2-1.8"
+      stroke="#e8b878" stroke-width="1.4" fill="none" stroke-linecap="round"/>`,
+};
 
 /* Takes the live game state so the stalls price against money you actually
    have, and so the action can deduct exactly what was spent. */
@@ -588,7 +655,7 @@ export function playMami(host, st) {
       grid.innerHTML = stalls.map((it, i) => {
         const tooDear = it.p > money_();
         return `<button class="mami-item" data-i="${i}" ${tooDear ? 'disabled' : ''}>
-          <span class="plate" style="background:${it.c}"></span>
+          <svg class="plate" viewBox="0 0 40 40" aria-hidden="true">${MAMI_ART[it.k]}</svg>
           <b>${it.n}</b>
           <em>\u20a6${it.p.toLocaleString()} · belle +${it.f}</em></button>`;
       }).join('');
