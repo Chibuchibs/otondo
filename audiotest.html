@@ -1,0 +1,194 @@
+<!doctype html>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow">
+<title>Otondo audio test</title>
+<style>
+  :root{--cream:#f6f1e4;--ink:#1d1b16;--muted:#6b6557;--line:#ddd5c2;
+        --green:#2f6b3a;--green-dk:#24542d;--white:#fffdf7}
+  *{box-sizing:border-box}
+  body{margin:0;padding:18px 16px 60px;background:var(--cream);color:var(--ink);
+       font:16px/1.5 ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;
+       max-width:560px;margin-inline:auto}
+  h1{font-size:19px;margin:0 0 4px}
+  p.lede{color:var(--muted);margin:0 0 18px;font-size:14px}
+  .test{background:var(--white);border:1px solid var(--line);border-radius:14px;
+        padding:13px 14px;margin-bottom:12px}
+  .test h2{font-size:15px;margin:0 0 2px}
+  .test .what{color:var(--muted);font-size:13px;margin:0 0 10px}
+  button{font:inherit;font-weight:700;border:0;border-radius:11px;padding:11px 14px}
+  .play{background:var(--green);color:#fff;width:100%;margin-bottom:9px}
+  .play:active{background:var(--green-dk)}
+  .verdict{display:flex;gap:7px}
+  .verdict button{flex:1;background:#efe9d9;color:var(--ink);font-size:13.5px;
+                  padding:9px 6px;border:1px solid var(--line)}
+  .verdict button[aria-pressed="true"]{background:var(--green);color:#fff;border-color:var(--green)}
+  pre{background:var(--white);border:1px solid var(--line);border-radius:12px;
+      padding:12px;font-size:12.5px;white-space:pre-wrap;word-break:break-word;margin:0 0 12px}
+  .copy{background:var(--ink);color:#fff;width:100%}
+  .hint{color:var(--muted);font-size:13px;margin:16px 0 8px}
+</style>
+
+<h1>Otondo audio test</h1>
+<p class="lede">Turn the ringer switch ON and the volume up. Play each one, then
+tap how it sounded. Nothing here is part of the game — it is only to find out
+which audio path your phone handles properly.</p>
+
+<div id="tests"></div>
+
+<p class="hint">When all five are marked, copy the result and paste it back into
+the chat.</p>
+<pre id="out">…</pre>
+<button class="copy" id="copy">Copy result</button>
+
+<script type="module">
+import { renderLoop, BAR } from './audio.js?v=20261015141658';
+
+/* Each test isolates ONE layer. Read as a grid: if the sine is clean through
+   Web Audio but static through the WAV element, the WAV decode is at fault; if
+   the sine is clean both ways but the groove is not, the arrangement is; if
+   everything is silent, it is the audio category, not the audio. */
+const TESTS = [
+  { id:'A', name:'Beep · Web Audio', what:'Plain AudioContext. Known to come out silent on iOS — it uses the ringer channel.' },
+  { id:'B', name:'Beep · Web Audio + playback category', what:'Same, but claiming the playback channel first. This is the path we could not try before.' },
+  { id:'C', name:'Beep · WAV file', what:'Same beep encoded to a WAV and played as a media element — the way the game does it now.' },
+  { id:'D', name:'Camp groove · Web Audio + playback', what:'The real music, no WAV step.' },
+  { id:'E', name:'Camp groove · WAV file', what:'The real music exactly as the hidden button plays it. Expected: static.' },
+];
+
+const verdicts = {};
+const host = document.getElementById('tests');
+for (const t of TESTS) {
+  const d = document.createElement('div');
+  d.className = 'test';
+  d.innerHTML = `<h2>${t.id}. ${t.name}</h2><p class="what">${t.what}</p>
+    <button class="play" data-play="${t.id}">Play ${t.id}</button>
+    <div class="verdict">
+      ${['clean','static','silent'].map(v =>
+        `<button data-v="${t.id}:${v}" aria-pressed="false">${v}</button>`).join('')}
+    </div>`;
+  host.appendChild(d);
+}
+
+/* ---- audio plumbing ---- */
+let ctx = null, node = null, mediaEl = null;
+
+function stopAll() {
+  try { node && node.stop(); } catch {}
+  node = null;
+  if (mediaEl) { try { mediaEl.pause(); } catch {} mediaEl = null; }
+}
+
+/* iOS 16.4+ exposes this. Setting it to 'playback' is what lets Web Audio out
+   of the ringer channel — the whole reason the WAV detour was built. */
+function claimPlayback() {
+  try {
+    if (navigator.audioSession) { navigator.audioSession.type = 'playback'; return true; }
+  } catch {}
+  return false;
+}
+
+function getCtx() {
+  const AC = window.AudioContext || window.webkitAudioContext;
+  if (!ctx) ctx = new AC();
+  if (ctx.state === 'suspended') ctx.resume();
+  return ctx;
+}
+
+function beepBuffer(c) {
+  const rate = c.sampleRate, n = Math.floor(rate * 2);
+  const b = c.createBuffer(1, n, rate), d = b.getChannelData(0);
+  /* A quiet 330Hz tone with soft edges — anything harsh would muddy the verdict. */
+  for (let i = 0; i < n; i++) {
+    const t = i / rate;
+    const fade = Math.min(1, t / 0.05, (2 - t) / 0.05);
+    d[i] = Math.sin(2 * Math.PI * 330 * t) * 0.18 * fade;
+  }
+  return b;
+}
+
+function playBuffer(buf) {
+  const c = getCtx();
+  node = c.createBufferSource();
+  node.buffer = buf; node.loop = true;
+  node.connect(c.destination);
+  node.start();
+  setTimeout(stopAll, 5000);
+}
+
+function wav(buf) {
+  const n = buf.length, d = buf.getChannelData(0);
+  const ab = new ArrayBuffer(44 + n * 2), v = new DataView(ab);
+  const str = (o, s) => { for (let i = 0; i < s.length; i++) v.setUint8(o + i, s.charCodeAt(i)); };
+  str(0, 'RIFF'); v.setUint32(4, 36 + n * 2, true); str(8, 'WAVEfmt ');
+  v.setUint32(16, 16, true); v.setUint16(20, 1, true); v.setUint16(22, 1, true);
+  v.setUint32(24, buf.sampleRate, true); v.setUint32(28, buf.sampleRate * 2, true);
+  v.setUint16(32, 2, true); v.setUint16(34, 16, true);
+  str(36, 'data'); v.setUint32(40, n * 2, true);
+  for (let i = 0; i < n; i++) {
+    const s = Math.max(-1, Math.min(1, d[i]));
+    v.setInt16(44 + i * 2, s < 0 ? s * 0x8000 : s * 0x7fff, true);
+  }
+  return new Blob([ab], { type: 'audio/wav' });
+}
+
+function playWav(buf) {
+  mediaEl = document.createElement('audio');
+  mediaEl.src = URL.createObjectURL(wav(buf));
+  mediaEl.loop = true;
+  mediaEl.setAttribute('playsinline', '');
+  mediaEl.style.display = 'none';
+  document.body.appendChild(mediaEl);
+  mediaEl.play().catch(e => log('play refused: ' + e.message));
+  setTimeout(stopAll, 5000);
+}
+
+async function run(id) {
+  stopAll();
+  if (id === 'A') { playBuffer(beepBuffer(getCtx())); }
+  if (id === 'B') { claimPlayback(); playBuffer(beepBuffer(getCtx())); }
+  if (id === 'C') { playWav(beepBuffer(getCtx())); }
+  if (id === 'D') { claimPlayback(); playBuffer(await renderLoop()); }
+  if (id === 'E') { playWav(await renderLoop()); }
+}
+
+document.addEventListener('click', async e => {
+  const p = e.target.closest('[data-play]');
+  if (p) {
+    try { await run(p.dataset.play); }
+    catch (err) { log('ERROR ' + p.dataset.play + ': ' + err.message); }
+    return;
+  }
+  const v = e.target.closest('[data-v]');
+  if (v) {
+    const [id, verdict] = v.dataset.v.split(':');
+    verdicts[id] = verdict;
+    for (const b of document.querySelectorAll(`[data-v^="${id}:"]`))
+      b.setAttribute('aria-pressed', String(b === v));
+    report();
+  }
+});
+
+/* ---- what gets reported back ---- */
+const lines = [];
+const log = t => { lines.push(t); report(); };
+
+function report() {
+  const env = [
+    'ua: ' + navigator.userAgent,
+    'audioSession: ' + (navigator.audioSession ? 'yes (type=' + navigator.audioSession.type + ')' : 'NOT SUPPORTED'),
+    'ctx rate: ' + (ctx ? ctx.sampleRate : '—'),
+    'ctx state: ' + (ctx ? ctx.state : '—'),
+  ];
+  const res = TESTS.map(t => `${t.id} ${t.name.padEnd(38)} ${verdicts[t.id] || '—'}`);
+  document.getElementById('out').textContent =
+    ['=== OTONDO AUDIO TEST ===', ...res, '', ...env, ...lines].join('\n');
+}
+report();
+
+document.getElementById('copy').onclick = async () => {
+  const t = document.getElementById('out').textContent;
+  try { await navigator.clipboard.writeText(t); document.getElementById('copy').textContent = 'Copied'; }
+  catch { document.getElementById('copy').textContent = 'Select the text above and copy'; }
+};
+</script>

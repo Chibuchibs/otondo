@@ -128,9 +128,13 @@ function wav(buf) {
 
 /* OfflineAudioContext needs no user gesture, so the loop is built up front and
    the tap only has to call play() — which must stay synchronous on iOS. */
-function build() {
-  if (ready) return ready;
-  ready = (async () => {
+/* The loop as a bare AudioBuffer. Split out of build() so it can be played
+   either through a media element (the WAV path below) or straight out of a
+   live AudioContext, without rendering the arrangement twice. */
+let renderedLoop = null;
+export function renderLoop() {
+  if (renderedLoop) return renderedLoop;
+  renderedLoop = (async () => {
     const OAC = window.OfflineAudioContext || window.webkitOfflineAudioContext;
     const AC  = window.AudioContext || window.webkitAudioContext;
     if (!OAC || !AC) throw new Error('no web audio');
@@ -177,7 +181,15 @@ function build() {
         kick(c, out, b * BAR + 14 * stepDur);
       }
     }
-    const rendered = await c.startRendering();
+    return c.startRendering();
+  })();
+  return renderedLoop;
+}
+
+function build() {
+  if (ready) return ready;
+  ready = (async () => {
+    const rendered = await renderLoop();
     url = URL.createObjectURL(wav(rendered));
     el = document.createElement('audio');
     el.src = url; el.loop = true; el.preload = 'auto';
