@@ -2,7 +2,7 @@
    Every function is failure-tolerant on purpose: if Supabase is unset, slow,
    or down, the game must still be playable. Nothing here throws upward. */
 
-import { SUPABASE_URL, SUPABASE_ANON_KEY } from './config.js?v=20261015133200';
+import { SUPABASE_URL, SUPABASE_ANON_KEY } from './config.js?v=20261015135815';
 
 const TOKEN_KEY = 'otondo:token';
 let sb = null, token = null, channel = null;
@@ -79,6 +79,18 @@ export function campRoster() {
       .map(metas => metas[metas.length - 1])
       .map(p => ({ nick: p.nick || null, platoon: p.platoon || null, day: p.day || null }));
   } catch { return []; }
+}
+
+/* Set a name after the fact. The front door no longer asks for one, so this
+   is how a player claims an identity once they care about it. */
+export async function renameMe(nickname) {
+  if (!sb || !token) return false;
+  try {
+    const { data, error } = await sb.rpc('rename_player',
+      { p_token: token, p_nickname: nickname });
+    if (error) throw error;
+    return data === true;
+  } catch (e) { console.warn('[otondo] rename failed:', e.message); return false; }
 }
 
 export async function joinCamp(nickname, platoon, source) {

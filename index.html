@@ -420,6 +420,15 @@
   /* badges you are wearing, on the camp screen */
   .badges{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 11px}
   .badges:empty{display:none}
+  .whoami{display:flex;align-items:center;gap:8px;margin:0 2px 10px;font-size:13px}
+  .whoami b{font-size:14px}
+  .whoami .auto{color:var(--muted)}
+  .whoami button{background:none;border:0;padding:0;font-family:inherit;font-size:12.5px;
+    font-weight:800;color:var(--green-dk);-webkit-text-fill-color:var(--green-dk);
+    text-decoration:underline;text-underline-offset:3px}
+  .whoami input{margin:0;padding:8px 10px;font-size:14px;flex:1;min-width:0}
+  .whoami .save{background:var(--green);color:#fff;-webkit-text-fill-color:#fff;
+    border-radius:10px;padding:9px 13px;text-decoration:none;flex:none}
   .badges span{display:inline-flex;align-items:center;gap:5px;background:var(--green-lt);
     border:1px solid var(--green);color:var(--green-dk);font-size:11.5px;font-weight:800;
     padding:4px 9px;border-radius:99px}
@@ -563,9 +572,9 @@
        allawee never enter. 21 days of parade, bad beans, Man O War and Mami
        market. Build credibility, keep your belle full, make the money last.
        Then find out where dem post you.</p>
-    <input id="name" maxlength="16" placeholder="Wetin be your name?" autocomplete="off">
-    <p class="note" id="nameNote" style="margin:-4px 2px 10px;min-height:1.1em"></p>
     <button class="primary" id="start">Enter camp</button>
+    <p class="note" style="text-align:center;margin-top:9px">
+      No sign up. You can pick your name later.</p>
   </section>
 
   <section id="game" class="hidden">
@@ -588,6 +597,7 @@
     </div>
 
     <div id="panelCamp">
+      <p class="whoami" id="whoami"></p>
       <div class="badges" id="badges"></div>
       <div class="mgwrap hidden" id="mgwrap">
       <div class="mgcard">
@@ -663,18 +673,18 @@
 
 <script type="module">
 import { newGame, doAction, canDo, unlocked, ACTIONS, phaseOf, nextUnlock,
-         shareText, MAX_DAY } from './game.js?v=20261015133200';
+         shareText, MAX_DAY } from './game.js?v=20261015135815';
 
 /* Kept here, not exported from game.js: a new cross-file export breaks any
    client holding a cached game.js after a deploy. */
 const ALLAWEE_NOTE = 'Allawee ₦77,000 — e never enter.';
 import { initNet, joinCamp, syncPlayer, platoonBoard, recentChat, postChat,
          postSuggestion, reportMessage, awardBoard, myAwards, laughChat,
-         setPresence, campRoster, online } from './net.js?v=20261015133200';
-import { startMusic, stopMusic, musicOn, audioState, BEAT, BAR } from './audio.js?v=20261015133200';
+         setPresence, campRoster, renameMe, online } from './net.js?v=20261015135815';
+import { startMusic, stopMusic, musicOn, audioState, BEAT, BAR } from './audio.js?v=20261015135815';
 import { playHoop, playPenalty, playQuiz, playRegister, playParade,
          playMami, playHustle, playManOWar, playSaed, playSocial,
-         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261015133200';
+         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261015135815';
 
 /* Every dance animation is expressed in beats, so the steps are on-tempo
    whether or not the sound is playing — and genuinely on the beat when it is. */
@@ -1199,34 +1209,32 @@ const SAVE = 'otondo:v1';
 try { const raw = localStorage.getItem(SAVE); if (raw) s = JSON.parse(raw); } catch {}
 function save(){ try { localStorage.setItem(SAVE, JSON.stringify(s)); } catch {} }
 
-/* A name is required. Without this everyone who skipped the field arrived as
-   "Otondo" and the chat filled with identical names. */
-function enterCamp(){
-  const input = $('name');
-  const name  = input.value.trim().replace(/\s+/g, ' ');
-  if (name.length < 2){
-    $('nameNote').textContent = name.length
-      ? 'Give us small more — two letters at least.'
-      : 'Abeg type your name first.';
-    input.focus();
-    return;
-  }
-  $('nameNote').textContent = '';
-  s = newGame(name); save(); render();
-  mine = [];                       // clear before the round-trip, not after
+/* No name is asked for at the door. Four in five arrivals were leaving before
+   day 5 and the rate did not move when the mini-games landed — the form was
+   the last thing between a visitor and a game. Everyone starts as
+   "Otondo 4821" and claims a real name when it actually matters. */
+const autoName = () => `Otondo ${1000 + Math.floor(Math.random() * 9000)}`;
+const isAutoName = n => /^Otondo \d{4}$/.test(n || '');
+
+/* The server row is created on the first COMPLETED action, not on page load.
+   Creating it on arrival would turn `players` from "someone who played" into
+   "someone who loaded the page", bots included, and wreck every metric. */
+let joined = false;
+async function ensureJoined(){
+  if (joined || !s) return;
+  joined = true;
+  await joinCamp(s.name, s.platoon, cameFrom());
+  pushPresence();
+  mine = await myAwards();
   drawBadges();
-  joinCamp(s.name, s.platoon, cameFrom()).then(async () => {
-    syncPlayer(s, { force: true });
-    /* A new run means a new player row and a new token, so whatever badges the
-       previous run earned are no longer ours. Ask the server, never assume. */
-    mine = await myAwards();
-    drawBadges();
-  });
 }
 
+function enterCamp(){
+  s = newGame(autoName()); save(); render();
+  mine = [];                       // last run's badges are not this run's
+  drawBadges();
+}
 $('start').onclick = enterCamp;
-$('name').addEventListener('keydown', e => { if (e.key === 'Enter') enterCamp(); });
-$('name').addEventListener('input', () => { $('nameNote').textContent = ''; });
 $('again').onclick = () => {
   s = null;
   mine = [];                       // last run's badges are not this run's
@@ -1384,6 +1392,7 @@ function render(){
   $('sMoney').textContent = '₦' + s.money.toLocaleString();
   $('sCred').textContent = s.cred;
   bar($('bEnergy'), s.energy); bar($('bBelle'), s.belle);
+  drawWhoami();
   const ph = phaseOf(s.day);
   $('phases').innerHTML = PHASE_LIST.map(p =>
     `<span class="${p.name === ph.name ? 'now' : (s.day > p.to ? 'done' : '')}"
@@ -1427,6 +1436,50 @@ function setLive(n){
     : 'Single player';
   if (!on){ $('whoList').classList.add('hidden'); el.setAttribute('aria-expanded','false'); }
   else if (!$('whoList').classList.contains('hidden')) drawWho();
+}
+
+/* The name you are playing under, and a way to change it. Shown rather than
+   demanded: an assigned name is fine until the moment it is attached to
+   something other people see. */
+function drawWhoami(){
+  const el = $('whoami');
+  if (!s) { el.innerHTML = ''; return; }
+  const auto = isAutoName(s.name);
+  el.innerHTML = `<b class="${auto ? 'auto' : ''}">${esc(s.name)}</b>` +
+                 `<button type="button" id="renameBtn">${auto ? 'pick a name' : 'change'}</button>`;
+  $('renameBtn').onclick = startRename;
+}
+
+function startRename(){
+  const el = $('whoami');
+  const cur = isAutoName(s.name) ? '' : s.name;
+  el.innerHTML = `<input id="renameIn" maxlength="16" autocomplete="off"
+                    placeholder="Wetin be your name?" value="${esc(cur)}">` +
+                 `<button type="button" class="save" id="renameSave">Save</button>`;
+  const input = $('renameIn');
+  input.focus();
+  const commit = async () => {
+    const v = input.value.trim().replace(/\s+/g, ' ').slice(0, 16);
+    if (v.length < 2) { drawWhoami(); return; }
+    s.name = v; save();
+    drawWhoami();
+    /* If they have not played an action yet there is no row to rename — the
+       name they chose will simply be the one they join with. */
+    await renameMe(v);
+    pushPresence();
+    if (!$('panelChat').classList.contains('hidden')) gateChat();
+    loadChat(true);
+  };
+  $('renameSave').onclick = commit;
+  input.addEventListener('keydown', e => { if (e.key === 'Enter') commit(); });
+}
+
+/* Chat is the one place an assigned name is not good enough — it is public and
+   permanent, and "Otondo 4821" says nothing to anybody. */
+function gateChat(){
+  const auto = s && isAutoName(s.name);
+  $('chatIn').disabled = $('chatSend').disabled = auto || !online();
+  note(auto ? 'Pick a name first — camp chat shows it to everybody.' : '');
 }
 
 /* Tap the live count to see who is actually in camp. Only what is already
@@ -1494,6 +1547,7 @@ async function takeAction(key, a){
   }
   doAction(s, key, Math.random, result);
   save(); render();
+  await ensureJoined();              // first completed action creates the row
   syncPlayer(s, { force: s.phase === 'ending' });
 }
 
@@ -1537,6 +1591,7 @@ function tab(which){
   $('panelAwards').classList.toggle('hidden', which !== 'awards');
   $('panelBoard').classList.toggle('hidden',  which !== 'board');
   $('panelChat').classList.toggle('hidden',   which !== 'chat');
+  if (which === 'chat')   gateChat();
   if (which === 'awards') drawAwards();
   if (which === 'board')  drawBoard();
   if (which === 'chat')   loadChat();
@@ -1659,8 +1714,9 @@ $('chatBox').addEventListener('click', async e => {
 });
 
 let chatLoaded = false;
-async function loadChat(){
-  if (chatLoaded) return;
+async function loadChat(force){
+  if (chatLoaded && !force) return;
+  if (force) chatLoaded = false;
   const msgs = await recentChat(30);
   if (!online()){
     $('chatNote').textContent = 'Camp chat needs the server. Running single player.';
