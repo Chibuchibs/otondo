@@ -229,6 +229,31 @@
   .phases span.now{background:var(--green);box-shadow:0 0 0 2px var(--green-lt)}
   .upnext{font-size:12px;color:var(--muted);margin:2px 2px 14px;text-align:center}
   .upnext b{color:var(--green-dk)}
+
+  /* ---------- mini-games ---------- */
+  .mgwrap{position:fixed;inset:0;z-index:60;background:rgba(26,26,26,.55);
+    display:flex;align-items:center;justify-content:center;padding:16px}
+  .mgcard{background:var(--cream);border-radius:18px;padding:14px;width:100%;
+    max-width:360px;box-shadow:0 18px 50px rgba(0,0,0,.3)}
+  .mg-top{display:flex;justify-content:space-between;align-items:baseline;
+    margin:0 2px 9px;font-size:13px}
+  .mg-top b{font-size:15px}
+  .mg-top span{color:var(--muted);font-weight:700;font-size:12px}
+  .mg-hint{margin:9px 2px 0;font-size:12.5px;color:var(--muted);text-align:center;
+    min-height:1.2em}
+  #mgCanvas{width:100%;height:auto;display:block;border-radius:12px;
+    border:1px solid var(--line);touch-action:none;cursor:pointer}
+  .quiz-q{font-size:16px;font-weight:800;margin:4px 2px 11px;line-height:1.3}
+  .quiz-opts{display:grid;gap:7px}
+  .quiz-opt{text-align:left;padding:12px 13px;border:2px solid var(--line);
+    border-radius:12px;background:var(--white);font-size:15px;font-weight:700;
+    color:var(--ink);-webkit-text-fill-color:var(--ink);font-family:inherit}
+  .quiz-opt.right{border-color:var(--green);background:var(--green-lt);
+    color:var(--green-dk);-webkit-text-fill-color:var(--green-dk)}
+  .quiz-opt.wrong{border-color:var(--red);opacity:.8}
+  .quiz-opt:disabled{opacity:.75}
+  .mg-skip{display:block;margin:10px auto 0;background:none;border:0;
+    color:var(--muted);font-size:12px;text-decoration:underline;font-family:inherit}
   .act .ico{font-size:21px;line-height:1;width:26px;flex:none;font-weight:800;
     color:var(--green-dk);display:flex;align-items:center;justify-content:center}
   .act b{display:block;font-size:16px}
@@ -506,7 +531,13 @@
 
     <div id="panelCamp">
       <div class="badges" id="badges"></div>
-      <div class="phases" id="phases"></div>
+      <div class="mgwrap hidden" id="mgwrap">
+      <div class="mgcard">
+        <div id="mghost"></div>
+        <button class="mg-skip" id="mgSkip">Skip this one</button>
+      </div>
+    </div>
+    <div class="phases" id="phases"></div>
       <div class="tag" id="actLbl"></div>
       <div class="actions" id="acts"></div>
       <p class="upnext" id="upnext"></p>
@@ -574,15 +605,16 @@
 
 <script type="module">
 import { newGame, doAction, canDo, unlocked, ACTIONS, phaseOf, nextUnlock,
-         shareText, MAX_DAY } from './game.js?v=20261013192426';
+         shareText, MAX_DAY } from './game.js?v=20261015112932';
 
 /* Kept here, not exported from game.js: a new cross-file export breaks any
    client holding a cached game.js after a deploy. */
 const ALLAWEE_NOTE = 'Allawee ₦77,000 — e never enter.';
 import { initNet, joinCamp, syncPlayer, platoonBoard, recentChat, postChat,
          postSuggestion, reportMessage, awardBoard, myAwards, laughChat,
-         setPresence, campRoster, online } from './net.js?v=20261013192426';
-import { startMusic, stopMusic, musicOn, audioState, BEAT, BAR } from './audio.js?v=20261013192426';
+         setPresence, campRoster, online } from './net.js?v=20261015112932';
+import { startMusic, stopMusic, musicOn, audioState, BEAT, BAR } from './audio.js?v=20261015112932';
+import { playHoop, playQuiz } from './minigames.js?v=20261015112932';
 
 /* Every dance animation is expressed in beats, so the steps are on-tempo
    whether or not the sound is playing — and genuinely on the beat when it is. */
@@ -1281,10 +1313,7 @@ function render(){
     b.innerHTML = `<span class="ico">${ICONS[key]||'•'}</span>
       <span><b>${a.label}</b><small>${a.hint}</small></span>` +
       (open ? '' : `<span class="when">DAY ${a.from}</span>`);
-    if (open) b.onclick = () => {
-      doAction(s, key); save(); render();
-      syncPlayer(s, { force: s.phase === 'ending' });
-    };
+    if (open) b.onclick = () => takeAction(key, a);
     box.appendChild(b);
   }
 
@@ -1346,6 +1375,39 @@ function pushPresence(){
      channel may not have joined yet, and a silently-dropped first attempt would
      otherwise never be retried. */
   if (setPresence({ nick: s.name, platoon: s.platoon, day: s.day })) shown = sig;
+}
+
+/* Actions carrying a `play` run the mini-game first and hand its score to the
+   state machine, so what you get is earned rather than rolled. */
+const GAMES = { hoop: playHoop, quiz: playQuiz };
+
+async function takeAction(key, a){
+  let result = null;
+  if (a.play && GAMES[a.play]){
+    try { result = await runMiniGame(GAMES[a.play]); }
+    catch (e) { console.warn('[otondo] mini-game failed:', e.message); }
+  }
+  doAction(s, key, Math.random, result);
+  save(); render();
+  syncPlayer(s, { force: s.phase === 'ending' });
+}
+
+function runMiniGame(game){
+  const wrap = $('mgwrap'), host = $('mghost');
+  wrap.classList.remove('hidden');
+  return new Promise(resolve => {
+    let settled = false;
+    const finish = r => {
+      if (settled) return; settled = true;
+      wrap.classList.add('hidden'); host.innerHTML = '';
+      $('mgSkip').onclick = null;
+      resolve(r);
+    };
+    /* An escape hatch, not a shortcut: skipping scores zero, so there is
+       nothing to gain by using it except getting unstuck. */
+    $('mgSkip').onclick = () => finish({ score: 0, detail: 'You sat this one out.' });
+    game(host).then(finish);
+  });
 }
 
 function tab(which){

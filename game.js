@@ -130,19 +130,36 @@ export const ACTIONS = {
   },
   sports: {
     label: 'Inter-platoon sports',
-    hint: 'Football, volleyball, tug of war. For your platoon.',
+    hint: 'Shoot for your platoon. You actually play this one.',
     from: 11,
-    run(s, rng) {
-      const game = pick(rng, ['football', 'volleyball', 'table tennis', 'tug of war']);
-      if (chance(rng, 0.45)) {
-        const cred = 8 + Math.floor(rng() * 7);
-        s.friends += 1;
-        apply(s, { energy: -20, belle: -10, cred });
-        return `Platoon ${s.platoon} win the ${game}. Dem carry you for shoulder. +${cred} credibility.`;
-      }
-      const cred = 3 + Math.floor(rng() * 4);
+    play: 'hoop',                     // the UI runs the mini-game first
+    run(s, rng, res) {
+      /* Falls back to a roll if the mini-game could not load, so a failed
+         module never blocks a day's action. */
+      const sc = res ? res.score : rng() * 0.7;
+      const cred = 3 + Math.round(sc * 17);
+      if (sc >= 0.99) s.friends += 1;
       apply(s, { energy: -18, belle: -10, cred });
-      return `Una lose the ${game} by one point. You still try. +${cred} credibility.`;
+      return `${res ? res.detail : 'You played for the platoon.'} +${cred} credibility.`;
+    },
+  },
+  quiz: {
+    label: 'Camp quiz night',
+    hint: 'Five questions. Nigeria, culture, history.',
+    from: 6,
+    play: 'quiz',
+    run(s, rng, res) {
+      const sc = res ? res.score : rng() * 0.6;
+      const cred = 2 + Math.round(sc * 15);
+      let line = res ? res.detail : 'You sat through quiz night.';
+      if (sc >= 0.99) {
+        const prize = 1500 + Math.floor(rng() * 1500);
+        s.money += prize;
+        line += ` Platoon prize: \u20a6${prize.toLocaleString()}.`;
+      }
+      s.friends += sc >= 0.6 ? 1 : 0;
+      apply(s, { energy: -8, cred });
+      return `${line} +${cred} credibility.`;
     },
   },
   social: {
@@ -314,9 +331,9 @@ export function canDo(s, key) {
   return true;
 }
 
-export function doAction(s, key, rng = Math.random) {
+export function doAction(s, key, rng = Math.random, result = null) {
   if (!canDo(s, key)) return s;
-  const msg = ACTIONS[key].run(s, rng);
+  const msg = ACTIONS[key].run(s, rng, result);
   s.log.unshift({ day: s.day, text: msg });
   s.actionsLeft -= 1;
   if (s.actionsLeft <= 0) endDay(s, rng);
