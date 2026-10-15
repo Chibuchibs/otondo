@@ -551,6 +551,149 @@ export function playPenalty(host) {
   });
 }
 
+/* --------------------------------------------------------------- mami ---- */
+/* Mami market: the stalls are open, your belle is empty and your money is
+   finite. Every plate fills you and empties your pocket. Walk away when you
+   have had enough — or keep eating and find out. */
+const MAMI = [
+  { n:'Indomie and egg',      p:1200, f:30, c:'#e8a33d' },
+  { n:'Boli and groundnut',   p:700,  f:20, c:'#b9683f' },
+  { n:'Soaked garri + milk',  p:600,  f:22, c:'#efe6cd' },
+  { n:'Cold minerals',        p:400,  f:10, c:'#c94f4f' },
+  { n:'Suya, one stick',      p:900,  f:18, c:'#8c4a2f' },
+  { n:'Amala and ewedu',      p:1300, f:32, c:'#6d5a3f' },
+  { n:'Fried rice',           p:1500, f:34, c:'#d9c88a' },
+  { n:'Puff puff, four',      p:500,  f:14, c:'#d79a4e' },
+];
+
+/* Takes the live game state so the stalls price against money you actually
+   have, and so the action can deduct exactly what was spent. */
+export function playMami(host, st) {
+  const money = st && typeof st.money === 'number' ? st.money : 20000;
+  return new Promise(resolve => {
+    const stalls = [...MAMI].sort(() => Math.random() - 0.5).slice(0, 4);
+    let belle = 0, spent = 0, bought = [];
+
+    host.innerHTML = `<div class="mg">
+      <p class="mg-top"><b>Mami market</b><span id="mgInfo"></span></p>
+      <div class="mami-grid" id="mamiGrid"></div>
+      <p class="mg-hint" id="mamiFb">Eat till your belle settle. Your money dey finish.</p>
+      <button class="mami-done" id="mamiDone">I don finish</button></div>`;
+    const grid = host.querySelector('#mamiGrid'), info = host.querySelector('#mgInfo');
+    const fb = host.querySelector('#mamiFb');
+
+    const money_ = () => money - spent;
+    function render() {
+      info.textContent = `Belle ${belle} · \u20a6${money_().toLocaleString()} left`;
+      grid.innerHTML = stalls.map((it, i) => {
+        const tooDear = it.p > money_();
+        return `<button class="mami-item" data-i="${i}" ${tooDear ? 'disabled' : ''}>
+          <span class="plate" style="background:${it.c}"></span>
+          <b>${it.n}</b>
+          <em>\u20a6${it.p.toLocaleString()} · belle +${it.f}</em></button>`;
+      }).join('');
+    }
+
+    grid.addEventListener('click', e => {
+      const b = e.target.closest('.mami-item');
+      if (!b || b.disabled) return;
+      const it = stalls[+b.dataset.i];
+      spent += it.p; belle = Math.min(100, belle + it.f);
+      bought.push(it.n);
+      fb.textContent = belle >= 100 ? 'Your belle don full. Stop now.'
+                     : `${it.n} enter. Belle dey settle.`;
+      render();
+      if (belle >= 100 || money_() < 400) finish();
+    });
+
+    host.querySelector('#mamiDone').onclick = () => finish();
+
+    function finish() {
+      /* Scored on belle filled per naira — overeating is not skill, and neither
+         is leaving hungry with a full pocket. */
+      const value = spent > 0 ? belle / (spent / 1000) : 0;
+      const score = Math.max(0, Math.min(1, value / 22));
+      const line = !bought.length ? 'You looked, you bought nothing, you waka.'
+        : belle >= 100 ? `You chopped ${bought.length} plates. Belle full, pocket light.`
+        : `You faced ${bought[0].toLowerCase()}${bought.length > 1 ? ' and more' : ''}. Belle dey settle.`;
+      resolve({ score, detail: line, spent, belle });
+    }
+
+    render();
+  });
+}
+
+/* ------------------------------------------------------------- hustle ---- */
+/* Camp hustle. Each job pays differently and costs different energy, and the
+   good ones need a skill you may not have yet. Pick three. */
+const JOBS = [
+  { n:'Wash khaki for three people', pay:[400,700],   e:14, icon:'bucket' },
+  { n:'Charge phones at the gen',    pay:[600,1000],  e:8,  icon:'phone'  },
+  { n:'Sell recharge cards',         pay:[500,900],   e:6,  icon:'card'   },
+  { n:'Plait hair for the hostel',   pay:[800,1400],  e:16, icon:'comb'   },
+  { n:'Snap photos for camp IDs',    pay:[900,1600],  e:10, icon:'camera' },
+  { n:'Run errands to Mami',         pay:[300,600],   e:12, icon:'bag'    },
+  { n:'Help with SAED content',      pay:[1000,1800], e:9,  icon:'laptop' },
+  { n:'Iron uniforms before parade', pay:[500,950],   e:13, icon:'iron'   },
+];
+const JOB_ART = {
+  bucket:`<rect x="11" y="17" width="18" height="16" rx="2" fill="#4a6fa5"/><rect x="10" y="15" width="20" height="3" rx="1.5" fill="#3b5a86"/>`,
+  phone: `<rect x="14" y="12" width="12" height="22" rx="3" fill="#2f3b47"/><rect x="16" y="15" width="8" height="14" fill="#8fd4c0"/>`,
+  card:  `<rect x="9" y="16" width="22" height="14" rx="2" fill="#0a7a43"/><rect x="12" y="24" width="16" height="2" fill="#fbf9f2"/>`,
+  comb:  `<rect x="11" y="14" width="18" height="6" rx="2" fill="#8d5524"/><rect x="13" y="20" width="2" height="9" fill="#8d5524"/><rect x="19" y="20" width="2" height="9" fill="#8d5524"/><rect x="25" y="20" width="2" height="9" fill="#8d5524"/>`,
+  camera:`<rect x="8" y="16" width="24" height="15" rx="3" fill="#2f3b47"/><circle cx="20" cy="23" r="5" fill="#8fd4c0"/><rect x="15" y="12" width="8" height="4" rx="1" fill="#2f3b47"/>`,
+  bag:   `<rect x="11" y="17" width="18" height="16" rx="2" fill="#b9683f"/><path d="M15 17v-3a5 5 0 0 1 10 0v3" stroke="#8c4a2f" stroke-width="2" fill="none"/>`,
+  laptop:`<rect x="9" y="13" width="22" height="14" rx="1.5" fill="#2f3b47"/><rect x="11" y="15" width="18" height="10" fill="#8fd4c0"/><rect x="6" y="27" width="28" height="3" rx="1.5" fill="#55606c"/>`,
+  iron:  `<path d="M9 26h22l-3-9H13z" fill="#9aa3ad"/><rect x="9" y="26" width="22" height="3" rx="1.5" fill="#6f7882"/><rect x="17" y="12" width="6" height="5" rx="2" fill="#6f7882"/>`,
+};
+
+export function playHustle(host) {
+  return new Promise(resolve => {
+    const PICKS = 3;
+    const offered = [...JOBS].sort(() => Math.random() - 0.5).slice(0, 5);
+    let picks = 0, earned = 0, tired = 0, taken = [];
+
+    host.innerHTML = `<div class="mg">
+      <p class="mg-top"><b>Camp hustle</b><span id="mgInfo"></span></p>
+      <p class="mg-hint" style="margin:0 2px 9px">Pick ${PICKS} jobs. Big pay costs you energy.</p>
+      <div class="hus-grid" id="husGrid"></div>
+      <p class="mg-hint" id="husFb">\u00a0</p></div>`;
+    const grid = host.querySelector('#husGrid'), info = host.querySelector('#mgInfo');
+    const fb = host.querySelector('#husFb');
+
+    function render() {
+      info.textContent = `${picks} of ${PICKS} · \u20a6${earned.toLocaleString()}`;
+      grid.innerHTML = offered.map((j, i) =>
+        `<button class="hus-item" data-i="${i}" ${taken.includes(i) ? 'disabled' : ''}>
+           <svg viewBox="0 0 40 40" aria-hidden="true">${JOB_ART[j.icon]}</svg>
+           <span><b>${j.n}</b><em>\u20a6${j.pay[0]}\u2013${j.pay[1]} · energy \u2212${j.e}</em></span>
+         </button>`).join('');
+    }
+
+    grid.addEventListener('click', e => {
+      const b = e.target.closest('.hus-item');
+      if (!b || b.disabled) return;
+      const i = +b.dataset.i, j = offered[i];
+      const pay = j.pay[0] + Math.floor(Math.random() * (j.pay[1] - j.pay[0]));
+      earned += pay; tired += j.e; taken.push(i); picks++;
+      fb.textContent = `${j.n} \u2014 \u20a6${pay.toLocaleString()} entered.`;
+      render();
+      if (picks >= PICKS) setTimeout(finish, 750);
+    });
+
+    function finish() {
+      const best = offered.map(j => j.pay[1]).sort((a,b) => b-a).slice(0, PICKS)
+        .reduce((a,b) => a+b, 0);
+      resolve({
+        score: Math.max(0, Math.min(1, earned / best)),
+        detail: `You hustled \u20a6${earned.toLocaleString()} off ${PICKS} jobs.`,
+        earned, tired,
+      });
+    }
+    render();
+  });
+}
+
 /* ---------------------------------------------------------------- quiz ---- */
 /* Deliberately general Nigerian knowledge rather than NYSC trivia — the camp
    framing is already everywhere else, and this has to be answerable by anyone. */

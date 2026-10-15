@@ -48,36 +48,28 @@ export const ACTIONS = {
   },
   mami: {
     label: 'Mami market',
-    hint: 'Indomie, boli, soaked garri — costs ₦',
+    hint: 'Chop till your belle settle. Your money dey finish.',
     cost: 400,                      // cheapest thing on the fire
-    run(s, rng) {
-      const menu = [
-        ['indomie and egg',        1200, 28, 14],
-        ['boli and groundnut',      700, 20, 10],
-        ['soaked garri with milk',  600, 22, 16],
-        ['cold minerals',           400, 12,  8],
-      ];
-      const afford = menu.filter(i => i[1] <= s.money);
-      const item = pick(rng, afford.length ? afford : [menu[3]]);
-      spend(s, item[1]);
-      apply(s, { belle: item[2], energy: item[3], cred: 1 });
-      return `You faced ${item[0]} at Mami. ₦${item[1].toLocaleString()} gone, but belle dey settle.`;
+    play: 'mami',
+    run(s, rng, res) {
+      if (!res) { spend(s, 700); apply(s, { belle: 20, energy: 10, cred: 1 });
+                  return 'You faced something small at Mami.'; }
+      spend(s, res.spent || 0);
+      apply(s, { belle: res.belle || 0, energy: Math.round((res.belle || 0) / 2), cred: 1 });
+      return `${res.detail} ₦${(res.spent || 0).toLocaleString()} gone.`;
     },
   },
   hustle: {
     label: 'Hustle',
-    hint: 'Laundry, charge phones, sell recharge card',
-    run(s, rng) {
-      const gig = pick(rng, [
-        ['washed khaki for three people', 500],
-        ['charged phones at the generator', 800],
-        ['sold recharge cards', 650],
-        ['plaited hair in the hostel', 950],
-      ]);
-      const pay = gig[1] + Math.floor(rng() * 400);
-      s.money += pay;
-      apply(s, { energy: -14, belle: -8 });
-      return `You ${gig[0]}. ₦${pay.toLocaleString()} entered.`;
+    hint: 'Pick three jobs. Big pay costs energy.',
+    play: 'hustle',
+    run(s, rng, res) {
+      if (!res) { const p = 600 + Math.floor(rng() * 500); s.money += p;
+                  apply(s, { energy: -14, belle: -8 });
+                  return `You hustled small. ₦${p.toLocaleString()} entered.`; }
+      s.money += res.earned || 0;
+      apply(s, { energy: -(res.tired || 12), belle: -8 });
+      return res.detail;
     },
   },
   manowar: {
