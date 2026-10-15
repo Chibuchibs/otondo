@@ -287,30 +287,50 @@ export function playParade(host) {
       for (let a = 0; a < 8; a++){ const r = a * Math.PI / 4;
         x.beginPath(); x.moveTo(286 + Math.cos(r) * 25, 30 + Math.sin(r) * 25);
         x.lineTo(286 + Math.cos(r) * 32, 30 + Math.sin(r) * 32); x.stroke(); }
-      x.fillStyle = '#c9b88e'; x.fillRect(0, 150, W, H - 150);     // parade ground
+      x.fillStyle = '#c9b88e'; x.fillRect(0, 152, W, H - 152);     // parade ground
 
-      // A and B markers
-      x.fillStyle = '#0a7a43'; x.fillRect(16, 128, 4, 34);
-      x.fillRect(W - 24, 128, 4, 34);
-      x.font = '700 11px system-ui, sans-serif'; x.fillText('A', 14, 124); x.fillText('B', W - 27, 124);
-
-      // the squad, advancing with every good step
-      /* Start far enough in that the rear of the squad is not clipped off the
-         left edge — at 24 the third figure sat at -6. */
-      const px = 52 + (W - 104) * (steps / STEPS);
+      /* Marking time on the spot, in formation — which is what drill actually
+         is, and holding still means they can be drawn big enough to see the
+         kit. Progress shows on the bar, not by walking off-screen. */
       for (let n = 0; n < 3; n++){
-        const bx = px - n * 14, sway = Math.sin((steps + n) * 1.6) * 2;
-        x.fillStyle = '#8aa863'; x.fillRect(bx - 5, 136 + sway, 10, 16);
-        x.fillStyle = '#fbf9f2'; x.fillRect(bx - 6, 120 + sway, 12, 17);
-        x.fillStyle = '#0a7a43'; x.fillRect(bx - 6, 120 + sway, 12, 2.4);
-        x.fillStyle = '#8d5524'; x.beginPath(); x.arc(bx, 114 + sway, 6, 0, 7); x.fill();
+        const bx = 80 + n * 80;
+        const up = (steps + n) % 2 === 0;          // legs alternate on each step
+        const lift = flash > 14 && flashGood ? 3 : 0;
+        // legs: one knee raised
+        x.fillStyle = '#7b9856';
+        x.fillRect(bx - 9, 126, 8, up ? 22 - lift : 22);
+        x.fillStyle = '#8aa863';
+        x.fillRect(bx + 1, 126, 8, up ? 22 : 22 - lift);
+        x.fillStyle = '#e0762a';                    // boots
+        x.fillRect(bx - 10, up ? 148 - lift : 148, 10, 5);
+        x.fillRect(bx,      up ? 148 : 148 - lift, 10, 5);
+        x.fillStyle = '#2a2520';
+        x.fillRect(bx - 10, up ? 151 - lift : 151, 10, 2);
+        x.fillRect(bx,      up ? 151 : 151 - lift, 10, 2);
+        // torso and arms
+        x.fillStyle = '#fbf9f2'; x.fillRect(bx - 11, 100, 22, 28);
+        x.fillStyle = '#0a7a43'; x.fillRect(bx - 11, 100, 22, 3);
+        x.beginPath(); x.arc(bx, 112, 3.4, 0, 7); x.fill();
+        x.fillStyle = '#5f7a42'; x.fillRect(bx - 11, 122, 22, 4);   // belt
+        x.fillStyle = '#fbf9f2';
+        x.fillRect(bx - 16, 102, 5, up ? 16 : 20);
+        x.fillRect(bx + 11, 102, 5, up ? 20 : 16);
+        // head and cap
+        x.fillStyle = '#8d5524'; x.beginPath(); x.arc(bx, 92, 9, 0, 7); x.fill();
         x.fillStyle = '#fbf9f2'; x.beginPath();
-        x.ellipse(bx, 112 + sway, 7, 5, 0, Math.PI, 0); x.fill();
-        x.fillStyle = '#e0762a'; x.fillRect(bx - 6, 150 + sway, 12, 4);
+        x.ellipse(bx, 89, 10, 7, 0, Math.PI, 0); x.fill();
+        x.fillStyle = '#0a7a43'; x.fillRect(bx - 11, 87, 22, 3);
       }
 
+      // how far through the parade they are
+      const pw = W - 48;
+      x.fillStyle = 'rgba(0,0,0,.1)'; x.fillRect(24, 166, pw, 8);
+      x.fillStyle = '#0a7a43'; x.fillRect(24, 166, pw * (steps / STEPS), 8);
+      x.fillStyle = '#7a7257'; x.font = '700 10px system-ui, sans-serif';
+      x.fillText('A', 24, 163); x.fillText('B', W - 30, 163);
+
       // rhythm bar
-      const by = 196, bw = W - 48;
+      const by = 200, bw = W - 48;
       x.fillStyle = 'rgba(0,0,0,.1)'; x.fillRect(24, by, bw, 16);
       x.fillStyle = '#d9ece1';
       x.fillRect(24 + bw * (0.5 - BAND), by, bw * BAND * 2, 16);
@@ -321,7 +341,7 @@ export function playParade(host) {
       if (flash > 0) {
         x.fillStyle = flashGood ? '#0a7a43' : '#b0432f';
         x.font = '700 18px system-ui, sans-serif'; x.textAlign = 'center';
-        x.fillText(flashGood ? 'IN STEP' : 'OUT OF STEP', W / 2, 178);
+        x.fillText(flashGood ? 'IN STEP' : 'OUT OF STEP', W / 2, 190);
         x.textAlign = 'left';
         flash--;
       }
