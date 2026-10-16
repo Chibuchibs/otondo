@@ -261,7 +261,7 @@ export function playParade(host) {
       <div class="mg">
         <p class="mg-top"><b>Morning parade</b><span id="mgInfo">0 of ${STEPS} steps</span></p>
         <canvas id="mgCanvas" width="${W}" height="${H}"></canvas>
-        <p class="mg-hint">Tap in step as the marker hits the green.</p>
+        <p class="mg-hint">Tap when the orange marker is inside the green band.</p>
       </div>`;
     const cv = host.querySelector('#mgCanvas'), x = cv.getContext('2d');
     const info = host.querySelector('#mgInfo');
@@ -271,7 +271,9 @@ export function playParade(host) {
     /* Driven by the CLOCK, not the frame count. Per-frame movement ran twice as
        fast on a 120Hz phone as on a 60Hz one, and froze entirely whenever the
        browser throttled frames — which made the parade unwinnable. */
-    const SWEEP = 1500;                  // ms for one there-and-back
+    /* 1800, not 1500. Combined with the band finally being visible, this is
+       the difference between reading the rhythm and guessing at it. */
+    const SWEEP = 1800;                  // ms for one there-and-back
     const t0 = performance.now();
     const marker = () => {
       const u = ((performance.now() - t0) % SWEEP) / SWEEP;
@@ -279,6 +281,8 @@ export function playParade(host) {
     };
 
     function draw() {
+      const m = marker();
+      const inBand = Math.abs(m - 0.5) <= BAND;
       x.clearRect(0, 0, W, H);
       x.fillStyle = '#e8f0f6'; x.fillRect(0, 0, W, H);
       // the sun, because the sun is the point
@@ -294,7 +298,11 @@ export function playParade(host) {
          kit. Progress shows on the bar, not by walking off-screen. */
       for (let n = 0; n < 3; n++){
         const bx = 80 + n * 80;
-        const up = (steps + n) % 2 === 0;          // legs alternate on each step
+        /* Driven by the marker, not the step count: the squad now visibly
+           steps each time the marker crosses the middle, so the beat can be
+           read off the drill itself. The bar is no longer the only way to
+           find the rhythm. */
+        const up = (m < 0.5) === (n % 2 === 0);
         const lift = flash > 14 && flashGood ? 3 : 0;
         // legs: one knee raised
         x.fillStyle = '#7b9856';
@@ -329,19 +337,32 @@ export function playParade(host) {
       x.fillStyle = '#7a7257'; x.font = '700 10px system-ui, sans-serif';
       x.fillText('A', 24, 163); x.fillText('B', W - 30, 163);
 
-      // rhythm bar
-      const by = 200, bw = W - 48;
-      x.fillStyle = 'rgba(0,0,0,.1)'; x.fillRect(24, by, bw, 16);
-      x.fillStyle = '#d9ece1';
-      x.fillRect(24 + bw * (0.5 - BAND), by, bw * BAND * 2, 16);
-      x.fillStyle = '#0a7a43';
-      x.fillRect(24 + bw * marker() - 2, by - 4, 4, 24);
-      x.strokeStyle = 'rgba(0,0,0,.18)'; x.lineWidth = 1; x.strokeRect(24, by, bw, 16);
+      /* The band used to be #d9ece1 — pale mint on a light grey track, beside
+         a strong green marker. The TARGET was the hardest thing on screen to
+         see while the moving part was the easiest, which is backwards. Now the
+         band is solid green, it lights up while the marker is inside it, and
+         the marker is ORANGE so it never camouflages against its own target. */
+      const by = 196, bh = 22, bw = W - 48;
+      x.fillStyle = '#e7e1d0'; x.fillRect(24, by, bw, bh);
+      x.fillStyle = inBand ? '#3f9e68' : '#8fc9a8';
+      x.fillRect(24 + bw * (0.5 - BAND), by, bw * BAND * 2, bh);
+      x.strokeStyle = '#0a7a43'; x.lineWidth = 2;
+      x.strokeRect(24 + bw * (0.5 - BAND), by, bw * BAND * 2, bh);
+      if (inBand) {
+        x.fillStyle = '#fbf9f2'; x.font = '800 11px system-ui, sans-serif';
+        x.textAlign = 'center'; x.fillText('NOW', W / 2, by + 15); x.textAlign = 'left';
+      }
+      const mx = 24 + bw * m;
+      x.fillStyle = '#e0762a';
+      x.fillRect(mx - 3, by - 7, 6, bh + 14);
+      x.beginPath(); x.moveTo(mx - 7, by - 7); x.lineTo(mx + 7, by - 7);
+      x.lineTo(mx, by + 1); x.closePath(); x.fill();
+      x.strokeStyle = 'rgba(0,0,0,.18)'; x.lineWidth = 1; x.strokeRect(24, by, bw, bh);
 
       if (flash > 0) {
         x.fillStyle = flashGood ? '#0a7a43' : '#b0432f';
         x.font = '700 18px system-ui, sans-serif'; x.textAlign = 'center';
-        x.fillText(flashGood ? 'IN STEP' : 'OUT OF STEP', W / 2, 190);
+        x.fillText(flashGood ? 'IN STEP' : 'OUT OF STEP', W / 2, 188);
         x.textAlign = 'left';
         flash--;
       }
