@@ -459,6 +459,12 @@
   .odds-rival{display:flex;align-items:center;gap:7px;margin-top:9px;
     padding-top:9px;border-top:1px solid var(--line);font-size:12.5px}
   .odds-rival .who{flex:1;color:var(--muted);-webkit-text-fill-color:var(--muted)}
+  /* Says plainly that this one is not a person. The live count, the roster and
+     chat beside it are all REAL, so an unlabelled "same platoon" name read as
+     another player — the user asked whether it was one, which is the answer. */
+  .odds-rival .simtag{font-style:normal;font-size:10px;font-weight:800;
+    letter-spacing:.06em;text-transform:uppercase;padding:2px 6px;border-radius:999px;
+    background:var(--dust);color:var(--muted);-webkit-text-fill-color:var(--muted)}
   .odds-rival .who b{color:var(--ink);-webkit-text-fill-color:var(--ink)}
   .odds-rival .verdict{font-weight:800;font-size:12px;padding:3px 8px;border-radius:999px}
   .odds-rival .ahead{background:#e2f0e7;color:var(--green-dk);-webkit-text-fill-color:var(--green-dk)}
@@ -720,18 +726,18 @@
 <script type="module">
 import { newGame, doAction, canDo, unlocked, ACTIONS, phaseOf, nextUnlock, postingOdds, rivalOf,
          computePosting,
-         shareText, MAX_DAY } from './game.js?v=20261017104445';
+         shareText, MAX_DAY } from './game.js?v=20261017104509';
 
 /* Kept here, not exported from game.js: a new cross-file export breaks any
    client holding a cached game.js after a deploy. */
 const ALLAWEE_NOTE = 'Allawee ₦77,000 — e never enter.';
 import { initNet, joinCamp, syncPlayer, platoonBoard, recentChat, postChat,
          postSuggestion, reportMessage, awardBoard, myAwards, laughChat,
-         setPresence, campRoster, renameMe, online } from './net.js?v=20261017104445';
-import { startMusic, stopMusic, musicOn, audioState, audioSupported, BEAT, BAR } from './audio.js?v=20261017104445';
+         setPresence, campRoster, renameMe, online } from './net.js?v=20261017104509';
+import { startMusic, stopMusic, musicOn, audioState, audioSupported, BEAT, BAR } from './audio.js?v=20261017104509';
 import { playHoop, playPenalty, playQuiz, playRegister, playParade,
          playMami, playHustle, playManOWar, playSaed, playSocial,
-         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261017104445';
+         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261017104509';
 
 /* Every dance animation is expressed in beats, so the steps are on-tempo
    whether or not the sound is playing — and genuinely on the beat when it is. */
@@ -1506,7 +1512,7 @@ function drawEndRival(){
   const won = s.cred > r.cred;
   $('eRival').innerHTML =
     `<b>${won ? 'You beat' : 'You lost to'} ${esc(r.name)}</b><br>` +
-    `${esc(r.name)} — ${esc(r.posting.place)} ${r.posting.emoji} ` +
+    `${esc(r.name)}, your camp rival — ${esc(r.posting.place)} ${r.posting.emoji} ` +
     `(credibility ${r.cred} to your ${s.cred})`;
 }
 
@@ -1542,8 +1548,8 @@ function drawOdds(){
       <span>🙂 <b>${pc(o.mid)}%</b> manage</span>
       <span>😭 <b>${pc(o.hard)}%</b> far</span></div>
     <div class="odds-rival">
-      <span class="who"><b>${esc(r.name)}</b>, same platoon ·
-        ${pc(ro.soft)}% soft</span>
+      <span class="who"><b>${esc(r.name)}</b> <em class="simtag">camp rival</em>
+        · ${pc(ro.soft)}% soft</span>
       <span class="verdict ${lead > 0 ? 'ahead' : lead < 0 ? 'behind' : 'level'}">${
         lead > 0 ? 'You dey lead' : lead < 0 ? `${esc(r.name)} dey lead` : 'Level'
       }</span></div>
