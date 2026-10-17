@@ -27,7 +27,7 @@ export function playHoop(host) {
       <div class="mg">
         <p class="mg-top"><b>Camp court</b><span id="mgInfo">Shot 1 of ${SHOTS}</span></p>
         <canvas id="mgCanvas" width="${W}" height="${H}"></canvas>
-        <p class="mg-hint">Hold to aim your power. Let go to shoot.</p>
+        <p class="mg-hint">Hold, then let go when the marker is on the green.</p>
       </div>`;
     const cv = host.querySelector('#mgCanvas'), x = cv.getContext('2d');
     const info = host.querySelector('#mgInfo');
@@ -36,15 +36,40 @@ export function playHoop(host) {
     let ball = null, hoopX = 0, done = false;
     /* Same fix as the parade: the meter used to fill per frame, so it charged
        at double speed on a 120Hz screen. */
-    const CHARGE = 1100;                 // ms for a full up-and-down sweep
+    /* 1500, was 1100. The winning power window is ~16% of the meter, so at
+       1100ms the player had 88ms to release — against the parade's 288ms, more
+       than three times tighter, at a target that was not drawn at all. */
+    const CHARGE = 1500;                 // ms for a full up-and-down sweep
     const powerNow = () => {
       if (!charging) return 0;
       const u = ((performance.now() - chargeFrom) % CHARGE) / CHARGE;
       return u < 0.5 ? u * 2 : 2 - u * 2;
     };
 
+    /* Which power values actually go in, for the distance in front of you.
+       Solved by flying the real trajectory rather than by formula, because the
+       flight is a discrete Euler step and an analytic curve would disagree with
+       it at the edges — and the band has to be exactly true or it is worse than
+       no band. Runs once per shot. */
+    function winWindow(hx) {
+      let lo = null, hi = null;
+      for (let p = 0; p <= 1; p += 0.004) {
+        const v = 5 + p * 5.5;
+        let bx = 62, by = H - 112, vx = v * 0.76, vy = -v * 0.86, inPlay = false;
+        for (let f = 0; f < 400; f++) {
+          bx += vx; by += vy; vy += 0.42;
+          if (vy > 0 && Math.abs(bx - hx) < 17 && by > 80 && by < 94) { inPlay = true; break; }
+          if (by > H) break;
+        }
+        if (inPlay) { if (lo === null) lo = p; hi = p; }
+      }
+      return lo === null ? null : [lo, hi];
+    }
+
+    let win = null;
     const newShot = () => {
       hoopX = 190 + Math.random() * 90;      // the distance changes every time
+      win = winWindow(hoopX);
       charging = false; ball = null;
       info.textContent = `Shot ${Math.min(shot + 1, SHOTS)} of ${SHOTS} · ${made} in`;
     };
@@ -91,12 +116,31 @@ export function playHoop(host) {
                   x.strokeStyle = 'rgba(0,0,0,.35)'; x.lineWidth = 1.2; x.stroke(); }
       else      { x.fillStyle = '#e0762a'; x.beginPath(); x.arc(62, H - 112, 8, 0, 7); x.fill(); }
 
-      // power meter
-      x.fillStyle = 'rgba(0,0,0,.12)'; x.fillRect(16, 18, 120, 12);
+      /* Power meter, with the band that goes IN marked on it. Without this the
+         player had an 88ms window at an invisible target — the same mistake as
+         the parade's pale-mint band and Man O War's inverted hint: the mechanic
+         was fine, the target was not drawn. The band moves with the distance,
+         so it still has to be read every shot. */
+      const MX = 16, MW = 120, MY = 16, MH = 16;
       const p = powerNow();
-      x.fillStyle = p > .82 ? '#c0392b' : '#0a7a43';
-      x.fillRect(16, 18, 120 * p, 12);
-      x.strokeStyle = 'rgba(0,0,0,.25)'; x.lineWidth = 1; x.strokeRect(16, 18, 120, 12);
+      x.fillStyle = '#e7e1d0'; x.fillRect(MX, MY, MW, MH);
+      if (win) {
+        const inBand = charging && p >= win[0] && p <= win[1];
+        x.fillStyle = inBand ? '#3f9e68' : '#8fc9a8';
+        x.fillRect(MX + MW * win[0], MY, MW * (win[1] - win[0]), MH);
+        x.strokeStyle = '#0a7a43'; x.lineWidth = 2;
+        x.strokeRect(MX + MW * win[0], MY, MW * (win[1] - win[0]), MH);
+      }
+      if (charging) {
+        const hx = MX + MW * p;
+        x.fillStyle = '#e0762a';
+        x.fillRect(hx - 2.5, MY - 5, 5, MH + 10);
+        x.beginPath(); x.moveTo(hx - 6, MY - 5); x.lineTo(hx + 6, MY - 5);
+        x.lineTo(hx, MY + 2); x.closePath(); x.fill();
+      }
+      x.strokeStyle = 'rgba(0,0,0,.25)'; x.lineWidth = 1; x.strokeRect(MX, MY, MW, MH);
+      x.fillStyle = '#7a7257'; x.font = '800 10px system-ui, sans-serif';
+      x.fillText('POWER', MX, MY + MH + 11);
     }
 
     function tick() {
