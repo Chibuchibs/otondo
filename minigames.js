@@ -792,7 +792,7 @@ export function playManOWar(host) {
       <div class="mg">
         <p class="mg-top"><b>Man O War</b><span id="mgInfo">0%</span></p>
         <canvas id="mgCanvas" width="${W}" height="${H}"></canvas>
-        <p class="mg-hint">Tap the side you are falling towards.</p>
+        <p class="mg-hint">Leaning left? Tap RIGHT. Tap the side the arrow shows.</p>
       </div>`;
     const cv = host.querySelector('#mgCanvas'), x = cv.getContext('2d');
     const info = host.querySelector('#mgInfo');
@@ -832,13 +832,43 @@ export function playManOWar(host) {
       x.fillStyle = '#e0762a'; x.fillRect(-7, -3, 14, 4);
       x.restore();
 
-      // balance meter
-      x.fillStyle = 'rgba(0,0,0,.1)'; x.fillRect(60, 206, W - 120, 12);
-      x.fillStyle = '#d9ece1'; x.fillRect(W/2 - 22, 206, 44, 12);
-      x.fillStyle = Math.abs(tilt) > 0.72 ? '#b0432f' : '#0a7a43';
-      x.fillRect(W/2 + tilt * (W - 120) / 2 - 3, 202, 6, 20);
-      x.fillStyle = '#7a7257'; x.font = '700 10px system-ui, sans-serif';
-      x.fillText('LEFT', 24, 216); x.fillText('RIGHT', W - 52, 216);
+      /* WHICH SIDE TO TAP. The old hint said "tap the side you are falling
+         towards", which is backwards — lean() pushes you IN the direction you
+         tap, so following it accelerated the fall. Simulated: tapping towards
+         the lean gave 1108 falls, identical to not playing at all; tapping
+         away gave zero. The mechanic was never hard, the instruction was
+         inverted. So the side to tap is now drawn on the bridge itself. */
+      if (Math.abs(tilt) > 0.1) {
+        const tapLeft = tilt > 0;              // leaning right -> pull left
+        const cx = tapLeft ? 52 : W - 52;
+        const urgent = Math.abs(tilt) > 0.55;
+        x.fillStyle = urgent ? 'rgba(176,67,47,.17)' : 'rgba(10,122,67,.11)';
+        x.fillRect(tapLeft ? 0 : W / 2, 0, W / 2, 186);
+        x.fillStyle = urgent ? '#b0432f' : '#0a7a43';
+        x.beginPath();
+        const ax = tapLeft ? -1 : 1;
+        x.moveTo(cx - 17 * ax, 40); x.lineTo(cx + 5 * ax, 22);
+        x.lineTo(cx + 5 * ax, 58); x.closePath(); x.fill();
+        x.font = '800 12px system-ui, sans-serif'; x.textAlign = 'center';
+        x.fillText('TAP', cx, 76); x.textAlign = 'left';
+      }
+
+      /* Balance meter, rebuilt for contrast like the parade's: the safe zone
+         was #d9ece1 on light grey, the least visible thing on screen. */
+      const mw = W - 120, mx = 60;
+      x.fillStyle = '#e7e1d0'; x.fillRect(mx, 204, mw, 16);
+      x.fillStyle = '#b0432f';
+      x.fillRect(mx, 204, mw * 0.14, 16);
+      x.fillRect(mx + mw * 0.86, 204, mw * 0.14, 16);
+      x.fillStyle = '#8fc9a8'; x.fillRect(W/2 - 24, 204, 48, 16);
+      x.strokeStyle = '#0a7a43'; x.lineWidth = 2; x.strokeRect(W/2 - 24, 204, 48, 16);
+      const knob = W/2 + tilt * mw / 2;
+      x.fillStyle = '#e0762a';
+      x.fillRect(knob - 3.5, 198, 7, 28);
+      x.beginPath(); x.moveTo(knob - 8, 198); x.lineTo(knob + 8, 198);
+      x.lineTo(knob, 206); x.closePath(); x.fill();
+      x.fillStyle = '#7a7257'; x.font = '800 11px system-ui, sans-serif';
+      x.fillText('LEFT', 12, 216); x.fillText('RIGHT', W - 46, 216);
     }
 
     function tick() {
