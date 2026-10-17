@@ -239,6 +239,14 @@
     margin:0 2px 9px;font-size:13px}
   .mg-top b{font-size:15px}
   .mg-top span{color:var(--muted);font-weight:700;font-size:12px}
+  /* The instruction, promoted. It used to be the same small muted text as the
+     live feedback, sitting BELOW the canvas — on a phone that is past the fold
+     on a timing game, and three separate "this is impossible" reports turned
+     out to be "I never saw the hint". Now it sits directly under the title, in
+     ink rather than grey, before anything you have to react to. */
+  .mg-brief{margin:0 2px 10px;padding:9px 11px;background:var(--dust);
+    border-radius:10px;font-size:13.5px;line-height:1.4;font-weight:600;
+    color:var(--ink);-webkit-text-fill-color:var(--ink);text-align:center}
   .mg-hint{margin:9px 2px 0;font-size:12.5px;color:var(--muted);text-align:center;
     min-height:1.2em}
   #mgCanvas{width:100%;height:auto;display:block;border-radius:12px;
@@ -712,18 +720,18 @@
 <script type="module">
 import { newGame, doAction, canDo, unlocked, ACTIONS, phaseOf, nextUnlock, postingOdds, rivalOf,
          computePosting,
-         shareText, MAX_DAY } from './game.js?v=20261017102145';
+         shareText, MAX_DAY } from './game.js?v=20261017103220';
 
 /* Kept here, not exported from game.js: a new cross-file export breaks any
    client holding a cached game.js after a deploy. */
 const ALLAWEE_NOTE = 'Allawee ₦77,000 — e never enter.';
 import { initNet, joinCamp, syncPlayer, platoonBoard, recentChat, postChat,
          postSuggestion, reportMessage, awardBoard, myAwards, laughChat,
-         setPresence, campRoster, renameMe, online } from './net.js?v=20261017102145';
-import { startMusic, stopMusic, musicOn, audioState, audioSupported, BEAT, BAR } from './audio.js?v=20261017102145';
+         setPresence, campRoster, renameMe, online } from './net.js?v=20261017103220';
+import { startMusic, stopMusic, musicOn, audioState, audioSupported, BEAT, BAR } from './audio.js?v=20261017103220';
 import { playHoop, playPenalty, playQuiz, playRegister, playParade,
          playMami, playHustle, playManOWar, playSaed, playSocial,
-         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261017102145';
+         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261017103220';
 
 /* Every dance animation is expressed in beats, so the steps are on-tempo
    whether or not the sound is playing — and genuinely on the beat when it is. */

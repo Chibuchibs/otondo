@@ -26,13 +26,15 @@ export function playHoop(host) {
     host.innerHTML = `
       <div class="mg">
         <p class="mg-top"><b>Camp court</b><span id="mgInfo">Shot 1 of ${SHOTS}</span></p>
+        <p class="mg-brief">Hold, then let go when the marker is on the green.</p>
         <canvas id="mgCanvas" width="${W}" height="${H}"></canvas>
-        <p class="mg-hint">Hold, then let go when the marker is on the green.</p>
       </div>`;
     const cv = host.querySelector('#mgCanvas'), x = cv.getContext('2d');
     const info = host.querySelector('#mgInfo');
 
     let shot = 0, made = 0, made0 = 0, charging = false, chargeFrom = 0;
+    /* When the shot was released, so the follow-through can play out. */
+    let releasedAt = 0;
     let ball = null, hoopX = 0, done = false;
     /* Same fix as the parade: the meter used to fill per frame, so it charged
        at double speed on a 120Hz screen. */
@@ -93,6 +95,25 @@ export function playHoop(host) {
         x.beginPath(); x.moveTo(hoopX + i * 6, 88); x.lineTo(hoopX + i * 3, 108); x.stroke();
       }
 
+      /* The shooter now moves: he sinks into the shot as the power builds and
+         springs up through the release, and the arm follows the ball instead
+         of the whole figure standing still while a bar fills somewhere else.
+         Everything below is drawn through one translate so the kit does not
+         have to be re-coordinated. */
+      const sinceShot = releasedAt ? performance.now() - releasedAt : 1e9;
+      const springing = sinceShot < 420;
+      const spring = springing ? 1 - sinceShot / 420 : 0;
+      const dip = charging ? powerNow() * 6 : -5 * spring;
+
+      x.save(); x.translate(0, dip);
+
+      /* The arm: cocked low while loading, snapped up and through on release. */
+      x.fillStyle = '#8d5524';
+      x.save(); x.translate(55, H - 118);
+      x.rotate(charging ? 0.45 - powerNow() * 0.5 : -0.75 * spring + 0.1);
+      x.fillRect(0, -3, 15, 6);
+      x.restore();
+
       // the shooter, in the same sports kit
       x.fillStyle = '#fbf9f2'; x.fillRect(37, H - 96, 18, 17);     // white shorts
       x.fillStyle = '#0a7a43'; x.fillRect(37, H - 96, 18, 2.4);    // waistband
@@ -111,10 +132,13 @@ export function playHoop(host) {
       x.fillStyle = '#fbf9f2'; x.beginPath();                      // white cap
       x.ellipse(46, H - 140, 12, 8, 0, Math.PI, 0); x.fill();
       x.fillStyle = '#0a7a43'; x.fillRect(33, H - 143, 26, 4);
+      x.restore();
 
       if (ball) { x.fillStyle = '#e0762a'; x.beginPath(); x.arc(ball.x, ball.y, 8, 0, 7); x.fill();
                   x.strokeStyle = 'rgba(0,0,0,.35)'; x.lineWidth = 1.2; x.stroke(); }
-      else      { x.fillStyle = '#e0762a'; x.beginPath(); x.arc(62, H - 112, 8, 0, 7); x.fill(); }
+      else      { x.fillStyle = '#e0762a'; x.beginPath();
+                  /* the held ball rides the crouch too, or it floats */
+                  x.arc(62, H - 112 + dip, 8, 0, 7); x.fill(); }
 
       /* Power meter, with the band that goes IN marked on it. Without this the
          player had an 88ms window at an invisible target — the same mistake as
@@ -172,6 +196,7 @@ export function playHoop(host) {
          bottom quarter of the meter — charge to mid-power, as anyone naturally
          would, and the ball always sailed over. This puts the sweet spot at
          0.44-0.72, mid-bar, with ~17% of the meter scoring. */
+      releasedAt = performance.now();
       const v = 5 + lastPower * 5.5;
       ball = { x: 62, y: H - 112, vx: v * 0.76, vy: -v * 0.86, scored: false };
     }
@@ -247,10 +272,11 @@ export function playRegister(host) {
 
     host.innerHTML = `<div class="mg">
       <p class="mg-top"><b>Camp registration</b><span id="mgInfo"></span></p>
+        <p class="mg-brief">Three hours for queue. Grab the right thing.</p>
       <p class="reg-ask" id="regAsk"></p>
       <div class="reg-bar"><i id="regFill"></i></div>
       <div class="reg-grid" id="regGrid"></div>
-      <p class="mg-hint" id="regFb">Three hours for queue. Grab the right thing.</p></div>`;
+      <p class="mg-hint" id="regFb">\u00a0</p></div>`;
     const ask = host.querySelector('#regAsk'), grid = host.querySelector('#regGrid');
     const info = host.querySelector('#mgInfo'), fb = host.querySelector('#regFb');
     const fill = host.querySelector('#regFill');
@@ -320,8 +346,8 @@ export function playParade(host) {
     host.innerHTML = `
       <div class="mg">
         <p class="mg-top"><b>Morning parade</b><span id="mgInfo">0 of ${STEPS} steps</span></p>
+        <p class="mg-brief">Tap when the orange marker is inside the green band.</p>
         <canvas id="mgCanvas" width="${W}" height="${H}"></canvas>
-        <p class="mg-hint">Tap when the orange marker is inside the green band.</p>
       </div>`;
     const cv = host.querySelector('#mgCanvas'), x = cv.getContext('2d');
     const info = host.querySelector('#mgInfo');
@@ -480,8 +506,8 @@ export function playPenalty(host) {
     host.innerHTML = `
       <div class="mg">
         <p class="mg-top"><b>Penalty spot</b><span id="mgInfo">Kick 1 of ${KICKS}</span></p>
+        <p class="mg-brief">Tap where you want it. The keeper no dey sleep.</p>
         <canvas id="mgCanvas" width="${W}" height="${H}"></canvas>
-        <p class="mg-hint">Tap where you want it. The keeper no dey sleep.</p>
       </div>`;
     const cv = host.querySelector('#mgCanvas'), x = cv.getContext('2d');
     const info = host.querySelector('#mgInfo');
@@ -489,6 +515,7 @@ export function playPenalty(host) {
     let kick = 0, scored = 0, done = false, t = 0;
     let keeper = (GL + GR) / 2, dir = 1, speed = 2.3;
     let ball = null, msg = '', msgT = 0, lunge = 0, reach = 0;
+    let kickedAt = 0;   // when the strike began, for the swing
 
     const newKick = () => {
       ball = null;
@@ -537,6 +564,26 @@ export function playPenalty(host) {
       x.fillStyle = '#8d5524';
       x.beginPath(); x.arc(kx, ky - 9, 9, 0, 7); x.fill();        // head
 
+      /* The kicker now strikes instead of standing still: he plants, swings
+         the leg through and leans into it. ~360ms, so it reads at a glance
+         without holding up the next kick. */
+      const sinceKick = kickedAt ? performance.now() - kickedAt : 1e9;
+      const swinging = sinceKick < 360;
+      const sw = swinging ? sinceKick / 360 : 0;          // 0 -> 1 through the strike
+
+      x.save();
+      if (swinging) { x.translate(157, H - 20); x.rotate(-0.16 * Math.sin(sw * Math.PI)); x.translate(-157, -(H - 20)); }
+
+      /* The striking leg, swung through toward the ball. Drawn before the body
+         so it reads as the far leg coming round. */
+      if (swinging) {
+        x.save(); x.translate(160, H - 44);
+        x.rotate(-1.15 * Math.sin(sw * Math.PI));
+        x.fillStyle = '#8d5524'; x.fillRect(0, -4, 20, 8);
+        x.fillStyle = '#f2efe4'; x.fillRect(18, -5, 10, 9);        // boot
+        x.restore();
+      }
+
       /* Sports kit, not the khaki: camp PT and matches are played in the white
          crested vest and white shorts, with canvas shoes. */
       x.fillStyle = '#fbf9f2'; x.fillRect(149, H - 46, 16, 15);     // white shorts
@@ -556,6 +603,7 @@ export function playPenalty(host) {
       x.fillStyle = '#fbf9f2'; x.beginPath();                        // white cap
       x.ellipse(157, H - 78, 10, 7, 0, Math.PI, 0); x.fill();
       x.fillStyle = '#0a7a43'; x.fillRect(146, H - 80, 22, 3);
+      x.restore();
 
       if (ball) {
         x.fillStyle = '#fbf9f2'; x.beginPath(); x.arc(ball.x, ball.y, 7, 0, 7); x.fill();
@@ -606,6 +654,7 @@ export function playPenalty(host) {
       if (ball || kick >= KICKS) return;
       const tx = Math.max(GL + 12, Math.min(GR - 12, px));
       const ty = Math.max(GT + 12, Math.min(GB - 8, py));
+      kickedAt = performance.now();
       ball = { x0: 170, y0: H - 24, x: 170, y: H - 24, tx, ty, p: 0 };
     }
 
@@ -724,8 +773,9 @@ export function playMami(host, st) {
 
     host.innerHTML = `<div class="mg">
       <p class="mg-top"><b>Mami market</b><span id="mgInfo"></span></p>
+        <p class="mg-brief">Eat till your belle settle. Your money dey finish.</p>
       <div class="mami-grid" id="mamiGrid"></div>
-      <p class="mg-hint" id="mamiFb">Eat till your belle settle. Your money dey finish.</p>
+      <p class="mg-hint" id="mamiFb">\u00a0</p>
       <button class="mami-done" id="mamiDone">I don finish</button></div>`;
     const grid = host.querySelector('#mamiGrid'), info = host.querySelector('#mgInfo');
     const fb = host.querySelector('#mamiFb');
@@ -803,7 +853,7 @@ export function playHustle(host) {
 
     host.innerHTML = `<div class="mg">
       <p class="mg-top"><b>Camp hustle</b><span id="mgInfo"></span></p>
-      <p class="mg-hint" style="margin:0 2px 9px">Pick ${PICKS} jobs. Big pay costs you energy.</p>
+        <p class="mg-brief">Pick ${PICKS} jobs. Big pay costs you energy.</p>
       <div class="hus-grid" id="husGrid"></div>
       <p class="mg-hint" id="husFb">\u00a0</p></div>`;
     const grid = host.querySelector('#husGrid'), info = host.querySelector('#mgInfo');
@@ -851,8 +901,8 @@ export function playManOWar(host) {
     host.innerHTML = `
       <div class="mg">
         <p class="mg-top"><b>Man O War</b><span id="mgInfo">0%</span></p>
+        <p class="mg-brief">Leaning left? Tap RIGHT. Tap the side the arrow shows.</p>
         <canvas id="mgCanvas" width="${W}" height="${H}"></canvas>
-        <p class="mg-hint">Leaning left? Tap RIGHT. Tap the side the arrow shows.</p>
       </div>`;
     const cv = host.querySelector('#mgCanvas'), x = cv.getContext('2d');
     const info = host.querySelector('#mgInfo');
@@ -1001,7 +1051,8 @@ export function playSaed(host) {
 
     host.innerHTML = `<div class="mg">
       <p class="mg-top"><b>SAED: ${trade.n}</b><span id="mgInfo"></span></p>
-      <p class="mg-hint" id="saedFb" style="margin:0 2px 10px">Watch the order, then repeat it.</p>
+        <p class="mg-brief">Watch the order, then repeat it.</p>
+      <p class="mg-hint" id="saedFb" style="margin:0 2px 10px">\u00a0</p>
       <div class="saed-grid" id="saedGrid"></div></div>`;
     const grid = host.querySelector('#saedGrid'), info = host.querySelector('#mgInfo');
     const fb = host.querySelector('#saedFb');
@@ -1070,10 +1121,11 @@ export function playSocial(host) {
 
     host.innerHTML = `<div class="mg">
       <p class="mg-top"><b>Social night</b><span id="mgInfo"></span></p>
+        <p class="mg-brief">MC go call the step. Do am sharp sharp.</p>
       <p class="soc-call" id="socCall"></p>
       <div class="reg-bar"><i id="socFill"></i></div>
       <div class="soc-grid" id="socGrid"></div>
-      <p class="mg-hint" id="socFb">MC go call the step. Do am sharp sharp.</p></div>`;
+      <p class="mg-hint" id="socFb">\u00a0</p></div>`;
     const call = host.querySelector('#socCall'), grid = host.querySelector('#socGrid');
     const info = host.querySelector('#mgInfo'), fb = host.querySelector('#socFb');
     const fill = host.querySelector('#socFill');
@@ -1144,8 +1196,9 @@ export function playDodge(host) {
 
     host.innerHTML = `<div class="mg">
       <p class="mg-top"><b>4:30am bugle</b><span id="mgInfo"></span></p>
+        <p class="mg-brief">Bugle don blow. Snooze am?</p>
       <div class="dodge-clock" id="dodgeClock">04:30</div>
-      <p class="mg-hint" id="dodgeFb" style="min-height:2.4em">Bugle don blow. Snooze am?</p>
+      <p class="mg-hint" id="dodgeFb" style="min-height:2.4em">\u00a0</p>
       <div class="reg-bar"><i id="dodgeRisk" style="background:#b0432f;width:0%"></i></div>
       <button class="dodge-btn" id="dodgeSnooze">Hit snooze</button>
       <button class="mami-done" id="dodgeUp" style="background:var(--muted);margin-top:7px">Get up and go</button>
@@ -1257,9 +1310,10 @@ export function playSocialise(host) {
 
     host.innerHTML = `<div class="mg">
       <p class="mg-top"><b>Camp gist</b><span id="mgInfo"></span></p>
+        <p class="mg-brief">Read the room.</p>
       <p class="gist-say" id="gistSay"></p>
       <div class="gist-opts" id="gistOpts"></div>
-      <p class="mg-hint" id="gistFb">Read the room.</p></div>`;
+      <p class="mg-hint" id="gistFb">\u00a0</p></div>`;
     const say = host.querySelector('#gistSay'), opts = host.querySelector('#gistOpts');
     const info = host.querySelector('#mgInfo'), fb = host.querySelector('#gistFb');
 
@@ -1319,11 +1373,12 @@ export function playRehearse(host) {
 
     host.innerHTML = `<div class="mg">
       <p class="mg-top"><b>Passing-out drill</b><span id="mgInfo"></span></p>
+        <p class="mg-brief">Obey the command. "As you were" means do nothing.</p>
       <p class="soc-call" id="drillCmd"></p>
       <div class="reg-bar"><i id="drillFill"></i></div>
       <div class="soc-grid" id="drillGrid"></div>
       <button class="mami-done" id="drillStill" style="background:var(--muted);margin-top:7px">Stand still</button>
-      <p class="mg-hint" id="drillFb">Obey the command. "As you were" means do nothing.</p></div>`;
+      <p class="mg-hint" id="drillFb">\u00a0</p></div>`;
     const cmdEl = host.querySelector('#drillCmd'), grid = host.querySelector('#drillGrid');
     const info = host.querySelector('#mgInfo'), fb = host.querySelector('#drillFb');
     const fill = host.querySelector('#drillFill');
@@ -1436,9 +1491,10 @@ export function playQuiz(host) {
     let i = 0, right = 0, locked = false;
     host.innerHTML = `<div class="mg">
       <p class="mg-top"><b>Camp quiz</b><span id="mgInfo"></span></p>
+        <p class="mg-brief">Five questions. No second chances.</p>
       <p class="quiz-q" id="quizQ"></p>
       <div class="quiz-opts" id="quizO"></div>
-      <p class="mg-hint" id="quizFb">Five questions. No second chances.</p></div>`;
+      <p class="mg-hint" id="quizFb">\u00a0</p></div>`;
     const qEl = host.querySelector('#quizQ'), oEl = host.querySelector('#quizO');
     const info = host.querySelector('#mgInfo'), fb = host.querySelector('#quizFb');
 
