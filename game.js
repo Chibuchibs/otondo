@@ -289,6 +289,20 @@ const POSTINGS = {
   hard: ['Zamfara', 'Yobe', 'Taraba — deep inside', 'Bayelsa riverine', 'A village with no network', 'Borno'],
 };
 
+/* The same arithmetic computePosting rolls against, exposed so the player can
+   watch it move. Hidden, credibility was an abstract number climbing for no
+   stated reason and the payoff — the posting — did not exist until day 21.
+   Visible, every action is a bet on where you end up:
+     cred   0  ->  soft  5%  mid 40%  hard 55%
+     cred 100  ->  soft 40%  mid 40%  hard 20%
+     cred 200  ->  soft 75%  mid 25%  hard  0%  */
+export function postingOdds(s) {
+  const t = (s.cred || 0) * 0.35, cl = x => Math.max(0, Math.min(1, x));
+  const soft = cl((5 + t) / 100);
+  const hard = cl((55 - t) / 100);
+  return { soft, mid: Math.max(0, 1 - soft - hard), hard };
+}
+
 export function computePosting(s, rng) {
   const roll = rng() * 100 + s.cred * 0.35;
   if (roll > 95) return { tier: 'soft', place: pick(rng, POSTINGS.soft), emoji: '🎉' };
