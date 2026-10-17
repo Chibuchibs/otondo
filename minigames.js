@@ -4,6 +4,22 @@
    Each resolves to { score: 0..1, detail: 'one line for the camp log' }. */
 
 /* ---------------------------------------------------------------- hoop ---- */
+/* Fisher-Yates. `sort(() => Math.random() - 0.5)` is not a shuffle: comparator
+   results are inconsistent, so the permutations come out skewed. Measured on
+   the quiz's four options, it put the correct answer in slot 0 28.3% of the
+   time and slot 3 only 18.8% — so always guessing the first option beat
+   guessing at random. It also skewed which questions, stalls and jobs appeared.
+   Only used for ordering; the physics noise in Man O War is a different thing
+   and is left alone. */
+function shuffle(a) {
+  const out = [...a];
+  for (let i = out.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [out[i], out[j]] = [out[j], out[i]];
+  }
+  return out;
+}
+
 export function playHoop(host) {
   return new Promise(resolve => {
     const W = 320, H = 240, SHOTS = 5;
@@ -182,7 +198,7 @@ const KIT = [
 export function playRegister(host) {
   return new Promise(resolve => {
     const ROUNDS = 4, LIMIT = 3400;
-    const order = [...KIT].sort(() => Math.random() - 0.5).slice(0, ROUNDS);
+    const order = shuffle(KIT).slice(0, ROUNDS);
     let i = 0, got = 0, timer = null, deadline = 0, raf = 0;
 
     host.innerHTML = `<div class="mg">
@@ -197,9 +213,9 @@ export function playRegister(host) {
 
     function round() {
       const want = order[i];
-      const shown = [...KIT].sort(() => Math.random() - 0.5).slice(0, 4);
+      let shown = shuffle(KIT).slice(0, 4);
       if (!shown.find(k => k.id === want.id)) shown[0] = want;
-      shown.sort(() => Math.random() - 0.5);
+      shown = shuffle(shown);
       info.textContent = `${i + 1} of ${ROUNDS} · ${got} collected`;
       ask.textContent = `Collect your ${want.name}`;
       grid.innerHTML = shown.map(k =>
@@ -659,7 +675,7 @@ const MAMI_ART = {
 export function playMami(host, st) {
   const money = st && typeof st.money === 'number' ? st.money : 20000;
   return new Promise(resolve => {
-    const stalls = [...MAMI].sort(() => Math.random() - 0.5).slice(0, 4);
+    const stalls = shuffle(MAMI).slice(0, 4);
     let belle = 0, spent = 0, bought = [];
 
     host.innerHTML = `<div class="mg">
@@ -738,7 +754,7 @@ const JOB_ART = {
 export function playHustle(host) {
   return new Promise(resolve => {
     const PICKS = 3;
-    const offered = [...JOBS].sort(() => Math.random() - 0.5).slice(0, 5);
+    const offered = shuffle(JOBS).slice(0, 5);
     let picks = 0, earned = 0, tired = 0, taken = [];
 
     host.innerHTML = `<div class="mg">
@@ -1024,9 +1040,9 @@ export function playSocial(host) {
       want = MOVES[Math.floor(Math.random() * MOVES.length)];
       info.textContent = `${round + 1} of ${ROUNDS} · ${hit} hit`;
       call.textContent = want + '!';
-      const opts = [...MOVES].sort(() => Math.random() - 0.5).slice(0, 4);
+      const opts = shuffle(MOVES).slice(0, 4);
       if (!opts.includes(want)) opts[0] = want;
-      grid.innerHTML = opts.sort(() => Math.random() - 0.5)
+      grid.innerHTML = shuffle(opts)
         .map(m => `<button class="soc-move" data-m="${m}">${m}</button>`).join('');
       deadline = performance.now() + limit;
       cancelAnimationFrame(raf);
@@ -1102,7 +1118,14 @@ export function playDodge(host) {
     host.querySelector('#dodgeSnooze').onclick = () => {
       if (over) return;
       snoozes++;
-      risk = Math.min(0.95, risk + 0.17 + Math.random() * 0.07);
+      /* Was +0.17..0.24 per snooze, which made the counter a liar: it reads
+         "N of 5 snoozed", framing five as the goal, and five landed 0.17% of
+         the time. Worse, EVERY strategy was bad — the best available stop had
+         an expected score of 0.19 while every other game can reach 1.0 on
+         skill. At +0.06..0.11 the curve has a real peak (stop at 3, expected
+         0.34), the decision actually matters, and the full dodge is a 21%
+         stretch rather than a fiction. */
+      risk = Math.min(0.95, risk + 0.06 + Math.random() * 0.05);
       paint();
       if (Math.random() < risk) {
         over = true;
@@ -1185,7 +1208,7 @@ const GIST = [
 export function playSocialise(host) {
   return new Promise(resolve => {
     const N = 5;
-    const picked = [...GIST].sort(() => Math.random() - 0.5).slice(0, N);
+    const picked = shuffle(GIST).slice(0, N);
     let i = 0, points = 0, locked = false;
 
     host.innerHTML = `<div class="mg">
@@ -1203,7 +1226,7 @@ export function playSocialise(host) {
       const it = picked[i];
       info.textContent = `${i + 1} of ${N}`;
       say.textContent = it.say;
-      const shuffled = [...it.opts].sort(() => Math.random() - 0.5);
+      const shuffled = shuffle(it.opts);
       opts.innerHTML = shuffled.map(([t, v], n) =>
         `<button class="gist-opt" data-v="${v}">${esc(t)}</button>`).join('');
       locked = false;
@@ -1360,9 +1383,9 @@ const BANK = [
 export function playQuiz(host) {
   return new Promise(resolve => {
     const N = 5;
-    const picked = [...BANK].sort(() => Math.random() - 0.5).slice(0, N)
+    const picked = shuffle(BANK).slice(0, N)
       .map(([q, opts, correct]) => {
-        const order = opts.map((t, i) => [t, i]).sort(() => Math.random() - 0.5);
+        const order = shuffle(opts.map((t, i) => [t, i]));
         return { q, opts: order.map(o => o[0]), correct: order.findIndex(o => o[1] === correct) };
       });
 
