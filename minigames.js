@@ -577,10 +577,14 @@ export function playPenalty(host) {
       /* The striking leg, swung through toward the ball. Drawn before the body
          so it reads as the far leg coming round. */
       if (swinging) {
-        x.save(); x.translate(160, H - 44);
-        x.rotate(-1.15 * Math.sin(sw * Math.PI));
-        x.fillStyle = '#8d5524'; x.fillRect(0, -4, 20, 8);
-        x.fillStyle = '#f2efe4'; x.fillRect(18, -5, 10, 9);        // boot
+        x.save(); x.translate(161, H - 40);
+        /* Starts BEHIND him (+0.55, angled down and back) and swings through to
+           roughly -0.75. The first version began already rotated up, so it read
+           as a raised arm rather than a leg coming through the ball. */
+        x.rotate(0.55 - 1.3 * Math.sin(sw * Math.PI));
+        x.fillStyle = '#8d5524'; x.fillRect(-2, -3.5, 15, 7);      // leg
+        x.fillStyle = '#f2efe4'; x.fillRect(11, -4.5, 9, 8);       // boot
+        x.fillStyle = '#5a5a5a'; x.fillRect(11, 2, 9, 1.6);        // sole
         x.restore();
       }
 
