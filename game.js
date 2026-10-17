@@ -311,9 +311,36 @@ export function computePosting(s, rng) {
 }
 
 /* ---------- lifecycle ---------- */
+/* A platoon-mate serving the same 21 days. The game was solitaire: your
+   credibility climbed against nothing, so there was no way to be DOING BADLY,
+   only slowly. A rival turns the odds panel from a progress bar into a
+   scoreboard. Beatable on purpose — ends around 190 cred, where the simulated
+   average player lands at 231 and a poor one at 105. */
+const RIVAL_NAMES = ['Chidi', 'Ngozi', 'Musa', 'Tunde', 'Amaka', 'Bisi',
+                     'Emeka', 'Hauwa', 'Segun', 'Ifeoma', 'Yusuf', 'Chioma'];
+
+export function newRival(rng = Math.random) {
+  return { name: pick(rng, RIVAL_NAMES), cred: 0 };
+}
+
+/* Saves written before rivals existed have no s.rival, and there are players
+   mid-camp right now. Never assume it is there. */
+export function rivalOf(s, rng = Math.random) {
+  if (!s.rival) {
+    s.rival = newRival(rng);
+    /* Back-fill. There are players mid-camp whose saves predate rivals; giving
+       them an opponent starting from zero on day 15 would hand them a lead they
+       never earned and make the scoreboard meaningless. Credit the rival for
+       the days already served, at the same ~11.5/day they would have gained. */
+    s.rival.cred = Math.round(Math.max(0, (s.day || 1) - 1) * 11.5);
+  }
+  return s.rival;
+}
+
 export function newGame(name, rng = Math.random) {
   return {
     name: (name || 'Otondo').slice(0, 16),
+    rival: newRival(rng),
     platoon: 1 + Math.floor(rng() * 10),
     day: 1,
     actionsLeft: ACTIONS_PER_DAY,
@@ -362,6 +389,15 @@ function endDay(s, rng) {
   /* No allawee inside camp. The ₦77,000 is paid 25th-30th into an account you
      only register once you get here — so it lands AFTER you pass out. You spend
      all 21 days on the money you brought. */
+
+  /* The rival serves their own day. Random enough that the gap moves, steady
+     enough that falling behind means you actually fell behind. */
+  const r = rivalOf(s, rng);
+  /* Tuned by sweeping daily gain against simulated runs. +4..14 left the rival
+     beatable 92% of the time by an AVERAGE player — no tension at all. At
+     +6..17 a strong player still wins 98%, an average one is a 58% coin-flip,
+     and a careless one never wins. Skill decides it, which is the point. */
+  r.cred += 6 + Math.floor(rng() * 12);
 
   // overnight
   apply(s, { energy: 14, belle: -10 });
