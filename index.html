@@ -217,8 +217,16 @@
 
   /* the agbero and whoever is after him. z-index above the traffic so the
      chase reads as happening on the near pavement. */
-  .runner{position:absolute;bottom:4px;z-index:3;pointer-events:none;
+  /* Tappable. This carried pointer-events:none from when the chase was purely
+     ambient, which made the thief uncatchable — a synthetic click still fired
+     the handler, so it tested fine and failed on a finger. */
+  .runner{position:absolute;bottom:4px;z-index:3;cursor:pointer;
+    -webkit-tap-highlight-color:transparent;
     animation:chaseGo 15s linear forwards}
+  /* A moving 47px figure is a hard target on a phone. The hit box reaches
+     well past the drawing without changing where anything sits. */
+  .runner::after{content:'';position:absolute;inset:-10px -18px}
+  .runner .flip,.runner svg{pointer-events:none}
   /* The facing lives on an inner layer. Flipping the wrapper would mirror the
      label with the figure, and "THIEF" came out backwards. */
   .runner .flip{display:block;animation:chaseFace 15s linear forwards}
@@ -263,7 +271,6 @@
   .tapPoint{position:absolute;z-index:6;pointer-events:none;width:40px;
     margin-left:-20px;animation:pointBob .78s ease-in-out infinite}
   @keyframes pointBob{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
-  .scene.played .tapPoint{display:none}
 
   .tapRing{fill:none;stroke:#ffd666;stroke-width:2.4;pointer-events:none;
     transform-box:fill-box;transform-origin:center;
@@ -859,18 +866,18 @@
 <script type="module">
 import { newGame, doAction, canDo, unlocked, ACTIONS, phaseOf, nextUnlock, postingOdds, rivalOf,
          computePosting,
-         shareText, MAX_DAY } from './game.js?v=20261027123143';
+         shareText, MAX_DAY } from './game.js?v=20261027123553';
 
 /* Kept here, not exported from game.js: a new cross-file export breaks any
    client holding a cached game.js after a deploy. */
 const ALLAWEE_NOTE = 'Allawee ₦77,000 — e never enter.';
 import { initNet, joinCamp, syncPlayer, platoonBoard, recentChat, postChat,
          postSuggestion, reportMessage, awardBoard, myAwards, laughChat,
-         setPresence, campRoster, renameMe, online } from './net.js?v=20261027123143';
-import { startMusic, stopMusic, musicOn, audioState, audioSupported, BEAT, BAR } from './audio.js?v=20261027123143';
+         setPresence, campRoster, renameMe, online } from './net.js?v=20261027123553';
+import { startMusic, stopMusic, musicOn, audioState, audioSupported, BEAT, BAR } from './audio.js?v=20261027123553';
 import { playHoop, playPenalty, playQuiz, playRegister, playParade,
          playMami, playHustle, playManOWar, playSaed, playSocial,
-         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261027123143';
+         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261027123553';
 
 /* Every dance animation is expressed in beats, so the steps are on-tempo
    whether or not the sound is playing — and genuinely on the beat when it is. */
@@ -1404,7 +1411,10 @@ pointer.innerHTML = `<svg viewBox="0 0 40 30" aria-hidden="true">
 sceneEl.appendChild(pointer);
 
 function aimPointer(){
-  if (hintDone || calm()){ pointer.style.opacity = '0'; return; }
+  /* Deliberately NOT tied to hintDone. The chip is a tutorial and goes away
+     once you have tapped; this marks which figure is yours, which stays true
+     for the whole session and is the only thing linking a tap to your wallet. */
+  if (calm()){ pointer.style.opacity = '0'; return; }
   /* Aim at whoever is actually being offered. Pointing at the figure furthest
      along meant the arrow and the label could name two different people. */
   const best = sceneEl.querySelector('.wantsCorn, .wantsRide');
@@ -1484,7 +1494,7 @@ function offerCorn(){
   const r = cornTarget.getBoundingClientRect();
   cornTag.style.display = 'block';
   pinInside(cornTag, box, r.left - box.left + r.width / 2);
-  cornTag.style.bottom = Math.round(box.bottom - r.top + (hintDone ? 10 : 40)) + 'px';
+  cornTag.style.bottom = Math.round(box.bottom - r.top + 40) + 'px';
 }
 
 function clearCorn(){
@@ -1517,7 +1527,7 @@ function offerRide(){
   rideTag.style.display = 'block';
   const r = rideTarget.getBoundingClientRect();
   pinInside(rideTag, box, r.left - box.left + r.width / 2);
-  rideTag.style.bottom = Math.round(box.bottom - r.top + (hintDone ? 10 : 40)) + 'px';
+  rideTag.style.bottom = Math.round(box.bottom - r.top + 40) + 'px';
 }
 function clearRide(){
   rideTag.style.display = 'none';
