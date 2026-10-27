@@ -870,18 +870,18 @@
 <script type="module">
 import { newGame, doAction, canDo, unlocked, ACTIONS, phaseOf, nextUnlock, postingOdds, rivalOf,
          computePosting,
-         shareText, MAX_DAY } from './game.js?v=20261027124431';
+         shareText, MAX_DAY } from './game.js?v=20261027125048';
 
 /* Kept here, not exported from game.js: a new cross-file export breaks any
    client holding a cached game.js after a deploy. */
 const ALLAWEE_NOTE = 'Allawee ₦77,000 — e never enter.';
 import { initNet, joinCamp, syncPlayer, platoonBoard, recentChat, postChat,
          postSuggestion, reportMessage, awardBoard, myAwards, laughChat,
-         setPresence, campRoster, renameMe, online } from './net.js?v=20261027124431';
-import { startMusic, stopMusic, musicOn, audioState, audioSupported, BEAT, BAR } from './audio.js?v=20261027124431';
+         setPresence, campRoster, renameMe, online } from './net.js?v=20261027125048';
+import { startMusic, stopMusic, musicOn, audioState, audioSupported, BEAT, BAR } from './audio.js?v=20261027125048';
 import { playHoop, playPenalty, playQuiz, playRegister, playParade,
          playMami, playHustle, playManOWar, playSaed, playSocial,
-         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261027124431';
+         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261027125048';
 
 /* Every dance animation is expressed in beats, so the steps are on-tempo
    whether or not the sound is playing — and genuinely on the beat when it is. */
@@ -1672,11 +1672,13 @@ function agberoChase(){
      he runs in rags, they run in ordinary clothes. */
   const cast = [
     { skin: 2, scale: 1.02, tone: 0, delay: 0,   rags: true },   // the man himself
-    /* Spaced wide enough that they read as a line of people rather than one
-       smudge — .3s apart put two of them on top of each other. */
-    { skin: 0, scale: .96, tone: 1, delay: .95, stick: true },
-    { skin: 3, scale: .99, tone: 2, delay: 1.7, stick: true },
-    { skin: 1, scale: .94, tone: 3, delay: 2.5, stick: true },
+    /* ~0.45s apart. At roughly 128px/s that is about 58px between them — a
+       figure's width, so they read as separate people without the last one
+       trailing seconds behind the man he is supposed to be chasing. 0.3s
+       overlapped them; 0.95s+ left the group lagging. */
+    { skin: 0, scale: .96, tone: 1, delay: .5,  stick: true },
+    { skin: 3, scale: .99, tone: 2, delay: .95, stick: true },
+    { skin: 1, scale: .94, tone: 3, delay: 1.4, stick: true },
   ];
   cast.forEach(c => {
     const wrap = document.createElement('div');
