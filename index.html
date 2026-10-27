@@ -220,16 +220,20 @@
   /* Tappable. This carried pointer-events:none from when the chase was purely
      ambient, which made the thief uncatchable — a synthetic click still fired
      the handler, so it tested fine and failed on a finger. */
+  /* `both`, not `forwards`. During animation-delay an element sits at its
+     natural position, so each chaser stood at left:0 in full view and then
+     snapped off-screen when its turn began. `backwards` holds them at the 0%
+     keyframe — off-screen left — until they actually start running. */
   .runner{position:absolute;bottom:4px;z-index:3;cursor:pointer;
     -webkit-tap-highlight-color:transparent;
-    animation:chaseGo 15s linear forwards}
+    animation:chaseGo 15s linear both}
   /* A moving 47px figure is a hard target on a phone. The hit box reaches
      well past the drawing without changing where anything sits. */
   .runner::after{content:'';position:absolute;inset:-10px -18px}
   .runner .flip,.runner svg{pointer-events:none}
   /* The facing lives on an inner layer. Flipping the wrapper would mirror the
      label with the figure, and "THIEF" came out backwards. */
-  .runner .flip{display:block;animation:chaseFace 15s linear forwards}
+  .runner .flip{display:block;animation:chaseFace 15s linear both}
   .runner .leg,.runner .leg2{animation-duration:.2s}
   .runner .arm,.runner .arm2{animation-duration:.2s}
   .runner .torso{animation-duration:.1s}
@@ -866,18 +870,18 @@
 <script type="module">
 import { newGame, doAction, canDo, unlocked, ACTIONS, phaseOf, nextUnlock, postingOdds, rivalOf,
          computePosting,
-         shareText, MAX_DAY } from './game.js?v=20261027123553';
+         shareText, MAX_DAY } from './game.js?v=20261027124111';
 
 /* Kept here, not exported from game.js: a new cross-file export breaks any
    client holding a cached game.js after a deploy. */
 const ALLAWEE_NOTE = 'Allawee ₦77,000 — e never enter.';
 import { initNet, joinCamp, syncPlayer, platoonBoard, recentChat, postChat,
          postSuggestion, reportMessage, awardBoard, myAwards, laughChat,
-         setPresence, campRoster, renameMe, online } from './net.js?v=20261027123553';
-import { startMusic, stopMusic, musicOn, audioState, audioSupported, BEAT, BAR } from './audio.js?v=20261027123553';
+         setPresence, campRoster, renameMe, online } from './net.js?v=20261027124111';
+import { startMusic, stopMusic, musicOn, audioState, audioSupported, BEAT, BAR } from './audio.js?v=20261027124111';
 import { playHoop, playPenalty, playQuiz, playRegister, playParade,
          playMami, playHustle, playManOWar, playSaed, playSocial,
-         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261027123553';
+         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261027124111';
 
 /* Every dance animation is expressed in beats, so the steps are on-tempo
    whether or not the sound is playing — and genuinely on the beat when it is. */
@@ -1417,7 +1421,16 @@ function aimPointer(){
   if (calm()){ pointer.style.opacity = '0'; return; }
   /* Aim at whoever is actually being offered. Pointing at the figure furthest
      along meant the arrow and the label could name two different people. */
-  const best = sceneEl.querySelector('.wantsCorn, .wantsRide');
+  /* Prefer whoever is being offered. When nothing is on offer — during the
+     chase or the fire — fall back to any walker, so the marker never blinks
+     out. It names which figure is yours, and that is true at all times. */
+  let best = sceneEl.querySelector('.wantsCorn, .wantsRide');
+  if (!best){
+    const box0 = sceneEl.getBoundingClientRect();
+    best = [...sceneEl.querySelectorAll(':scope > .corper')]
+      .filter(p => !p.classList.contains('riding'))
+      .find(p => inFrame(p, box0, 0.08)) || null;
+  }
   if (!best){ pointer.style.opacity = '0'; return; }
   const box = sceneEl.getBoundingClientRect();
   const r = best.getBoundingClientRect();
@@ -1449,11 +1462,13 @@ function pinInside(el, box, centre, gap = 6){
   el.style.left = Math.round(x) + 'px';
 }
 
-const inFrame = (el, box, pad = 0.12) => {
+/* A declaration, not a const arrow: aimPointer's timer starts above this
+   point in the file and a `const` read early throws. */
+function inFrame(el, box, pad = 0.12){
   const r = el.getBoundingClientRect();
   const c = r.left - box.left + r.width / 2;
   return c > box.width * pad && c < box.width * (1 - pad);
-};
+}
 
 let cornShop = null;
 /* Measured: a stall is in frame every single sample over 30s, so leaving the
@@ -1465,9 +1480,14 @@ const flipTurn = () => { rideTurn = !rideTurn; };
 function offerCorn(){
   if (calm()) return;
   const box = sceneEl.getBoundingClientRect();
-  const busy = sceneEl.querySelector('.running, .munching, .shopping')
-            || sceneEl.classList.contains('dancing')
-            || sceneBusy();          // the chase or the fire owns the screen
+  /* Deliberately does NOT bail on sceneBusy(). The marked figure is the only
+     one the player can act through, so suppressing it during a chase left YOU
+     standing there unable to do anything. The chase and the fire still exclude
+     each other, so the most on screen at once is one event plus one offer. */
+  /* The dance is NOT a blocker. It runs roughly half the time, and bailing on
+     it left the marked figure with nothing to do in 19 of 24 samples. A tap
+     during the dance simply ends the dance first. */
+  const busy = sceneEl.querySelector('.running, .munching, .shopping');
   /* no shop in frame means nowhere to run to — offering it would be a lie */
   if (!cornShop || !cornShop.isConnected || !inFrame(cornShop, box))
     cornShop = [...sceneEl.querySelectorAll('.shop[data-errand]')].find(el => inFrame(el, box)) || null;
@@ -1511,8 +1531,7 @@ function offerRide(){
   if (calm()) return;
   if (!rideTurn || cornTarget){ clearRide(); return; }
   const box = sceneEl.getBoundingClientRect();
-  if (sceneBusy() || sceneEl.classList.contains('dancing')
-      || sceneEl.querySelector('.running, .munching, .shopping')){ clearRide(); return; }
+  if (sceneEl.querySelector('.running, .munching, .shopping')){ clearRide(); return; }
   if (!rideTarget || !rideTarget.isConnected || !inFrame(rideTarget, box)
       || rideTarget.classList.contains('riding') || rideTarget.classList.contains('hailing')){
     if (rideTarget){ unmark(rideTarget); rideTarget.classList.remove('wantsRide'); }
@@ -1564,6 +1583,7 @@ sceneEl.addEventListener('click', e => {
     const who = p, where = cornShop;
     clearCorn();
     flipTurn();
+    backToTrekking();            // snackRun refuses to start mid-dance
     snackRun(who, where);
     return;
   }
@@ -1571,6 +1591,7 @@ sceneEl.addEventListener('click', e => {
     hintUsed();
     clearRide();
     flipTurn();
+    backToTrekking();
     hailRide(p);
     return;
   }
@@ -1709,9 +1730,9 @@ function burningDanfo(){
   v.style.bottom = '34px';
   v.style.animationDuration = '15s';           // the slow lane, so it is hittable
   v.style.animationIterationCount = '1';
-  v.innerHTML = danfo() + flameSvg() + '<i class="tapTag">TAP TO PUT OUT</i>';
+  v.innerHTML = danfo() + flameSvg() + '<i class="tapTag">FIRE! TAP TO PUT OUT</i>';
   v.setAttribute('role', 'button');
-  v.setAttribute('aria-label', 'Put out the fire');
+  v.setAttribute('aria-label', 'Fire. Tap to put it out');
   sceneEl.appendChild(v);
   v.addEventListener('animationend', () => v.remove());
 }
