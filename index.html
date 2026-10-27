@@ -870,18 +870,18 @@
 <script type="module">
 import { newGame, doAction, canDo, unlocked, ACTIONS, phaseOf, nextUnlock, postingOdds, rivalOf,
          computePosting,
-         shareText, MAX_DAY } from './game.js?v=20261027124111';
+         shareText, MAX_DAY } from './game.js?v=20261027124250';
 
 /* Kept here, not exported from game.js: a new cross-file export breaks any
    client holding a cached game.js after a deploy. */
 const ALLAWEE_NOTE = 'Allawee ₦77,000 — e never enter.';
 import { initNet, joinCamp, syncPlayer, platoonBoard, recentChat, postChat,
          postSuggestion, reportMessage, awardBoard, myAwards, laughChat,
-         setPresence, campRoster, renameMe, online } from './net.js?v=20261027124111';
-import { startMusic, stopMusic, musicOn, audioState, audioSupported, BEAT, BAR } from './audio.js?v=20261027124111';
+         setPresence, campRoster, renameMe, online } from './net.js?v=20261027124250';
+import { startMusic, stopMusic, musicOn, audioState, audioSupported, BEAT, BAR } from './audio.js?v=20261027124250';
 import { playHoop, playPenalty, playQuiz, playRegister, playParade,
          playMami, playHustle, playManOWar, playSaed, playSocial,
-         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261027124111';
+         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261027124250';
 
 /* Every dance animation is expressed in beats, so the steps are on-tempo
    whether or not the sound is playing — and genuinely on the beat when it is. */
@@ -1236,7 +1236,9 @@ function fillScene(el, n, big){
 }
 roadside($('scene'));
 traffic($('scene'));
-fillScene($('scene'), 4, false);
+/* Three, not four. The pavement also carries the chase, the fire, a label
+   and the YOU marker — a fourth trekker tipped it into clutter. */
+fillScene($('scene'), 3, false);
 
 /* ---------- dance break ----------
    Every so often the trek stops, everyone slides into a line, does legwork,
@@ -1362,12 +1364,6 @@ function resumeMarch(p, px){
   p.style.animationDelay = (-phase * dur) + 's';
 }
 
-/* A replacement trekker, entering from the left like everyone else. */
-function walkOneIn(){
-  const i = Math.floor(Math.random() * SKINS.length);
-  const html = corper(SKINS[i], 0.95 + (i % 3) * 0.22, 10.5 + i * 3.2, 0, 1, i % 3);
-  sceneEl.insertAdjacentHTML('beforeend', html);
-}
 
 /* Every tappable figure gets a ring at its feet. Added after the fact rather
    than inside corper(), because corper() also draws the big static figures on
