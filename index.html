@@ -194,6 +194,13 @@
   .corper.munching .leg,.corper.munching .leg2{animation:none}
   .corper.munching .torso{animation:munch .55s ease-in-out infinite}
   .corper.munching .arm {animation:toMouth .55s ease-in-out infinite}
+  /* Crossing to a stall means crossing the road. The walkers sit on z-index 2,
+     the near pavement; a figure at a stall is on the far side and must drop
+     behind the traffic (z-index 1) or his legs show through a passing danfo.
+     Level with the stalls (0) and later in the DOM, so he stands in front of
+     the shop but behind anything driving past. */
+  .corper.running,.corper.munching,.corper.shopping{z-index:0}
+
   /* browsing a stall: stood still, looking. No munching — nobody eats a mattress. */
   .corper.shopping .leg,.corper.shopping .leg2{animation:none}
   .corper.shopping .arm,.corper.shopping .arm2{animation:none}
@@ -870,18 +877,18 @@
 <script type="module">
 import { newGame, doAction, canDo, unlocked, ACTIONS, phaseOf, nextUnlock, postingOdds, rivalOf,
          computePosting,
-         shareText, MAX_DAY } from './game.js?v=20261027125048';
+         shareText, MAX_DAY } from './game.js?v=20261027125327';
 
 /* Kept here, not exported from game.js: a new cross-file export breaks any
    client holding a cached game.js after a deploy. */
 const ALLAWEE_NOTE = 'Allawee ₦77,000 — e never enter.';
 import { initNet, joinCamp, syncPlayer, platoonBoard, recentChat, postChat,
          postSuggestion, reportMessage, awardBoard, myAwards, laughChat,
-         setPresence, campRoster, renameMe, online } from './net.js?v=20261027125048';
-import { startMusic, stopMusic, musicOn, audioState, audioSupported, BEAT, BAR } from './audio.js?v=20261027125048';
+         setPresence, campRoster, renameMe, online } from './net.js?v=20261027125327';
+import { startMusic, stopMusic, musicOn, audioState, audioSupported, BEAT, BAR } from './audio.js?v=20261027125327';
 import { playHoop, playPenalty, playQuiz, playRegister, playParade,
          playMami, playHustle, playManOWar, playSaed, playSocial,
-         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261027125048';
+         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261027125327';
 
 /* Every dance animation is expressed in beats, so the steps are on-tempo
    whether or not the sound is playing — and genuinely on the beat when it is. */
