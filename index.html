@@ -870,18 +870,18 @@
 <script type="module">
 import { newGame, doAction, canDo, unlocked, ACTIONS, phaseOf, nextUnlock, postingOdds, rivalOf,
          computePosting,
-         shareText, MAX_DAY } from './game.js?v=20261027124250';
+         shareText, MAX_DAY } from './game.js?v=20261027124431';
 
 /* Kept here, not exported from game.js: a new cross-file export breaks any
    client holding a cached game.js after a deploy. */
 const ALLAWEE_NOTE = 'Allawee ₦77,000 — e never enter.';
 import { initNet, joinCamp, syncPlayer, platoonBoard, recentChat, postChat,
          postSuggestion, reportMessage, awardBoard, myAwards, laughChat,
-         setPresence, campRoster, renameMe, online } from './net.js?v=20261027124250';
-import { startMusic, stopMusic, musicOn, audioState, audioSupported, BEAT, BAR } from './audio.js?v=20261027124250';
+         setPresence, campRoster, renameMe, online } from './net.js?v=20261027124431';
+import { startMusic, stopMusic, musicOn, audioState, audioSupported, BEAT, BAR } from './audio.js?v=20261027124431';
 import { playHoop, playPenalty, playQuiz, playRegister, playParade,
          playMami, playHustle, playManOWar, playSaed, playSocial,
-         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261027124250';
+         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261027124431';
 
 /* Every dance animation is expressed in beats, so the steps are on-tempo
    whether or not the sound is playing — and genuinely on the beat when it is. */
@@ -1420,11 +1420,15 @@ function aimPointer(){
   /* Prefer whoever is being offered. When nothing is on offer — during the
      chase or the fire — fall back to any walker, so the marker never blinks
      out. It names which figure is yours, and that is true at all times. */
-  let best = sceneEl.querySelector('.wantsCorn, .wantsRide');
+  /* Order matters. Whoever is on offer first; otherwise whoever is mid-task,
+     because that is still you and the marker should not desert them; only
+     then any walker. Hopping to a bystander made the marker sit over someone
+     who did nothing when tapped. */
+  let best = sceneEl.querySelector('.wantsCorn, .wantsRide')
+          || sceneEl.querySelector('.running, .munching, .shopping, .riding, .hailing');
   if (!best){
     const box0 = sceneEl.getBoundingClientRect();
     best = [...sceneEl.querySelectorAll(':scope > .corper')]
-      .filter(p => !p.classList.contains('riding'))
       .find(p => inFrame(p, box0, 0.08)) || null;
   }
   if (!best){ pointer.style.opacity = '0'; return; }
@@ -1587,6 +1591,15 @@ sceneEl.addEventListener('click', e => {
     hintUsed();
     clearRide();
     flipTurn();
+    backToTrekking();
+    hailRide(p);
+    return;
+  }
+  /* Safety net: any trekker who is not already doing something answers a tap.
+     Without this, the marker could sit over a figure that ignored you — the
+     exact mismatch between what the screen says and what it does. */
+  if (p && !p.matches('.riding, .hailing, .running, .munching, .shopping')){
+    hintUsed();
     backToTrekking();
     hailRide(p);
     return;
