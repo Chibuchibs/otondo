@@ -43,7 +43,7 @@
     color:var(--white);background:var(--green);padding:5px 10px;border-radius:99px}
 
   /* ---------- walking scene ---------- */
-  .scene{position:relative;height:156px;margin:0 -12px 16px;overflow:hidden;
+  .scene{position:relative;height:218px;margin:0 -12px 16px;overflow:hidden;
     background:linear-gradient(#f7edd6 0%,#f2e4c6 62%,var(--dust) 62%,#d6caa8 100%)}
   /* ---------- weather over the trek ----------
      Three moods on a loop: hot sun, storm, harmattan wind. The sun is the joke —
@@ -121,7 +121,9 @@
     animation:road 1.1s linear infinite}
   @keyframes road{to{transform:translateX(-44px)}}
 
-  .sign{position:absolute;right:14px;bottom:44px;z-index:3;text-align:center}
+  /* Lifted clear of the road now that the pavement is where the tapping
+     happens — the signpost was sitting in the middle of the action. */
+  .sign{position:absolute;right:14px;bottom:112px;z-index:3;text-align:center}
   .sign b{display:block;background:var(--green);color:#fff;font-size:10px;font-weight:800;
     letter-spacing:.1em;padding:5px 9px;border-radius:4px;white-space:nowrap}
   .sign i{display:block;width:4px;height:26px;background:#8c7f5e;margin:0 auto}
@@ -151,12 +153,14 @@
      is PAUSED rather than cancelled, so when they fall back into step they
      carry on from exactly where they stopped — no jump.
      In unison on purpose: a line all hitting the same beat is the whole joke. */
-  .scene.dancing .corper{animation-play-state:paused}
-  .scene.dancing .leg  {animation:zankuA var(--beat,.42s) ease-in-out infinite}
-  .scene.dancing .leg2 {animation:zankuB var(--beat,.42s) ease-in-out infinite}
-  .scene.dancing .arm  {animation:pumpA  var(--beat,.42s) ease-in-out infinite}
-  .scene.dancing .arm2 {animation:pumpB  var(--beat,.42s) ease-in-out infinite}
-  .scene.dancing .torso{animation:hype   calc(var(--beat,.42s)/2) ease-in-out infinite}
+  /* Scoped to the trekkers only. The unscoped form caught the figures inside
+     .runner too, so a man being chased stopped to do legwork. */
+  .scene.dancing > .corper{animation-play-state:paused}
+  .scene.dancing > .corper .leg  {animation:zankuA var(--beat,.42s) ease-in-out infinite}
+  .scene.dancing > .corper .leg2 {animation:zankuB var(--beat,.42s) ease-in-out infinite}
+  .scene.dancing > .corper .arm  {animation:pumpA  var(--beat,.42s) ease-in-out infinite}
+  .scene.dancing > .corper .arm2 {animation:pumpB  var(--beat,.42s) ease-in-out infinite}
+  .scene.dancing > .corper .torso{animation:hype   calc(var(--beat,.42s)/2) ease-in-out infinite}
   @keyframes zankuA{0%,100%{transform:rotate(-10deg)}
                     28%{transform:rotate(42deg)}58%{transform:rotate(-18deg)}}
   @keyframes zankuB{0%,100%{transform:rotate(12deg)}
@@ -168,10 +172,10 @@
   /* Second move: shaku shaku. Arms folded across the chest, elbows snapping,
      body leaning side to side on a shuffle. Rules sit AFTER the zanku ones —
      same specificity, so source order is what swaps the move. */
-  .scene.shaku .leg  {animation:shakuLegA var(--beat,.5s) ease-in-out infinite}
-  .scene.shaku .leg2 {animation:shakuLegB var(--beat,.5s) ease-in-out infinite}
-  .scene.shaku .arm  {animation:shakuArmA calc(var(--beat,.5s)/2) ease-in-out infinite}
-  .scene.shaku .arm2 {animation:shakuArmB calc(var(--beat,.5s)/2) ease-in-out infinite}
+  .scene.shaku > .corper .leg  {animation:shakuLegA var(--beat,.5s) ease-in-out infinite}
+  .scene.shaku > .corper .leg2 {animation:shakuLegB var(--beat,.5s) ease-in-out infinite}
+  .scene.shaku > .corper .arm  {animation:shakuArmA calc(var(--beat,.5s)/2) ease-in-out infinite}
+  .scene.shaku > .corper .arm2 {animation:shakuArmB calc(var(--beat,.5s)/2) ease-in-out infinite}
   .scene.shaku .torso{animation:shakuLean var(--beat,.5s) ease-in-out infinite}
   @keyframes shakuLegA{0%,100%{transform:rotate(-7deg)}50%{transform:rotate(15deg)}}
   @keyframes shakuLegB{0%,100%{transform:rotate(15deg)}50%{transform:rotate(-7deg)}}
@@ -190,6 +194,134 @@
   .corper.munching .leg,.corper.munching .leg2{animation:none}
   .corper.munching .torso{animation:munch .55s ease-in-out infinite}
   .corper.munching .arm {animation:toMouth .55s ease-in-out infinite}
+  /* browsing a stall: stood still, looking. No munching — nobody eats a mattress. */
+  .corper.shopping .leg,.corper.shopping .leg2{animation:none}
+  .corper.shopping .arm,.corper.shopping .arm2{animation:none}
+  .corper.shopping .torso{animation:bob .9s ease-in-out infinite}
+
+  /* ---------- the scene answers back ----------
+     Three things respond to a finger. None of them stop the road: the trek,
+     the traffic and the stalls carry on underneath, and every one of these
+     cleans up after itself so a half-finished tap can't strand a figure. */
+  .corper{cursor:pointer;-webkit-tap-highlight-color:transparent}
+  .corper.hailing{animation-play-state:paused}
+  .corper.hailing .leg,.corper.hailing .leg2{animation:none}
+  .corper.hailing .arm2{animation:hail .46s ease-in-out infinite}
+  @keyframes hail{0%,100%{transform:rotate(-142deg)}50%{transform:rotate(-112deg)}}
+  /* riding: everything stops swinging and the whole figure drops onto the seat */
+  .corper.riding{animation-play-state:paused;transform:translateY(12px) scale(.86)}
+  .corper.riding .leg,.corper.riding .leg2,.corper.riding .arm,
+  .corper.riding .arm2,.corper.riding .torso{animation:none}
+  .corper.sliding,.pickup.sliding{transition:left 1.5s cubic-bezier(.4,0,.6,1)}
+  .pickup{position:absolute;z-index:1;transition:left 1.15s cubic-bezier(.25,.8,.4,1)}
+
+  /* the agbero and whoever is after him. z-index above the traffic so the
+     chase reads as happening on the near pavement. */
+  .runner{position:absolute;bottom:4px;z-index:3;pointer-events:none;
+    animation:chaseGo 15s linear forwards}
+  /* The facing lives on an inner layer. Flipping the wrapper would mirror the
+     label with the figure, and "THIEF" came out backwards. */
+  .runner .flip{display:block;animation:chaseFace 15s linear forwards}
+  .runner .leg,.runner .leg2{animation-duration:.2s}
+  .runner .arm,.runner .arm2{animation-duration:.2s}
+  .runner .torso{animation-duration:.1s}
+  @keyframes chaseGo{
+    0%{left:-18%}   24%{left:110%}  25%{left:110%}  49%{left:-18%}
+    50%{left:-18%}  74%{left:110%}  75%{left:110%}  100%{left:-18%}}
+  @keyframes chaseFace{
+    0%,24%{transform:scaleX(1)}    25%,49%{transform:scaleX(-1)}
+    50%,74%{transform:scaleX(1)}   75%,100%{transform:scaleX(-1)}}
+
+  /* the danfo that is having a day. Deliberately the slowest thing on the
+     road: a target you cannot catch is not a target, it is a decoration. */
+  /* Same lane and same depth as the rest of the traffic — raising it put a
+     bus in front of the people walking on the near pavement. Still hittable:
+     it is the widest thing on the road. */
+  .vehicle.ablaze{cursor:pointer;z-index:1}
+  .flame{position:absolute;left:50%;bottom:72%;transform:translateX(-50%);
+    width:26px;height:30px;pointer-events:none;
+    animation:flicker .22s ease-in-out infinite alternate}
+  @keyframes flicker{from{transform:translateX(-50%) scaleY(1)   scaleX(1)}
+                     to  {transform:translateX(-50%) scaleY(1.22) scaleX(.9)}}
+  .ablaze[data-fire="2"] .flame{opacity:.72;scale:.78}
+  .ablaze[data-fire="1"] .flame{opacity:.45;scale:.56}
+  .puff{position:absolute;left:50%;bottom:70%;width:34px;height:34px;
+    transform:translateX(-50%);pointer-events:none;
+    animation:puffUp 1.1s ease-out forwards}
+  @keyframes puffUp{from{opacity:.85;transform:translateX(-50%) translateY(0)   scale(.5)}
+                    to  {opacity:0;  transform:translateX(-50%) translateY(-26px) scale(1.5)}}
+  /* ---------- making the targets obvious ----------
+     A thing nobody can see is not a target. Every tappable figure carries a
+     ring at its feet, the burning danfo carries a label, and a standing hint
+     tells you the rule — because a screen that does not say what to do gets
+     treated as a picture. */
+  /* The walking figures ARE svg elements, so the ring has to be drawn in svg
+     too — an HTML child inside an <svg> lays out at 0x0 and renders nothing. */
+  /* A pointer above the figure, because a ring at the feet of a 30px-wide
+     corper is as small as the corper. This is the thing that actually gets
+     noticed; the ring only confirms it once you are looking. */
+  .tapPoint{position:absolute;z-index:6;pointer-events:none;width:40px;
+    margin-left:-20px;animation:pointBob .78s ease-in-out infinite}
+  @keyframes pointBob{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
+  .scene.played .tapPoint{display:none}
+
+  .tapRing{fill:none;stroke:#ffd666;stroke-width:2.4;pointer-events:none;
+    transform-box:fill-box;transform-origin:center;
+    animation:ringPulse 1.45s ease-out infinite}
+  @keyframes ringPulse{
+    0%  {transform:scale(.45);opacity:0}
+    30% {opacity:1}
+    100%{transform:scale(1.5);opacity:0}}
+  .corper.riding .tapRing,.corper.hailing .tapRing{display:none}
+
+  .costFloat.gain{color:#b7f5c8}
+  .costFloat{position:absolute;z-index:8;transform:translateX(-50%);
+    pointer-events:none;color:#ffdede;font:800 12px/1 system-ui,sans-serif;
+    text-shadow:0 1px 3px rgba(0,0,0,.6);animation:costUp 1.4s ease-out forwards}
+  @keyframes costUp{from{opacity:0;transform:translateX(-50%) translateY(6px)}
+                    18%{opacity:1}
+                    to  {opacity:0;transform:translateX(-50%) translateY(-28px)}}
+
+  .runnerTag.caught{background:#1f7a46}
+  .runnerTag.caught::after{border-top-color:#1f7a46}
+  .runnerTag{position:absolute;z-index:6;transform:translateX(-50%);
+    background:#b3281c;color:#fff;font:800 9px/1 system-ui,sans-serif;
+    letter-spacing:.1em;padding:4px 6px;border-radius:3px;white-space:nowrap;
+    pointer-events:none;box-shadow:0 2px 5px rgba(0,0,0,.3)}
+  .runnerTag::after{content:'';position:absolute;left:50%;top:100%;margin-left:-3px;
+    border:3px solid transparent;border-top-color:#b3281c}
+
+  .rideTag{background:#8a5a1f !important}
+  .rideTag::after{border-top-color:#8a5a1f !important}
+  .cornTag{position:absolute;z-index:7;transform:translateX(-50%);pointer-events:none;
+    background:#1f7a46;color:#fff;font:800 9.5px/1 system-ui,sans-serif;
+    letter-spacing:.07em;padding:5px 7px;border-radius:4px;white-space:nowrap;
+    box-shadow:0 2px 6px rgba(0,0,0,.28);
+    animation:tagBob .8s ease-in-out infinite alternate}
+  .cornTag::after{content:'';position:absolute;left:50%;top:100%;margin-left:-4px;
+    border:4px solid transparent;border-top-color:#1f7a46}
+
+  .tapTag{position:absolute;left:50%;bottom:112%;transform:translateX(-50%);
+    background:#e0452b;color:#fff;font:800 9px/1 system-ui,sans-serif;
+    letter-spacing:.09em;padding:4px 6px;border-radius:4px;pointer-events:none;
+    white-space:nowrap;animation:tagBob .7s ease-in-out infinite alternate}
+  @keyframes tagBob{from{transform:translateX(-50%) translateY(0)}
+                    to  {transform:translateX(-50%) translateY(-3px)}}
+
+  .tapHint{position:absolute;left:8px;bottom:6px;z-index:5;pointer-events:none;
+    background:rgba(20,18,14,.72);color:#ffe9a8;border-radius:999px;
+    font:800 10.5px/1 system-ui,sans-serif;letter-spacing:.03em;
+    padding:6px 10px;display:flex;gap:5px;align-items:center;
+    backdrop-filter:blur(2px)}
+  .tapHint b{font-size:12px;animation:pokePoke .9s ease-in-out infinite}
+  @keyframes pokePoke{0%,100%{transform:translateY(0)}50%{transform:translateY(-2.5px)}}
+  .scene.played .tapHint{opacity:0;transition:opacity .5s ease;pointer-events:none}
+
+  @media (prefers-reduced-motion: reduce){
+    .tapRing,.tapTag,.tapHint b{animation:none}
+    .runner,.flame,.puff{animation:none}
+    .corper.sliding,.pickup.sliding,.pickup{transition:none}
+  }
   @keyframes munch{0%,100%{transform:translateY(0)}50%{transform:translateY(-2px)}}
   @keyframes toMouth{0%,100%{transform:rotate(-104deg)}50%{transform:rotate(-128deg)}}
 
@@ -615,6 +747,7 @@
     </svg>
     <div class="road"></div>
     <div class="sign"><b>YOUR PPA →</b><i></i></div>
+    <div class="tapHint" id="tapHint"><b>👆</b><span>Tap the one with the sign</span></div>
   </div>
 
   <section id="intro" class="intro">
@@ -726,18 +859,18 @@
 <script type="module">
 import { newGame, doAction, canDo, unlocked, ACTIONS, phaseOf, nextUnlock, postingOdds, rivalOf,
          computePosting,
-         shareText, MAX_DAY } from './game.js?v=20261017104509';
+         shareText, MAX_DAY } from './game.js?v=20261027123143';
 
 /* Kept here, not exported from game.js: a new cross-file export breaks any
    client holding a cached game.js after a deploy. */
 const ALLAWEE_NOTE = 'Allawee ₦77,000 — e never enter.';
 import { initNet, joinCamp, syncPlayer, platoonBoard, recentChat, postChat,
          postSuggestion, reportMessage, awardBoard, myAwards, laughChat,
-         setPresence, campRoster, renameMe, online } from './net.js?v=20261017104509';
-import { startMusic, stopMusic, musicOn, audioState, audioSupported, BEAT, BAR } from './audio.js?v=20261017104509';
+         setPresence, campRoster, renameMe, online } from './net.js?v=20261027123143';
+import { startMusic, stopMusic, musicOn, audioState, audioSupported, BEAT, BAR } from './audio.js?v=20261027123143';
 import { playHoop, playPenalty, playQuiz, playRegister, playParade,
          playMami, playHustle, playManOWar, playSaed, playSocial,
-         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261017104509';
+         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261027123143';
 
 /* Every dance animation is expressed in beats, so the steps are on-tempo
    whether or not the sound is playing — and genuinely on the beat when it is. */
@@ -901,14 +1034,81 @@ function okada(passenger){
 }
 
 
+/* ---- civilians ----
+   Same skeleton as corper() on purpose — identical group classes, identical
+   viewBox — so every existing walk, run and dance animation applies without
+   knowing or caring who it is moving. Only the clothes differ.
+   `rags` is the agbero: torn hem, mismatched patches, no shoes. */
+const CIV_TOPS   = ['#c14f3e', '#3d6ea8', '#6d4f8c', '#2f7a63', '#c98a2b'];
+const CIV_BOTTOM = ['#2f3a4a', '#3b3a36', '#45413a', '#28313d'];
+
+function civilian(skin, scale, speed, delay, tone = 0, rags = false, stick = false){
+  const top    = rags ? '#8d7f63' : CIV_TOPS[tone % CIV_TOPS.length];
+  const topDk  = rags ? '#7a6d53' : top;
+  const trou   = rags ? '#6a5c46' : CIV_BOTTOM[tone % CIV_BOTTOM.length];
+  const trouDk = rags ? '#5c5040' : trou;
+  const shoe   = rags ? skin : '#241f1a';          // barefoot when in rags
+
+  /* a torn hem reads as rags far better than dirt does at this size */
+  const hem = rags
+    ? `<path d="M13.2 50 l3 3.5 l3-3.5 l3 3.5 l3-3.5 l3 3.5 l3-3.5 v-2.6 H13.2z"
+             fill="${topDk}"/>`
+    : '';
+  const patches = rags
+    ? `<rect x="16" y="33" width="5.5" height="5" rx="1" fill="#9c8a63"
+             transform="rotate(-8 18 35)"/>
+       <rect x="25" y="39" width="4.6" height="4.6" rx="1" fill="#7c6f55"
+             transform="rotate(12 27 41)"/>
+       <path d="M27 29 l4 5" stroke="#6d6049" stroke-width="1.2"/>`
+    : '';
+  /* a knee out on one leg: the one detail everybody reads instantly */
+  const kneeHole = rags
+    ? `<path d="M17.2 60 h5.5 v3.4 h-5.5z" fill="${skin}"/>` : '';
+
+  return `<svg class="corper civ" viewBox="0 0 46 86" aria-hidden="true" style="
+      animation-duration:${speed}s;animation-delay:${delay}s;
+      width:${46*scale}px;height:${86*scale}px">
+    <ellipse cx="23" cy="81" rx="12" ry="2.6" fill="rgba(0,0,0,.16)"/>
+    <g class="leg"><rect x="16" y="50" width="7.5" height="26" rx="3.4" fill="${trouDk}"/>
+      ${kneeHole}
+      <rect x="14.2" y="74" width="11" height="6" rx="2.6" fill="${shoe}"/></g>
+    <g class="leg2"><rect x="22.5" y="50" width="7.5" height="26" rx="3.4" fill="${trou}"/>
+      <rect x="21" y="74" width="11" height="6" rx="2.6" fill="${shoe}"/></g>
+    <g class="torso">
+      <g class="arm"><rect x="10.5" y="30" width="6" height="21" rx="3" fill="${topDk}"/>
+        <circle cx="13.5" cy="52" r="3.6" fill="${skin}"/></g>
+      <g class="arm2"><rect x="29.5" y="30" width="6" height="21" rx="3" fill="${top}"/>
+        <circle cx="32.5" cy="52" r="3.6" fill="${skin}"/>
+        ${stick ? `<g transform="rotate(-38 32.5 52)">
+             <rect x="31.2" y="18" width="2.6" height="36" rx="1.3" fill="#7a5630"/>
+             <rect x="31.2" y="18" width="2.6" height="7"  rx="1.3" fill="#6a4927"/>
+           </g>` : ''}</g>
+      <rect x="13.2" y="28" width="19.6" height="22" rx="3.2" fill="${top}"/>
+      ${hem}${patches}
+      <circle cx="23" cy="16" r="9.6" fill="${skin}"/>
+      ${rags
+        ? `<path d="M13.6 12 q3-7 9.4-7 t9.4 7 q-4-3-9.4-2.4 T13.6 12z" fill="#2b241c"/>
+           <path d="M15 9.5 l-2.4-3M31 9.5 l2.4-3" stroke="#2b241c" stroke-width="1.4"
+                 stroke-linecap="round"/>`
+        : `<path d="M13.6 12.5 q4-6.5 9.4-6.5 t9.4 6.5 q-4.5-2.6-9.4-2.6 t-9.4 2.6z"
+                 fill="#241c15"/>`}
+    </g></svg>`;
+}
+
+
 /* ---- roadside Nigeria: what actually lines every road ----
    Each `sign` is an ad slot: swap the text and body colour for a brand. */
 const SHOPS = [
-  { sign: 'FOOD JOINT',      w: 104, body: '#b9683f', roof: '#6d6450' },
-  { sign: 'ROASTED CORN',    w: 76,  body: '#8a6b3f', roof: '#5f5a38', stall: true },
-  { sign: 'PROVISION STORE', w: 112, body: '#4a6fa5', roof: '#6d6450' },
-  { sign: 'ELECTRONICS',     w: 110, body: '#2f6b4f', roof: '#5f5a38' },
-  { sign: 'FURNITURE',       w: 116, body: '#7d4b2c', roof: '#6d6450', furniture: true },
+  { sign: 'FOOD JOINT',      w: 104, body: '#b9683f', roof: '#6d6450',
+    errand: 'TAP TO BUY JOLLOF RICE', price: 600, belle: 9, food: true },
+  { sign: 'ROASTED CORN',    w: 76,  body: '#8a6b3f', roof: '#5f5a38', stall: true,
+    errand: 'TAP FOR ROASTED CORN', price: 200,  belle: 5, food: true },
+  { sign: 'PROVISION STORE', w: 112, body: '#4a6fa5', roof: '#6d6450',
+    errand: 'TAP TO BUY PROVISIONS', price: 450 },
+  { sign: 'ELECTRONICS',     w: 110, body: '#2f6b4f', roof: '#5f5a38',
+    errand: 'TAP TO BUY RECHARGE CARD', price: 500 },
+  { sign: 'FURNITURE',       w: 116, body: '#7d4b2c', roof: '#6d6450', furniture: true,
+    errand: 'TAP TO BUY STREAMING CHAIR', price: 2500 },
 ];
 
 /* signboard: textLength forces any wording to fit, so a long brand name
@@ -961,8 +1161,9 @@ function roadside(el){
   const strip = SHOPS.map((cfg, i) =>
     /* tagged by sign, not by index, so swapping a board for a paying advert
        does not silently send the runner to a furniture shop for lunch */
-    `<div class="shop"${/FOOD JOINT|ROASTED CORN/.test(cfg.sign) ? ' data-food="1"' : ''}
-       style="width:${Math.round(cfg.w*0.82)}px;bottom:50px;
+    `<div class="shop"${cfg.food ? ' data-food="1"' : ''} data-errand="${cfg.errand}"
+       data-price="${cfg.price || 0}" data-belle="${cfg.belle || 0}"
+       style="width:${Math.round(cfg.w*1.12)}px;bottom:62px;
        animation-duration:${CYCLE}s;
        animation-delay:${-(i * CYCLE / SHOPS.length)}s">${shop(cfg)}</div>`);
   el.insertAdjacentHTML('beforeend', strip.join(''));
@@ -996,11 +1197,11 @@ function traffic(el){
   /* far lane: smaller and higher up the road than the walkers, so the
      traffic reads as behind them rather than beside them */
   const fleet = [
-    { svg: danfo(),      w: 62, bottom: 28, speed: 8.0,  delay: -0.5 },
-    { svg: okada(true),  w: 42, bottom: 30, speed: 5.6,  delay: -3.6 },
-    { svg: keke(),       w: 44, bottom: 27, speed: 9.5,  delay: -6.6 },
-    { svg: okada(false), w: 38, bottom: 33, speed: 6.4,  delay: -9.4 },
-    { svg: danfoLoaded(), w: 66, bottom: 28, speed: 11.0, delay: -13.5 },
+    { svg: danfo(),       w: 88, bottom: 34, speed: 8.0,  delay: -0.5 },
+    { svg: okada(true),   w: 60, bottom: 37, speed: 5.6,  delay: -3.6 },
+    { svg: keke(),        w: 62, bottom: 33, speed: 9.5,  delay: -6.6 },
+    { svg: okada(false),  w: 54, bottom: 41, speed: 6.4,  delay: -9.4 },
+    { svg: danfoLoaded(), w: 94, bottom: 34, speed: 11.0, delay: -13.5 },
   ];
   el.insertAdjacentHTML('beforeend', fleet.map(v =>
     `<div class="vehicle" style="width:${v.w}px;bottom:${v.bottom}px;
@@ -1015,7 +1216,7 @@ function fillScene(el, n, big){
   const CARRY = [0, 1, 0, 2];
   const figs = Array.from({length:n}, (_,i) =>
     corper(SKINS[i % SKINS.length],
-           big ? 1 : (0.66 + (i%3)*0.17),
+           big ? 1 : (0.95 + (i%3)*0.22),
            big ? 7 : (10.5 + i*3.2),
            big ? 0 : -(i * 4.7),
            big ? 1 : OUTFITS[i % OUTFITS.length],
@@ -1071,12 +1272,467 @@ function backToTrekking(){
 /* Legwork first, then shaku shaku, then back to the trek. */
 function danceBreak(){
   if (!stillWatching()) return;
-  if ($('scene').querySelector('.running, .munching')) return;  // let them eat
+  if ($('scene').querySelector('.running, .munching, .shopping')) return;  // let them finish
   lineUp();
   if (musicOn()) return;        // the bar clock drives the rest
   setTimeout(() => $('scene').classList.add('shaku'), DANCE_FOR / 2);
   setTimeout(backToTrekking, DANCE_FOR);
 }
+/* ================= the scene answers back =================
+   The hero is the only thing most arrivals ever see. Three taps' worth of
+   life in it costs nothing and is the cheapest share we have. Everything
+   below is ambient or optional: nothing here gates "Enter camp". */
+
+const sceneEl = $('scene');
+const calm = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+const sceneW = () => sceneEl.getBoundingClientRect().width;
+
+/* ---- 1. tap a corper, he hails a keke and goes ----
+   Freeze him where he stands (reading the rect first, exactly as lineUp does
+   — a paused CSS percentage is not a pixel), bring a keke to him, then send
+   the pair off and walk a replacement in. */
+function hailRide(p){
+  if (p.dataset.busy) return;                 // one ride per figure
+  p.dataset.busy = '1';
+  const box = sceneEl.getBoundingClientRect();
+  const r   = p.getBoundingClientRect();
+  const x   = Math.round(r.left - box.left);
+
+  p.style.animation = 'none';
+  p.style.left = x + 'px';
+  p.classList.add('hailing');
+
+  const ride = document.createElement('div');
+  ride.className = 'pickup';
+  ride.style.width = '46px';
+  ride.style.bottom = '6px';
+  ride.style.left = '-60px';
+  ride.innerHTML = keke();
+  sceneEl.appendChild(ride);
+
+  requestAnimationFrame(() => { ride.style.left = (x - 26) + 'px'; });
+
+  const PULL_UP = calm() ? 0 : 1150;
+  setTimeout(() => {
+    p.classList.remove('hailing');
+    p.classList.add('riding');
+    p.style.left = (x - 4) + 'px';
+    /* Dropped further up the road rather than carried out of camp. The label
+       says YOU, and you riding away while a stranger takes your place made no
+       sense. */
+    const drop = Math.round(sceneW() * 0.74);
+    p.classList.add('sliding');
+    ride.classList.add('sliding');
+    requestAnimationFrame(() => { p.style.left = drop + 'px'; ride.style.left = drop + 'px'; });
+
+    setTimeout(() => {
+      p.classList.remove('riding', 'sliding');
+      resumeMarch(p, drop);                    // back on foot, from where he got off
+      ride.classList.remove('sliding');
+      ride.style.transition = 'left 1.1s linear';
+      requestAnimationFrame(() => { ride.style.left = (sceneW() + 90) + 'px'; });
+      setTimeout(() => ride.remove(), calm() ? 0 : 1150);
+      delete p.dataset.busy;
+    }, calm() ? 0 : 1550);
+  }, PULL_UP);
+}
+
+/* Drop a figure back into the CSS march at the position they are standing in.
+   @keyframes march runs left:-16% -> 112%, i.e. 128% of the scene, so the
+   phase they should be at is (pos + 16) / 128 — fed back as a negative delay
+   so the animation resumes there instead of restarting off-screen. */
+function resumeMarch(p, px){
+  const w = sceneW();
+  const dur = parseFloat(getComputedStyle(p).animationDuration) || 12;
+  const pct = (px / w) * 100;
+  const phase = Math.min(0.999, Math.max(0, (pct + 16) / 128));
+  p.style.left = '';
+  p.style.animation = '';
+  p.style.animationDelay = (-phase * dur) + 's';
+}
+
+/* A replacement trekker, entering from the left like everyone else. */
+function walkOneIn(){
+  const i = Math.floor(Math.random() * SKINS.length);
+  const html = corper(SKINS[i], 0.95 + (i % 3) * 0.22, 10.5 + i * 3.2, 0, 1, i % 3);
+  sceneEl.insertAdjacentHTML('beforeend', html);
+}
+
+/* Every tappable figure gets a ring at its feet. Added after the fact rather
+   than inside corper(), because corper() also draws the big static figures on
+   the result card, and a pulsing ring has no business there. */
+function markTappable(el){
+  if (!el) return;
+  /* A runner is a plain div wrapping a figure — ring the figure inside it. */
+  const fig = el.tagName.toLowerCase() === 'svg' ? el : el.querySelector('svg.corper');
+  if (!fig || fig.querySelector('.tapRing')) return;
+  /* createElementNS, not createElement: an HTML element inside an <svg> has no
+     box and renders nothing at all. The viewBox is 0 0 46 86 and the feet sit
+     at cy 81, so the ring goes exactly where the existing shadow is. */
+  const NS = 'http://www.w3.org/2000/svg';
+  const ring = document.createElementNS(NS, 'ellipse');
+  ring.setAttribute('class', 'tapRing');
+  ring.setAttribute('cx', '23'); ring.setAttribute('cy', '81');
+  ring.setAttribute('rx', '13'); ring.setAttribute('ry', '3.6');
+  fig.appendChild(ring);
+}
+/* Only the figure currently being offered carries a ring. Ringing all four
+   said "tap any of us" while only one of them had a labelled action — the eye
+   had no way to tell who did what. */
+function unmark(el){
+  const fig = !el ? null : (el.tagName.toLowerCase() === 'svg' ? el : el.querySelector('svg.corper'));
+  fig?.querySelector('.tapRing')?.remove();
+}
+function markAll(){
+  sceneEl.querySelectorAll('.runner').forEach(markTappable);
+}
+markAll();
+
+/* ---- the pointer ----
+   Parked above whichever walking figure is furthest along, re-aimed a few
+   times a second. It is the only unmissable thing in the scene, and it goes
+   the moment anything is tapped — an instruction that outstays its welcome
+   is just clutter. */
+const pointer = document.createElement('div');
+pointer.className = 'tapPoint';
+pointer.innerHTML = `<svg viewBox="0 0 40 30" aria-hidden="true">
+  <rect x="2" y="1" width="36" height="17" rx="4" fill="#ffd34d"/>
+  <path d="M20 28 L14 18 h12 Z" fill="#ffd34d"/>
+  <text x="20" y="13.6" text-anchor="middle" font-size="10.5" font-weight="800"
+        font-family="system-ui,sans-serif" fill="#4a3708">YOU</text>
+</svg>`;
+sceneEl.appendChild(pointer);
+
+function aimPointer(){
+  if (hintDone || calm()){ pointer.style.opacity = '0'; return; }
+  /* Aim at whoever is actually being offered. Pointing at the figure furthest
+     along meant the arrow and the label could name two different people. */
+  const best = sceneEl.querySelector('.wantsCorn, .wantsRide');
+  if (!best){ pointer.style.opacity = '0'; return; }
+  const box = sceneEl.getBoundingClientRect();
+  const r = best.getBoundingClientRect();
+  pointer.style.opacity = '1';
+  pointer.style.left    = Math.round(r.left - box.left + r.width / 2) + 'px';
+  pointer.style.bottom  = Math.round(box.bottom - r.top + 2) + 'px';
+}
+if (!calm()){ aimPointer(); setInterval(aimPointer, 120); }
+
+/* ---- "tap for roasted corn" ----
+   The snack run already existed on a timer. Labelling it turns something that
+   merely happened into something you can cause, which is the whole difference
+   between a picture and a game. The label has to live outside the figure:
+   .corper is an <svg>, and an HTML child inside one renders at 0x0. */
+const cornTag = document.createElement('div');
+cornTag.className = 'cornTag';
+cornTag.textContent = 'TAP FOR ROASTED CORN';
+cornTag.style.display = 'none';
+sceneEl.appendChild(cornTag);
+let cornTarget = null;
+
+/* A label wider than the gap to the edge gets eaten by overflow:hidden.
+   "TAP TO BUY STREAMING CHAIR ₦2,500" is 233px on a 375px phone, so it only
+   fits centred — clamp it rather than lose half the instruction. */
+function pinInside(el, box, centre, gap = 6){
+  const half = el.offsetWidth / 2;
+  const min = half + gap, max = box.width - half - gap;
+  const x = max < min ? box.width / 2 : Math.min(Math.max(centre, min), max);
+  el.style.left = Math.round(x) + 'px';
+}
+
+const inFrame = (el, box, pad = 0.12) => {
+  const r = el.getBoundingClientRect();
+  const c = r.left - box.left + r.width / 2;
+  return c > box.width * pad && c < box.width * (1 - pad);
+};
+
+let cornShop = null;
+/* Measured: a stall is in frame every single sample over 30s, so leaving the
+   ride as a no-shop fallback meant it was never offered once. They take turns
+   instead, and the turn flips each time an offer is used or expires. */
+let rideTurn = false;
+const flipTurn = () => { rideTurn = !rideTurn; };
+
+function offerCorn(){
+  if (calm()) return;
+  const box = sceneEl.getBoundingClientRect();
+  const busy = sceneEl.querySelector('.running, .munching, .shopping')
+            || sceneEl.classList.contains('dancing')
+            || sceneBusy();          // the chase or the fire owns the screen
+  /* no shop in frame means nowhere to run to — offering it would be a lie */
+  if (!cornShop || !cornShop.isConnected || !inFrame(cornShop, box))
+    cornShop = [...sceneEl.querySelectorAll('.shop[data-errand]')].find(el => inFrame(el, box)) || null;
+  if (busy || !cornShop || rideTurn){ clearCorn(); return; }
+
+  if (!cornTarget || !cornTarget.isConnected || !inFrame(cornTarget, box)){
+    /* Drop the old one first. Reassigning without clearing left a corper
+       still carrying the errand behaviour with no label above them — tapping
+       them then did something the screen never offered. */
+    if (cornTarget){ cornTarget.classList.remove('wantsCorn'); unmark(cornTarget); }
+    cornTarget = [...sceneEl.querySelectorAll(':scope > .corper')]
+      .filter(p => !p.classList.contains('riding') && !p.classList.contains('hailing'))
+      .find(p => inFrame(p, box)) || null;
+  }
+  if (!cornTarget){ clearCorn(); return; }
+
+  cornTarget.classList.add('wantsCorn');
+  markTappable(cornTarget);
+  /* The price goes on the label. Charging for a tap nobody was warned about
+     is the sort of thing that reads as the game cheating you. */
+  const cost = +cornShop.dataset.price || 0;
+  cornTag.textContent = (cornShop.dataset.errand || 'TAP TO GO SHOP')
+    + (cost && s ? `  \u20a6${cost.toLocaleString()}` : '');
+  const r = cornTarget.getBoundingClientRect();
+  cornTag.style.display = 'block';
+  pinInside(cornTag, box, r.left - box.left + r.width / 2);
+  cornTag.style.bottom = Math.round(box.bottom - r.top + (hintDone ? 10 : 40)) + 'px';
+}
+
+function clearCorn(){
+  cornTag.style.display = 'none';
+  if (cornTarget){ cornTarget.classList.remove('wantsCorn'); unmark(cornTarget); }
+  cornTarget = null;
+  cornShop = null;
+}
+
+/* When no shop is passing, the one in front is still offered — a ride out.
+   Something is always nameable, so the scene never shows an unlabelled ring. */
+let rideTarget = null;
+function offerRide(){
+  if (calm()) return;
+  if (!rideTurn || cornTarget){ clearRide(); return; }
+  const box = sceneEl.getBoundingClientRect();
+  if (sceneBusy() || sceneEl.classList.contains('dancing')
+      || sceneEl.querySelector('.running, .munching, .shopping')){ clearRide(); return; }
+  if (!rideTarget || !rideTarget.isConnected || !inFrame(rideTarget, box)
+      || rideTarget.classList.contains('riding') || rideTarget.classList.contains('hailing')){
+    if (rideTarget){ unmark(rideTarget); rideTarget.classList.remove('wantsRide'); }
+    rideTarget = [...sceneEl.querySelectorAll(':scope > .corper')]
+      .filter(p => !p.classList.contains('riding') && !p.classList.contains('hailing'))
+      .find(p => inFrame(p, box)) || null;
+  }
+  if (!rideTarget){ clearRide(); return; }
+  rideTarget.classList.add('wantsRide');
+  markTappable(rideTarget);
+  rideTag.textContent = 'TAP TO RIDE KEKE';
+  rideTag.style.display = 'block';
+  const r = rideTarget.getBoundingClientRect();
+  pinInside(rideTag, box, r.left - box.left + r.width / 2);
+  rideTag.style.bottom = Math.round(box.bottom - r.top + (hintDone ? 10 : 40)) + 'px';
+}
+function clearRide(){
+  rideTag.style.display = 'none';
+  if (rideTarget){ rideTarget.classList.remove('wantsRide'); unmark(rideTarget); }
+  rideTarget = null;
+}
+const rideTag = document.createElement('div');
+rideTag.className = 'cornTag rideTag';
+rideTag.style.display = 'none';
+sceneEl.appendChild(rideTag);
+if (!calm()){ setInterval(offerRide, 150); setInterval(flipTurn, 14000); }
+if (!calm()) setInterval(offerCorn, 150);
+
+/* Once they have tapped anything, the standing hint has done its job.
+   Declared up here, not next to its function: aimPointer runs on a timer that
+   starts before that point, and a `let` read early throws. */
+var hintDone = false;
+function hintUsed(){
+  if (hintDone) return;
+  hintDone = true;
+  sceneEl.classList.add('played');
+}
+
+sceneEl.addEventListener('click', e => {
+  const run = e.target.closest('.runner');
+  if (run){
+    hintUsed();
+    if (run.classList.contains('thief')) catchThief(run); else trip(run);
+    return;
+  }
+  const p = e.target.closest('.corper');
+  if (p && p.classList.contains('wantsCorn')){
+    hintUsed();
+    const who = p, where = cornShop;
+    clearCorn();
+    flipTurn();
+    snackRun(who, where);
+    return;
+  }
+  if (p && p.classList.contains('wantsRide')){
+    hintUsed();
+    clearRide();
+    flipTurn();
+    hailRide(p);
+    return;
+  }
+  const v = e.target.closest('.vehicle.ablaze');
+  if (v){ hintUsed(); douse(v); }
+});
+
+/* ---- catching him ----
+   Everything stops where it stands, the label turns, and the whole chase
+   clears a beat later. Whatever he took comes back to you — the errands take
+   money out of the scene, so this is the one thing that puts a little in. */
+function catchThief(run){
+  if (run.dataset.caught) return;
+  run.dataset.caught = '1';
+
+  sceneEl.querySelectorAll('.runner, .runner .flip').forEach(el => {
+    el.style.animationPlayState = 'paused';
+  });
+  sceneEl.querySelectorAll('.runner .leg, .runner .leg2, .runner .arm, .runner .arm2, .runner .torso')
+    .forEach(el => { el.style.animation = 'none'; });
+
+  const tag = sceneEl.querySelector('.runnerTag');
+  if (tag){ tag.textContent = 'CAUGHT!'; tag.classList.add('caught'); }
+
+  const fig = run.querySelector('svg.corper');
+  if (fig){
+    fig.style.transition = 'transform .25s ease';
+    fig.style.transform  = 'rotate(-14deg) translateY(5px)';
+  }
+
+  /* A small recovery, and only in camp. Bounded by how rarely the chase runs,
+     so it cannot be farmed into a living. */
+  if (s && fig){
+    const back = 150 + Math.floor(Math.random() * 250);
+    s.money += back;
+    render();
+    floatCost(fig, `+₦${back.toLocaleString()}`);
+  }
+
+  setTimeout(() => {
+    sceneEl.querySelectorAll('.runner').forEach(el => el.remove());
+    sceneEl.querySelectorAll('.runnerTag').forEach(el => el.remove());
+  }, 1500);
+}
+
+/* Tapping the chase has to do something, or "tap anybody" is a lie — the same
+   failure as a screen telling players to do the thing that loses. He stumbles,
+   the crowd gains, and he carries on. */
+function trip(run){
+  if (run.dataset.tripped) return;
+  run.dataset.tripped = '1';
+  const fig = run.querySelector('.corper');
+  if (!fig) return;
+  fig.style.transition = 'transform .22s ease';
+  fig.style.transform = 'rotate(-26deg) translateY(7px)';
+  setTimeout(() => { fig.style.transform = ''; run.dataset.tripped = ''; }, 420);
+}
+
+/* ---- 2. somebody is being chased ----
+   Agbero across the screen and back, twice, with a small crowd behind him.
+   Pure ambience: it is not tappable and it does not block anything. */
+/* The road already carries four walkers, five vehicles and five stalls. One
+   event on top of that reads as life; two at once reads as noise. */
+const sceneBusy = () => !!sceneEl.querySelector('.runner, .ablaze');
+
+function agberoChase(){
+  if (calm() || sceneBusy()) return;
+  /* The agbero is not a corps member and neither is the crowd after him —
+     he runs in rags, they run in ordinary clothes. */
+  const cast = [
+    { skin: 2, scale: 1.02, tone: 0, delay: 0,   rags: true },   // the man himself
+    /* Spaced wide enough that they read as a line of people rather than one
+       smudge — .3s apart put two of them on top of each other. */
+    { skin: 0, scale: .96, tone: 1, delay: .95, stick: true },
+    { skin: 3, scale: .99, tone: 2, delay: 1.7, stick: true },
+    { skin: 1, scale: .94, tone: 3, delay: 2.5, stick: true },
+  ];
+  cast.forEach(c => {
+    const wrap = document.createElement('div');
+    wrap.className = 'runner' + (c.rags ? ' thief' : '');
+    wrap.style.width = Math.round(46 * c.scale) + 'px';
+    wrap.style.animationDelay = c.delay + 's';
+    const flip = document.createElement('span');
+    flip.className = 'flip';
+    flip.style.animationDelay = c.delay + 's';
+    flip.innerHTML = civilian(SKINS[c.skin % SKINS.length], c.scale, 9, 0, c.tone, !!c.rags, !!c.stick);
+    wrap.appendChild(flip);
+    /* the inner figure must not also be marching, or it drifts out of its own
+       wrapper and the chase comes apart */
+    sceneEl.appendChild(wrap);
+    const inner = wrap.querySelector('.corper');
+    if (inner){ inner.style.animation = 'none'; inner.style.left = '0'; inner.style.position = 'static'; }
+    markTappable(wrap);
+    /* The label lives in the scene, not in the runner, and is driven onto the
+       figure every frame. Pegging it to the wrapper looked right at rest and
+       sat up to 180px adrift for the first seconds of a run. */
+    if (c.rags){
+      const fig = wrap.querySelector('svg.corper');
+      const tag = document.createElement('i');
+      tag.className = 'runnerTag';
+      tag.textContent = 'CATCH THE THIEF';
+      sceneEl.appendChild(tag);
+      const follow = () => {
+        if (!fig.isConnected){ tag.remove(); return; }
+        const box = sceneEl.getBoundingClientRect(), r = fig.getBoundingClientRect();
+        /* Tracked exactly, NOT clamped. Clamping kept the label parked at the
+           edge of the scene while the thief had already run off it — the sign
+           has to leave with the man it is pointing at. */
+        tag.style.left   = Math.round(r.left - box.left + r.width / 2) + 'px';
+        tag.style.bottom = Math.round(box.bottom - r.top + 4) + 'px';
+        requestAnimationFrame(follow);
+      };
+      follow();
+    }
+    wrap.addEventListener('animationend', () => wrap.remove());
+  });
+}
+
+/* ---- 3. the danfo that caught fire ----
+   Three taps puts it out. Slowest vehicle on the road on purpose — the target
+   has to be catchable, and it has to be more visible than the traffic it is
+   moving against. */
+function flameSvg(){
+  return `<svg class="flame" viewBox="0 0 26 30" aria-hidden="true">
+    <path d="M13 0 C17 8 24 10 22 19 a9 9 0 0 1-18 0 C2 10 9 8 13 0Z" fill="#f2792b"/>
+    <path d="M13 8 C15 13 19 14 18 20 a5.2 5.2 0 0 1-10 0 C7 14 11 13 13 8Z" fill="#f7c53d"/>
+  </svg>`;
+}
+
+function burningDanfo(){
+  if (calm() || sceneBusy()) return;
+  const v = document.createElement('div');
+  v.className = 'vehicle ablaze';
+  v.dataset.fire = '3';
+  v.style.width = '96px';
+  v.style.bottom = '34px';
+  v.style.animationDuration = '15s';           // the slow lane, so it is hittable
+  v.style.animationIterationCount = '1';
+  v.innerHTML = danfo() + flameSvg() + '<i class="tapTag">TAP TO PUT OUT</i>';
+  v.setAttribute('role', 'button');
+  v.setAttribute('aria-label', 'Put out the fire');
+  sceneEl.appendChild(v);
+  v.addEventListener('animationend', () => v.remove());
+}
+
+function douse(v){
+  const left = (+v.dataset.fire || 1) - 1;
+  v.dataset.fire = String(left);
+  if (left > 0) return;
+  v.querySelector('.flame')?.remove();
+  v.querySelector('.tapTag')?.remove();
+  v.classList.remove('ablaze');
+  v.removeAttribute('aria-label');
+  const puff = document.createElement('div');
+  puff.className = 'puff';
+  puff.innerHTML = `<svg viewBox="0 0 34 34" aria-hidden="true">
+    <circle cx="12" cy="20" r="9"  fill="#cfc8bb" opacity=".9"/>
+    <circle cx="21" cy="16" r="10" fill="#ded8cc" opacity=".85"/>
+    <circle cx="26" cy="23" r="7"  fill="#cfc8bb" opacity=".8"/></svg>`;
+  v.appendChild(puff);
+  setTimeout(() => puff.remove(), 1100);
+}
+
+/* Spaced so the scene is never busy with both at once, and never silent for
+   long. First one comes early enough that a quick visitor still sees it. */
+if (!calm()){
+  setTimeout(agberoChase,  6000);
+  setTimeout(burningDanfo, 17000);
+  setInterval(agberoChase,  38000);
+  setInterval(burningDanfo, 46000);
+}
+
 /* Off by default on purpose: most arrivals come from TikTok with their own
    music already playing, and hijacking that costs more players than it wins. */
 const SND_KEY = 'otondo:sound';
@@ -1167,7 +1823,7 @@ const SNACK_EVERY = 23000, RUN_MS = 950, EAT_MS = 1500;
 /* Returns false when it could not go — the caller retries soon rather than
    forfeiting a whole 23s turn. The dance and the run overlap often enough that
    skipping meant the run almost never happened. */
-function snackRun(){
+function snackRun(preferred, target){
   const sc = $('scene');
   if (!stillWatching()) return true;
   if (sc.classList.contains('dancing')) return false;
@@ -1184,8 +1840,14 @@ function snackRun(){
     const c = r.left - box.left + r.width / 2;
     return { el, c, ok: c > box.width * 0.12 && c < box.width * 0.88 };
   };
-  const stall  = [...sc.querySelectorAll('.shop[data-food]')].map(place).find(x => x.ok);
-  const runner = crew.map(place).find(x => x.ok);
+  /* Any shop will do now, not only food. A tap names a specific one; the
+     timer-driven run takes whatever is in frame. */
+  const stall  = (target ? [place(target)].find(x => x.ok) : null)
+              || [...sc.querySelectorAll('.shop[data-errand]')].map(place).find(x => x.ok);
+  /* A tapped corper goes if they are in frame; otherwise fall back to
+     whoever is, so the timer-driven run still works. */
+  const picked = preferred && crew.includes(preferred) ? place(preferred) : null;
+  const runner = (picked && picked.ok) ? picked : crew.map(place).find(x => x.ok);
   crew.forEach(p => { p.style.transition = ''; });     // restore the CSS glide
   if (!stall || !runner) return false;
 
@@ -1210,7 +1872,9 @@ function snackRun(){
 
   let pin = 0;
   setTimeout(() => {
-    who.classList.replace('running', 'munching');
+    /* You eat roasted corn. You do not eat a mattress. */
+    who.classList.replace('running', stall.el.dataset.food ? 'munching' : 'shopping');
+    buy(stall.el, who);
     /* Eating: pin to the stall every frame with the transition off, so they
        stay with it as it drifts instead of being left behind. A single
        predicted position cannot hold for a second and a half. */
@@ -1222,7 +1886,7 @@ function snackRun(){
   setTimeout(() => {
     cancelAnimationFrame(pin);
     who.style.transition = '';                    // glide back to the road
-    who.classList.replace('munching', 'running');
+    who.classList.replace(stall.el.dataset.food ? 'munching' : 'shopping', 'running');
     who.style.transform = '';
   }, RUN_MS + EAT_MS);
 
@@ -1232,6 +1896,34 @@ function snackRun(){
     delete stall.el.dataset.target;
   }, RUN_MS + EAT_MS + RUN_MS);
   return true;
+}
+
+/* Money only moves once camp has actually started — before that there is no
+   wallet to take from, and the scene is just scenery. Food fills the belle, so
+   a tap is a trade rather than a punishment for touching the decoration. */
+function buy(shopEl, who){
+  const cost  = +shopEl.dataset.price || 0;
+  const belle = +shopEl.dataset.belle || 0;
+  if (!s || !cost) return;
+  const paid = Math.min(cost, s.money);        // never let money go negative
+  s.money -= paid;
+  if (belle) s.belle = Math.min(100, s.belle + belle);
+  render();
+  floatCost(who, paid ? `-₦${paid.toLocaleString()}` : 'No money');
+}
+
+/* A number that lifts off the buyer, so the deduction is seen and not just
+   quietly applied to a stat bar somebody may not be looking at. */
+function floatCost(who, text){
+  const box = sceneEl.getBoundingClientRect();
+  const r   = who.getBoundingClientRect();
+  const tag = document.createElement('div');
+  tag.className = 'costFloat' + (text.startsWith('+') ? ' gain' : '');
+  tag.textContent = text;
+  tag.style.bottom = Math.round(box.bottom - r.top + 6) + 'px';
+  sceneEl.appendChild(tag);
+  pinInside(tag, box, r.left - box.left + r.width / 2);   // needs to be in the DOM to measure
+  setTimeout(() => tag.remove(), 1400);
 }
 
 const scheduleSnack = delay =>
