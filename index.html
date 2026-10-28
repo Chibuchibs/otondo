@@ -1001,18 +1001,18 @@
 <script type="module">
 import { newGame, doAction, canDo, unlocked, ACTIONS, phaseOf, nextUnlock, postingOdds, rivalOf,
          computePosting,
-         shareText, MAX_DAY } from './game.js?v=20261028062743';
+         shareText, MAX_DAY } from './game.js?v=20261028062950';
 
 /* Kept here, not exported from game.js: a new cross-file export breaks any
    client holding a cached game.js after a deploy. */
 const ALLAWEE_NOTE = 'Allawee ₦77,000 — e never enter.';
 import { initNet, joinCamp, syncPlayer, platoonBoard, recentChat, postChat,
          postSuggestion, reportMessage, awardBoard, myAwards, laughChat,
-         setPresence, campRoster, renameMe, online } from './net.js?v=20261028062743';
-import { startMusic, stopMusic, musicOn, audioState, audioSupported, BEAT, BAR } from './audio.js?v=20261028062743';
+         setPresence, campRoster, renameMe, online } from './net.js?v=20261028062950';
+import { startMusic, stopMusic, musicOn, audioState, audioSupported, BEAT, BAR } from './audio.js?v=20261028062950';
 import { playHoop, playPenalty, playQuiz, playRegister, playParade,
          playMami, playHustle, playManOWar, playSaed, playSocial,
-         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261028062743';
+         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261028062950';
 
 /* Every dance animation is expressed in beats, so the steps are on-tempo
    whether or not the sound is playing — and genuinely on the beat when it is. */
@@ -1798,13 +1798,19 @@ let potReadyAt = 0;
 const pothole = document.createElement('div');
 pothole.className = 'pothole';
 pothole.innerHTML = `<svg viewBox="0 0 80 48" aria-hidden="true" overflow="visible">
-  <defs><path id="potArc" d="M11 38 A29 29 0 0 1 69 38" fill="none"/></defs>
+  <!-- Flatter and lower than a semicircle. R29 on a 58 chord IS a semicircle,
+       which threw the name 30 units clear of a hole only 7.5 deep — it floated
+       rather than belonging to it. This keeps the sagitta at ~13 so the arc
+       still hugs the ellipse, but spans a wider chord (6 to 74) because TEXT
+       LONGER THAN ITS PATH IS SIMPLY NOT DRAWN: at R37 the arc ran 63 units
+       against 78 units of lettering, so the M and the E fell off the ends. -->
+  <defs><path id="potArc" d="M6 40 A51 51 0 0 1 74 40" fill="none"/></defs>
   <ellipse cx="40" cy="39" rx="27" ry="7.5" fill="#2e2a24"/>
   <ellipse cx="40" cy="37.4" rx="27" ry="7.5" fill="#4a4136"/>
   <ellipse cx="40" cy="38" rx="19" ry="4.6" fill="#241f1a"/>
   <path d="M18 36 q7-4 15-2 M48 34 q8-1 13 3" stroke="#6b5f4c"
         stroke-width="1.5" fill="none" stroke-linecap="round"/>
-  <text class="potName" font-size="8.4" font-weight="900" letter-spacing="1.1"
+  <text class="potName" font-size="8" font-weight="900" letter-spacing="0.55"
         font-family="system-ui,sans-serif" text-anchor="middle">
     <textPath href="#potArc" startOffset="50%">MR. POTHOLE</textPath>
   </text>
