@@ -1001,18 +1001,18 @@
 <script type="module">
 import { newGame, doAction, canDo, unlocked, ACTIONS, phaseOf, nextUnlock, postingOdds, rivalOf,
          computePosting,
-         shareText, MAX_DAY } from './game.js?v=20261028063809';
+         shareText, MAX_DAY } from './game.js?v=20261028063925';
 
 /* Kept here, not exported from game.js: a new cross-file export breaks any
    client holding a cached game.js after a deploy. */
 const ALLAWEE_NOTE = 'Allawee ₦77,000 — e never enter.';
 import { initNet, joinCamp, syncPlayer, platoonBoard, recentChat, postChat,
          postSuggestion, reportMessage, awardBoard, myAwards, laughChat,
-         setPresence, campRoster, renameMe, online } from './net.js?v=20261028063809';
-import { startMusic, stopMusic, musicOn, audioState, audioSupported, BEAT, BAR } from './audio.js?v=20261028063809';
+         setPresence, campRoster, renameMe, online } from './net.js?v=20261028063925';
+import { startMusic, stopMusic, musicOn, audioState, audioSupported, BEAT, BAR } from './audio.js?v=20261028063925';
 import { playHoop, playPenalty, playQuiz, playRegister, playParade,
          playMami, playHustle, playManOWar, playSaed, playSocial,
-         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261028063809';
+         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261028063925';
 
 /* Every dance animation is expressed in beats, so the steps are on-tempo
    whether or not the sound is playing — and genuinely on the beat when it is. */
@@ -1245,9 +1245,11 @@ function civilian(skin, scale, speed, delay, tone = 0, rags = false, stick = fal
    the dust behind them, so the row read as one brown band. Brightening all
    five would have cost the contrast again; two bright shopfronts against three
    dull ones is what makes the street look painted rather than washed out.
-   Teal and yellow. The yellow is deliberately warmer and deeper than the
-   danfos' #f2c413 so a building never reads as a parked bus — they sit in the
-   same frame constantly. Red was the first try and it looked good, but red is
+   Teal and yellow. The yellow is deliberately deeper than the danfos' #f2c413
+   so a building never reads as a parked bus — they sit in the same frame
+   constantly. #f7b31c was the first try and measured only ΔE 12 from the bus
+   yellow with a 7° hue gap, which is the same colour at a glance; #d99a12 is
+   ΔE 20, far enough apart to read as a painted wall while still bright. Red was the first try and it looked good, but red is
    this scene's urgency colour (FIRE, CATCH THE THIEF) and a whole wall of it
    competes with the one signal that has to cut through.
    The roofs take a darker shade of the same hue — a grey-brown roof on a
@@ -1259,7 +1261,7 @@ const SHOPS = [
     errand: 'TAP FOR ROASTED CORN', price: 200,  belle: 5, food: true },
   { sign: 'PROVISION STORE', w: 112, body: '#0fa3a0', roof: '#0a7d79',
     errand: 'TAP TO BUY PROVISIONS', price: 450 },
-  { sign: 'ELECTRONICS',     w: 110, body: '#f7b31c', roof: '#c9820d',
+  { sign: 'ELECTRONICS',     w: 110, body: '#d99a12', roof: '#a8720a',
     errand: 'TAP TO BUY PHONE CHARGER', price: 500,
     /* A second errand on the same shop, picked at random each time it is
        offered. Recharge card is the thing anyone actually walks into an
