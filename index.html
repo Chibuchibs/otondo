@@ -259,6 +259,21 @@
   /* The facing lives on an inner layer. Flipping the wrapper would mirror the
      label with the figure, and "THIEF" came out backwards. */
   .runner .flip{display:block;animation:chaseFace 7.5s linear both}
+  /* Arm up, not swinging at the side. A mob reads as a mob when some of them
+     have a hand in the air; all four swinging politely in time looked like a
+     jog. -150deg from the shoulder puts the arm above the head and the small
+     wobble is it being shaken rather than held still.
+
+     The raised arm carries NO stick. A stick is a 2.6px-wide rect, and once
+     the arm is overhead it lies across the head and reads as a scratch rather
+     than a weapon — the raised empty hand is unmistakable at this size, and
+     the chaser who is still swinging keeps his stick, so the group has one
+     either way. Higher specificity than `.runner .arm2`, so it keeps its own
+     duration. */
+  @keyframes brandish{0%,100%{transform:rotate(-150deg)}
+                      50%   {transform:rotate(-169deg)}}
+  .runner.raised .arm2{animation:brandish .3s ease-in-out infinite;
+    transform-origin:24px 28px}
   .runner .leg,.runner .leg2{animation-duration:.2s}
   .runner .arm,.runner .arm2{animation-duration:.2s}
   .runner .torso{animation-duration:.1s}
@@ -941,18 +956,18 @@
 <script type="module">
 import { newGame, doAction, canDo, unlocked, ACTIONS, phaseOf, nextUnlock, postingOdds, rivalOf,
          computePosting,
-         shareText, MAX_DAY } from './game.js?v=20261027223127';
+         shareText, MAX_DAY } from './game.js?v=20261028060317';
 
 /* Kept here, not exported from game.js: a new cross-file export breaks any
    client holding a cached game.js after a deploy. */
 const ALLAWEE_NOTE = 'Allawee ₦77,000 — e never enter.';
 import { initNet, joinCamp, syncPlayer, platoonBoard, recentChat, postChat,
          postSuggestion, reportMessage, awardBoard, myAwards, laughChat,
-         setPresence, campRoster, renameMe, online } from './net.js?v=20261027223127';
-import { startMusic, stopMusic, musicOn, audioState, audioSupported, BEAT, BAR } from './audio.js?v=20261027223127';
+         setPresence, campRoster, renameMe, online } from './net.js?v=20261028060317';
+import { startMusic, stopMusic, musicOn, audioState, audioSupported, BEAT, BAR } from './audio.js?v=20261028060317';
 import { playHoop, playPenalty, playQuiz, playRegister, playParade,
          playMami, playHustle, playManOWar, playSaed, playSocial,
-         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261027223127';
+         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261028060317';
 
 /* Every dance animation is expressed in beats, so the steps are on-tempo
    whether or not the sound is playing — and genuinely on the beat when it is. */
@@ -1124,7 +1139,7 @@ function okada(passenger){
 const CIV_TOPS   = ['#c14f3e', '#3d6ea8', '#6d4f8c', '#2f7a63', '#c98a2b'];
 const CIV_BOTTOM = ['#2f3a4a', '#3b3a36', '#45413a', '#28313d'];
 
-function civilian(skin, scale, speed, delay, tone = 0, rags = false, stick = false){
+function civilian(skin, scale, speed, delay, tone = 0, rags = false, stick = false, raised = false){
   const top    = rags ? '#8d7f63' : CIV_TOPS[tone % CIV_TOPS.length];
   const topDk  = rags ? '#7a6d53' : top;
   const trou   = rags ? '#6a5c46' : CIV_BOTTOM[tone % CIV_BOTTOM.length];
@@ -1161,7 +1176,7 @@ function civilian(skin, scale, speed, delay, tone = 0, rags = false, stick = fal
         <circle cx="13.5" cy="52" r="3.6" fill="${skin}"/></g>
       <g class="arm2"><rect x="29.5" y="30" width="6" height="21" rx="3" fill="${top}"/>
         <circle cx="32.5" cy="52" r="3.6" fill="${skin}"/>
-        ${stick ? `<g transform="rotate(-38 32.5 52)">
+        ${stick && !raised ? `<g transform="rotate(-38 32.5 52)">
              <rect x="31.2" y="18" width="2.6" height="36" rx="1.3" fill="#7a5630"/>
              <rect x="31.2" y="18" width="2.6" height="7"  rx="1.3" fill="#6a4927"/>
            </g>` : ''}</g>
@@ -2059,18 +2074,24 @@ function agberoChase(){
      changes meaning when the pack turns around. */
   const cast = [
     { skin: 2, scale: 1.02, tone: 0, trail: 0,   rags: true },   // the man himself
-    { skin: 0, scale: .96, tone: 1, trail: 58,  stick: true },
+    /* One hand up, two sticks. Raising both outer chasers left a single stick
+       in the whole mob, which undoes the point of them carrying one; and a
+       line of identical raised arms reads as a drill squad rather than a
+       crowd. The man at the front has his hand up — he is the one closest to
+       catching the thief — and the two behind him are still swinging. */
+    { skin: 0, scale: .96, tone: 1, trail: 58,  raised: true },
     { skin: 3, scale: .99, tone: 2, trail: 116, stick: true },
     { skin: 1, scale: .94, tone: 3, trail: 174, stick: true },
   ];
   cast.forEach(c => {
     const wrap = document.createElement('div');
-    wrap.className = 'runner' + (c.rags ? ' thief' : '');
+    wrap.className = 'runner' + (c.rags ? ' thief' : '') + (c.raised ? ' raised' : '');
     wrap.style.width = Math.round(46 * c.scale) + 'px';
     wrap.style.setProperty('--trail', c.trail + 'px');
     const flip = document.createElement('span');
     flip.className = 'flip';
-    flip.innerHTML = civilian(SKINS[c.skin % SKINS.length], c.scale, 9, 0, c.tone, !!c.rags, !!c.stick);
+    flip.innerHTML = civilian(SKINS[c.skin % SKINS.length], c.scale, 9, 0,
+                              c.tone, !!c.rags, !!c.stick, !!c.raised);
     wrap.appendChild(flip);
     /* the inner figure must not also be marching, or it drifts out of its own
        wrapper and the chase comes apart */
