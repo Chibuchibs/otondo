@@ -1001,18 +1001,18 @@
 <script type="module">
 import { newGame, doAction, canDo, unlocked, ACTIONS, phaseOf, nextUnlock, postingOdds, rivalOf,
          computePosting,
-         shareText, MAX_DAY } from './game.js?v=20261028064036';
+         shareText, MAX_DAY } from './game.js?v=20261028064614';
 
 /* Kept here, not exported from game.js: a new cross-file export breaks any
    client holding a cached game.js after a deploy. */
 const ALLAWEE_NOTE = 'Allawee ₦77,000 — e never enter.';
 import { initNet, joinCamp, syncPlayer, platoonBoard, recentChat, postChat,
          postSuggestion, reportMessage, awardBoard, myAwards, laughChat,
-         setPresence, campRoster, renameMe, online } from './net.js?v=20261028064036';
-import { startMusic, stopMusic, musicOn, audioState, audioSupported, BEAT, BAR } from './audio.js?v=20261028064036';
+         setPresence, campRoster, renameMe, online } from './net.js?v=20261028064614';
+import { startMusic, stopMusic, musicOn, audioState, audioSupported, BEAT, BAR } from './audio.js?v=20261028064614';
 import { playHoop, playPenalty, playQuiz, playRegister, playParade,
          playMami, playHustle, playManOWar, playSaed, playSocial,
-         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261028064036';
+         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261028064614';
 
 /* Every dance animation is expressed in beats, so the steps are on-tempo
    whether or not the sound is playing — and genuinely on the beat when it is. */
@@ -1435,6 +1435,25 @@ const SIGN_LINES = [
   ['NO WAHALA',        '#e2641f', '#fff'],     // boot orange
   ['E BE LIKE FILM',   '#6b3fa0', '#fff'],     // viewing-centre purple
 ];
+
+/* ---- seasonal line: the election ----
+   Added for the season and set to take itself down, because a stale "VOTE O!"
+   months after polling day makes the whole board look abandoned — and nobody
+   should have to remember to come back and delete a string.
+
+   It is a turnout message and nothing else: no party, no candidate, no slogan
+   belonging to anyone. A game that camp members play is not a place to carry
+   somebody's campaign, and an unbranded nudge to vote is the only version of
+   this that stays honest whoever is reading it.
+
+   Cream board with green ink, which is the one combination no other line uses,
+   so it reads as a poster pasted up rather than another bit of camp talk. */
+const VOTE_LINE  = ['VOTE O!', '#f7f4ea', '#0a7a43'];
+/* 1 February 2027, local time: the election is in January, so this clears the
+   morning after the month ends. If a precise polling date is wanted, this one
+   constant is the only thing to change. */
+const VOTE_UNTIL = new Date(2027, 1, 1).getTime();
+if (Date.now() < VOTE_UNTIL) SIGN_LINES.splice(2, 0, VOTE_LINE);
 function paintSign(board, entry){
   board.textContent      = entry[0];
   board.style.background = entry[1];
