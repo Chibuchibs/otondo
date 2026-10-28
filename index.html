@@ -672,6 +672,13 @@
     font-weight:800;color:var(--green-dk);-webkit-text-fill-color:var(--green-dk);
     text-decoration:underline;text-underline-offset:3px}
   .whoami input{margin:0;padding:8px 10px;font-size:14px;flex:1;min-width:0}
+  /* In chat this is not a convenience link, it is the only thing standing
+     between the player and a type bar that is greyed out. A bare text link is
+     an 18px tap target; this is the one control that must not be fiddly, so it
+     gets a real button and a 44px target. */
+  #chatName{margin:10px 2px 8px}
+  #chatName button{background:var(--green);color:#fff;-webkit-text-fill-color:#fff;
+    border-radius:10px;padding:0 14px;min-height:44px;text-decoration:none}
   .whoami .save{background:var(--green);color:#fff;-webkit-text-fill-color:#fff;
     border-radius:10px;padding:9px 13px;text-decoration:none;flex:none}
   .badges span{display:inline-flex;align-items:center;gap:5px;background:var(--green-lt);
@@ -869,6 +876,11 @@
 
     <div id="panelChat" class="hidden">
       <div class="chatbox" id="chatBox"></div>
+      <!-- The name control has to live HERE as well as on the camp tab. Chat
+           is disabled until you pick a name, and the only way to pick one was
+           a button on a different tab — so the type bar was simply greyed out
+           with no way out of it from where the player was standing. -->
+      <p class="whoami" id="chatName"></p>
       <div class="row">
         <input id="chatIn" maxlength="140" placeholder="Say something to camp…">
         <button id="chatSend">Send</button>
@@ -918,18 +930,18 @@
 <script type="module">
 import { newGame, doAction, canDo, unlocked, ACTIONS, phaseOf, nextUnlock, postingOdds, rivalOf,
          computePosting,
-         shareText, MAX_DAY } from './game.js?v=20261027220634';
+         shareText, MAX_DAY } from './game.js?v=20261027222732';
 
 /* Kept here, not exported from game.js: a new cross-file export breaks any
    client holding a cached game.js after a deploy. */
 const ALLAWEE_NOTE = 'Allawee ₦77,000 — e never enter.';
 import { initNet, joinCamp, syncPlayer, platoonBoard, recentChat, postChat,
          postSuggestion, reportMessage, awardBoard, myAwards, laughChat,
-         setPresence, campRoster, renameMe, online } from './net.js?v=20261027220634';
-import { startMusic, stopMusic, musicOn, audioState, audioSupported, BEAT, BAR } from './audio.js?v=20261027220634';
+         setPresence, campRoster, renameMe, online } from './net.js?v=20261027222732';
+import { startMusic, stopMusic, musicOn, audioState, audioSupported, BEAT, BAR } from './audio.js?v=20261027222732';
 import { playHoop, playPenalty, playQuiz, playRegister, playParade,
          playMami, playHustle, playManOWar, playSaed, playSocial,
-         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261027220634';
+         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261027222732';
 
 /* Every dance animation is expressed in beats, so the steps are on-tempo
    whether or not the sound is playing — and genuinely on the beat when it is. */
@@ -2723,8 +2735,8 @@ function drawWhoami(){
   $('renameBtn').onclick = startRename;
 }
 
-function startRename(){
-  const el = $('whoami');
+function startRename(host){
+  const el = host || $('whoami');
   const cur = isAutoName(s.name) ? '' : s.name;
   el.innerHTML = `<input id="renameIn" maxlength="16" autocomplete="off"
                     placeholder="Wetin be your name?" value="${esc(cur)}">` +
@@ -2733,9 +2745,10 @@ function startRename(){
   input.focus();
   const commit = async () => {
     const v = input.value.trim().replace(/\s+/g, ' ').slice(0, 16);
-    if (v.length < 2) { drawWhoami(); return; }
+    if (v.length < 2) { drawWhoami(); if (el !== $('whoami')) gateChat(); return; }
     s.name = v; save();
     drawWhoami();
+    if (el !== $('whoami')) gateChat();       // redraw whichever host opened it
     /* If they have not played an action yet there is no row to rename — the
        name they chose will simply be the one they join with. */
     await renameMe(v);
@@ -2753,6 +2766,20 @@ function gateChat(){
   const auto = s && isAutoName(s.name);
   $('chatIn').disabled = $('chatSend').disabled = auto || !online();
   note(auto ? 'Pick a name first — camp chat shows it to everybody.' : '');
+  /* And give them the way to do it, right here. Telling someone what they must
+     do while the control for doing it lives on a tab they are not looking at
+     is the same as not telling them. */
+  const host = $('chatName');
+  if (!host) return;
+  if (auto){
+    host.classList.remove('hidden');
+    host.innerHTML = `<b class="auto">${esc(s.name)}</b>` +
+                     `<button type="button" id="chatRename">pick a name</button>`;
+    $('chatRename').onclick = () => startRename(host);
+  } else {
+    host.classList.add('hidden');
+    host.innerHTML = '';
+  }
 }
 
 /* Tap the live count to see who is actually in camp. Only what is already
