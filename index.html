@@ -877,18 +877,18 @@
 <script type="module">
 import { newGame, doAction, canDo, unlocked, ACTIONS, phaseOf, nextUnlock, postingOdds, rivalOf,
          computePosting,
-         shareText, MAX_DAY } from './game.js?v=20261027125327';
+         shareText, MAX_DAY } from './game.js?v=20261027174231';
 
 /* Kept here, not exported from game.js: a new cross-file export breaks any
    client holding a cached game.js after a deploy. */
 const ALLAWEE_NOTE = 'Allawee ₦77,000 — e never enter.';
 import { initNet, joinCamp, syncPlayer, platoonBoard, recentChat, postChat,
          postSuggestion, reportMessage, awardBoard, myAwards, laughChat,
-         setPresence, campRoster, renameMe, online } from './net.js?v=20261027125327';
-import { startMusic, stopMusic, musicOn, audioState, audioSupported, BEAT, BAR } from './audio.js?v=20261027125327';
+         setPresence, campRoster, renameMe, online } from './net.js?v=20261027174231';
+import { startMusic, stopMusic, musicOn, audioState, audioSupported, BEAT, BAR } from './audio.js?v=20261027174231';
 import { playHoop, playPenalty, playQuiz, playRegister, playParade,
          playMami, playHustle, playManOWar, playSaed, playSocial,
-         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261027125327';
+         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261027174231';
 
 /* Every dance animation is expressed in beats, so the steps are on-tempo
    whether or not the sound is playing — and genuinely on the beat when it is. */
@@ -1124,7 +1124,7 @@ const SHOPS = [
   { sign: 'PROVISION STORE', w: 112, body: '#4a6fa5', roof: '#6d6450',
     errand: 'TAP TO BUY PROVISIONS', price: 450 },
   { sign: 'ELECTRONICS',     w: 110, body: '#2f6b4f', roof: '#5f5a38',
-    errand: 'TAP TO BUY RECHARGE CARD', price: 500 },
+    errand: 'TAP TO BUY PHONE CHARGER', price: 500 },
   { sign: 'FURNITURE',       w: 116, body: '#7d4b2c', roof: '#6d6450', furniture: true,
     errand: 'TAP TO BUY STREAMING CHAIR', price: 2500 },
 ];
@@ -1232,11 +1232,22 @@ function fillScene(el, n, big){
   /* A little carried kit on some of them: the camp bucket and the kit bag are
      as much a part of the look as the khaki. */
   const CARRY = [0, 1, 0, 2];
+  /* One duration for all three, and delays spaced at exactly a third of it.
+     They used to walk at 10.5s, 13.7s and 16.9s, which drifts: every so often
+     the phases converge and all three sit bunched at the left edge together,
+     leaving the scene empty with one figure loitering by the bezel — the thing
+     that reads as "stuck in the corner". Equal durations hold the spacing for
+     ever. @keyframes march spans 128% of the scene, so a third of the cycle is
+     42.7% of the width apart; the usable band is wider than that, which means
+     one of them is always well inside the frame and the YOU marker always has
+     somebody worth pointing at. Variety now comes from scale, kit and skin
+     rather than from speed. */
+  const CYCLE = 13.5;
   const figs = Array.from({length:n}, (_,i) =>
     corper(SKINS[i % SKINS.length],
            big ? 1 : (0.95 + (i%3)*0.22),
-           big ? 7 : (10.5 + i*3.2),
-           big ? 0 : -(i * 4.7),
+           big ? 7 : CYCLE,
+           big ? 0 : -(i * CYCLE / n),
            big ? 1 : OUTFITS[i % OUTFITS.length],
            big ? 0 : CARRY[i % CARRY.length]));
   el.insertAdjacentHTML('beforeend', figs.join('') + extra);
@@ -1252,7 +1263,12 @@ fillScene($('scene'), 3, false);
    then carries on. The march animation is paused rather than removed, so the
    walk resumes mid-stride instead of restarting from off-screen. */
 /* 8 bars a cycle: 2 bars legwork, 2 bars shaku, 4 bars walking. */
-const DANCE_EVERY = BAR * 8 * 1000, DANCE_FOR = BAR * 4 * 1000;
+/* One bar, not four. Four bars meant they stood in a line for 9.1s out of
+   every 18.3 — half the time — and a figure parked near the left edge reads as
+   stuck rather than dancing. A bar is 2.2857s and the steps are locked to it,
+   so one bar is the shortest cut that does not fall out of time with the
+   music: legwork for two beats, shaku for two. */
+const DANCE_EVERY = BAR * 8 * 1000, DANCE_FOR = BAR * 1 * 1000;
 const stillWatching = () =>
   !window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
@@ -1293,8 +1309,12 @@ function backToTrekking(){
 function danceBreak(){
   if (!stillWatching()) return;
   if ($('scene').querySelector('.running, .munching, .shopping')) return;  // let them finish
+  if ($('scene').classList.contains('dancing')) return;   // already mid-routine
   lineUp();
-  if (musicOn()) return;        // the bar clock drives the rest
+  /* Timed from here rather than from the next bar lines. With the music on the
+     START is still pinned to a bar, so the routine cannot drift off the beat,
+     but the END no longer has to wait for a whole bar boundary — which is what
+     made the music path last four bars while the silent path lasted one. */
   setTimeout(() => $('scene').classList.add('shaku'), DANCE_FOR / 2);
   setTimeout(backToTrekking, DANCE_FOR);
 }
@@ -1306,6 +1326,13 @@ function danceBreak(){
 const sceneEl = $('scene');
 const calm = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 const sceneW = () => sceneEl.getBoundingClientRect().width;
+/* One number for "close enough to the edge to still count". The YOU marker
+   used 0.08 and the two offers used 0.12, so a figure in that 4% band got the
+   marker with no instruction above it — the screen naming someone and then
+   telling the player nothing to do with them. Both read EDGE now. Shops keep
+   the stricter default: being sent to a stall that is half off-screen is a
+   different kind of lie. */
+const EDGE = 0.08;
 
 /* ---- 1. tap a corper, he hails a keke and goes ----
    Freeze him where he stands (reading the rect first, exactly as lineUp does
@@ -1436,7 +1463,7 @@ function aimPointer(){
   if (!best){
     const box0 = sceneEl.getBoundingClientRect();
     best = [...sceneEl.querySelectorAll(':scope > .corper')]
-      .find(p => inFrame(p, box0, 0.08)) || null;
+      .find(p => inFrame(p, box0, EDGE)) || null;
   }
   if (!best){ pointer.style.opacity = '0'; return; }
   const box = sceneEl.getBoundingClientRect();
@@ -1484,7 +1511,7 @@ let cornShop = null;
 let rideTurn = false;
 const flipTurn = () => { rideTurn = !rideTurn; };
 
-function offerCorn(){
+function offerCorn(force){
   if (calm()) return;
   const box = sceneEl.getBoundingClientRect();
   /* Deliberately does NOT bail on sceneBusy(). The marked figure is the only
@@ -1498,16 +1525,16 @@ function offerCorn(){
   /* no shop in frame means nowhere to run to — offering it would be a lie */
   if (!cornShop || !cornShop.isConnected || !inFrame(cornShop, box))
     cornShop = [...sceneEl.querySelectorAll('.shop[data-errand]')].find(el => inFrame(el, box)) || null;
-  if (busy || !cornShop || rideTurn){ clearCorn(); return; }
+  if (busy || !cornShop || (rideTurn && !force)){ clearCorn(); return; }
 
-  if (!cornTarget || !cornTarget.isConnected || !inFrame(cornTarget, box)){
+  if (!cornTarget || !cornTarget.isConnected || !inFrame(cornTarget, box, EDGE)){
     /* Drop the old one first. Reassigning without clearing left a corper
        still carrying the errand behaviour with no label above them — tapping
        them then did something the screen never offered. */
     if (cornTarget){ cornTarget.classList.remove('wantsCorn'); unmark(cornTarget); }
     cornTarget = [...sceneEl.querySelectorAll(':scope > .corper')]
       .filter(p => !p.classList.contains('riding') && !p.classList.contains('hailing'))
-      .find(p => inFrame(p, box)) || null;
+      .find(p => inFrame(p, box, EDGE)) || null;
   }
   if (!cornTarget){ clearCorn(); return; }
 
@@ -1534,17 +1561,17 @@ function clearCorn(){
 /* When no shop is passing, the one in front is still offered — a ride out.
    Something is always nameable, so the scene never shows an unlabelled ring. */
 let rideTarget = null;
-function offerRide(){
+function offerRide(force){
   if (calm()) return;
-  if (!rideTurn || cornTarget){ clearRide(); return; }
+  if ((!rideTurn && !force) || cornTarget){ clearRide(); return; }
   const box = sceneEl.getBoundingClientRect();
   if (sceneEl.querySelector('.running, .munching, .shopping')){ clearRide(); return; }
-  if (!rideTarget || !rideTarget.isConnected || !inFrame(rideTarget, box)
+  if (!rideTarget || !rideTarget.isConnected || !inFrame(rideTarget, box, EDGE)
       || rideTarget.classList.contains('riding') || rideTarget.classList.contains('hailing')){
     if (rideTarget){ unmark(rideTarget); rideTarget.classList.remove('wantsRide'); }
     rideTarget = [...sceneEl.querySelectorAll(':scope > .corper')]
       .filter(p => !p.classList.contains('riding') && !p.classList.contains('hailing'))
-      .find(p => inFrame(p, box)) || null;
+      .find(p => inFrame(p, box, EDGE)) || null;
   }
   if (!rideTarget){ clearRide(); return; }
   rideTarget.classList.add('wantsRide');
@@ -1564,8 +1591,20 @@ const rideTag = document.createElement('div');
 rideTag.className = 'cornTag rideTag';
 rideTag.style.display = 'none';
 sceneEl.appendChild(rideTag);
-if (!calm()){ setInterval(offerRide, 150); setInterval(flipTurn, 14000); }
-if (!calm()) setInterval(offerCorn, 150);
+/* The turn picks which offer leads; if it cannot be made the other one takes
+   the tick. Running the two on independent timers meant a turn with no shop in
+   frame produced no label at all, and the YOU marker sat over a figure with
+   nothing written above them. */
+function offerTick(){
+  if (rideTurn){
+    offerRide();
+    if (rideTarget) clearCorn(); else offerCorn(true);
+  } else {
+    offerCorn();
+    if (cornTarget) clearRide(); else offerRide(true);
+  }
+}
+if (!calm()){ setInterval(offerTick, 150); setInterval(flipTurn, 14000); }
 
 /* Once they have tapped anything, the standing hint has done its job.
    Declared up here, not next to its function: aimPointer runs on a timer that
@@ -1857,10 +1896,7 @@ setTimeout(() => { danceBreak(); startDanceTimers(); }, 6000);
 /* The bar index comes straight off the audio element's clock, so the routine
    cannot drift from the music no matter how long the page is left open. */
 function onMusicBar(b){
-  const sc = $('scene');
-  if (b === 0) danceBreak();
-  else if (b === 2 && sc.classList.contains('dancing')) sc.classList.add('shaku');
-  else if (b === 4) backToTrekking();
+  if (b === 0) danceBreak();    // danceBreak itself ends it one bar later
 }
 
 /* ---------- the boli run ----------
