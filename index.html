@@ -1001,18 +1001,18 @@
 <script type="module">
 import { newGame, doAction, canDo, unlocked, ACTIONS, phaseOf, nextUnlock, postingOdds, rivalOf,
          computePosting,
-         shareText, MAX_DAY } from './game.js?v=20261028062950';
+         shareText, MAX_DAY } from './game.js?v=20261028063306';
 
 /* Kept here, not exported from game.js: a new cross-file export breaks any
    client holding a cached game.js after a deploy. */
 const ALLAWEE_NOTE = 'Allawee ₦77,000 — e never enter.';
 import { initNet, joinCamp, syncPlayer, platoonBoard, recentChat, postChat,
          postSuggestion, reportMessage, awardBoard, myAwards, laughChat,
-         setPresence, campRoster, renameMe, online } from './net.js?v=20261028062950';
-import { startMusic, stopMusic, musicOn, audioState, audioSupported, BEAT, BAR } from './audio.js?v=20261028062950';
+         setPresence, campRoster, renameMe, online } from './net.js?v=20261028063306';
+import { startMusic, stopMusic, musicOn, audioState, audioSupported, BEAT, BAR } from './audio.js?v=20261028063306';
 import { playHoop, playPenalty, playQuiz, playRegister, playParade,
          playMami, playHustle, playManOWar, playSaed, playSocial,
-         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261028062950';
+         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261028063306';
 
 /* Every dance animation is expressed in beats, so the steps are on-tempo
    whether or not the sound is playing — and genuinely on the beat when it is. */
@@ -1794,17 +1794,24 @@ let potReadyAt = 0;
    textPath with startOffset 50% and text-anchor middle keeps it centred on the
    arc whatever the wording is. The arc bulges upward (sweep 1), which is the
    one orientation where the letters stay upright and fan outward; an arc under
-   the hole would hang them upside down. */
-const pothole = document.createElement('div');
-pothole.className = 'pothole';
-pothole.innerHTML = `<svg viewBox="0 0 80 48" aria-hidden="true" overflow="visible">
+   the hole would hang them upside down.
+
+   Built by a function because there are two of them now: Mr. Pothole in the
+   walking path, which is the one you can fall into, and Mrs. Pothole up in the
+   far lane, which is scenery — nothing walks there, so there is nothing to
+   trip over. Each needs its own arc id or the second one borrows the first's
+   path and lands on top of it. */
+function makePothole(id, name){
+  const el = document.createElement('div');
+  el.className = 'pothole';
+  el.innerHTML = `<svg viewBox="0 0 80 48" aria-hidden="true" overflow="visible">
   <!-- Flatter and lower than a semicircle. R29 on a 58 chord IS a semicircle,
        which threw the name 30 units clear of a hole only 7.5 deep — it floated
        rather than belonging to it. This keeps the sagitta at ~13 so the arc
        still hugs the ellipse, but spans a wider chord (6 to 74) because TEXT
        LONGER THAN ITS PATH IS SIMPLY NOT DRAWN: at R37 the arc ran 63 units
        against 78 units of lettering, so the M and the E fell off the ends. -->
-  <defs><path id="potArc" d="M6 40 A51 51 0 0 1 74 40" fill="none"/></defs>
+  <defs><path id="${id}" d="M6 40 A51 51 0 0 1 74 40" fill="none"/></defs>
   <ellipse cx="40" cy="39" rx="27" ry="7.5" fill="#2e2a24"/>
   <ellipse cx="40" cy="37.4" rx="27" ry="7.5" fill="#4a4136"/>
   <ellipse cx="40" cy="38" rx="19" ry="4.6" fill="#241f1a"/>
@@ -1812,14 +1819,29 @@ pothole.innerHTML = `<svg viewBox="0 0 80 48" aria-hidden="true" overflow="visib
         stroke-width="1.5" fill="none" stroke-linecap="round"/>
   <text class="potName" font-size="8" font-weight="900" letter-spacing="0.55"
         font-family="system-ui,sans-serif" text-anchor="middle">
-    <textPath href="#potArc" startOffset="50%">MR. POTHOLE</textPath>
+    <textPath href="#${id}" startOffset="50%">${name}</textPath>
   </text>
 </svg>`;
-sceneEl.appendChild(pothole);
+  sceneEl.appendChild(el);
+  return el;
+}
+
+const pothole = makePothole('potArc', 'MR. POTHOLE');
+
+/* Up in the far lane and over to the left. Smaller, because everything in that
+   lane is drawn smaller to sit back from the camera. No gameplay: the corpers
+   walk the near pavement, so there is nothing of yours to fall in. */
+const MRS_AT = 0.21, MRS_W = 48, MRS_BOTTOM = 28;
+const potholeMrs = makePothole('potArcMrs', 'MRS. POTHOLE');
+potholeMrs.style.width  = MRS_W + 'px';
+potholeMrs.style.bottom = MRS_BOTTOM + 'px';
+potholeMrs.style.zIndex = '0';            // traffic drives over her
 
 const potX = () => sceneEl.getBoundingClientRect().width * POT_AT;
 function placePothole(){
   pothole.style.left = Math.round(potX() - 40) + 'px';   // box is 80 wide now
+  const w = sceneEl.getBoundingClientRect().width;
+  potholeMrs.style.left = Math.round(w * MRS_AT - MRS_W / 2) + 'px';
 }
 placePothole();
 addEventListener('resize', placePothole);
