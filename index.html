@@ -233,7 +233,7 @@
      keyframe — off-screen left — until they actually start running. */
   .runner{position:absolute;bottom:4px;z-index:3;cursor:pointer;
     -webkit-tap-highlight-color:transparent;
-    animation:chaseGo 15s linear both}
+    animation:chaseGo 15s linear both, chaseTrail 15s step-end both}
   /* A moving 47px figure is a hard target on a phone. The hit box reaches
      well past the drawing without changing where anything sits. */
   .runner::after{content:'';position:absolute;inset:-10px -18px}
@@ -250,6 +250,21 @@
   @keyframes chaseFace{
     0%,24%{transform:scaleX(1)}    25%,49%{transform:scaleX(-1)}
     50%,74%{transform:scaleX(1)}   75%,100%{transform:scaleX(-1)}}
+  /* The gap between the thief and each chaser, as a distance rather than as a
+     head start in time. A time delay puts a chaser at an earlier phase, which
+     is correct going one way and correct going the other way too — but at the
+     turn the thief has already doubled back while the group is still running
+     at the far edge, so for a second or so he is running straight at them and
+     reads as the one doing the chasing. Holding the gap in space instead means
+     the whole pack turns at the same instant and he is in front on both legs.
+     step-end so the sign of the offset snaps at the turn rather than sliding
+     through zero, which would walk each chaser through the man he is after. */
+  @keyframes chaseTrail{
+    0%  {transform:translateX(calc(var(--trail,0px) * -1))}
+    25% {transform:translateX(var(--trail,0px))}
+    50% {transform:translateX(calc(var(--trail,0px) * -1))}
+    75% {transform:translateX(var(--trail,0px))}
+    100%{transform:translateX(calc(var(--trail,0px) * -1))}}
 
   /* the danfo that is having a day. Deliberately the slowest thing on the
      road: a target you cannot catch is not a target, it is a decoration. */
@@ -877,18 +892,18 @@
 <script type="module">
 import { newGame, doAction, canDo, unlocked, ACTIONS, phaseOf, nextUnlock, postingOdds, rivalOf,
          computePosting,
-         shareText, MAX_DAY } from './game.js?v=20261027174231';
+         shareText, MAX_DAY } from './game.js?v=20261027175111';
 
 /* Kept here, not exported from game.js: a new cross-file export breaks any
    client holding a cached game.js after a deploy. */
 const ALLAWEE_NOTE = 'Allawee ₦77,000 — e never enter.';
 import { initNet, joinCamp, syncPlayer, platoonBoard, recentChat, postChat,
          postSuggestion, reportMessage, awardBoard, myAwards, laughChat,
-         setPresence, campRoster, renameMe, online } from './net.js?v=20261027174231';
-import { startMusic, stopMusic, musicOn, audioState, audioSupported, BEAT, BAR } from './audio.js?v=20261027174231';
+         setPresence, campRoster, renameMe, online } from './net.js?v=20261027175111';
+import { startMusic, stopMusic, musicOn, audioState, audioSupported, BEAT, BAR } from './audio.js?v=20261027175111';
 import { playHoop, playPenalty, playQuiz, playRegister, playParade,
          playMami, playHustle, playManOWar, playSaed, playSocial,
-         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261027174231';
+         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261027175111';
 
 /* Every dance animation is expressed in beats, so the steps are on-tempo
    whether or not the sound is playing — and genuinely on the beat when it is. */
@@ -1603,6 +1618,27 @@ function offerTick(){
     offerCorn();
     if (cornTarget) clearRide(); else offerRide(true);
   }
+  sweepOffers();
+}
+
+/* The guarantee, enforced rather than assumed: exactly one offer is live, it
+   sits on exactly one figure, and the label above that figure names it. Any
+   figure still carrying an offer class that is not the current target had it
+   left behind by a path that cleared the label but not the class — and a tap
+   on them then did something the screen never said. */
+function sweepOffers(){
+  sceneEl.querySelectorAll(':scope > .corper.wantsCorn').forEach(p => {
+    if (p !== cornTarget){ p.classList.remove('wantsCorn'); unmark(p); }
+  });
+  sceneEl.querySelectorAll(':scope > .corper.wantsRide').forEach(p => {
+    if (p !== rideTarget){ p.classList.remove('wantsRide'); unmark(p); }
+  });
+  /* Never both. The ride tag is drawn after the corn tag, so when the two
+     overlapped the player read "TAP TO RIDE KEKE" off a figure whose class
+     still said corn — the exact mismatch that sent them for food. */
+  if (cornTarget && rideTarget) clearRide();
+  if (cornTag.style.display !== 'none' && rideTag.style.display !== 'none')
+    cornTag.style.display = 'none';
 }
 if (!calm()){ setInterval(offerTick, 150); setInterval(flipTurn, 14000); }
 
@@ -1624,7 +1660,19 @@ sceneEl.addEventListener('click', e => {
     return;
   }
   const p = e.target.closest('.corper');
-  if (p && p.classList.contains('wantsCorn')){
+  /* Read the visible label first. The classes are what the code acts on, but
+     the label is what the player agreed to, and when they disagree the player
+     is right. */
+  const showingRide = rideTag.style.display !== 'none';
+  if (p && showingRide && (p === rideTarget || p.classList.contains('wantsRide'))){
+    hintUsed();
+    clearCorn(); clearRide();
+    flipTurn();
+    backToTrekking();
+    hailRide(p);
+    return;
+  }
+  if (p && p.classList.contains('wantsCorn') && cornTag.style.display !== 'none'){
     hintUsed();
     const who = p, where = cornShop;
     clearCorn();
@@ -1716,24 +1764,22 @@ function agberoChase(){
   if (calm() || sceneBusy()) return;
   /* The agbero is not a corps member and neither is the crowd after him —
      he runs in rags, they run in ordinary clothes. */
+  /* Spaced in pixels, not in seconds. 58px is about a figure's width, so they
+     read as four separate people rather than one blur, and the gap no longer
+     changes meaning when the pack turns around. */
   const cast = [
-    { skin: 2, scale: 1.02, tone: 0, delay: 0,   rags: true },   // the man himself
-    /* ~0.45s apart. At roughly 128px/s that is about 58px between them — a
-       figure's width, so they read as separate people without the last one
-       trailing seconds behind the man he is supposed to be chasing. 0.3s
-       overlapped them; 0.95s+ left the group lagging. */
-    { skin: 0, scale: .96, tone: 1, delay: .5,  stick: true },
-    { skin: 3, scale: .99, tone: 2, delay: .95, stick: true },
-    { skin: 1, scale: .94, tone: 3, delay: 1.4, stick: true },
+    { skin: 2, scale: 1.02, tone: 0, trail: 0,   rags: true },   // the man himself
+    { skin: 0, scale: .96, tone: 1, trail: 58,  stick: true },
+    { skin: 3, scale: .99, tone: 2, trail: 116, stick: true },
+    { skin: 1, scale: .94, tone: 3, trail: 174, stick: true },
   ];
   cast.forEach(c => {
     const wrap = document.createElement('div');
     wrap.className = 'runner' + (c.rags ? ' thief' : '');
     wrap.style.width = Math.round(46 * c.scale) + 'px';
-    wrap.style.animationDelay = c.delay + 's';
+    wrap.style.setProperty('--trail', c.trail + 'px');
     const flip = document.createElement('span');
     flip.className = 'flip';
-    flip.style.animationDelay = c.delay + 's';
     flip.innerHTML = civilian(SKINS[c.skin % SKINS.length], c.scale, 9, 0, c.tone, !!c.rags, !!c.stick);
     wrap.appendChild(flip);
     /* the inner figure must not also be marching, or it drifts out of its own
@@ -1741,6 +1787,12 @@ function agberoChase(){
     sceneEl.appendChild(wrap);
     const inner = wrap.querySelector('.corper');
     if (inner){ inner.style.animation = 'none'; inner.style.left = '0'; inner.style.position = 'static'; }
+    /* Running in lockstep would have all four putting the same foot down at
+       the same instant, which reads as a drill rather than a chase. Offsetting
+       the stride phase costs nothing and breaks the formation up. */
+    wrap.querySelectorAll('.leg,.leg2,.arm,.arm2,.torso').forEach(el => {
+      el.style.animationDelay = (-c.trail / 420) + 's';
+    });
     markTappable(wrap);
     /* The label lives in the scene, not in the runner, and is driven onto the
        figure every frame. Pegging it to the wrapper looked right at rest and
@@ -1771,8 +1823,14 @@ function agberoChase(){
    Three taps puts it out. Slowest vehicle on the road on purpose — the target
    has to be catchable, and it has to be more visible than the traffic it is
    moving against. */
-function flameSvg(){
-  return `<svg class="flame" viewBox="0 0 26 30" aria-hidden="true">
+/* `at` is a percentage across the bus and `scale` its size, so the two flames
+   do not sit on top of each other. The negative animation-delay starts each
+   one at a different point of the same flicker, which is what stops them
+   pulsing in unison and reading as one wide flame. */
+function flameSvg(at = 50, scale = 1, phase = 0){
+  return `<svg class="flame" viewBox="0 0 26 30" aria-hidden="true"
+    style="left:${at}%;width:${Math.round(26*scale)}px;height:${Math.round(30*scale)}px;
+           animation-delay:${phase}s">
     <path d="M13 0 C17 8 24 10 22 19 a9 9 0 0 1-18 0 C2 10 9 8 13 0Z" fill="#f2792b"/>
     <path d="M13 8 C15 13 19 14 18 20 a5.2 5.2 0 0 1-10 0 C7 14 11 13 13 8Z" fill="#f7c53d"/>
   </svg>`;
@@ -1787,7 +1845,10 @@ function burningDanfo(){
   v.style.bottom = '34px';
   v.style.animationDuration = '15s';           // the slow lane, so it is hittable
   v.style.animationIterationCount = '1';
-  v.innerHTML = danfo() + flameSvg() + '<i class="tapTag">FIRE! TAP TO PUT OUT</i>';
+  /* Two flames, not one: a single flame on a 96px bus read as a small problem,
+     and the tap tag had to do all the work of saying this is an emergency. */
+  v.innerHTML = danfo() + flameSvg(34, 1, 0) + flameSvg(66, .78, -.11)
+              + '<i class="tapTag">FIRE! TAP TO PUT OUT</i>';
   v.setAttribute('role', 'button');
   v.setAttribute('aria-label', 'Fire. Tap to put it out');
   sceneEl.appendChild(v);
@@ -1798,7 +1859,7 @@ function douse(v){
   const left = (+v.dataset.fire || 1) - 1;
   v.dataset.fire = String(left);
   if (left > 0) return;
-  v.querySelector('.flame')?.remove();
+  v.querySelectorAll('.flame').forEach(f => f.remove());
   v.querySelector('.tapTag')?.remove();
   v.classList.remove('ablaze');
   v.removeAttribute('aria-label');
@@ -1815,10 +1876,27 @@ function douse(v){
 /* Spaced so the scene is never busy with both at once, and never silent for
    long. First one comes early enough that a quick visitor still sees it. */
 if (!calm()){
-  setTimeout(agberoChase,  6000);
-  setTimeout(burningDanfo, 17000);
-  setInterval(agberoChase,  38000);
-  setInterval(burningDanfo, 46000);
+  /* Fire first, chase second. The chase runs 15s and the fire refuses to start
+     while it is on, so scheduling the fire second pushed the first one out to
+     23s — most of a short visit spent before anything tappable with a label on
+     it appears. */
+  setTimeout(fireSoon,      3000);
+  setTimeout(agberoChase,  12000);
+  setInterval(agberoChase, 38000);
+  setInterval(fireSoon,    23000);
+}
+/* Twice as often as before. At 23s it now lands inside a chase often enough
+   to matter, and burningDanfo refuses while the scene is busy — so a slot that
+   collides is retried a few seconds later rather than forfeited, which is the
+   difference between halving the interval and actually halving the wait. */
+function fireSoon(tries = 0){
+  if (calm()) return;
+  if (sceneEl.querySelector('.ablaze')) return;      // one fire at a time
+  if (sceneBusy()){
+    if (tries < 6) setTimeout(() => fireSoon(tries + 1), 3000);
+    return;
+  }
+  burningDanfo();
 }
 
 /* Off by default on purpose: most arrivals come from TikTok with their own
