@@ -16,7 +16,7 @@
 <meta property="og:image" content="https://otondo.ng/share.png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
-<meta property="og:image:alt" content="Three corps members in khaki walking a dusty road toward a sign reading YOUR PPA">
+<meta property="og:image:alt" content="Three corps members in khaki walking a dusty road past a roadside signboard">
 
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="Otondo — survive 21 days of camp">
@@ -122,11 +122,15 @@
   @keyframes road{to{transform:translateX(-44px)}}
 
   /* Lifted clear of the road now that the pavement is where the tapping
-     happens — the signpost was sitting in the middle of the action. */
-  .sign{position:absolute;right:14px;bottom:112px;z-index:3;text-align:center}
+     happens — the signpost was sitting in the middle of the action. Higher
+     still now: at 112px it shared a row with the shop boards and the two kept
+     colliding, so FOOD JOINT and the sign overlapped on a narrow phone. The
+     top-right corner is the one piece of sky nothing else uses. */
+  .sign{position:absolute;right:14px;bottom:150px;z-index:3;text-align:center}
   .sign b{display:block;background:var(--green);color:#fff;font-size:10px;font-weight:800;
-    letter-spacing:.1em;padding:5px 9px;border-radius:4px;white-space:nowrap}
-  .sign i{display:block;width:4px;height:26px;background:#8c7f5e;margin:0 auto}
+    letter-spacing:.1em;padding:5px 9px;border-radius:4px;white-space:nowrap;
+    transition:opacity .4s ease}
+  .sign i{display:block;width:4px;height:34px;background:#8c7f5e;margin:0 auto}
 
   .corper{position:absolute;bottom:4px;width:46px;height:86px;z-index:2;
     animation:march linear infinite}
@@ -779,7 +783,7 @@
             fill="rgba(255,255,255,.72)" stroke="#c4b793" stroke-width=".9"/>
     </svg>
     <div class="road"></div>
-    <div class="sign"><b>YOUR PPA →</b><i></i></div>
+    <div class="sign"><b>NO WAHALA</b><i></i></div>
     <div class="tapHint" id="tapHint"><b>👆</b><span>Tap the one with the sign</span></div>
   </div>
 
@@ -892,18 +896,18 @@
 <script type="module">
 import { newGame, doAction, canDo, unlocked, ACTIONS, phaseOf, nextUnlock, postingOdds, rivalOf,
          computePosting,
-         shareText, MAX_DAY } from './game.js?v=20261027175111';
+         shareText, MAX_DAY } from './game.js?v=20261027175814';
 
 /* Kept here, not exported from game.js: a new cross-file export breaks any
    client holding a cached game.js after a deploy. */
 const ALLAWEE_NOTE = 'Allawee ₦77,000 — e never enter.';
 import { initNet, joinCamp, syncPlayer, platoonBoard, recentChat, postChat,
          postSuggestion, reportMessage, awardBoard, myAwards, laughChat,
-         setPresence, campRoster, renameMe, online } from './net.js?v=20261027175111';
-import { startMusic, stopMusic, musicOn, audioState, audioSupported, BEAT, BAR } from './audio.js?v=20261027175111';
+         setPresence, campRoster, renameMe, online } from './net.js?v=20261027175814';
+import { startMusic, stopMusic, musicOn, audioState, audioSupported, BEAT, BAR } from './audio.js?v=20261027175814';
 import { playHoop, playPenalty, playQuiz, playRegister, playParade,
          playMami, playHustle, playManOWar, playSaed, playSocial,
-         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261027175111';
+         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261027175814';
 
 /* Every dance animation is expressed in beats, so the steps are on-tempo
    whether or not the sound is playing — and genuinely on the beat when it is. */
@@ -1272,6 +1276,47 @@ traffic($('scene'));
 /* Three, not four. The pavement also carries the chase, the fire, a label
    and the YOU marker — a fourth trekker tipped it into clutter. */
 fillScene($('scene'), 3, false);
+
+/* ---------- the signboard ----------
+   It used to read YOUR PPA with an arrow, which was a promise the scene never
+   kept — nothing is down that road. Camp pidgin says more about where you are
+   than a destination does, and a board that changes is a reason to look at the
+   scene twice. Starts on a random phrase so two players side by side are not
+   reading the same one. */
+const SIGN_LINES = ['SHINE YOUR EYES', 'NO DULLING', 'YOU DON CHOP',
+                    'WETIN DEY HAPPEN', 'NO WAHALA', 'E BE LIKE FILM'];
+
+/* 💰 Ad slot. Set this to a sponsor's line and it takes every other turn on the
+   board — roughly half the airtime, with the pidgin lines filling the rest so
+   the corner never reads as a pure ad. Keep it to about 16 characters: the
+   board is nowrap and anything longer runs off a 375px phone. Leave it null
+   and the sign is just the phrases. The shop boards (SHOPS[].sign) are the
+   other slots. */
+const SIGN_SPONSOR = null;   // e.g. 'MTN · 2GB ₦500'
+
+(() => {
+  const board = $('scene').querySelector('.sign b');
+  if (!board) return;
+  let i = Math.floor(Math.random() * SIGN_LINES.length);
+  let sponsorTurn = false;
+  board.textContent = SIGN_LINES[i];
+  /* A changing sign is still motion. Under reduced-motion it keeps whichever
+     line it opened on rather than flickering in the corner. */
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  setInterval(() => {
+    board.style.opacity = '0';
+    setTimeout(() => {
+      if (SIGN_SPONSOR && !sponsorTurn){
+        board.textContent = SIGN_SPONSOR;
+      } else {
+        i = (i + 1) % SIGN_LINES.length;
+        board.textContent = SIGN_LINES[i];
+      }
+      if (SIGN_SPONSOR) sponsorTurn = !sponsorTurn;
+      board.style.opacity = '1';
+    }, 400);                                   // matches the CSS transition
+  }, 5200);
+})();
 
 /* ---------- dance break ----------
    Every so often the trek stops, everyone slides into a line, does legwork,
