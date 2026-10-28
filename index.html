@@ -918,18 +918,18 @@
 <script type="module">
 import { newGame, doAction, canDo, unlocked, ACTIONS, phaseOf, nextUnlock, postingOdds, rivalOf,
          computePosting,
-         shareText, MAX_DAY } from './game.js?v=20261027215246';
+         shareText, MAX_DAY } from './game.js?v=20261027220634';
 
 /* Kept here, not exported from game.js: a new cross-file export breaks any
    client holding a cached game.js after a deploy. */
 const ALLAWEE_NOTE = 'Allawee ₦77,000 — e never enter.';
 import { initNet, joinCamp, syncPlayer, platoonBoard, recentChat, postChat,
          postSuggestion, reportMessage, awardBoard, myAwards, laughChat,
-         setPresence, campRoster, renameMe, online } from './net.js?v=20261027215246';
-import { startMusic, stopMusic, musicOn, audioState, audioSupported, BEAT, BAR } from './audio.js?v=20261027215246';
+         setPresence, campRoster, renameMe, online } from './net.js?v=20261027220634';
+import { startMusic, stopMusic, musicOn, audioState, audioSupported, BEAT, BAR } from './audio.js?v=20261027220634';
 import { playHoop, playPenalty, playQuiz, playRegister, playParade,
          playMami, playHustle, playManOWar, playSaed, playSocial,
-         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261027215246';
+         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261027220634';
 
 /* Every dance animation is expressed in beats, so the steps are on-tempo
    whether or not the sound is playing — and genuinely on the beat when it is. */
@@ -1303,6 +1303,23 @@ traffic($('scene'));
 /* Three, not four. The pavement also carries the chase, the fire, a label
    and the YOU marker — a fourth trekker tipped it into clutter. */
 fillScene($('scene'), 3, false);
+/* Each figure's place in the procession. The three share one duration and sit
+   a third of a cycle apart, which only holds while nothing re-phases them —
+   and a ride did exactly that, dropping the rider three-quarters of the way
+   along and restarting his march from there. A few rides and two of them
+   stand on top of each other, which is both ugly and a trap: the figure on
+   top takes the tap, and if he is the one mid-errand the tap dies. */
+$('scene').querySelectorAll(':scope > .corper').forEach(p => {
+  const cs = getComputedStyle(p);
+  p.dataset.slot = cs.animationDelay;
+  /* The duration is set INLINE by corper(); the stylesheet only says
+     `animation:march linear infinite`, with no duration at all. So
+     `style.animation = ''` — which resumeMarch has always done — throws the
+     duration away, the march runs for 0s, and the figure stops dead wherever
+     it stood. That is the "coppers sitting in the left corner" in one line:
+     anyone who took a ride simply never walked again. Keep a copy to put back. */
+  p.dataset.dur = cs.animationDuration;
+});
 
 /* ---------- the signboard ----------
    It used to read YOUR PPA with an arrow, which was a promise the scene never
@@ -1405,7 +1422,22 @@ function lineUp(){
 function backToTrekking(){
   const sc = $('scene');
   sc.classList.remove('dancing', 'shaku');          // march unpauses mid-stride
-  sc.querySelectorAll('.corper').forEach(p => { p.style.transform = ''; });
+  /* Put everyone back on their slot while the transforms are unwinding.
+     The three only stay evenly spaced while nothing re-phases them, and a
+     snack run pauses one figure's march for ~3.4s — a quarter of the cycle,
+     about 120px — every single time. It accumulates, and two of them end up
+     standing on top of each other. Resetting the phase here is free: the line
+     is already gliding apart, so the correction rides along with a movement
+     the player is watching anyway, instead of being a jump of its own. */
+  sc.querySelectorAll(':scope > .corper').forEach(p => {
+    if (p.dataset.slot && !p.matches('.riding, .hailing, .running, .munching, .shopping, .inRide')){
+      p.style.left = '';
+      p.style.animation = '';
+      p.style.animationDuration = p.dataset.dur;
+      p.style.animationDelay = p.dataset.slot;
+    }
+    p.style.transform = '';
+  });
 }
 
 /* Legwork first, then shaku shaku, then back to the trek. */
@@ -1509,8 +1541,18 @@ function hailRide(p){
     requestAnimationFrame(() => { p.style.left = drop + 'px'; ride.style.left = drop + 'px'; });
 
     setTimeout(() => {
-      p.classList.remove('riding', 'sliding', 'inRide');
-      resumeMarch(p, drop);                    // back on foot, from where he got off
+      p.classList.remove('riding', 'sliding');
+      if (p.dataset.slot){
+        /* Back into his own slot rather than resuming from the drop point.
+           `inRide` is still on him here, so he is hidden while the phase is
+           reset and there is no visible jump. */
+        p.style.left = ''; p.style.animation = '';
+        p.style.animationDuration = p.dataset.dur;
+        p.style.animationDelay = p.dataset.slot;
+      } else {
+        resumeMarch(p, drop);
+      }
+      p.classList.remove('inRide');
       ride.classList.remove('sliding');
       ride.style.transition = 'left 1.1s linear';
       requestAnimationFrame(() => { ride.style.left = (sceneW() + 90) + 'px'; });
@@ -1526,11 +1568,15 @@ function hailRide(p){
    so the animation resumes there instead of restarting off-screen. */
 function resumeMarch(p, px){
   const w = sceneW();
-  const dur = parseFloat(getComputedStyle(p).animationDuration) || 12;
+  const dur = parseFloat(p.dataset.dur) || parseFloat(getComputedStyle(p).animationDuration) || 12;
   const pct = (px / w) * 100;
   const phase = Math.min(0.999, Math.max(0, (pct + 16) / 128));
   p.style.left = '';
   p.style.animation = '';
+  /* Duration back FIRST, and always. Clearing the shorthand above discards the
+     inline duration, and without restoring it the march lasts 0s — the figure
+     never moves again. */
+  p.style.animationDuration = dur + 's';
   p.style.animationDelay = (-phase * dur) + 's';
 }
 
@@ -1857,7 +1903,7 @@ function takeOffer(p){
     clearCorn();
     flipTurn();
     backToTrekking();            // snackRun refuses to start mid-dance
-    snackRun(who, where);
+    snackRun(who, where, true);
     return true;
   }
   return false;
@@ -1869,6 +1915,7 @@ sceneEl.addEventListener('click', e => {
   const tag = e.target.closest('.cornTag');
   if (tag){
     if (takeOffer(tag.classList.contains('rideTag') ? rideTarget : cornTarget)) return;
+    if (takeOffer(cornTarget) || takeOffer(rideTarget)) return;
     /* The label is up but its target has gone. Rather than swallow the tap —
        which is exactly what "the command is not responsive" looks like — take
        the instruction down, so the screen stops promising something it can no
@@ -1889,6 +1936,20 @@ sceneEl.addEventListener('click', e => {
   }
   const p = e.target.closest('.corper');
   if (p && takeOffer(p)) return;
+  /* Figures overlap. When they do, the one in front takes the tap — and if he
+     happens to be the one mid-errand, the tap died while the instruction sat
+     right there on screen. Any tap that lands on a person means "do the thing
+     the screen is offering", whichever person it landed on. */
+  if (p && (takeOffer(cornTarget) || takeOffer(rideTarget))) return;
+  /* Last resort: the tap landed on a person, that person cannot act, and
+     nothing is on offer anywhere. Send whoever IS free instead. A tap that
+     lands on a figure should never do nothing — that is the whole complaint,
+     and every branch above can miss in some arrangement of the scene. */
+  if (p){
+    const spare = [...sceneEl.querySelectorAll(':scope > .corper')]
+      .filter(freeFig).find(q => inFrame(q, sceneEl.getBoundingClientRect(), 0.05));
+    if (spare){ hintUsed(); backToTrekking(); hailRide(spare); return; }
+  }
   /* Safety net: any trekker who is not already doing something answers a tap.
      Without this, the marker could sit over a figure that ignored you — the
      exact mismatch between what the screen says and what it does. */
@@ -1930,8 +1991,14 @@ function catchThief(run){
   if (s && fig){
     const back = 150 + Math.floor(Math.random() * 250);
     s.money += back;
+    /* Credibility as well as cash. Running a thief down in front of the whole
+       camp is exactly what camp talks about, and credibility is the number the
+       ending is scored on. One point: the chase comes round every ~32s, and
+       the activities meant to carry the game have to stay worth more than a
+       street scuffle. */
+    s.cred = (s.cred || 0) + 1;
     render();
-    floatCost(fig, `+₦${back.toLocaleString()}`);
+    floatCost(fig, `+₦${back.toLocaleString()}  +1 CRED`);
   }
 
   setTimeout(() => {
@@ -2199,7 +2266,7 @@ const SNACK_EVERY = 23000, RUN_MS = 950, EAT_MS = 1500;
 /* Returns false when it could not go — the caller retries soon rather than
    forfeiting a whole 23s turn. The dance and the run overlap often enough that
    skipping meant the run almost never happened. */
-function snackRun(preferred, target){
+function snackRun(preferred, target, paid){
   const sc = $('scene');
   if (!stillWatching()) return true;
   if (sc.classList.contains('dancing')) return false;
@@ -2250,7 +2317,7 @@ function snackRun(preferred, target){
   setTimeout(() => {
     /* You eat roasted corn. You do not eat a mattress. */
     who.classList.replace('running', stall.el.dataset.food ? 'munching' : 'shopping');
-    buy(stall.el, who);
+    if (paid) buy(stall.el, who);      // only a tap costs money
     /* Eating: pin to the stall every frame with the transition off, so they
        stay with it as it drifts instead of being left behind. A single
        predicted position cannot hold for a second and a half. */
@@ -2307,6 +2374,13 @@ function floatCost(who, text){
   setTimeout(() => tag.remove(), 1400);
 }
 
+/* The ambient run stays — a corper wandering to a stall is most of the life in
+   this scene, and a street where nobody ever moves on their own is a poster.
+   What it must not do is SPEND. It called buy(), so every 23 seconds the game
+   walked someone to a stall and took the player's money with nobody having
+   tapped anything. Money now leaves the pocket only on a tap: the third
+   argument is what separates "someone is going about their day" from "you
+   chose to buy this". */
 const scheduleSnack = delay =>
   setTimeout(() => scheduleSnack(snackRun() ? SNACK_EVERY : 3500), delay);
 scheduleSnack(11000);
