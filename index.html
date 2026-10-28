@@ -918,18 +918,18 @@
 <script type="module">
 import { newGame, doAction, canDo, unlocked, ACTIONS, phaseOf, nextUnlock, postingOdds, rivalOf,
          computePosting,
-         shareText, MAX_DAY } from './game.js?v=20261027182247';
+         shareText, MAX_DAY } from './game.js?v=20261027215246';
 
 /* Kept here, not exported from game.js: a new cross-file export breaks any
    client holding a cached game.js after a deploy. */
 const ALLAWEE_NOTE = 'Allawee ₦77,000 — e never enter.';
 import { initNet, joinCamp, syncPlayer, platoonBoard, recentChat, postChat,
          postSuggestion, reportMessage, awardBoard, myAwards, laughChat,
-         setPresence, campRoster, renameMe, online } from './net.js?v=20261027182247';
-import { startMusic, stopMusic, musicOn, audioState, audioSupported, BEAT, BAR } from './audio.js?v=20261027182247';
+         setPresence, campRoster, renameMe, online } from './net.js?v=20261027215246';
+import { startMusic, stopMusic, musicOn, audioState, audioSupported, BEAT, BAR } from './audio.js?v=20261027215246';
 import { playHoop, playPenalty, playQuiz, playRegister, playParade,
          playMami, playHustle, playManOWar, playSaed, playSocial,
-         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261027182247';
+         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261027215246';
 
 /* Every dance animation is expressed in beats, so the steps are on-tempo
    whether or not the sound is playing — and genuinely on the beat when it is. */
@@ -1165,7 +1165,11 @@ const SHOPS = [
   { sign: 'PROVISION STORE', w: 112, body: '#4a6fa5', roof: '#6d6450',
     errand: 'TAP TO BUY PROVISIONS', price: 450 },
   { sign: 'ELECTRONICS',     w: 110, body: '#2f6b4f', roof: '#5f5a38',
-    errand: 'TAP TO BUY PHONE CHARGER', price: 500 },
+    errand: 'TAP TO BUY PHONE CHARGER', price: 500,
+    /* A second errand on the same shop, picked at random each time it is
+       offered. Recharge card is the thing anyone actually walks into an
+       electronics kiosk for, and it was lost when the charger replaced it. */
+    errand2: 'TAP TO BUY RECHARGE CARD', price2: 200 },
   { sign: 'FURNITURE',       w: 116, body: '#7d4b2c', roof: '#6d6450', furniture: true,
     errand: 'TAP TO BUY STREAMING CHAIR', price: 2500 },
 ];
@@ -1222,6 +1226,7 @@ function roadside(el){
        does not silently send the runner to a furniture shop for lunch */
     `<div class="shop"${cfg.food ? ' data-food="1"' : ''} data-errand="${cfg.errand}"
        data-price="${cfg.price || 0}" data-belle="${cfg.belle || 0}"
+       ${cfg.errand2 ? `data-errand2="${cfg.errand2}" data-price2="${cfg.price2 || 0}"` : ''}
        style="width:${Math.round(cfg.w*1.12)}px;bottom:62px;
        animation-duration:${CYCLE}s;
        animation-delay:${-(i * CYCLE / SHOPS.length)}s">${shop(cfg)}</div>`);
@@ -1429,8 +1434,33 @@ const sceneW = () => sceneEl.getBoundingClientRect().width;
    marker with no instruction above it — the screen naming someone and then
    telling the player nothing to do with them. Both read EDGE now. Shops keep
    the stricter default: being sent to a stall that is half off-screen is a
-   different kind of lie. */
-const EDGE = 0.08;
+   different kind of lie.
+
+   0.18, not 0.08. At 8% the marked figure stood half-clipped by the bezel, the
+   YOU arrow hung off the edge with nothing under it, and pinInside had to drag
+   the label toward the middle to stop it clipping — so the instruction ended
+   up over a different person from the one it named. Measured across the full
+   13.5s march cycle at 50ms: a figure is inside the band on 270 of 270 steps
+   at every pad from 0.08 up to 0.22, so this costs nothing. */
+const EDGE = 0.18;
+
+/* Free to be given a job. A figure already running an errand is not, and an
+   offer has to skip them rather than suppress itself. */
+const freeFig = p => p && !p.matches(
+  '.riding, .hailing, .running, .munching, .shopping, .inRide');
+
+/* Comfortably in frame if anyone is; nearer the edge rather than nothing at
+   all. EDGE keeps the marked figure clear of the bezel in the normal case, but
+   with three figures spaced a third of the cycle apart only about one is
+   inside that band at a time — so whenever that one was mid-errand the scene
+   had nobody to offer and went quiet for up to 3.45s. The second pass is the
+   difference between a strict preference and a hard requirement. */
+function pickFigure(box){
+  const free = [...sceneEl.querySelectorAll(':scope > .corper')].filter(freeFig);
+  return free.find(p => inFrame(p, box, EDGE))
+      || free.find(p => inFrame(p, box, 0.05))
+      || null;
+}
 
 /* ---- 1. tap a corper, he hails a keke and goes ----
    Freeze him where he stands (reading the rect first, exactly as lineUp does
@@ -1550,6 +1580,7 @@ pointer.innerHTML = `<svg viewBox="0 0 40 30" aria-hidden="true">
 </svg>`;
 sceneEl.appendChild(pointer);
 
+let lastAimed = 0;
 function aimPointer(){
   /* Deliberately NOT tied to hintDone. The chip is a tutorial and goes away
      once you have tapped; this marks which figure is yours, which stays true
@@ -1564,23 +1595,47 @@ function aimPointer(){
      because that is still you and the marker should not desert them; only
      then any walker. Hopping to a bystander made the marker sit over someone
      who did nothing when tapped. */
-  let best = sceneEl.querySelector('.wantsCorn, .wantsRide')
-          || sceneEl.querySelector(
-               '.running:not(.inRide), .munching:not(.inRide), .shopping:not(.inRide),'
-             + '.riding:not(.inRide), .hailing:not(.inRide)');
-  if (!best){
-    const box0 = sceneEl.getBoundingClientRect();
-    best = [...sceneEl.querySelectorAll(':scope > .corper')]
-      .find(p => inFrame(p, box0, EDGE)) || null;
+  /* The marker names whoever carries the live offer, and nobody else. Pointing
+     at a figure with no instruction above them is the "YOU and no command" the
+     player reports; pointing at one that is mid-errand is worse, because the
+     tap then does nothing. */
+  let best = sceneEl.querySelector('.corper.wantsCorn, .corper.wantsRide');
+  if (best) lastAimed = performance.now();
+  else {
+    /* offerTick runs every 150ms and clears the old offer before setting the
+       next, so there are frames with nothing marked. Now that this is driven
+       per frame rather than every 120ms, hiding on those frames is a visible
+       flicker. Hold the marker where it is through the gap, and give up only
+       if the gap turns out to be real. */
+    if (performance.now() - lastAimed < 500) return;
+    pointer.style.opacity = '0';
+    return;
   }
-  if (!best){ pointer.style.opacity = '0'; return; }
   const box = sceneEl.getBoundingClientRect();
   const r = best.getBoundingClientRect();
+  const centre = r.left - box.left + r.width / 2;
+  /* A figure that has left the frame keeps no marker. Without this the arrow
+     followed a departing target straight off the scene — measured at left:393
+     on a 375px board, which is the "YOU is pegged off" the player sees. */
+  if (centre < -4 || centre > box.width + 4){ pointer.style.opacity = '0'; return; }
   pointer.style.opacity = '1';
-  pointer.style.left    = Math.round(r.left - box.left + r.width / 2) + 'px';
-  pointer.style.bottom  = Math.round(box.bottom - r.top + 2) + 'px';
+  /* Clamped so the arrow itself can never hang over the bezel, however close
+     to the edge its target gets. */
+  const half = pointer.offsetWidth / 2 || 20;
+  pointer.style.left   = Math.round(
+    Math.min(Math.max(centre, half + 2), box.width - half - 2)) + 'px';
+  pointer.style.bottom = Math.round(box.bottom - r.top + 2) + 'px';
 }
-if (!calm()){ aimPointer(); setInterval(aimPointer, 120); }
+/* Every frame, not every 120ms. The figures are moved by CSS — the dance
+   slides them across the scene on a transition — and a poll that wakes six
+   times a second always shows the marker trailing the man it is naming. The
+   THIEF label learned this first and sat up to 180px adrift until it tracked
+   per frame; this one measured 25-36px of lag in ordinary play and 315px
+   during a dance. rAF costs nothing here: it is two reads and two writes. */
+if (!calm()){
+  const trackPointer = () => { aimPointer(); requestAnimationFrame(trackPointer); };
+  trackPointer();
+}
 
 /* ---- "tap for roasted corn" ----
    The snack run already existed on a timer. Labelling it turns something that
@@ -1613,11 +1668,19 @@ function inFrame(el, box, pad = 0.12){
 }
 
 let cornShop = null;
+let cornPick = 1;              // which of the shop's errands is on offer
 /* Measured: a stall is in frame every single sample over 30s, so leaving the
    ride as a no-shop fallback meant it was never offered once. They take turns
    instead, and the turn flips each time an offer is used or expires. */
+/* One turn in four, not every other one. A straight boolean gave the keke
+   half the turns by design, and it also inherited every shop turn that could
+   not be filled — measured at 41% of all offers against 45% shared between the
+   shops. The keke is one thing you can do, not the main thing. */
+let turnNo = 0;
 let rideTurn = false;
-const flipTurn = () => { rideTurn = !rideTurn; };
+const flipTurn = () => { turnNo++; rideTurn = (turnNo % 4 === 0); };
+/* 10s turns: at 14s a one-in-four keke came round only every 56s and vanished
+   from a 40s window entirely. Same share, four times round in 40s. */
 
 function offerCorn(force){
   if (calm()) return;
@@ -1629,20 +1692,33 @@ function offerCorn(force){
   /* The dance is NOT a blocker. It runs roughly half the time, and bailing on
      it left the marked figure with nothing to do in 19 of 24 samples. A tap
      during the dance simply ends the dance first. */
-  const busy = sceneEl.querySelector('.running, .munching, .shopping');
+  /* Busy is per-figure, NOT scene-wide. A scene-wide bail meant one corper on
+     a snack run silenced every offer for the ~2.5s of it, while the marker
+     happily pointed YOU at that same busy figure — so the screen showed YOU
+     with no instruction, and tapping did nothing, because a busy figure is
+     excluded from the safety net too. Three reported symptoms, one line. */
   /* no shop in frame means nowhere to run to — offering it would be a lie */
-  if (!cornShop || !cornShop.isConnected || !inFrame(cornShop, box))
-    cornShop = [...sceneEl.querySelectorAll('.shop[data-errand]')].find(el => inFrame(el, box)) || null;
-  if (busy || !cornShop || (rideTurn && !force)){ clearCorn(); return; }
+  if (!cornShop || !cornShop.isConnected || !inFrame(cornShop, box)){
+    /* Pick among the shops in frame, not the first one in document order.
+       `.find()` always returned the earliest in the DOM that qualified, so of
+       five shops only two were ever offered — measured over 33s: roasted corn
+       28%, jollof 17%, and the charger, provisions and streaming chair never
+       once. */
+    const open = [...sceneEl.querySelectorAll('.shop[data-errand]')].filter(el => inFrame(el, box));
+    cornShop = open.length ? open[Math.floor(Math.random() * open.length)] : null;
+    /* Which of the shop's errands this time, chosen when the shop is. Choosing
+       it per frame would make the label flicker between the two. */
+    cornPick = cornShop && cornShop.dataset.errand2 && Math.random() < 0.5 ? 2 : 1;
+  }
+  if (!cornShop || (rideTurn && !force)){ clearCorn(); return; }
 
-  if (!cornTarget || !cornTarget.isConnected || !inFrame(cornTarget, box, EDGE)){
+  if (!cornTarget || !cornTarget.isConnected || !freeFig(cornTarget)
+      || !inFrame(cornTarget, box, EDGE)){
     /* Drop the old one first. Reassigning without clearing left a corper
        still carrying the errand behaviour with no label above them — tapping
        them then did something the screen never offered. */
     if (cornTarget){ cornTarget.classList.remove('wantsCorn'); unmark(cornTarget); }
-    cornTarget = [...sceneEl.querySelectorAll(':scope > .corper')]
-      .filter(p => !p.classList.contains('riding') && !p.classList.contains('hailing'))
-      .find(p => inFrame(p, box, EDGE)) || null;
+    cornTarget = pickFigure(box);
   }
   if (!cornTarget){ clearCorn(); return; }
 
@@ -1650,8 +1726,18 @@ function offerCorn(force){
   markTappable(cornTarget);
   /* The price goes on the label. Charging for a tap nobody was warned about
      is the sort of thing that reads as the game cheating you. */
-  const cost = +cornShop.dataset.price || 0;
-  cornTag.textContent = (cornShop.dataset.errand || 'TAP TO GO SHOP')
+  const alt  = cornPick === 2 && cornShop.dataset.errand2;
+  const cost = (alt ? +cornShop.dataset.price2 : +cornShop.dataset.price) || 0;
+  /* Exactly one shop may carry a live quote. Reassigning cornShop without
+     clearing the old one left a stale price on a shop nobody was being
+     offered — and the timer-driven snack run picks any shop in frame, so it
+     would have charged that stale figure. */
+  sceneEl.querySelectorAll('.shop[data-live-price]').forEach(el => {
+    if (el !== cornShop) delete el.dataset.livePrice;
+  });
+  cornShop.dataset.livePrice = cost;          // what buy() must charge
+  cornTag.textContent = ((alt ? cornShop.dataset.errand2 : cornShop.dataset.errand)
+                         || 'TAP TO GO SHOP')
     + (cost && s ? `  \u20a6${cost.toLocaleString()}` : '');
   const r = cornTarget.getBoundingClientRect();
   cornTag.style.display = 'block';
@@ -1661,6 +1747,7 @@ function offerCorn(force){
 
 function clearCorn(){
   cornTag.style.display = 'none';
+  if (cornShop) delete cornShop.dataset.livePrice;
   if (cornTarget){ cornTarget.classList.remove('wantsCorn'); unmark(cornTarget); }
   cornTarget = null;
   cornShop = null;
@@ -1673,13 +1760,10 @@ function offerRide(force){
   if (calm()) return;
   if ((!rideTurn && !force) || cornTarget){ clearRide(); return; }
   const box = sceneEl.getBoundingClientRect();
-  if (sceneEl.querySelector('.running, .munching, .shopping')){ clearRide(); return; }
-  if (!rideTarget || !rideTarget.isConnected || !inFrame(rideTarget, box, EDGE)
-      || rideTarget.classList.contains('riding') || rideTarget.classList.contains('hailing')){
+  if (!rideTarget || !rideTarget.isConnected || !freeFig(rideTarget)
+      || !inFrame(rideTarget, box, EDGE)){
     if (rideTarget){ unmark(rideTarget); rideTarget.classList.remove('wantsRide'); }
-    rideTarget = [...sceneEl.querySelectorAll(':scope > .corper')]
-      .filter(p => !p.classList.contains('riding') && !p.classList.contains('hailing'))
-      .find(p => inFrame(p, box, EDGE)) || null;
+    rideTarget = pickFigure(box);
   }
   if (!rideTarget){ clearRide(); return; }
   rideTarget.classList.add('wantsRide');
@@ -1738,7 +1822,7 @@ function sweepOffers(){
   if (cornTag.style.display !== 'none' && rideTag.style.display !== 'none')
     cornTag.style.display = 'none';
 }
-if (!calm()){ setInterval(offerTick, 150); setInterval(flipTurn, 14000); }
+if (!calm()){ setInterval(offerTick, 150); setInterval(flipTurn, 10000); }
 
 /* Once they have tapped anything, the standing hint has done its job.
    Declared up here, not next to its function: aimPointer runs on a timer that
@@ -1785,6 +1869,12 @@ sceneEl.addEventListener('click', e => {
   const tag = e.target.closest('.cornTag');
   if (tag){
     if (takeOffer(tag.classList.contains('rideTag') ? rideTarget : cornTarget)) return;
+    /* The label is up but its target has gone. Rather than swallow the tap —
+       which is exactly what "the command is not responsive" looks like — take
+       the instruction down, so the screen stops promising something it can no
+       longer do. The next tick puts up one that works. */
+    clearCorn(); clearRide();
+    return;
   }
   const thiefTag = e.target.closest('.runnerTag');
   if (thiefTag){
@@ -2188,7 +2278,12 @@ function snackRun(preferred, target){
    wallet to take from, and the scene is just scenery. Food fills the belle, so
    a tap is a trade rather than a punishment for touching the decoration. */
 function buy(shopEl, who){
-  const cost  = +shopEl.dataset.price || 0;
+  /* livePrice is what the label actually quoted, which matters on a shop that
+     sells two things at two prices: charging the base price for the cheaper
+     errand would be the game quietly taking more than it asked for. Set by
+     offerCorn when it picks the errand, removed by clearCorn, so a run that
+     nobody was offered still falls back to the shop's own price. */
+  const cost  = +shopEl.dataset.livePrice || +shopEl.dataset.price || 0;
   const belle = +shopEl.dataset.belle || 0;
   if (!s || !cost) return;
   const paid = Math.min(cost, s.money);        // never let money go negative
