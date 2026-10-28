@@ -698,11 +698,22 @@
   .msg b{color:var(--green-dk)}
   .msg em{font-style:normal;color:var(--muted);font-size:11px;font-weight:700}
   .flag{float:right;background:none;border:0;color:#c9c0a6;font-size:14px;
+    min-height:44px;min-width:36px;margin:-14px 0;
+    display:inline-flex;align-items:center;justify-content:center;
+    -webkit-tap-highlight-color:transparent;
     padding:0 2px;line-height:1}
   .flag:hover{color:var(--red)}
   .flag:disabled{color:#22c55e}
-  .laugh{float:right;background:none;border:0;font-size:13px;padding:0 7px 0 2px;
+  /* 13px of glyph is not a tap target. These sat at the right-hand edge of a
+     message, which is where a thumb is least accurate, and missing one looks
+     exactly like the button not working. The box grows to 44px and the glyph
+     stays the same size — the negative margins keep the message layout from
+     moving to pay for it. */
+  .laugh{float:right;background:none;border:0;font-size:13px;
+    min-height:44px;min-width:44px;padding:0 7px 0 2px;margin:-14px 0;
+    display:inline-flex;align-items:center;justify-content:center;
     line-height:1;color:var(--muted);font-weight:800;font-family:inherit;
+    -webkit-tap-highlight-color:transparent;
     -webkit-text-fill-color:currentColor;-webkit-appearance:none;appearance:none}
   .laugh span{margin-left:3px}
   .laugh:disabled{opacity:.55}
@@ -930,18 +941,18 @@
 <script type="module">
 import { newGame, doAction, canDo, unlocked, ACTIONS, phaseOf, nextUnlock, postingOdds, rivalOf,
          computePosting,
-         shareText, MAX_DAY } from './game.js?v=20261027222732';
+         shareText, MAX_DAY } from './game.js?v=20261027223127';
 
 /* Kept here, not exported from game.js: a new cross-file export breaks any
    client holding a cached game.js after a deploy. */
 const ALLAWEE_NOTE = 'Allawee ₦77,000 — e never enter.';
 import { initNet, joinCamp, syncPlayer, platoonBoard, recentChat, postChat,
          postSuggestion, reportMessage, awardBoard, myAwards, laughChat,
-         setPresence, campRoster, renameMe, online } from './net.js?v=20261027222732';
-import { startMusic, stopMusic, musicOn, audioState, audioSupported, BEAT, BAR } from './audio.js?v=20261027222732';
+         setPresence, campRoster, renameMe, online } from './net.js?v=20261027223127';
+import { startMusic, stopMusic, musicOn, audioState, audioSupported, BEAT, BAR } from './audio.js?v=20261027223127';
 import { playHoop, playPenalty, playQuiz, playRegister, playParade,
          playMami, playHustle, playManOWar, playSaed, playSocial,
-         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261027222732';
+         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261027223127';
 
 /* Every dance animation is expressed in beats, so the steps are on-tempo
    whether or not the sound is playing — and genuinely on the beat when it is. */
@@ -3078,6 +3089,11 @@ $('chatBox').addEventListener('click', async e => {
   if (laugh){
     if (laugh.disabled) return;
     laugh.disabled = true;
+    /* Same reason as send(): laughing is authorised with the token, and the
+       token only exists once the player has a server row. Someone who has not
+       completed an action yet tapped the smile and nothing happened at all —
+       the count ticked up optimistically and then silently went back. */
+    await ensureJoined();
     const count  = laugh.querySelector('span');
     const before = Number(count.textContent) || 0;
     count.textContent = before + 1;          // optimistic: the tap must feel instant
@@ -3094,6 +3110,7 @@ $('chatBox').addEventListener('click', async e => {
   const btn = e.target.closest('.flag');
   if (!btn) return;
   btn.disabled = true;
+  await ensureJoined();                      // reporting needs the token too
   const r = await reportMessage(Number(btn.dataset.id));
   if (r === 'hidden'){ btn.closest('.msg').remove(); note('Reported. Message removed.'); }
   else if (r === 'reported'){ btn.textContent = '✓'; note('Reported. Thank you.'); }
@@ -3133,6 +3150,15 @@ async function send(){
   const v = $('chatIn').value.trim();
   if (!v) return;
   $('chatSend').disabled = true;
+  /* Join first. The server row — and the token every write is authorised with
+     — is created on the first COMPLETED action, which is right: it keeps
+     `players` meaning "someone who played" rather than "someone who loaded the
+     page". But posting to camp chat IS a completed action by a real person,
+     and it was the one that never triggered it. A player who entered camp,
+     went straight to CHAT, picked a name and typed had no token, so postChat
+     bailed before it sent anything and reported "Camp chat is unreachable
+     right now" — which was not true, and gave them nothing to act on. */
+  await ensureJoined();
   const r = await postChat(v);
   $('chatSend').disabled = false;
   if (r === 'ok') $('chatIn').value = '';
