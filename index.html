@@ -224,7 +224,16 @@
   .corper.riding .leg,.corper.riding .leg2,.corper.riding .arm,
   .corper.riding .arm2,.corper.riding .torso{animation:none}
   .corper.sliding,.pickup.sliding{transition:left 1.5s cubic-bezier(.4,0,.6,1)}
-  .pickup{position:absolute;z-index:1;transition:left 1.15s cubic-bezier(.25,.8,.4,1)}
+  /* Level with the figures, not with the far-lane traffic. At z-index 1 the
+     enlarged keke was drawn behind every passing corper, which puts a vehicle
+     in the near lane behind people standing further from the camera. It is
+     appended after them, so DOM order draws it in front. */
+  .pickup{position:absolute;z-index:2;transition:left 1.15s cubic-bezier(.25,.8,.4,1)}
+  /* He is inside the keke, so he is not on the street. Hidden rather than
+     removed: he still travels with the ride and reappears where he gets out,
+     which is what keeps the marker pointing at the player's own figure instead
+     of handing it to a stranger. */
+  .corper.inRide{opacity:0;pointer-events:none}
 
   /* the agbero and whoever is after him. z-index above the traffic so the
      chase reads as happening on the near pavement. */
@@ -324,23 +333,30 @@
   .runnerTag{position:absolute;z-index:6;transform:translateX(-50%);
     background:#b3281c;color:#fff;font:800 9px/1 system-ui,sans-serif;
     letter-spacing:.1em;padding:4px 6px;border-radius:3px;white-space:nowrap;
-    pointer-events:none;box-shadow:0 2px 5px rgba(0,0,0,.3)}
+    cursor:pointer;-webkit-tap-highlight-color:transparent;
+    box-shadow:0 2px 5px rgba(0,0,0,.3)}
   .runnerTag::after{content:'';position:absolute;left:50%;top:100%;margin-left:-3px;
     border:3px solid transparent;border-top-color:#b3281c}
 
   .rideTag{background:#8a5a1f !important}
   .rideTag::after{border-top-color:#8a5a1f !important}
-  .cornTag{position:absolute;z-index:7;transform:translateX(-50%);pointer-events:none;
+  /* The label IS the button. It says TAP TO BUY PHONE CHARGER in a rounded
+     green pill with a pointer tail — every cue says press me — and it carried
+     pointer-events:none, so pressing it did nothing. Worst at the edges, where
+     pinInside slides the label toward the middle to keep it from clipping and
+     it ends up nowhere near the small sliver of figure still on screen. */
+  .cornTag{position:absolute;z-index:7;transform:translateX(-50%);cursor:pointer;
+    -webkit-tap-highlight-color:transparent;
     background:#1f7a46;color:#fff;font:800 9.5px/1 system-ui,sans-serif;
     letter-spacing:.07em;padding:5px 7px;border-radius:4px;white-space:nowrap;
     box-shadow:0 2px 6px rgba(0,0,0,.28);
     animation:tagBob .8s ease-in-out infinite alternate}
   .cornTag::after{content:'';position:absolute;left:50%;top:100%;margin-left:-4px;
-    border:4px solid transparent;border-top-color:#1f7a46}
+    border:4px solid transparent;border-top-color:#1f7a46;pointer-events:none}
 
   .tapTag{position:absolute;left:50%;bottom:112%;transform:translateX(-50%);
     background:#e0452b;color:#fff;font:800 9px/1 system-ui,sans-serif;
-    letter-spacing:.09em;padding:4px 6px;border-radius:4px;pointer-events:none;
+    letter-spacing:.09em;padding:4px 6px;border-radius:4px;cursor:pointer;
     white-space:nowrap;animation:tagBob .7s ease-in-out infinite alternate}
   @keyframes tagBob{from{transform:translateX(-50%) translateY(0)}
                     to  {transform:translateX(-50%) translateY(-3px)}}
@@ -896,18 +912,18 @@
 <script type="module">
 import { newGame, doAction, canDo, unlocked, ACTIONS, phaseOf, nextUnlock, postingOdds, rivalOf,
          computePosting,
-         shareText, MAX_DAY } from './game.js?v=20261027175814';
+         shareText, MAX_DAY } from './game.js?v=20261027180942';
 
 /* Kept here, not exported from game.js: a new cross-file export breaks any
    client holding a cached game.js after a deploy. */
 const ALLAWEE_NOTE = 'Allawee ₦77,000 — e never enter.';
 import { initNet, joinCamp, syncPlayer, platoonBoard, recentChat, postChat,
          postSuggestion, reportMessage, awardBoard, myAwards, laughChat,
-         setPresence, campRoster, renameMe, online } from './net.js?v=20261027175814';
-import { startMusic, stopMusic, musicOn, audioState, audioSupported, BEAT, BAR } from './audio.js?v=20261027175814';
+         setPresence, campRoster, renameMe, online } from './net.js?v=20261027180942';
+import { startMusic, stopMusic, musicOn, audioState, audioSupported, BEAT, BAR } from './audio.js?v=20261027180942';
 import { playHoop, playPenalty, playQuiz, playRegister, playParade,
          playMami, playHustle, playManOWar, playSaed, playSocial,
-         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261027175814';
+         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261027180942';
 
 /* Every dance animation is expressed in beats, so the steps are on-tempo
    whether or not the sound is playing — and genuinely on the beat when it is. */
@@ -1411,18 +1427,26 @@ function hailRide(p){
 
   const ride = document.createElement('div');
   ride.className = 'pickup';
-  ride.style.width = '46px';
+  /* 92px, not 46. The keke viewBox is 54x40, so 46px wide came out 34px tall —
+     two-fifths of a corper and SMALLER than the kekes in the far lane at 62px,
+     which reads as a toy. 92px is about 68px tall against a standing figure's
+     86px, which is roughly the real proportion and clearly a foreground
+     vehicle rather than more traffic. */
+  ride.style.width = '92px';
   ride.style.bottom = '6px';
-  ride.style.left = '-60px';
+  /* Far enough out that a 92px keke is fully off-screen on the first paint.
+     -60px hid a 46px one completely but left a third of this one parked at the
+     edge for a frame before the transition started. */
+  ride.style.left = '-110px';
   ride.innerHTML = keke();
   sceneEl.appendChild(ride);
 
-  requestAnimationFrame(() => { ride.style.left = (x - 26) + 'px'; });
+  requestAnimationFrame(() => { ride.style.left = (x - 48) + 'px'; });
 
   const PULL_UP = calm() ? 0 : 1150;
   setTimeout(() => {
     p.classList.remove('hailing');
-    p.classList.add('riding');
+    p.classList.add('riding', 'inRide');      // gone the moment he climbs in
     p.style.left = (x - 4) + 'px';
     /* Dropped further up the road rather than carried out of camp. The label
        says YOU, and you riding away while a stranger takes your place made no
@@ -1433,7 +1457,7 @@ function hailRide(p){
     requestAnimationFrame(() => { p.style.left = drop + 'px'; ride.style.left = drop + 'px'; });
 
     setTimeout(() => {
-      p.classList.remove('riding', 'sliding');
+      p.classList.remove('riding', 'sliding', 'inRide');
       resumeMarch(p, drop);                    // back on foot, from where he got off
       ride.classList.remove('sliding');
       ride.style.transition = 'left 1.1s linear';
@@ -1519,7 +1543,9 @@ function aimPointer(){
      then any walker. Hopping to a bystander made the marker sit over someone
      who did nothing when tapped. */
   let best = sceneEl.querySelector('.wantsCorn, .wantsRide')
-          || sceneEl.querySelector('.running, .munching, .shopping, .riding, .hailing');
+          || sceneEl.querySelector(
+               '.running:not(.inRide), .munching:not(.inRide), .shopping:not(.inRide),'
+             + '.riding:not(.inRide), .hailing:not(.inRide)');
   if (!best){
     const box0 = sceneEl.getBoundingClientRect();
     best = [...sceneEl.querySelectorAll(':scope > .corper')]
@@ -1657,8 +1683,13 @@ sceneEl.appendChild(rideTag);
    nothing written above them. */
 function offerTick(){
   if (rideTurn){
+    /* Corn goes first, not last. offerRide refuses while a corn target exists,
+       and on a ride turn nothing had cleared it yet — so the ride offer bailed
+       every tick, offerCorn(true) immediately re-asserted corn, and the keke
+       was never offered again after the first corn target was picked. */
+    clearCorn();
     offerRide();
-    if (rideTarget) clearCorn(); else offerCorn(true);
+    if (!rideTarget) offerCorn(true);
   } else {
     offerCorn();
     if (cornTarget) clearRide(); else offerRide(true);
@@ -1697,7 +1728,47 @@ function hintUsed(){
   sceneEl.classList.add('played');
 }
 
+/* Whatever is on offer for this figure, taken. Both the figure and the label
+   above it come through here, so the two can never answer a tap differently.
+   Reads the visible label first: the classes are what the code acts on, but
+   the label is what the player agreed to, and when they disagree the player is
+   right. */
+function takeOffer(p){
+  if (!p) return false;
+  if (rideTag.style.display !== 'none'
+      && (p === rideTarget || p.classList.contains('wantsRide'))){
+    hintUsed();
+    clearCorn(); clearRide();
+    flipTurn();
+    backToTrekking();
+    hailRide(p);
+    return true;
+  }
+  if (cornTag.style.display !== 'none'
+      && (p === cornTarget || p.classList.contains('wantsCorn'))){
+    hintUsed();
+    const who = p, where = cornShop;
+    clearCorn();
+    flipTurn();
+    backToTrekking();            // snackRun refuses to start mid-dance
+    snackRun(who, where);
+    return true;
+  }
+  return false;
+}
+
 sceneEl.addEventListener('click', e => {
+  /* A label is a button. Tapping the words is the most obvious thing a player
+     can do, and it used to be the one thing that did nothing. */
+  const tag = e.target.closest('.cornTag');
+  if (tag){
+    if (takeOffer(tag.classList.contains('rideTag') ? rideTarget : cornTarget)) return;
+  }
+  const thiefTag = e.target.closest('.runnerTag');
+  if (thiefTag){
+    const t = sceneEl.querySelector('.runner.thief');
+    if (t){ hintUsed(); catchThief(t); return; }
+  }
   const run = e.target.closest('.runner');
   if (run){
     hintUsed();
@@ -1705,35 +1776,7 @@ sceneEl.addEventListener('click', e => {
     return;
   }
   const p = e.target.closest('.corper');
-  /* Read the visible label first. The classes are what the code acts on, but
-     the label is what the player agreed to, and when they disagree the player
-     is right. */
-  const showingRide = rideTag.style.display !== 'none';
-  if (p && showingRide && (p === rideTarget || p.classList.contains('wantsRide'))){
-    hintUsed();
-    clearCorn(); clearRide();
-    flipTurn();
-    backToTrekking();
-    hailRide(p);
-    return;
-  }
-  if (p && p.classList.contains('wantsCorn') && cornTag.style.display !== 'none'){
-    hintUsed();
-    const who = p, where = cornShop;
-    clearCorn();
-    flipTurn();
-    backToTrekking();            // snackRun refuses to start mid-dance
-    snackRun(who, where);
-    return;
-  }
-  if (p && p.classList.contains('wantsRide')){
-    hintUsed();
-    clearRide();
-    flipTurn();
-    backToTrekking();
-    hailRide(p);
-    return;
-  }
+  if (p && takeOffer(p)) return;
   /* Safety net: any trekker who is not already doing something answers a tap.
      Without this, the marker could sit over a figure that ignored you — the
      exact mismatch between what the screen says and what it does. */
