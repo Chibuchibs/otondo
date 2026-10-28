@@ -137,6 +137,36 @@
     transition:opacity .4s ease, background .4s ease, color .4s ease}
   .sign i{display:block;width:4px;height:34px;background:#8c7f5e;margin:0 auto}
 
+  /* ---------- Mr. Pothole ----------
+     Fixed, not drifting. A hazard you can learn the position of is fair; one
+     that wanders is just bad luck, and the whole point is that the player gets
+     a chance to react to it. Behind the walkers so they pass over it. */
+  .pothole{position:absolute;bottom:3px;z-index:1;width:56px;pointer-events:none}
+  /* Letters only — no plate. A second dark pill down among the figures read as
+     another instruction to press; the name is scenery, not a button. Pink
+     because nothing else in the scene is, so it reads as a label rather than
+     as part of the road, and the dark shadow is what keeps it legible against
+     the dust. */
+  .potTag{position:absolute;z-index:5;transform:translateX(-50%);
+    color:#ff4d9d;font:900 9px/1 system-ui,sans-serif;
+    letter-spacing:.1em;white-space:nowrap;pointer-events:none;
+    text-shadow:0 1px 2px rgba(0,0,0,.55),0 0 1px rgba(0,0,0,.8)}
+  /* The march animates `left`, so the hop is free to own `transform`. */
+  @keyframes hopOver{0%,100%{transform:translateY(0)}
+    38%{transform:translateY(-30px)} 58%{transform:translateY(-30px)}}
+  .corper.jumping{animation-name:march,hopOver;
+    animation-duration:var(--dur,13.5s),.62s;
+    animation-timing-function:linear,cubic-bezier(.3,0,.4,1);
+    animation-iteration-count:infinite,1}
+  @keyframes sink{0%{transform:translateY(0) scale(1);opacity:1}
+    50%{transform:translateY(17px) scale(.9);opacity:1}
+    100%{transform:translateY(32px) scale(.74);opacity:0}}
+  .corper.sunk{animation-name:march,sink;
+    animation-duration:var(--dur,13.5s),.75s;
+    animation-timing-function:linear,ease-in;
+    animation-iteration-count:infinite,1;animation-fill-mode:none,forwards}
+  .corper.gone{opacity:0;pointer-events:none}
+
   .corper{position:absolute;bottom:4px;width:46px;height:86px;z-index:2;
     animation:march linear infinite}
   .vehicle{position:absolute;z-index:1;animation:drive linear infinite}
@@ -251,14 +281,14 @@
      keyframe — off-screen left — until they actually start running. */
   .runner{position:absolute;bottom:4px;z-index:3;cursor:pointer;
     -webkit-tap-highlight-color:transparent;
-    animation:chaseGo 7.5s linear both, chaseTrail 7.5s step-end both}
+    animation:chaseGo 12s linear both, chaseTrail 12s step-end both}
   /* A moving 47px figure is a hard target on a phone. The hit box reaches
      well past the drawing without changing where anything sits. */
   .runner::after{content:'';position:absolute;inset:-10px -18px}
   .runner .flip,.runner svg{pointer-events:none}
   /* The facing lives on an inner layer. Flipping the wrapper would mirror the
      label with the figure, and "THIEF" came out backwards. */
-  .runner .flip{display:block;animation:chaseFace 7.5s linear both}
+  .runner .flip{display:block;animation:chaseFace 12s linear both}
   /* Arm up, not swinging at the side. A mob reads as a mob when some of them
      have a hand in the air; all four swinging politely in time looked like a
      jog. -150deg from the shoulder puts the arm above the head and the small
@@ -282,10 +312,23 @@
      keyframes AND the duration keeps the running speed exactly as it was —
      each crossing is still ~3.6s — so this is less of the same thing rather
      than the same thing hurried. */
+  /* The turn has to happen where nobody can see it. The pack is held apart by
+     a fixed pixel gap whose SIGN flips at the turn — correct on both legs, but
+     the flip is instant, so if anyone is still on screen when it happens they
+     jump. Measured on the old keyframes: 23 frames of chasers running with no
+     thief in front of them, and a 348px single-frame teleport. That is exactly
+     "the thief becomes the one chasing".
+
+     So the thief overshoots to 165%, far enough that the last chaser — 174px,
+     about 46% of a phone's width, behind him — is also clear of the edge
+     before the sign flips at 50%. Same at the left end, hence -70%. The
+     off-screen runs are deliberately fast (10% of the cycle each) and the
+     visible crossing keeps its pace, so the overshoot costs no watching time. */
   @keyframes chaseGo{
-    0%{left:-18%}  49%{left:110%}  51%{left:110%}  100%{left:-18%}}
+    0%{left:-70%}   10%{left:-18%}  40%{left:112%}  48%{left:165%}
+    52%{left:165%}  60%{left:112%}  90%{left:-18%}  100%{left:-70%}}
   @keyframes chaseFace{
-    0%,49%{transform:scaleX(1)}    51%,100%{transform:scaleX(-1)}}
+    0%,48%{transform:scaleX(1)}    52%,100%{transform:scaleX(-1)}}
   /* The gap between the thief and each chaser, as a distance rather than as a
      head start in time. A time delay puts a chaser at an earlier phase, which
      is correct going one way and correct going the other way too — but at the
@@ -382,11 +425,15 @@
   @keyframes tagBob{from{transform:translateX(-50%) translateY(0)}
                     to  {transform:translateX(-50%) translateY(-3px)}}
 
+  /* No plate behind it. It sat across the walkers' legs as a solid dark bar,
+     which both hid them and looked like one more thing to press — and it is
+     the one label that is NOT pressable. Letters and a shadow carry it fine
+     over the road. */
   .tapHint{position:absolute;left:8px;bottom:6px;z-index:5;pointer-events:none;
-    background:rgba(20,18,14,.72);color:#ffe9a8;border-radius:999px;
+    color:#ffe9a8;
     font:800 10.5px/1 system-ui,sans-serif;letter-spacing:.03em;
-    padding:6px 10px;display:flex;gap:5px;align-items:center;
-    backdrop-filter:blur(2px)}
+    padding:6px 2px;display:flex;gap:5px;align-items:center;
+    text-shadow:0 1px 3px rgba(0,0,0,.75),0 0 2px rgba(0,0,0,.6)}
   .tapHint b{font-size:12px;animation:pokePoke .9s ease-in-out infinite}
   @keyframes pokePoke{0%,100%{transform:translateY(0)}50%{transform:translateY(-2.5px)}}
   .scene.played .tapHint{opacity:0;transition:opacity .5s ease;pointer-events:none}
@@ -956,18 +1003,18 @@
 <script type="module">
 import { newGame, doAction, canDo, unlocked, ACTIONS, phaseOf, nextUnlock, postingOdds, rivalOf,
          computePosting,
-         shareText, MAX_DAY } from './game.js?v=20261028060317';
+         shareText, MAX_DAY } from './game.js?v=20261028062143';
 
 /* Kept here, not exported from game.js: a new cross-file export breaks any
    client holding a cached game.js after a deploy. */
 const ALLAWEE_NOTE = 'Allawee ₦77,000 — e never enter.';
 import { initNet, joinCamp, syncPlayer, platoonBoard, recentChat, postChat,
          postSuggestion, reportMessage, awardBoard, myAwards, laughChat,
-         setPresence, campRoster, renameMe, online } from './net.js?v=20261028060317';
-import { startMusic, stopMusic, musicOn, audioState, audioSupported, BEAT, BAR } from './audio.js?v=20261028060317';
+         setPresence, campRoster, renameMe, online } from './net.js?v=20261028062143';
+import { startMusic, stopMusic, musicOn, audioState, audioSupported, BEAT, BAR } from './audio.js?v=20261028062143';
 import { playHoop, playPenalty, playQuiz, playRegister, playParade,
          playMami, playHustle, playManOWar, playSaed, playSocial,
-         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261028060317';
+         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261028062143';
 
 /* Every dance animation is expressed in beats, so the steps are on-tempo
    whether or not the sound is playing — and genuinely on the beat when it is. */
@@ -1517,7 +1564,8 @@ const EDGE = 0.18;
 /* Free to be given a job. A figure already running an errand is not, and an
    offer has to skip them rather than suppress itself. */
 const freeFig = p => p && !p.matches(
-  '.riding, .hailing, .running, .munching, .shopping, .inRide');
+  '.riding, .hailing, .running, .munching, .shopping, .inRide,'
+  + ' .jumping, .sunk, .gone');
 
 /* Comfortably in frame if anyone is; nearer the edge rather than nothing at
    all. EDGE keeps the marked figure clear of the bezel in the normal case, but
@@ -1683,7 +1731,7 @@ function aimPointer(){
      at a figure with no instruction above them is the "YOU and no command" the
      player reports; pointing at one that is mid-errand is worse, because the
      tap then does nothing. */
-  let best = sceneEl.querySelector('.corper.wantsCorn, .corper.wantsRide');
+  let best = sceneEl.querySelector('.corper.wantsJump, .corper.wantsCorn, .corper.wantsRide');
   if (best) lastAimed = performance.now();
   else {
     /* offerTick runs every 150ms and clears the old offer before setting the
@@ -1721,6 +1769,134 @@ if (!calm()){
   trackPointer();
 }
 
+/* ---------- Mr. Pothole ----------
+   Sits at a fixed spot on the walking path. Everyone who reaches it hops it;
+   the only person who can fail to is YOU, because you are the only one whose
+   legs the player controls. That is what makes it a task rather than scenery.
+
+   JUMP costs a little energy. FALLING IN costs more AND takes the figure off
+   the street for a lap. The asymmetry is the whole design: if jumping were the
+   only thing that cost anything, never tapping would be strictly better play
+   and the task would punish the only people who engaged with it. */
+const POT_AT    = 0.58;    // across the scene; fixed so it can be learned
+const POT_WARN  = 96;      // px of approach you get to react in
+const JUMP_COST = 4;
+const FALL_COST = 12;
+/* After a pothole is dealt with, nobody is asked again for a while. Without
+   this it ran away with the scene: three figures a third of a lap apart means
+   somebody enters the warning zone every ~4.5s, and each ask lasts ~2.7s, so
+   the jump was 61% of every offer the player saw — crowding out all five shops
+   and the keke, which is the same fault the keke itself had. During the
+   cooldown everyone simply hops it, so the street still behaves. */
+const POT_COOLDOWN = 11000;
+let potReadyAt = 0;
+
+const pothole = document.createElement('div');
+pothole.className = 'pothole';
+pothole.innerHTML = `<svg viewBox="0 0 56 20" aria-hidden="true">
+  <ellipse cx="28" cy="12" rx="27" ry="7.5" fill="#2e2a24"/>
+  <ellipse cx="28" cy="10.4" rx="27" ry="7.5" fill="#4a4136"/>
+  <ellipse cx="28" cy="11" rx="19" ry="4.6" fill="#241f1a"/>
+  <path d="M6 9 q7-4 15-2 M36 7 q8-1 13 3" stroke="#6b5f4c"
+        stroke-width="1.5" fill="none" stroke-linecap="round"/>
+</svg>`;
+sceneEl.appendChild(pothole);
+
+const potTag = document.createElement('i');
+potTag.className = 'potTag';
+potTag.textContent = 'MR. POTHOLE';
+sceneEl.appendChild(potTag);
+
+const potX = () => sceneEl.getBoundingClientRect().width * POT_AT;
+function placePothole(){
+  const x = potX();
+  pothole.style.left = Math.round(x - 28) + 'px';
+  potTag.style.left  = Math.round(x) + 'px';
+  potTag.style.bottom = '26px';
+}
+placePothole();
+addEventListener('resize', placePothole);
+
+/* Centre of a figure, in scene pixels. */
+const figX = (p, box) => {
+  const r = p.getBoundingClientRect();
+  return r.left - box.left + r.width / 2;
+};
+
+function hopPothole(p, paid){
+  if (p.dataset.hop) return;
+  p.dataset.hop = '1';
+  if (paid) potReadyAt = performance.now() + POT_COOLDOWN;
+  p.style.setProperty('--dur', (parseFloat(p.dataset.dur) || 13.5) + 's');
+  p.classList.add('jumping');
+  setTimeout(() => { p.classList.remove('jumping'); }, 640);
+  if (paid && s){
+    s.energy = Math.max(0, s.energy - JUMP_COST);
+    render();
+    floatCost(p, `-${JUMP_COST} energy`);
+  }
+}
+
+function fallIn(p){
+  if (p.dataset.hop) return;
+  p.dataset.hop = '1';
+  potReadyAt = performance.now() + POT_COOLDOWN;
+  p.style.setProperty('--dur', (parseFloat(p.dataset.dur) || 13.5) + 's');
+  p.classList.add('sunk');
+  if (s){
+    s.energy = Math.max(0, s.energy - FALL_COST);
+    render();
+    floatCost(p, `-${FALL_COST} energy`);
+  }
+  setTimeout(() => {
+    p.classList.remove('sunk');
+    p.classList.add('gone');
+    /* Back to the start of the march, off-screen left, then shown again —
+       he climbs out somewhere behind us and walks back in. Resetting the
+       phase while he is invisible means there is no teleport to see. */
+    p.style.left = ''; p.style.animation = '';
+    p.style.animationDuration = p.dataset.dur;
+    p.style.animationDelay = '0s';
+    setTimeout(() => { p.classList.remove('gone'); delete p.dataset.hop; }, 400);
+  }, 760);
+}
+
+/* Everyone hops it except whoever the player is steering, who gets the choice.
+   Flags clear once a figure is back round the left-hand side. */
+let jumpTarget = null;
+function watchPothole(){
+  if (calm()) return;
+  const box = sceneEl.getBoundingClientRect();
+  const x = potX();
+  jumpTarget = null;
+  sceneEl.querySelectorAll(':scope > .corper').forEach(p => {
+    if (p.matches('.riding, .hailing, .running, .munching, .shopping, .inRide, .gone, .sunk')) return;
+    const fx = figX(p, box);
+    if (fx < x - POT_WARN - 40) { delete p.dataset.hop; return; }   // new lap
+    if (fx < x - POT_WARN) return;                                   // not yet
+    /* Already dealt with this lap. This check has to come BEFORE the offer is
+       made: a bystander hops the hole on its own, and if it later became the
+       marked figure the screen went on to offer a jump it had already taken —
+       the tap then cost nothing and played no animation, because hopPothole
+       refuses to run twice. The player saw the instruction do nothing. */
+    if (p.dataset.hop) return;
+    /* `jumpShown` has to be in here. Offering the jump clears the corn and
+       ride targets, so without it the figure stopped counting as yours the
+       instant it was asked — and then auto-hopped like a bystander. Nobody
+       could ever fall in, which is half the mechanic. */
+    const mine = (performance.now() >= potReadyAt)
+              && (p === cornTarget || p === rideTarget || p === jumpShown);
+    if (mine){
+      if (fx < x) jumpTarget = p;      // yours: you get asked
+      else fallIn(p);                  // asked, and not answered
+      return;
+    }
+    /* A bystander takes off just short of the hole rather than the moment it
+       enters the warning zone, which is a figure's width too early. */
+    if (fx >= x - 26) hopPothole(p, false);
+  });
+}
+
 /* ---- "tap for roasted corn" ----
    The snack run already existed on a timer. Labelling it turns something that
    merely happened into something you can cause, which is the whole difference
@@ -1753,6 +1929,16 @@ function inFrame(el, box, pad = 0.12){
 
 let cornShop = null;
 let cornPick = 1;              // which of the shop's errands is on offer
+let jumpShown = null;
+const jumpTag = document.createElement('div');
+jumpTag.className = 'cornTag jumpTag';
+jumpTag.style.display = 'none';
+sceneEl.appendChild(jumpTag);
+function clearJump(){
+  jumpTag.style.display = 'none';
+  if (jumpShown){ jumpShown.classList.remove('wantsJump'); unmark(jumpShown); }
+  jumpShown = null;
+}
 /* Measured: a stall is in frame every single sample over 30s, so leaving the
    ride as a no-shop fallback meant it was never offered once. They take turns
    instead, and the turn flips each time an offer is used or expires. */
@@ -1872,6 +2058,28 @@ sceneEl.appendChild(rideTag);
    frame produced no label at all, and the YOU marker sat over a figure with
    nothing written above them. */
 function offerTick(){
+  /* Mr. Pothole first, always. It is the only offer with a deadline — the
+     others wait patiently while a shop drifts past, this one is gone the
+     moment he reaches the hole — so it has to be able to interrupt them. */
+  watchPothole();
+  if (jumpTarget){
+    if (jumpTarget !== jumpShown){
+      clearCorn(); clearRide();
+      if (jumpShown) { jumpShown.classList.remove('wantsJump'); unmark(jumpShown); }
+      jumpShown = jumpTarget;
+      jumpShown.classList.add('wantsJump');
+      markTappable(jumpShown);
+      jumpTag.textContent = 'TAP TO JUMP MR. POTHOLE';
+      jumpTag.style.display = 'block';
+    }
+    const box = sceneEl.getBoundingClientRect();
+    const r = jumpShown.getBoundingClientRect();
+    pinInside(jumpTag, box, r.left - box.left + r.width / 2);
+    jumpTag.style.bottom = Math.round(box.bottom - r.top + 40) + 'px';
+    sweepOffers();
+    return;
+  }
+  clearJump();
   if (rideTurn){
     /* Corn goes first, not last. offerRide refuses while a corn target exists,
        and on a ride turn nothing had cleared it yet — so the ride offer bailed
@@ -1893,6 +2101,9 @@ function offerTick(){
    left behind by a path that cleared the label but not the class — and a tap
    on them then did something the screen never said. */
 function sweepOffers(){
+  sceneEl.querySelectorAll(':scope > .corper.wantsJump').forEach(p => {
+    if (p !== jumpShown){ p.classList.remove('wantsJump'); unmark(p); }
+  });
   sceneEl.querySelectorAll(':scope > .corper.wantsCorn').forEach(p => {
     if (p !== cornTarget){ p.classList.remove('wantsCorn'); unmark(p); }
   });
@@ -1925,6 +2136,15 @@ function hintUsed(){
    right. */
 function takeOffer(p){
   if (!p) return false;
+  if (jumpTag.style.display !== 'none'
+      && (p === jumpShown || p.classList.contains('wantsJump'))){
+    hintUsed();
+    const who = p;
+    clearJump();
+    backToTrekking();
+    hopPothole(who, true);         // the tap is what makes it cost energy
+    return true;
+  }
   if (rideTag.style.display !== 'none'
       && (p === rideTarget || p.classList.contains('wantsRide'))){
     hintUsed();
@@ -1952,8 +2172,9 @@ sceneEl.addEventListener('click', e => {
      can do, and it used to be the one thing that did nothing. */
   const tag = e.target.closest('.cornTag');
   if (tag){
-    if (takeOffer(tag.classList.contains('rideTag') ? rideTarget : cornTarget)) return;
-    if (takeOffer(cornTarget) || takeOffer(rideTarget)) return;
+    if (takeOffer(tag.classList.contains('jumpTag') ? jumpShown
+                : tag.classList.contains('rideTag') ? rideTarget : cornTarget)) return;
+    if (takeOffer(jumpShown) || takeOffer(cornTarget) || takeOffer(rideTarget)) return;
     /* The label is up but its target has gone. Rather than swallow the tap —
        which is exactly what "the command is not responsive" looks like — take
        the instruction down, so the screen stops promising something it can no
@@ -1978,7 +2199,7 @@ sceneEl.addEventListener('click', e => {
      happens to be the one mid-errand, the tap died while the instruction sat
      right there on screen. Any tap that lands on a person means "do the thing
      the screen is offering", whichever person it landed on. */
-  if (p && (takeOffer(cornTarget) || takeOffer(rideTarget))) return;
+  if (p && (takeOffer(jumpShown) || takeOffer(cornTarget) || takeOffer(rideTarget))) return;
   /* Last resort: the tap landed on a person, that person cannot act, and
      nothing is on offer anywhere. Send whoever IS free instead. A tap that
      lands on a figure should never do nothing — that is the whole complaint,
@@ -2127,7 +2348,7 @@ function agberoChase(){
       follow();
     }
     wrap.addEventListener('animationend', () => wrap.remove());
-    setTimeout(() => wrap.remove(), 12000);   // see burningDanfo: frozen tabs
+    setTimeout(() => wrap.remove(), 16000);   // see burningDanfo: frozen tabs
   });
 }
 
@@ -2206,7 +2427,7 @@ function douse(v){
    once in 15s, the chase makes one round trip in 7.5s. One shared number
    would either cut the bus off or leave dead air after the chase. */
 const FIRE_LEN  = 15500;
-const CHASE_LEN = 8000;
+const CHASE_LEN = 12500;
 const EVENT_GAP = 4000;     // a breath of ordinary street between them
 let fireNext = true;        // fire leads: it is the one with the louder label
 
