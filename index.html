@@ -1001,18 +1001,18 @@
 <script type="module">
 import { newGame, doAction, canDo, unlocked, ACTIONS, phaseOf, nextUnlock, postingOdds, rivalOf,
          computePosting,
-         shareText, MAX_DAY } from './game.js?v=20261028063306';
+         shareText, MAX_DAY } from './game.js?v=20261028063621';
 
 /* Kept here, not exported from game.js: a new cross-file export breaks any
    client holding a cached game.js after a deploy. */
 const ALLAWEE_NOTE = 'Allawee ₦77,000 — e never enter.';
 import { initNet, joinCamp, syncPlayer, platoonBoard, recentChat, postChat,
          postSuggestion, reportMessage, awardBoard, myAwards, laughChat,
-         setPresence, campRoster, renameMe, online } from './net.js?v=20261028063306';
-import { startMusic, stopMusic, musicOn, audioState, audioSupported, BEAT, BAR } from './audio.js?v=20261028063306';
+         setPresence, campRoster, renameMe, online } from './net.js?v=20261028063621';
+import { startMusic, stopMusic, musicOn, audioState, audioSupported, BEAT, BAR } from './audio.js?v=20261028063621';
 import { playHoop, playPenalty, playQuiz, playRegister, playParade,
          playMami, playHustle, playManOWar, playSaed, playSocial,
-         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261028063306';
+         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261028063621';
 
 /* Every dance animation is expressed in beats, so the steps are on-tempo
    whether or not the sound is playing — and genuinely on the beat when it is. */
@@ -1240,14 +1240,23 @@ function civilian(skin, scale, speed, delay, tone = 0, rags = false, stick = fal
 
 /* ---- roadside Nigeria: what actually lines every road ----
    Each `sign` is an ad slot: swap the text and body colour for a brand. */
+/* Two of the five are painted, the rest stay earthy. Everything here was
+   terracotta, brown, muted blue and dark green — all roughly the same value as
+   the dust behind them, so the row read as one brown band. Brightening all
+   five would have cost the contrast again; two bright shopfronts against three
+   dull ones is what makes the street look painted rather than washed out.
+   Teal and red are chosen because nothing else in the scene owns them: the
+   danfos have yellow, the corpers green, the flames orange, the pothole pink.
+   The roofs take a darker shade of the same hue — a grey-brown roof on a
+   bright wall reads as a mistake. */
 const SHOPS = [
   { sign: 'FOOD JOINT',      w: 104, body: '#b9683f', roof: '#6d6450',
     errand: 'TAP TO BUY JOLLOF RICE', price: 600, belle: 9, food: true },
   { sign: 'ROASTED CORN',    w: 76,  body: '#8a6b3f', roof: '#5f5a38', stall: true,
     errand: 'TAP FOR ROASTED CORN', price: 200,  belle: 5, food: true },
-  { sign: 'PROVISION STORE', w: 112, body: '#4a6fa5', roof: '#6d6450',
+  { sign: 'PROVISION STORE', w: 112, body: '#0fa3a0', roof: '#0a7d79',
     errand: 'TAP TO BUY PROVISIONS', price: 450 },
-  { sign: 'ELECTRONICS',     w: 110, body: '#2f6b4f', roof: '#5f5a38',
+  { sign: 'ELECTRONICS',     w: 110, body: '#e0453a', roof: '#b4332b',
     errand: 'TAP TO BUY PHONE CHARGER', price: 500,
     /* A second errand on the same shop, picked at random each time it is
        offered. Recharge card is the thing anyone actually walks into an
