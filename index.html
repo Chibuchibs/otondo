@@ -127,9 +127,14 @@
      colliding, so FOOD JOINT and the sign overlapped on a narrow phone. The
      top-right corner is the one piece of sky nothing else uses. */
   .sign{position:absolute;right:14px;bottom:150px;z-index:3;text-align:center}
+  /* Colour comes from JS, one per phrase. A roadside board here is painted in
+     whatever the signwriter had — pink beside green beside yellow — and a
+     single corporate green read as an official road sign rather than as the
+     street. The shadow is what keeps a light board legible against pale sky. */
   .sign b{display:block;background:var(--green);color:#fff;font-size:10px;font-weight:800;
     letter-spacing:.1em;padding:5px 9px;border-radius:4px;white-space:nowrap;
-    transition:opacity .4s ease}
+    box-shadow:0 2px 5px rgba(0,0,0,.22);
+    transition:opacity .4s ease, background .4s ease, color .4s ease}
   .sign i{display:block;width:4px;height:34px;background:#8c7f5e;margin:0 auto}
 
   .corper{position:absolute;bottom:4px;width:46px;height:86px;z-index:2;
@@ -912,18 +917,18 @@
 <script type="module">
 import { newGame, doAction, canDo, unlocked, ACTIONS, phaseOf, nextUnlock, postingOdds, rivalOf,
          computePosting,
-         shareText, MAX_DAY } from './game.js?v=20261027180942';
+         shareText, MAX_DAY } from './game.js?v=20261027181244';
 
 /* Kept here, not exported from game.js: a new cross-file export breaks any
    client holding a cached game.js after a deploy. */
 const ALLAWEE_NOTE = 'Allawee ₦77,000 — e never enter.';
 import { initNet, joinCamp, syncPlayer, platoonBoard, recentChat, postChat,
          postSuggestion, reportMessage, awardBoard, myAwards, laughChat,
-         setPresence, campRoster, renameMe, online } from './net.js?v=20261027180942';
-import { startMusic, stopMusic, musicOn, audioState, audioSupported, BEAT, BAR } from './audio.js?v=20261027180942';
+         setPresence, campRoster, renameMe, online } from './net.js?v=20261027181244';
+import { startMusic, stopMusic, musicOn, audioState, audioSupported, BEAT, BAR } from './audio.js?v=20261027181244';
 import { playHoop, playPenalty, playQuiz, playRegister, playParade,
          playMami, playHustle, playManOWar, playSaed, playSocial,
-         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261027180942';
+         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261027181244';
 
 /* Every dance animation is expressed in beats, so the steps are on-tempo
    whether or not the sound is playing — and genuinely on the beat when it is. */
@@ -1299,23 +1304,39 @@ fillScene($('scene'), 3, false);
    than a destination does, and a board that changes is a reason to look at the
    scene twice. Starts on a random phrase so two players side by side are not
    reading the same one. */
-const SIGN_LINES = ['SHINE YOUR EYES', 'NO DULLING', 'YOU DON CHOP',
-                    'WETIN DEY HAPPEN', 'NO WAHALA', 'E BE LIKE FILM'];
+/* [phrase, board colour, ink]. Dark ink on the two light boards: white on
+   yellow at 10px cannot be read, and being readable from across the scene is
+   the whole job. */
+const SIGN_LINES = [
+  ['SHINE YOUR EYES',  '#d6246e', '#fff'],     // market pink
+  ['NO DULLING',       '#f2b705', '#2a1f05'],  // danfo yellow
+  ['YOU DON CHOP',     '#0a7a43', '#fff'],     // NYSC green
+  ['WETIN DEY HAPPEN', '#1f5fb0', '#fff'],     // gloss blue
+  ['NO WAHALA',        '#e2641f', '#fff'],     // boot orange
+  ['E BE LIKE FILM',   '#6b3fa0', '#fff'],     // viewing-centre purple
+];
+function paintSign(board, entry){
+  board.textContent      = entry[0];
+  board.style.background = entry[1];
+  board.style.color      = entry[2];
+}
 
 /* 💰 Ad slot. Set this to a sponsor's line and it takes every other turn on the
    board — roughly half the airtime, with the pidgin lines filling the rest so
    the corner never reads as a pure ad. Keep it to about 16 characters: the
-   board is nowrap and anything longer runs off a 375px phone. Leave it null
-   and the sign is just the phrases. The shop boards (SHOPS[].sign) are the
+   board is nowrap and anything longer runs off a 375px phone. Same shape as a
+   phrase — [text, board colour, ink] — so a sponsor brings its own brand
+   colour rather than being repainted in ours. Leave it null and the sign is
+   just the phrases. The shop boards (SHOPS[].sign) are the
    other slots. */
-const SIGN_SPONSOR = null;   // e.g. 'MTN · 2GB ₦500'
+const SIGN_SPONSOR = null;   // e.g. ['MTN · 2GB ₦500', '#ffcc00', '#111']
 
 (() => {
   const board = $('scene').querySelector('.sign b');
   if (!board) return;
   let i = Math.floor(Math.random() * SIGN_LINES.length);
   let sponsorTurn = false;
-  board.textContent = SIGN_LINES[i];
+  paintSign(board, SIGN_LINES[i]);
   /* A changing sign is still motion. Under reduced-motion it keeps whichever
      line it opened on rather than flickering in the corner. */
   if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
@@ -1323,10 +1344,10 @@ const SIGN_SPONSOR = null;   // e.g. 'MTN · 2GB ₦500'
     board.style.opacity = '0';
     setTimeout(() => {
       if (SIGN_SPONSOR && !sponsorTurn){
-        board.textContent = SIGN_SPONSOR;
+        paintSign(board, SIGN_SPONSOR);
       } else {
         i = (i + 1) % SIGN_LINES.length;
-        board.textContent = SIGN_LINES[i];
+        paintSign(board, SIGN_LINES[i]);
       }
       if (SIGN_SPONSOR) sponsorTurn = !sponsorTurn;
       board.style.opacity = '1';
