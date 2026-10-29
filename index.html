@@ -1061,18 +1061,18 @@
 <script type="module">
 import { newGame, doAction, canDo, unlocked, ACTIONS, phaseOf, nextUnlock, postingOdds, rivalOf,
          computePosting,
-         shareText, MAX_DAY } from './game.js?v=20261028215854';
+         shareText, MAX_DAY } from './game.js?v=20261028220000';
 
 /* Kept here, not exported from game.js: a new cross-file export breaks any
    client holding a cached game.js after a deploy. */
 const ALLAWEE_NOTE = 'Allawee ₦77,000 — e never enter.';
 import { initNet, joinCamp, syncPlayer, platoonBoard, recentChat, postChat,
          postSuggestion, reportMessage, awardBoard, myAwards, laughChat,
-         setPresence, campRoster, renameMe, online } from './net.js?v=20261028215854';
-import { startMusic, stopMusic, musicOn, audioState, audioSupported, BEAT, BAR } from './audio.js?v=20261028215854';
+         setPresence, campRoster, renameMe, online } from './net.js?v=20261028220000';
+import { startMusic, stopMusic, musicOn, audioState, audioSupported, BEAT, BAR } from './audio.js?v=20261028220000';
 import { playHoop, playPenalty, playQuiz, playRegister, playParade,
          playMami, playHustle, playManOWar, playSaed, playSocial,
-         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261028215854';
+         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261028220000';
 
 /* Every dance animation is expressed in beats, so the steps are on-tempo
    whether or not the sound is playing — and genuinely on the beat when it is. */
@@ -2066,12 +2066,16 @@ const POS_DEFAULT = ['POS', '#1e3a6e', '#fff'];
    placed after the sun in the DOM but before the clouds, so cloud drifts in
    front of them and the sun is never covered. Names are generic on purpose
    and are the ad slot: TOWERS[].name is where a real one goes. */
+/* Five different buildings, not five shades of grey: a glass-blue bank, a
+   cream tower, a terracotta one, slate green, dusty purple. Each still a step
+   lighter and duller than anything on the street, so the row reads as
+   distance rather than competing with the shopfronts. */
 const TOWERS = [
-  { name: 'BANK',      w: 44, h: 86,  body: '#b9c3cf', win: '#e9edf2' },
-  { name: 'HOLDINGS',  w: 54, h: 112, body: '#c6c9cf', win: '#eef0f3', mast: true },
-  { name: 'INSURANCE', w: 40, h: 96,  body: '#cfc5ab', win: '#f1ecdd' },
-  { name: 'AGENCY',    w: 48, h: 74,  body: '#b8c2b6', win: '#e8ede6' },
-  { name: 'PLAZA',     w: 42, h: 90,  body: '#c4b7bc', win: '#efe8ea' },
+  { name: 'BANK',      w: 44, h: 86,  body: '#7fa6c9', win: '#d6e6f4' },
+  { name: 'HOLDINGS',  w: 54, h: 112, body: '#d9d3c4', win: '#f3efe4', mast: true },
+  { name: 'INSURANCE', w: 40, h: 96,  body: '#c98a6a', win: '#f1d9cb' },
+  { name: 'AGENCY',    w: 48, h: 74,  body: '#8fb0a0', win: '#dcebe3' },
+  { name: 'PLAZA',     w: 42, h: 90,  body: '#a99ab8', win: '#e6dfec' },
 ];
 function tower(t){
   const cols = Math.max(2, Math.floor((t.w - 10) / 9));
