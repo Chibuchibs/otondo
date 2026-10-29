@@ -167,12 +167,10 @@
   .genSet .engine{animation:genShake .11s linear infinite}
   .scene.light .genSet .smoke{animation:none;opacity:0}
   .scene.light .genSet .engine{animation:none}
-  /* Both hands up, from each shoulder outward. brandish already lifts the
-     right arm for the chasers; the left needs the mirror or it swings across
-     the body. Figures mid-errand keep their own arms. */
-  @keyframes brandishL{0%,100%{transform:rotate(150deg)}50%{transform:rotate(169deg)}}
-  .scene.light > .corper:not(.running):not(.munching):not(.shopping):not(.jumping):not(.sunk):not(.hailing):not(.riding):not(.inRide) .arm {animation:brandishL .3s ease-in-out infinite}
-  .scene.light > .corper:not(.running):not(.munching):not(.shopping):not(.jumping):not(.sunk):not(.hailing):not(.riding):not(.inRide) .arm2{animation:brandish  .3s ease-in-out infinite}
+  /* The corpers used to throw both hands up for the whole six seconds — and
+     kept marching like that, which read as two men walking with their arms in
+     the air. Dropped. The lights, the board, the generator and the spark carry
+     the moment on their own. */
 
   .pothole{position:absolute;bottom:1px;z-index:1;width:80px;pointer-events:none}
   /* On the kerb between the two potholes, in front of the shops that drift
@@ -1073,18 +1071,18 @@
 <script type="module">
 import { newGame, doAction, canDo, unlocked, ACTIONS, phaseOf, nextUnlock, postingOdds, rivalOf,
          computePosting,
-         shareText, MAX_DAY } from './game.js?v=20261028220527';
+         shareText, MAX_DAY } from './game.js?v=20261028220757';
 
 /* Kept here, not exported from game.js: a new cross-file export breaks any
    client holding a cached game.js after a deploy. */
 const ALLAWEE_NOTE = 'Allawee ₦77,000 — e never enter.';
 import { initNet, joinCamp, syncPlayer, platoonBoard, recentChat, postChat,
          postSuggestion, reportMessage, awardBoard, myAwards, laughChat,
-         setPresence, campRoster, renameMe, online } from './net.js?v=20261028220527';
-import { startMusic, stopMusic, musicOn, audioState, audioSupported, BEAT, BAR } from './audio.js?v=20261028220527';
+         setPresence, campRoster, renameMe, online } from './net.js?v=20261028220757';
+import { startMusic, stopMusic, musicOn, audioState, audioSupported, BEAT, BAR } from './audio.js?v=20261028220757';
 import { playHoop, playPenalty, playQuiz, playRegister, playParade,
          playMami, playHustle, playManOWar, playSaed, playSocial,
-         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261028220527';
+         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261028220757';
 
 /* Every dance animation is expressed in beats, so the steps are on-tempo
    whether or not the sound is playing — and genuinely on the beat when it is. */
