@@ -1071,18 +1071,18 @@
 <script type="module">
 import { newGame, doAction, canDo, unlocked, ACTIONS, phaseOf, nextUnlock, postingOdds, rivalOf,
          computePosting,
-         shareText, MAX_DAY } from './game.js?v=20261028220757';
+         shareText, MAX_DAY } from './game.js?v=20261028221609';
 
 /* Kept here, not exported from game.js: a new cross-file export breaks any
    client holding a cached game.js after a deploy. */
 const ALLAWEE_NOTE = 'Allawee ₦77,000 — e never enter.';
 import { initNet, joinCamp, syncPlayer, platoonBoard, recentChat, postChat,
          postSuggestion, reportMessage, awardBoard, myAwards, laughChat,
-         setPresence, campRoster, renameMe, online } from './net.js?v=20261028220757';
-import { startMusic, stopMusic, musicOn, audioState, audioSupported, BEAT, BAR } from './audio.js?v=20261028220757';
+         setPresence, campRoster, renameMe, online } from './net.js?v=20261028221609';
+import { startMusic, stopMusic, musicOn, audioState, audioSupported, BEAT, BAR } from './audio.js?v=20261028221609';
 import { playHoop, playPenalty, playQuiz, playRegister, playParade,
          playMami, playHustle, playManOWar, playSaed, playSocial,
-         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261028220757';
+         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261028221609';
 
 /* Every dance animation is expressed in beats, so the steps are on-tempo
    whether or not the sound is playing — and genuinely on the beat when it is. */
@@ -1659,7 +1659,14 @@ const stillWatching = () =>
 
 function lineUp(){
   const sc = $('scene');
-  const crew = [...sc.querySelectorAll('.corper')];
+  /* Direct children only. The runners' inner figures are `.corper` too, and
+     an unscoped query lined THEM up as well — shoving the thief and chasers
+     into a row mid-chase. Then backToTrekking, which clears transforms only on
+     the walkers, left the runners shuffled for the rest of the run: a chaser
+     pushed ahead of the thief stayed ahead, and the thief was "doing the
+     chasing". The CSS dance rules were scoped to `> .corper` long ago; this
+     query never was. */
+  const crew = [...sc.querySelectorAll(':scope > .corper')];
   if (!crew.length) return;
   /* Freeze the march BEFORE measuring, and read every position before writing
      any. Measuring inside the write loop samples each figure a few ms later
@@ -2964,7 +2971,9 @@ function snackRun(preferred, target, paid){
      and measuring mid-unwind gives a false origin — every offset computed from
      it is then wrong by whatever was left on the clock. Clearing is safe here
      because we already know no routine is running. */
-  const crew = [...sc.querySelectorAll('.corper')];
+  /* Walkers only: unscoped, this could pick a chaser's inner figure as the
+     corper to send to a stall. */
+  const crew = [...sc.querySelectorAll(':scope > .corper')];
   crew.forEach(p => { p.style.transition = 'none'; p.style.transform = 'none'; });
   void sc.offsetWidth;
   const place = el => {
