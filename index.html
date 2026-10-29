@@ -177,6 +177,15 @@
      what make somebody say "did you see the…" to the next person. */
   .convoy{position:absolute;left:0;right:0;bottom:30px;height:64px;z-index:1;pointer-events:none}
   .convoy .car{position:absolute;animation:drive 4.6s linear both}
+  /* Only the Odogwu's cars take a tap — the strip itself stays inert so a
+     finger between the cars still reaches the street. */
+  .convoy.odogwu .car{pointer-events:auto;cursor:pointer;-webkit-tap-highlight-color:transparent}
+  .convoy.odogwu .car::after{content:'';position:absolute;inset:-10px -8px}
+  .convoy.odogwu .tapTag{background:#c9a227;color:#1d1a10}
+  /* `.cashNote`, not `.note` — `.note` is the chat's help text, and a shared
+     class name would have turned those paragraphs into green rectangles. */
+  .cashNote{position:absolute;z-index:8;width:9px;height:5px;border-radius:1px;background:#2f8f5b;
+    box-shadow:inset 0 0 0 1px rgba(255,255,255,.35);pointer-events:none}
   .convoy .car svg{width:100%;display:block}
   @keyframes strobe{0%,49%{opacity:1}50%,100%{opacity:.12}}
   .convoy .lightR,.convoy .lightB{animation:strobe .22s steps(1) infinite}
@@ -1086,18 +1095,18 @@
 <script type="module">
 import { newGame, doAction, canDo, unlocked, ACTIONS, phaseOf, nextUnlock, postingOdds, rivalOf,
          computePosting,
-         shareText, MAX_DAY } from './game.js?v=20261028225402';
+         shareText, MAX_DAY } from './game.js?v=20261029104039';
 
 /* Kept here, not exported from game.js: a new cross-file export breaks any
    client holding a cached game.js after a deploy. */
 const ALLAWEE_NOTE = 'Allawee ₦77,000 — e never enter.';
 import { initNet, joinCamp, syncPlayer, platoonBoard, recentChat, postChat,
          postSuggestion, reportMessage, awardBoard, myAwards, laughChat,
-         setPresence, campRoster, renameMe, online } from './net.js?v=20261028225402';
-import { startMusic, stopMusic, musicOn, audioState, audioSupported, BEAT, BAR } from './audio.js?v=20261028225402';
+         setPresence, campRoster, renameMe, online } from './net.js?v=20261029104039';
+import { startMusic, stopMusic, musicOn, audioState, audioSupported, BEAT, BAR } from './audio.js?v=20261029104039';
 import { playHoop, playPenalty, playQuiz, playRegister, playParade,
          playMami, playHustle, playManOWar, playSaed, playSocial,
-         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261028225402';
+         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261029104039';
 
 /* Every dance animation is expressed in beats, so the steps are on-tempo
    whether or not the sound is playing — and genuinely on the beat when it is. */
@@ -2690,7 +2699,9 @@ sceneEl.addEventListener('click', e => {
     return;
   }
   const v = e.target.closest('.vehicle.ablaze');
-  if (v){ hintUsed(); douse(v); }
+  if (v){ hintUsed(); douse(v); return; }
+  const od = e.target.closest('.convoy.odogwu');
+  if (od){ hintUsed(); dashMoney(od, e.clientX, e.clientY); }
 });
 
 /* ---- the mob catches him ----
@@ -2971,11 +2982,14 @@ function nextSceneEvent(){
      delays the queue; it does not cost an event. */
   if (sceneBusy()){ setTimeout(nextSceneEvent, 2000); return; }
   let len;
-  /* About one slot in eight goes to something rare instead, and the two rare
+  /* About one slot in five goes to something rare instead, and the two rare
      ones alternate so the same surprise never comes twice running. The
      fire/chase alternation is left where it was, so a rare slot delays the
      next regular event rather than skipping it. */
-  if (Math.random() < RARE_ODDS){
+  slotNo++;
+  const forceRare = !rareSeen && slotNo === 4;
+  if (forceRare || Math.random() < RARE_ODDS){
+    rareSeen = true;
     if (rareNext === 'convoy'){ convoy();       len = CONVOY_LEN; rareNext = 'goat'; }
     else                      { goatCrossing(); len = GOAT_LEN;   rareNext = 'convoy'; }
   } else {
@@ -2986,31 +3000,56 @@ function nextSceneEvent(){
   setTimeout(nextSceneEvent, len + EVENT_GAP);
 }
 /* ---------- rare events ----------
-   One slot in eight, and the two alternate. Rare is the point: at these odds a
-   player sees one every few minutes and cannot predict which — the fixed
-   cycle is learned in two minutes, these are not. */
-const RARE_ODDS  = 0.12;
+   One slot in five, and the two alternate. Rare is the point: at these odds a
+   player sees one every couple of minutes and cannot predict which — the
+   fixed cycle is learned in two minutes, these are not. (One in eight was the
+   first setting; the user waited too long to see a convoy.)
+   And one guarantee: if the dice have not produced a rare event by the fourth
+   slot — about a minute in — the fourth slot is one. A first visit is the one
+   that decides whether there is a second, and it must not be the visit that
+   happens to roll four plain events in a row. */
+let slotNo = 0, rareSeen = false;
+const RARE_ODDS  = 0.2;
 const TRIP_ODDS  = 0.125;    // one chase in eight, the thief trips on Mr. Pothole
-const CONVOY_LEN = 5600, GOAT_LEN = 10800;
+/* The convoy is two passes: the oga's, then — a few seconds behind, using the
+   gap his escort just opened — the Odogwu's. CONVOY_LEN covers both. */
+const CONVOY_PASS = 5600, ODOGWU_AFTER = [2600, 4400], GOAT_LEN = 10800;
+const CONVOY_LEN  = CONVOY_PASS + ODOGWU_AFTER[1] + CONVOY_PASS;
 let rareNext = 'convoy';
 
 /* An oga's convoy: two outriders, two black SUVs with the flag on the bonnet,
    strobes going, straight through the far lane at twice traffic speed. "Oga"
    on purpose — a big man is passing, and whose big man is nobody's business. */
-function suv(){
+function suv(body = '#141414', flag = true, trim = '#0a0a0a'){
   return `<svg viewBox="0 0 90 40" aria-hidden="true">
-    <path d="M6 31 h78 v-9 a5 5 0 0 0 -5 -5 h-9 l-9 -9 h-33 l-8 9 h-9 a5 5 0 0 0 -5 5z" fill="#141414"/>
+    <path d="M6 31 h78 v-9 a5 5 0 0 0 -5 -5 h-9 l-9 -9 h-33 l-8 9 h-9 a5 5 0 0 0 -5 5z" fill="${body}"/>
     <path d="M29 17 l6 -7 h25 l7 7z" fill="#2e3b4a"/>
     <path d="M31 17 l5 -5 h9 v5z M47 12 h11 l5 5 h-16z" fill="#4a6078" opacity=".55"/>
-    <rect x="6" y="24" width="78" height="2" fill="#0a0a0a"/>
-    <rect x="80" y="10" width="1.4" height="12" fill="#2a2a2a"/>
+    <rect x="6" y="24" width="78" height="2" fill="${trim}"/>
+    ${flag ? `<rect x="80" y="10" width="1.4" height="12" fill="#2a2a2a"/>
     <rect x="81.4" y="10" width="2.4" height="5.4" fill="#1d6b3a"/>
     <rect x="83.8" y="10" width="2.4" height="5.4" fill="#f3f1e8"/>
-    <rect x="86.2" y="10" width="2.4" height="5.4" fill="#1d6b3a"/>
+    <rect x="86.2" y="10" width="2.4" height="5.4" fill="#1d6b3a"/>` : ''}
     <circle class="lightR" cx="38" cy="8.5" r="2.6" fill="#ff3b3b"/>
     <circle class="lightB" cx="52" cy="8.5" r="2.6" fill="#3b7bff"/>
     <rect x="84" y="26" width="3" height="2.4" rx=".8" fill="#ffd34d"/>
     ${wheel(22,32,6)}${wheel(68,32,6)}
+  </svg>`;
+}
+/* The escort pickup that runs ahead of a rich man's SUVs: dark blue, a
+   lightbar across the cab, two men standing in the bed. */
+function pickup(){
+  return `<svg viewBox="0 0 90 40" aria-hidden="true">
+    <path d="M4 31 h82 v-10 h-34 v-9 h-20 l-8 9 h-15 a5 5 0 0 0 -5 5z" fill="#1f3350"/>
+    <path d="M27 21 l6 -8 h14 v8z" fill="#2e3b4a"/>
+    <rect x="52" y="21" width="34" height="2" fill="#0f1c2e"/>
+    <rect x="29" y="9.5" width="18" height="3" rx="1.2" fill="#2a2622"/>
+    <circle class="lightR" cx="33" cy="9" r="2.4" fill="#ff3b3b"/>
+    <circle class="lightB" cx="43" cy="9" r="2.4" fill="#3b7bff"/>
+    <circle cx="60" cy="14" r="3.2" fill="#6b4423"/><rect x="56.5" y="17" width="7" height="5" rx="1" fill="#1d1d1b"/>
+    <circle cx="74" cy="14" r="3.2" fill="#8d5524"/><rect x="70.5" y="17" width="7" height="5" rx="1" fill="#1d1d1b"/>
+    <rect x="84" y="26" width="3" height="2.4" rx=".8" fill="#ffd34d"/>
+    ${wheel(20,32,6)}${wheel(70,32,6)}
   </svg>`;
 }
 function convoy(){
@@ -3024,26 +3063,90 @@ function convoy(){
     `<div class="car" style="width:86px;bottom:7px;animation-delay:.9s">${suv()}</div>`;
   sceneEl.appendChild(c);
   if (shoutSign) shoutSign(['OGA DEY PASS!', '#1d1d1b', '#ffd34d']);
-  setTimeout(() => c.remove(), CONVOY_LEN);
+  setTimeout(() => c.remove(), CONVOY_PASS);
+  /* …and a few seconds behind him, the Odogwu, with the same siren and none of
+     the entitlement to it. The gap is random so the second pass is not a
+     pattern the eye learns. */
+  const after = ODOGWU_AFTER[0] + Math.random() * (ODOGWU_AFTER[1] - ODOGWU_AFTER[0]);
+  setTimeout(odogwuConvoy, CONVOY_PASS + after);
+}
+/* The rich man's: a police pickup out front, then a white SUV and a black one,
+   no flag on any bonnet. */
+function odogwuConvoy(){
+  if (calm()) return;
+  const c = document.createElement('div');
+  c.className = 'convoy odogwu';
+  /* Odogwus dash money. The white SUV is the one you tap — up to three times
+     a pass, a few hundred naira each — and the tag on it says so. */
+  c.dataset.dash = '3';
+  c.innerHTML =
+    `<div class="car" style="width:84px;bottom:10px;animation-delay:0s">${pickup()}</div>` +
+    `<div class="car dash" style="width:90px;bottom:4px;animation-delay:.5s">${suv('#f3f1e8', false, '#c9c4b6')}<i class="tapTag">TAP FOR MONEY</i></div>` +
+    `<div class="car" style="width:86px;bottom:7px;animation-delay:.92s">${suv('#141414', false)}</div>`;
+  c.setAttribute('role', 'button');
+  c.setAttribute('aria-label', 'Odogwu passing. Tap for money');
+  sceneEl.appendChild(c);
+  if (shoutSign) shoutSign(['ODOGWU PASSING', '#c9a227', '#1d1a10']);
+  setTimeout(() => c.remove(), CONVOY_PASS);
+}
+/* A tap on the Odogwu: notes fly out of the window, and some land on you. */
+function dashMoney(c, x, y){
+  const left = (+c.dataset.dash || 0) - 1;
+  if (left < 0) return;
+  c.dataset.dash = String(left);
+  if (left === 0){ c.querySelector('.tapTag')?.remove(); c.removeAttribute('aria-label'); }
+  const car = c.querySelector('.car.dash') || c;
+  if (s){
+    const got = 300 + Math.floor(Math.random() * 6) * 100;     // ₦300–800
+    s.money += got;
+    render();
+    floatCost(car, `+₦${got.toLocaleString()}`);
+  }
+  /* the spray: a few notes out of the window, each on its own arc */
+  const box = sceneEl.getBoundingClientRect();
+  const r = car.getBoundingClientRect();
+  const ox = (x ?? r.left + r.width * .55) - box.left, oy = (y ?? r.top + r.height * .35) - box.top;
+  for (let i = 0; i < 5; i++){
+    const n = document.createElement('i');
+    n.className = 'cashNote';
+    n.style.left = ox + 'px'; n.style.top = oy + 'px';
+    sceneEl.appendChild(n);
+    const dx = -30 + Math.random() * 60, dy = -40 - Math.random() * 30;
+    n.animate([
+      { transform: 'translate(0,0) rotate(0)', opacity: 1 },
+      { transform: `translate(${dx}px,${dy}px) rotate(${(Math.random()*2-1)*180}deg)`, opacity: 1, offset: .55 },
+      { transform: `translate(${dx*1.3}px,${dy + 70}px) rotate(${(Math.random()*2-1)*360}deg)`, opacity: 0 },
+    ], { duration: 900 + Math.random() * 300, easing: 'cubic-bezier(.2,.7,.4,1)' })
+      .onfinish = () => n.remove();
+  }
 }
 
 /* A goat wanders in from the right, stops in the far lane to chew, and the
-   traffic behind it has to wait — the cars ahead carry on, which is what makes
-   it a hold-up rather than a freeze. Then it ambles off and everyone goes. */
+   traffic behind her has to wait — the cars ahead carry on, which is what makes
+   it a hold-up rather than a freeze. Then she ambles off and everyone goes. */
+/* A goat, white with a patch in a bold colour drawn fresh each time she
+   comes — the user tried a cow and sent it back: a goat is faster and the
+   right scale for the lane, and the colour was the part worth keeping. She
+   faces left; she comes in from the right. */
+const GOAT_COATS = ['#8a4b2a', '#2a2622', '#c48a3c', '#a0522d', '#5b3a2e'];
 function goatSvg(){
+  const patch = GOAT_COATS[Math.floor(Math.random() * GOAT_COATS.length)];
+  const hide = '#f1ece0', shade = '#ddd6c6';
   return `<svg viewBox="0 0 40 30" aria-hidden="true">
-    <g class="gl"><rect x="12" y="16" width="2.6" height="12" rx="1.2" fill="#d9d2c4"/></g>
-    <g class="gl gl2"><rect x="17" y="16" width="2.6" height="12" rx="1.2" fill="#cfc7b8"/></g>
-    <g class="gl gl2"><rect x="26" y="16" width="2.6" height="12" rx="1.2" fill="#d9d2c4"/></g>
-    <g class="gl"><rect x="31" y="16" width="2.6" height="12" rx="1.2" fill="#cfc7b8"/></g>
-    <ellipse cx="23" cy="14" rx="12.5" ry="6" fill="#e9e2d4"/>
-    <path d="M35 12 l4 -4" stroke="#e9e2d4" stroke-width="2" stroke-linecap="round"/>
+    <g class="gl"><rect x="12" y="16" width="2.6" height="12" rx="1.2" fill="${shade}"/></g>
+    <g class="gl gl2"><rect x="17" y="16" width="2.6" height="12" rx="1.2" fill="${hide}"/></g>
+    <g class="gl gl2"><rect x="26" y="16" width="2.6" height="12" rx="1.2" fill="${shade}"/></g>
+    <g class="gl"><rect x="31" y="16" width="2.6" height="12" rx="1.2" fill="${hide}"/></g>
+    <ellipse cx="23" cy="14" rx="12.5" ry="6" fill="${hide}"/>
+    <path d="M20 9.5 q7 -3 12 2 l-1 6 h-11z" fill="${patch}"/>
+    <path d="M35 12 l4 -4" stroke="${patch}" stroke-width="2" stroke-linecap="round"/>
     <g class="head">
-      <path d="M12 12 l-7 1 l-1 6 l5 2 l4 -3z" fill="#e9e2d4"/>
+      <path d="M12 12 l-7 1 l-1 6 l5 2 l4 -3z" fill="${hide}"/>
+      <path d="M11 12.5 l-4 .6 l-.6 3.5 l3.5 .4z" fill="${patch}"/>
       <path d="M8 13 l-3 -6 M11 12 l-1 -7" stroke="#8a7a60" stroke-width="1.6" stroke-linecap="round"/>
-      <path d="M5 19 l-1 3.5" stroke="#d9d2c4" stroke-width="1.8" stroke-linecap="round"/>
+      <path d="M5 19 l-1 3.5" stroke="${shade}" stroke-width="1.8" stroke-linecap="round"/>
       <circle cx="8.5" cy="15" r="1" fill="#2a2622"/>
-      <path d="M11 11 l2 -2.4 l1 2.6z" fill="#cfc7b8"/>
+      <path d="M11 11 l2 -2.4 l1 2.6z" fill="${patch}"/>
     </g>
   </svg>`;
 }
