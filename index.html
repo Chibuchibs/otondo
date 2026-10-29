@@ -519,6 +519,7 @@
   .stat{background:var(--white);border:1px solid var(--line);border-radius:12px;padding:9px 11px}
   .stat b{display:block;font-size:10px;text-transform:uppercase;letter-spacing:.1em;
     color:var(--muted);font-weight:800}
+  .stat span.debt{color:var(--red)}
   .stat span{font-size:19px;font-weight:800}
   .bar{height:6px;background:var(--line);border-radius:3px;margin-top:6px;overflow:hidden}
   .bar i{display:block;height:100%;background:var(--green);transition:width .25s}
@@ -1071,18 +1072,18 @@
 <script type="module">
 import { newGame, doAction, canDo, unlocked, ACTIONS, phaseOf, nextUnlock, postingOdds, rivalOf,
          computePosting,
-         shareText, MAX_DAY } from './game.js?v=20261028221609';
+         shareText, MAX_DAY } from './game.js?v=20261028222347';
 
 /* Kept here, not exported from game.js: a new cross-file export breaks any
    client holding a cached game.js after a deploy. */
 const ALLAWEE_NOTE = 'Allawee ₦77,000 — e never enter.';
 import { initNet, joinCamp, syncPlayer, platoonBoard, recentChat, postChat,
          postSuggestion, reportMessage, awardBoard, myAwards, laughChat,
-         setPresence, campRoster, renameMe, online } from './net.js?v=20261028221609';
-import { startMusic, stopMusic, musicOn, audioState, audioSupported, BEAT, BAR } from './audio.js?v=20261028221609';
+         setPresence, campRoster, renameMe, online } from './net.js?v=20261028222347';
+import { startMusic, stopMusic, musicOn, audioState, audioSupported, BEAT, BAR } from './audio.js?v=20261028222347';
 import { playHoop, playPenalty, playQuiz, playRegister, playParade,
          playMami, playHustle, playManOWar, playSaed, playSocial,
-         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261028221609';
+         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261028222347';
 
 /* Every dance animation is expressed in beats, so the steps are on-tempo
    whether or not the sound is playing — and genuinely on the beat when it is. */
@@ -3051,15 +3052,22 @@ function buy(shopEl, who){
   const cost  = +shopEl.dataset.livePrice || +shopEl.dataset.price || 0;
   const belle = +shopEl.dataset.belle || 0;
   if (!s || !cost) return;
-  const paid = Math.min(cost, s.money);        // never let money go negative
-  s.money -= paid;
+  /* The full price, every time, below zero if that is where it lands. The old
+     cap made everything free once you hit ₦0 — a player could keep tapping
+     errands and watch the balance sit at zero, which is the opposite of a
+     lesson about money. Debt shows in red. */
+  s.money -= cost;
   if (belle) s.belle = Math.min(100, s.belle + belle);
   render();
-  floatCost(who, paid ? `-₦${paid.toLocaleString()}` : 'No money');
+  floatCost(who, `-₦${cost.toLocaleString()}`);
 }
 
 /* A number that lifts off the buyer, so the deduction is seen and not just
    quietly applied to a stat bar somebody may not be looking at. */
+/* "-₦400", never "₦-400": the sign goes in front of the currency, the way a
+   bank statement writes it, and a minus after the naira sign reads as a typo. */
+const naira = n => (n < 0 ? '-' : '') + '₦' + Math.abs(n).toLocaleString();
+
 function floatCost(who, text){
   const box = sceneEl.getBoundingClientRect();
   const r   = who.getBoundingClientRect();
@@ -3203,7 +3211,7 @@ async function buildPostingImage(st){
 
   x.globalAlpha = .92; x.font = F(38, 600);
   x.fillText(`Platoon ${st.platoon} · Credibility ${st.cred}`, mid, 330);
-  x.fillText(`₦${st.money.toLocaleString()} · ${st.friends} friends`, mid, 386);
+  x.fillText(`${naira(st.money)} · ${st.friends} friends`, mid, 386);
   x.globalAlpha = 1;
 
   x.globalAlpha = .8; x.font = F(34, 700);
@@ -3285,7 +3293,7 @@ function render(){
 
   if (over){
     $('eName').textContent = s.name;
-    $('eMeta').textContent = `Platoon ${s.platoon} · Credibility ${s.cred} · ₦${s.money.toLocaleString()} · ${s.friends} friends`;
+    $('eMeta').textContent = `Platoon ${s.platoon} · Credibility ${s.cred} · ${naira(s.money)} · ${s.friends} friends`;
     $('ePlace').textContent = s.posting.place;
     $('eEmoji').textContent = s.posting.emoji;
     $('eAllawee').textContent = ALLAWEE_NOTE;
@@ -3298,7 +3306,8 @@ function render(){
   pushPresence();
   $('sEnergy').textContent = s.energy;
   $('sBelle').textContent = s.belle;
-  $('sMoney').textContent = '₦' + s.money.toLocaleString();
+  $('sMoney').textContent = naira(s.money);
+  $('sMoney').classList.toggle('debt', s.money < 0);
   $('sCred').textContent = s.cred;
   bar($('bEnergy'), s.energy); bar($('bBelle'), s.belle);
   drawWhoami();

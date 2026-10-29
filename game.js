@@ -201,13 +201,18 @@ export const ACTIONS = {
   },
 };
 
-/* Never let money go negative — a player seeing "₦-400" assumes the game
-   is broken. Deduct only what they actually have. */
+/* The full amount, below zero if that is where it lands. This used to cap
+   at what the player had, on the theory that "₦-400" looks like a bug — but
+   the cap meant a broke player paid nothing for anything, which is worse. The
+   display now writes it "-₦400" in red, which reads as debt, not as a bug.
+   Actions you choose still require the cash (see canAct); this is for the
+   costs the game imposes on you. */
 function spend(s, amount) {
-  const paid = Math.min(amount, s.money);
-  s.money -= paid;
-  return paid;
+  s.money -= amount;
+  return amount;
 }
+
+const naira = n => (n < 0 ? '-' : '') + '₦' + Math.abs(n).toLocaleString();
 
 function apply(s, d) {
   if (d.energy) s.energy = clamp(s.energy + d.energy);
@@ -433,5 +438,5 @@ export function nextUnlock(s) {
 
 export function shareText(s) {
   if (!s.posting) return '';
-  return `I survived camp as a Platoon ${s.platoon} otondo.\nCredibility ${s.cred} · ₦${s.money.toLocaleString()} · ${s.friends} friends\nPosted to: ${s.posting.place.toUpperCase()} ${s.posting.emoji}\n\nPlay Otondo:`;
+  return `I survived camp as a Platoon ${s.platoon} otondo.\nCredibility ${s.cred} · ${naira(s.money)} · ${s.friends} friends\nPosted to: ${s.posting.place.toUpperCase()} ${s.posting.emoji}\n\nPlay Otondo:`;
 }
