@@ -1097,18 +1097,18 @@
 <script type="module">
 import { newGame, doAction, canDo, unlocked, ACTIONS, phaseOf, nextUnlock, postingOdds, rivalOf,
          computePosting,
-         shareText, MAX_DAY } from './game.js?v=20261029105201';
+         shareText, MAX_DAY } from './game.js?v=20261029110815';
 
 /* Kept here, not exported from game.js: a new cross-file export breaks any
    client holding a cached game.js after a deploy. */
 const ALLAWEE_NOTE = 'Allawee ₦77,000 — e never enter.';
 import { initNet, joinCamp, syncPlayer, platoonBoard, recentChat, postChat,
          postSuggestion, reportMessage, awardBoard, myAwards, laughChat,
-         setPresence, campRoster, renameMe, online } from './net.js?v=20261029105201';
-import { startMusic, stopMusic, musicOn, audioState, audioSupported, BEAT, BAR } from './audio.js?v=20261029105201';
+         setPresence, campRoster, renameMe, online } from './net.js?v=20261029110815';
+import { startMusic, stopMusic, musicOn, audioState, audioSupported, BEAT, BAR } from './audio.js?v=20261029110815';
 import { playHoop, playPenalty, playQuiz, playRegister, playParade,
          playMami, playHustle, playManOWar, playSaed, playSocial,
-         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261029105201';
+         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261029110815';
 
 /* Every dance animation is expressed in beats, so the steps are on-tempo
    whether or not the sound is playing — and genuinely on the beat when it is. */
@@ -1737,16 +1737,13 @@ function syncToSlots(){
   const dur = walkers[0].anim.effect.getTiming().duration;
   const ref = walkers.find(w => !w.p.matches('.riding, .hailing, .inRide, .gone, .running, .munching, .shopping'))
            || walkers[0];
-  const refPhase = ((ref.anim.currentTime % dur) + dur) % dur;
-  walkers.forEach(w => {
-    if (w === ref) return;
-    /* slots are 0, -4.5, -9 on a 13.5 cycle: a negative delay of -4.5s means
-       "a third of the way round", so the gap from the reference is the
-       difference of the two slots. */
-    const offset = ((w.slot - ref.slot) * -1000) % dur;
-    let target = (refPhase + offset) % dur; if (target < 0) target += dur;
-    w.anim.currentTime = target;
-  });
+  /* Every march to the SAME current time. Each walker already carries its slot
+     as a negative animation-delay, and the delay is applied on top of
+     currentTime — so equal current times put them exactly a slot apart. The
+     first version added the slot offset to currentTime as well, counting it
+     twice: with three walkers that merely swapped two of them, with two it put
+     both on the same spot at every dance end. */
+  walkers.forEach(w => { if (w !== ref) w.anim.currentTime = ref.anim.currentTime; });
 }
 
 function backToTrekking(){
@@ -1991,13 +1988,16 @@ function aimPointer(){
   if (best) lastAimed = performance.now();
   else {
     /* offerTick runs every 150ms and clears the old offer before setting the
-       next, so there are frames with nothing marked. Now that this is driven
-       per frame rather than every 120ms, hiding on those frames is a visible
-       flicker. Hold the marker where it is through the gap, and give up only
-       if the gap turns out to be real. */
+       next, so there are frames with nothing marked. Hold the marker where it
+       is through that gap; if the gap turns out to be real, point at any free
+       walker in frame rather than go dark — the rule is that there is a YOU
+       on the screen at all times, and a tap on that walker still does
+       something (see the click handler's fallbacks). */
     if (performance.now() - lastAimed < 500) return;
-    pointer.style.opacity = '0';
-    return;
+    const box0 = sceneEl.getBoundingClientRect();
+    best = [...sceneEl.querySelectorAll(':scope > .corper')]
+      .filter(freeFig).find(p => inFrame(p, box0, 0.05)) || null;
+    if (!best){ pointer.style.opacity = '0'; return; }
   }
   const box = sceneEl.getBoundingClientRect();
   const r = best.getBoundingClientRect();
@@ -2294,6 +2294,29 @@ const figX = (p, box) => {
   return r.left - box.left + r.width / 2;
 };
 
+/* After a figure's march has stood still — an errand, a fall — put it back on
+   the grid in one step and hide that step behind a transform that glides to
+   zero: he hurries a few paces to catch up. The grid is the other walker's
+   march time (equal current times are a slot apart, see syncToSlots); if no
+   other walker is free to read, fall back to adding the time he stood still.
+   Reading the other walker rather than adding a fixed figure means a dance
+   that re-spaced everyone while he was down does not get counted twice. */
+function rejoinGrid(p, stoodStillMs){
+  const march = p.getAnimations().find(a => a.animationName === 'march');
+  if (!march || calm()) return;
+  const before = p.getBoundingClientRect().left;
+  const other = [...sceneEl.querySelectorAll(':scope > .corper')].find(q => q !== p && freeFig(q));
+  const ref = other && other.getAnimations().find(a => a.animationName === 'march');
+  if (ref && ref.currentTime != null) march.currentTime = ref.currentTime;
+  else march.currentTime += stoodStillMs;
+  const after = p.getBoundingClientRect().left;
+  p.style.transition = 'none';
+  p.style.transform = `translateX(${Math.round(before - after)}px)`;
+  void p.offsetWidth;
+  p.style.transition = '';                       // the stylesheet's .7s ease
+  p.style.transform = '';
+}
+
 function hopPothole(p, paid){
   if (p.dataset.hop) return;
   p.dataset.hop = '1';
@@ -2320,6 +2343,11 @@ function fallIn(p){
   p.dataset.hop = '1';
   potReadyAt = performance.now() + POT_COOLDOWN;
   p.classList.add('sunk');
+  /* Stop walking the moment he goes in. Left running, he covered 27px during
+     the drop — the hole's whole half-width — and went under at the far rim.
+     Frozen, he sinks and climbs out exactly where he fell, then rejoinGrid
+     hurries him back to his place. */
+  p.style.animationPlayState = 'paused';
   /* Into the hole, not down the screen. The first version slid him 32px down
      and faded him out, which read as a figure sliding off the bottom. Now he
      pitches forward and the ground takes him from the feet up — a clip that
@@ -2348,14 +2376,31 @@ function fallIn(p){
        figure. Now his march runs on untouched while he is hidden, and he is
        shown again only once his slot has carried him off the left edge — so he
        still re-enters from the left, in his own place, with no teleport. */
-    const box = sceneEl.getBoundingClientRect();
-    const reappear = () => {
+    /* …and climbs back out about a second later, right where he fell. Waiting
+       for his slot to carry him round to the left edge kept him hidden four
+       or five seconds, and with two walkers that is the street down to one —
+       or, when the other is just off the edge, to none: the user sent a
+       screenshot of an empty road. Climbing out keeps the grid untouched (his
+       march never stopped) and keeps the second copper on screen. By now his
+       slot has moved on ~60px, so he surfaces at the far rim of the hole. */
+    setTimeout(() => {
       if (!p.isConnected) return;
-      const r = p.getBoundingClientRect();
-      if (r.right < box.left){ p.classList.remove('gone'); delete p.dataset.hop; }
-      else setTimeout(reappear, 200);
-    };
-    setTimeout(reappear, 200);
+      p.classList.remove('gone');
+      const climb = p.animate([
+        { transform: 'translateY(34px) rotate(-14deg)', clipPath: 'inset(0 0 100% 0)' },
+        { transform: 'translateY(16px) rotate(-8deg)',  clipPath: 'inset(0 0 40% 0)', offset: .55 },
+        { transform: 'translateY(0) rotate(0deg)',      clipPath: 'inset(0 0 0% 0)' },
+      ], { duration: 620, easing: 'ease-out', composite: 'add' });
+      climb.onfinish = () => {
+        p.style.animationPlayState = '';          // walking again, from the hole
+        rejoinGrid(p, 760 + 900 + 620);
+      };
+      /* `dataset.hop` stays set: he is still past the hole when he surfaces,
+         and clearing it here let watchPothole treat him as a fresh arrival —
+         a second hop at once, or, had he been the marked figure, straight
+         back into the hole. The lap reset in watchPothole clears it once his
+         slot has carried him round to the left edge. */
+    }, 900);
   }, 760);
 }
 
@@ -2385,8 +2430,8 @@ function watchPothole(){
     const mine = (performance.now() >= potReadyAt)
               && (p === cornTarget || p === rideTarget || p === jumpShown);
     if (mine){
-      if (fx < x) jumpTarget = p;      // yours: you get asked
-      else fallIn(p);                  // asked, and not answered
+      if (fx < x - 4) jumpTarget = p;  // yours: you get asked
+      else fallIn(p);                  // asked, and not answered — he is on the hole
       return;
     }
     /* A bystander takes off just short of the hole rather than the moment it
@@ -3342,7 +3387,10 @@ function snackRun(preferred, target, paid){
   /* A tapped corper goes if they are in frame; otherwise fall back to
      whoever is, so the timer-driven run still works. */
   const picked = preferred && crew.includes(preferred) ? place(preferred) : null;
-  const runner = (picked && picked.ok) ? picked : crew.map(place).find(x => x.ok);
+  /* Only a figure who is free to go. Unfiltered, this sent whoever was first
+     in frame — including a figure hidden in the pothole, who then surfaced at
+     a shop 93px from where he fell — and a figure mid-hop or mid-ride. */
+  const runner = (picked && picked.ok) ? picked : crew.filter(freeFig).map(place).find(x => x.ok);
   crew.forEach(p => { p.style.transition = ''; });     // restore the CSS glide
   if (!stall || !runner) return false;
 
@@ -3389,6 +3437,14 @@ function snackRun(preferred, target, paid){
     who.classList.remove('running');
     who.style.animationPlayState = '';            // rejoin the trek mid-stride
     delete stall.el.dataset.target;
+    /* The march stood still for the whole errand — a quarter of a cycle, about
+       120px — and resuming from there is what let the walkers close up on each
+       other (two walkers made it obvious). So: push his march forward by
+       exactly the time it was paused, which puts him back on the grid in one
+       step, and hide that step behind a transform that then glides to zero —
+       he hurries a few paces to catch up, which is what a person does after
+       stopping at a stall. The dance-end re-space stays as a backstop. */
+    rejoinGrid(who, RUN_MS + EAT_MS + RUN_MS);
   }, RUN_MS + EAT_MS + RUN_MS);
   return true;
 }
