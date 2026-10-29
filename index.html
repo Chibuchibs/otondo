@@ -277,7 +277,9 @@
   .goat.stand .head{animation:goatChew .5s ease-in-out infinite;transform-box:fill-box;transform-origin:right center}
 
   .pothole{position:absolute;bottom:1px;z-index:1;width:80px;pointer-events:none}
-  .pothole.live{pointer-events:auto;cursor:pointer}
+  /* `jumpable`, not `live`: `.live` is the in-camp counter's class, whose
+     display:flex made Safari draw the hole at the SVG's default 300px. */
+  .pothole.jumpable{pointer-events:auto;cursor:pointer}
   /* On the kerb between the two potholes, in front of the shops that drift
      behind it, behind the walkers. 36% keeps it clear of Mrs. Pothole (21%),
      Mr. Pothole (58%) and the figures' labels, which pin toward the middle. */
@@ -1253,7 +1255,7 @@
 <script type="module">
 import { newGame, doAction, canDo, unlocked, ACTIONS, phaseOf, nextUnlock, postingOdds, rivalOf,
          computePosting,
-         shareText, MAX_DAY } from './game.js?v=20261029164049';
+         shareText, MAX_DAY } from './game.js?v=20261029164421';
 
 /* ---------- scene coordinates ----------
    The scene is scaled by a transform (see the stage), so a native
@@ -1284,11 +1286,11 @@ const TS = (document.getElementById('scene').offsetWidth || 375) / 375;
 const ALLAWEE_NOTE = 'Allawee ₦77,000 — e never enter.';
 import { initNet, joinCamp, syncPlayer, platoonBoard, recentChat, postChat,
          postSuggestion, reportMessage, awardBoard, myAwards, laughChat,
-         setPresence, campRoster, renameMe, online } from './net.js?v=20261029164049';
-import { startMusic, stopMusic, musicOn, audioState, audioSupported, BEAT, BAR } from './audio.js?v=20261029164049';
+         setPresence, campRoster, renameMe, online } from './net.js?v=20261029164421';
+import { startMusic, stopMusic, musicOn, audioState, audioSupported, BEAT, BAR } from './audio.js?v=20261029164421';
 import { playHoop, playPenalty, playQuiz, playRegister, playParade,
          playMami, playHustle, playManOWar, playSaed, playSocial,
-         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261029164049';
+         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261029164421';
 
 /* Every dance animation is expressed in beats, so the steps are on-tempo
    whether or not the sound is playing — and genuinely on the beat when it is. */
@@ -3034,7 +3036,7 @@ function offerTick(){
      others wait patiently while a shop drifts past, this one is gone the
      moment he reaches the hole — so it has to be able to interrupt them. */
   watchPothole();
-  pothole.classList.toggle('live', !!jumpTarget);
+  pothole.classList.toggle('jumpable', !!jumpTarget);
   if (jumpTarget){
     if (jumpTarget !== jumpShown){
       clearCorn(); clearRide();
