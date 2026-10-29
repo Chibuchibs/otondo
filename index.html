@@ -161,7 +161,7 @@
                      to{transform:translate(-5px,-16px);opacity:0}}
   @keyframes genShake{0%,100%{transform:translate(0,0)}
                       25%{transform:translate(.4px,-.5px)} 75%{transform:translate(-.4px,.3px)}}
-  .genSet{position:absolute;left:74%;bottom:62px;width:36px;z-index:1;
+  .genSet{position:absolute;left:74%;bottom:62px;width:36px;z-index:0;
     pointer-events:none;transform:translateX(-50%)}
   .genSet .smoke{animation:genPuff 1.2s linear infinite}
   .genSet .engine{animation:genShake .11s linear infinite}
@@ -178,7 +178,11 @@
   /* On the kerb between the two potholes, in front of the shops that drift
      behind it, behind the walkers. 36% keeps it clear of Mrs. Pothole (21%),
      Mr. Pothole (58%) and the figures' labels, which pin toward the middle. */
-  .posStand{position:absolute;left:36%;bottom:62px;width:46px;z-index:1;
+  /* z-index 0, inserted straight after the shops: in front of the buildings,
+     behind the far-lane traffic (z1), the walkers (z2) and a corper standing
+     at a stall (z0 but later in the DOM). At z1 the kerb furniture painted
+     over cars and over people, because it was added to the page after them. */
+  .posStand{position:absolute;left:36%;bottom:62px;width:46px;z-index:0;
     pointer-events:none;transform:translateX(-50%)}
   /* Towers: bases hidden behind the shops, tops kept under the signboard
      (bottom 150) on the right and clear of the sun on the left by the
@@ -1057,18 +1061,18 @@
 <script type="module">
 import { newGame, doAction, canDo, unlocked, ACTIONS, phaseOf, nextUnlock, postingOdds, rivalOf,
          computePosting,
-         shareText, MAX_DAY } from './game.js?v=20261028215608';
+         shareText, MAX_DAY } from './game.js?v=20261028215854';
 
 /* Kept here, not exported from game.js: a new cross-file export breaks any
    client holding a cached game.js after a deploy. */
 const ALLAWEE_NOTE = 'Allawee ₦77,000 — e never enter.';
 import { initNet, joinCamp, syncPlayer, platoonBoard, recentChat, postChat,
          postSuggestion, reportMessage, awardBoard, myAwards, laughChat,
-         setPresence, campRoster, renameMe, online } from './net.js?v=20261028215608';
-import { startMusic, stopMusic, musicOn, audioState, audioSupported, BEAT, BAR } from './audio.js?v=20261028215608';
+         setPresence, campRoster, renameMe, online } from './net.js?v=20261028215854';
+import { startMusic, stopMusic, musicOn, audioState, audioSupported, BEAT, BAR } from './audio.js?v=20261028215854';
 import { playHoop, playPenalty, playQuiz, playRegister, playParade,
          playMami, playHustle, playManOWar, playSaed, playSocial,
-         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261028215608';
+         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261028215854';
 
 /* Every dance animation is expressed in beats, so the steps are on-tempo
    whether or not the sound is playing — and genuinely on the beat when it is. */
@@ -2015,6 +2019,14 @@ potholeMrs.style.width  = MRS_W + 'px';
 potholeMrs.style.bottom = MRS_BOTTOM + 'px';
 potholeMrs.style.zIndex = '0';            // traffic drives over her
 
+/* Kerb furniture goes into the page right after the shops, so DOM order puts
+   it behind every vehicle and figure that was added later. */
+function onKerb(el){
+  const shops = sceneEl.querySelectorAll('.shop');
+  const last = shops[shops.length - 1];
+  if (last) last.insertAdjacentElement('afterend', el); else sceneEl.appendChild(el);
+}
+
 /* ---------- POS stand ----------
    The branded umbrella with a plastic chair and a terminal on a trestle — on
    every corner now, and the one piece of street furniture that is literally
@@ -2045,7 +2057,7 @@ const POS_DEFAULT = ['POS', '#1e3a6e', '#fff'];
     <rect x="3" y="46" width="1.6" height="14" fill="#f0f0ea"/>
     <rect x="10" y="46" width="1.6" height="14" fill="#f0f0ea"/>
   </svg>`;
-  sceneEl.appendChild(el);
+  onKerb(el);
 })();
 
 /* ---------- skyline ----------
@@ -2162,7 +2174,7 @@ function tower(t){
       <circle class="smoke" cx="2.5" cy="12" r="2.1" fill="#8a8378" style="animation-delay:-.8s"/>
     </g>
   </svg>`;
-  sceneEl.appendChild(el);
+  onKerb(el);
 })();
 
 const potX = () => sceneEl.getBoundingClientRect().width * POT_AT;
