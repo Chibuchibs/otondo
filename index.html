@@ -1097,18 +1097,18 @@
 <script type="module">
 import { newGame, doAction, canDo, unlocked, ACTIONS, phaseOf, nextUnlock, postingOdds, rivalOf,
          computePosting,
-         shareText, MAX_DAY } from './game.js?v=20261029104759';
+         shareText, MAX_DAY } from './game.js?v=20261029105201';
 
 /* Kept here, not exported from game.js: a new cross-file export breaks any
    client holding a cached game.js after a deploy. */
 const ALLAWEE_NOTE = 'Allawee ₦77,000 — e never enter.';
 import { initNet, joinCamp, syncPlayer, platoonBoard, recentChat, postChat,
          postSuggestion, reportMessage, awardBoard, myAwards, laughChat,
-         setPresence, campRoster, renameMe, online } from './net.js?v=20261029104759';
-import { startMusic, stopMusic, musicOn, audioState, audioSupported, BEAT, BAR } from './audio.js?v=20261029104759';
+         setPresence, campRoster, renameMe, online } from './net.js?v=20261029105201';
+import { startMusic, stopMusic, musicOn, audioState, audioSupported, BEAT, BAR } from './audio.js?v=20261029105201';
 import { playHoop, playPenalty, playQuiz, playRegister, playParade,
          playMami, playHustle, playManOWar, playSaed, playSocial,
-         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261029104759';
+         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261029105201';
 
 /* Every dance animation is expressed in beats, so the steps are on-tempo
    whether or not the sound is playing — and genuinely on the beat when it is. */
@@ -1532,9 +1532,11 @@ function fillScene(el, n, big){
 }
 roadside($('scene'));
 traffic($('scene'));
-/* Three, not four. The pavement also carries the chase, the fire, a label
-   and the YOU marker — a fourth trekker tipped it into clutter. */
-fillScene($('scene'), 3, false);
+/* Two, not three (and not four before that). The pavement also carries the
+   chase, the fire, a label and the YOU marker, and each cut has read as less
+   clutter and a clearer "that one is you". Two are half a cycle apart — 240px
+   on a phone — so EDGE below is set to keep one of them always in the band. */
+fillScene($('scene'), 2, false);
 /* Each figure's place in the procession. The three share one duration and sit
    a third of a cycle apart, which only holds while nothing re-phases them —
    and a ride did exactly that, dropping the rider three-quarters of the way
@@ -1805,7 +1807,11 @@ const sceneW = () => sceneEl.getBoundingClientRect().width;
    up over a different person from the one it named. Measured across the full
    13.5s march cycle at 50ms: a figure is inside the band on 270 of 270 steps
    at every pad from 0.08 up to 0.22, so this costs nothing. */
-const EDGE = 0.18;
+/* 0.16 with two walkers: they sit 64% of the scene apart, and a band from
+   16% to 84% is 68% wide, so one is always inside it with room to spare. At
+   0.18 the band (64%) matched the spacing exactly and the marker flickered at
+   the boundary. */
+const EDGE = 0.16;
 
 /* Free to be given a job. A figure already running an errand is not, and an
    offer has to skip them rather than suppress itself. */
@@ -2029,7 +2035,11 @@ if (!calm()){
    only thing that cost anything, never tapping would be strictly better play
    and the task would punish the only people who engaged with it. */
 const POT_AT    = 0.58;    // across the scene; fixed so it can be learned
-const POT_WARN  = 96;      // px of approach you get to react in
+/* 150px, up from 96: about four seconds of warning at walking pace instead
+   of under three. The user watched figures go in and felt they had not been
+   given a fair chance; the jump is the one task with a deadline, so it gets
+   the longest run-up. */
+const POT_WARN  = 150;     // px of approach you get to react in
 const JUMP_COST = 4;
 const FALL_COST = 12;
 /* After a pothole is dealt with, nobody is asked again for a while. Without
