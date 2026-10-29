@@ -43,7 +43,16 @@
     color:var(--white);background:var(--green);padding:5px 10px;border-radius:99px}
 
   /* ---------- walking scene ---------- */
-  .scene{position:relative;height:218px;margin:0 -12px 16px;overflow:hidden;
+  /* The stage spans the whole window (full-bleed out of the 470px column); the
+     scene inside it is drawn at a fixed scale and scaled by --k. The stage's
+     own background repeats the scene's sky and road, for the rare window shape
+     (ultrawide, phone on its side) where the scene does not fill the width. */
+  .stage{position:relative;left:50%;width:var(--vw,100vw);margin:0 0 16px calc(var(--vw,100vw) / -2);
+    height:calc(218px * var(--k,1));overflow:hidden;
+    background:linear-gradient(#f7edd6 0%,#f2e4c6 62%,var(--dust) 62%,#d6caa8 100%)}
+  html{overflow-x:clip}
+  .scene{position:absolute;left:50%;top:0;height:218px;margin:0;overflow:hidden;
+    transform:translateX(-50%) scale(var(--k,1));transform-origin:50% 0;
     background:linear-gradient(#f7edd6 0%,#f2e4c6 62%,var(--dust) 62%,#d6caa8 100%)}
   /* ---------- weather over the trek ----------
      Three moods on a loop: hot sun, storm, harmattan wind. The sun is the joke —
@@ -176,7 +185,7 @@
      Variable reward: the fixed cycle is learned in two minutes, and these are
      what make somebody say "did you see the…" to the next person. */
   .convoy{position:absolute;left:0;right:0;bottom:30px;height:64px;z-index:1;pointer-events:none}
-  .convoy .car{position:absolute;animation:drive 4.6s linear both}
+  .convoy .car{position:absolute;animation:drive linear both}
   /* Only the Odogwu's cars take a tap — the strip itself stays inert so a
      finger between the cars still reaches the street. */
   .convoy.odogwu .car{pointer-events:auto;cursor:pointer;-webkit-tap-highlight-color:transparent}
@@ -193,8 +202,7 @@
   .convoy .rider i{position:absolute;left:44%;top:0;width:7px;height:7px;border-radius:50%;
     background:#3b7bff;box-shadow:0 0 6px 2px rgba(59,123,255,.7)}
   .convoy .rider i.lightR{background:#ff3b3b;box-shadow:0 0 6px 2px rgba(255,59,59,.7)}
-  .goat{position:absolute;bottom:36px;z-index:1;width:40px;pointer-events:none;
-    transition:left 3.4s linear}
+  .goat{position:absolute;bottom:36px;z-index:1;width:40px;pointer-events:none}
   .goat svg{width:100%;display:block}
   @keyframes goatLeg{0%,100%{transform:rotate(14deg)}50%{transform:rotate(-14deg)}}
   .goat .gl{animation:goatLeg .42s ease-in-out infinite;transform-box:fill-box;transform-origin:top center}
@@ -265,7 +273,8 @@
   .vehicle{position:absolute;z-index:1;animation:drive linear infinite}
   /* roadside stalls: furthest back, drifting slower than traffic (parallax).
      Each signboard is an ad slot — swap SHOPS[].sign for a brand. */
-  .shop{position:absolute;z-index:0;animation:drive linear infinite}
+  .shop{position:absolute;z-index:0;animation:shopDrive linear infinite}
+  @keyframes shopDrive{from{left:-50%}to{left:118%}}
   @keyframes drive{from{left:-22%}to{left:118%}}
   .wheel{animation:spin .5s linear infinite;transform-box:fill-box;
     transform-origin:center}
@@ -567,6 +576,12 @@
 
   /* ---------- stats ---------- */
   .stats{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px}
+  /* Under a full-width stage, a wider control column with the four stats in one
+     row — the same cards, a quarter of the height. */
+  @media (min-width:760px){
+    .wrap{max-width:720px}
+    .stats{grid-template-columns:repeat(4,1fr)}
+  }
   .stat{background:var(--white);border:1px solid var(--line);border-radius:12px;padding:9px 11px}
   .stat b{display:block;font-size:10px;text-transform:uppercase;letter-spacing:.1em;
     color:var(--muted);font-weight:800}
@@ -929,7 +944,7 @@
     </button>
     <div class="day" id="dayLbl"></div></header>
 
-  <div class="scene" id="scene">
+  <div class="stage" id="stage"><div class="scene" id="scene">
     <svg class="sun" viewBox="0 0 80 60" aria-hidden="true">
       <g class="sunRays" stroke="#f3c969" stroke-width="3" stroke-linecap="round">
         <line x1="26" y1="6"  x2="26" y2="12"/><line x1="26" y1="48" x2="26" y2="54"/>
@@ -1007,7 +1022,37 @@
     <div class="road"></div>
     <div class="sign"><b>NO WAHALA</b><i></i></div>
     <div class="tapHint" id="tapHint"><b>👆</b><span>Tap the one with the sign</span></div>
-  </div>
+  </div></div>
+  <script>
+  /* The stage. The scene is drawn at a fixed scale and SCALED to fill the
+     window, so every position, speed and timing tuned at phone size holds
+     everywhere; on a wide screen the street is also drawn WIDER (more road,
+     shops further apart) rather than just bigger, so it reaches edge to edge
+     without the scene growing taller than the window. Runs during parse, before
+     first paint, so there is no jump. The module reads the width it set
+     (scene.offsetWidth) to stretch its % timings to match. */
+  (function(){
+    var MIN_W = 375, MAX_W = 640, H = 218, MAX_FRAC = .62;
+    var stage = document.getElementById('stage'), scene = document.getElementById('scene');
+    var vw = document.documentElement.clientWidth, vh = window.innerHeight;
+    /* Scale is capped so the scene never takes more than 62% of the window's
+       height. Within that, the scene is drawn as wide as it needs to be to
+       reach the window's edges (375 on a phone, up to 640 on a monitor). The
+       width is chosen once: the module reads it to scale its timings. */
+    var kH = vh * MAX_FRAC / H;
+    var k = Math.min(vw / MIN_W, kH);
+    var W = Math.round(Math.min(MAX_W, Math.max(MIN_W, vw / k)));
+    scene.style.width = W + 'px';
+    function fit(){
+      vw = document.documentElement.clientWidth; vh = window.innerHeight;
+      var kk = Math.min(vw / W, vh * MAX_FRAC / H);
+      stage.style.setProperty('--vw', vw + 'px');
+      stage.style.setProperty('--k', kk.toFixed(4));
+    }
+    fit();
+    var t; addEventListener('resize', function(){ clearTimeout(t); t = setTimeout(fit, 120); });
+  })();
+  </script>
 
   <section id="intro" class="intro">
     <p><b>You don enter camp with ₦20,000.</b> That na the money you carry come —
@@ -1123,18 +1168,42 @@
 <script type="module">
 import { newGame, doAction, canDo, unlocked, ACTIONS, phaseOf, nextUnlock, postingOdds, rivalOf,
          computePosting,
-         shareText, MAX_DAY } from './game.js?v=20261029153132';
+         shareText, MAX_DAY } from './game.js?v=20261029154750';
+
+/* ---------- scene coordinates ----------
+   The scene is scaled by a transform (see the stage), so a native
+   getBoundingClientRect reports scaled, on-screen pixels while every left /
+   bottom / translate the scene code writes is in scene pixels. sceneRect()
+   returns rects in scene pixels for anything inside the scene — measured from
+   the scene's own on-screen corner — and the native rect for anything else.
+   All scene code measures through it; at a scale of 1 it is the native rect. */
+Element.prototype.sceneRect = function(){
+  const r = this.getBoundingClientRect();
+  const sc = document.getElementById('scene');
+  if (!sc || !(this === sc || sc.contains(this))) return r;
+  const S = sc.getBoundingClientRect();
+  const k = S.width / (sc.offsetWidth || S.width);
+  if (Math.abs(k - 1) < 1e-4) return r;
+  const left = S.left + (r.left - S.left) / k, top = S.top + (r.top - S.top) / k;
+  const width = r.width / k, height = r.height / k;
+  return { left, top, width, height, right: left + width, bottom: top + height, x: left, y: top };
+};
+/* Time scale. Most of the scene moves in % of its width, so a wider street
+   would move faster in pixels. TS stretches those durations by the same factor
+   the street was widened, keeping walking, driving and running speeds exactly
+   what they are on a phone (where TS is 1). */
+const TS = (document.getElementById('scene').offsetWidth || 375) / 375;
 
 /* Kept here, not exported from game.js: a new cross-file export breaks any
    client holding a cached game.js after a deploy. */
 const ALLAWEE_NOTE = 'Allawee ₦77,000 — e never enter.';
 import { initNet, joinCamp, syncPlayer, platoonBoard, recentChat, postChat,
          postSuggestion, reportMessage, awardBoard, myAwards, laughChat,
-         setPresence, campRoster, renameMe, online } from './net.js?v=20261029153132';
-import { startMusic, stopMusic, musicOn, audioState, audioSupported, BEAT, BAR } from './audio.js?v=20261029153132';
+         setPresence, campRoster, renameMe, online } from './net.js?v=20261029154750';
+import { startMusic, stopMusic, musicOn, audioState, audioSupported, BEAT, BAR } from './audio.js?v=20261029154750';
 import { playHoop, playPenalty, playQuiz, playRegister, playParade,
          playMami, playHustle, playManOWar, playSaed, playSocial,
-         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261029153132';
+         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261029154750';
 
 /* Every dance animation is expressed in beats, so the steps are on-tempo
    whether or not the sound is playing — and genuinely on the beat when it is. */
@@ -1463,6 +1532,13 @@ const SHOPS = [
   /* The hand-painted board with six hairstyles on it, where FURNITURE was. A
      whitewashed front so the painted board is the colour on it, and a haircut
      is the errand — 500 and a lift to belle, because a fresh cut IS belle. */
+  /* SAED in one tap: a bakery is the trade everybody's cousin learnt in camp.
+     It pays credibility, so it is once per camp day — with money allowed to go
+     negative, an uncapped paid credibility tap is an infinite one. The day it
+     is used, it simply stops being offered. Not food: the corper goes in to
+     learn, he does not stand there eating. */
+  { sign: 'BAKERY',          w: 104, body: '#d98f7e', roof: '#8a4b2a', bakery: true,
+    errand: 'TAP TO LEARN A TRADE', price: 1000, cred: 2, trade: true },
   { sign: 'BARBING SALON',   w: 116, body: '#ece4cf', roof: '#6d6450', barber: true,
     errand: 'TAP FOR A HAIRCUT', price: 500, belle: 8 },
 ];
@@ -1533,6 +1609,13 @@ function shop(cfg){
       <rect x="54" y="40" width="13" height="4"  rx="1" fill="#8a5a31"/>
       <rect x="70" y="46" width="12" height="10" rx="1" fill="#95633a"/>
       <rect x="70" y="42" width="12" height="4"  rx="1" fill="#7d4b2c"/>` : ''}
+    ${cfg.bakery ? `
+      <rect x="53" y="41.4" width="28" height="1.6" fill="#8a6b3f"/>
+      <ellipse cx="58" cy="39.6" rx="4.2" ry="2.3" fill="#c98a43"/>
+      <ellipse cx="67" cy="39.6" rx="4.2" ry="2.3" fill="#b97a35"/>
+      <ellipse cx="76" cy="39.6" rx="4.2" ry="2.3" fill="#c98a43"/>
+      <path d="M56.2 38.6l1 1M58.4 38.4l1 1M65.2 38.6l1 1M67.4 38.4l1 1M74.2 38.6l1 1M76.4 38.4l1 1"
+            stroke="#8a5a2a" stroke-width=".6" stroke-linecap="round"/>` : ''}
     ${cfg.barber ? barberBoard(8, -8, 84) : board(cfg.sign, 10, 6, 80)}
   </svg>`;
 }
@@ -1540,7 +1623,10 @@ function shop(cfg){
 /* Shared so the boli run can work out exactly how fast a stall is moving.
    @keyframes drive carries them from left:-22% to 118% — 140% of the scene
    width — over SHOP_CYCLE seconds. */
-const SHOP_CYCLE = 42, SHOP_TRAVEL = 1.40;
+/* Six shops on a 168% track, not five on 140%: spacing stays 28% of the
+   scene each and speed stays 1.40/42 = 1.68/50.4 per second, so adding the
+   bakery neither squeezes the row nor makes it drift faster. */
+const SHOP_CYCLE = 50.4 * TS, SHOP_TRAVEL = 1.68;
 
 function roadside(el){
   /* one shared duration keeps them evenly spaced forever; different
@@ -1551,6 +1637,7 @@ function roadside(el){
        does not silently send the runner to a furniture shop for lunch */
     `<div class="shop"${cfg.food ? ' data-food="1"' : ''} data-errand="${cfg.errand}"
        data-price="${cfg.price || 0}" data-belle="${cfg.belle || 0}"
+       ${cfg.cred ? `data-cred="${cfg.cred}"` : ''} ${cfg.trade ? 'data-trade="1"' : ''}
        ${cfg.errand2 ? `data-errand2="${cfg.errand2}" data-price2="${cfg.price2 || 0}"` : ''}
        style="width:${Math.round(cfg.w*1.12)}px;bottom:62px;
        animation-duration:${CYCLE}s;
@@ -1594,7 +1681,7 @@ function traffic(el){
   ];
   el.insertAdjacentHTML('beforeend', fleet.map(v =>
     `<div class="vehicle" style="width:${v.w}px;bottom:${v.bottom}px;
-       animation-duration:${v.speed}s;animation-delay:${v.delay}s">${v.svg}</div>`).join(''));
+       animation-duration:${v.speed * TS}s;animation-delay:${v.delay * TS}s">${v.svg}</div>`).join(''));
 }
 
 function fillScene(el, n, big){
@@ -1613,7 +1700,7 @@ function fillScene(el, n, big){
      one of them is always well inside the frame and the YOU marker always has
      somebody worth pointing at. Variety now comes from scale, kit and skin
      rather than from speed. */
-  const CYCLE = 13.5;
+  const CYCLE = 13.5 * TS;
   /* One in sunglasses who walks briskly with tight arms; one with the
      checked scarf who struts — longer stride, big swing. Different kit,
      different carry, different skin, different gait: two people, not a pair. */
@@ -1805,7 +1892,7 @@ function lineUp(){
      than the last, while they are still walking, and the line comes out
      crooked. */
   sc.classList.add('dancing');
-  const box = sc.getBoundingClientRect();
+  const box = sc.sceneRect();
   const gap = Math.min(64, box.width / (crew.length + 1));
   const first = (box.width - gap * (crew.length - 1)) / 2;
   /* Measure with the transition switched off and any previous offset cleared,
@@ -1814,7 +1901,7 @@ function lineUp(){
   crew.forEach(p => { p.style.transition = 'none'; p.style.transform = 'none'; });
   void sc.offsetWidth;                                   // force the reflow
   const here = crew.map(p => {
-    const r = p.getBoundingClientRect();
+    const r = p.sceneRect();
     return r.left - box.left + r.width / 2;
   });
   crew.forEach((p, i) => {
@@ -1894,7 +1981,7 @@ function danceBreak(){
 
 const sceneEl = $('scene');
 const calm = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-const sceneW = () => sceneEl.getBoundingClientRect().width;
+const sceneW = () => sceneEl.sceneRect().width;
 /* One number for "close enough to the edge to still count". The YOU marker
    used 0.08 and the two offers used 0.12, so a figure in that 4% band got the
    marker with no instruction above it — the screen naming someone and then
@@ -1940,8 +2027,8 @@ function pickFigure(box){
 function hailRide(p){
   if (p.dataset.busy) return;                 // one ride per figure
   p.dataset.busy = '1';
-  const box = sceneEl.getBoundingClientRect();
-  const r   = p.getBoundingClientRect();
+  const box = sceneEl.sceneRect();
+  const r   = p.sceneRect();
   const x   = Math.round(r.left - box.left);
 
   p.style.animation = 'none';
@@ -2098,13 +2185,13 @@ function aimPointer(){
        on the screen at all times, and a tap on that walker still does
        something (see the click handler's fallbacks). */
     if (performance.now() - lastAimed < 500) return;
-    const box0 = sceneEl.getBoundingClientRect();
+    const box0 = sceneEl.sceneRect();
     best = [...sceneEl.querySelectorAll(':scope > .corper')]
       .filter(freeFig).find(p => inFrame(p, box0, 0.05)) || null;
     if (!best){ pointer.style.opacity = '0'; return; }
   }
-  const box = sceneEl.getBoundingClientRect();
-  const r = best.getBoundingClientRect();
+  const box = sceneEl.sceneRect();
+  const r = best.sceneRect();
   const centre = r.left - box.left + r.width / 2;
   /* A figure that has left the frame keeps no marker. Without this the arrow
      followed a departing target straight off the scene — measured at left:393
@@ -2383,10 +2470,10 @@ function tower(t){
   onKerb(el);
 })();
 
-const potX = () => sceneEl.getBoundingClientRect().width * POT_AT;
+const potX = () => sceneEl.sceneRect().width * POT_AT;
 function placePothole(){
   pothole.style.left = Math.round(potX() - 40) + 'px';   // box is 80 wide now
-  const w = sceneEl.getBoundingClientRect().width;
+  const w = sceneEl.sceneRect().width;
   potholeMrs.style.left = Math.round(w * MRS_AT - MRS_W / 2) + 'px';
 }
 placePothole();
@@ -2394,7 +2481,7 @@ addEventListener('resize', placePothole);
 
 /* Centre of a figure, in scene pixels. */
 const figX = (p, box) => {
-  const r = p.getBoundingClientRect();
+  const r = p.sceneRect();
   return r.left - box.left + r.width / 2;
 };
 
@@ -2408,12 +2495,12 @@ const figX = (p, box) => {
 function rejoinGrid(p, stoodStillMs){
   const march = p.getAnimations().find(a => a.animationName === 'march');
   if (!march || calm()) return;
-  const before = p.getBoundingClientRect().left;
+  const before = p.sceneRect().left;
   const other = [...sceneEl.querySelectorAll(':scope > .corper')].find(q => q !== p && freeFig(q));
   const ref = other && other.getAnimations().find(a => a.animationName === 'march');
   if (ref && ref.currentTime != null) march.currentTime = ref.currentTime;
   else march.currentTime += stoodStillMs;
-  const after = p.getBoundingClientRect().left;
+  const after = p.sceneRect().left;
   p.style.transition = 'none';
   p.style.transform = `translateX(${Math.round(before - after)}px)`;
   void p.offsetWidth;
@@ -2513,7 +2600,7 @@ function fallIn(p){
 let jumpTarget = null;
 function watchPothole(){
   if (calm()) return;
-  const box = sceneEl.getBoundingClientRect();
+  const box = sceneEl.sceneRect();
   const x = potX();
   jumpTarget = null;
   sceneEl.querySelectorAll(':scope > .corper').forEach(p => {
@@ -2569,7 +2656,7 @@ function pinInside(el, box, centre, gap = 6){
 /* A declaration, not a const arrow: aimPointer's timer starts above this
    point in the file and a `const` read early throws. */
 function inFrame(el, box, pad = 0.12){
-  const r = el.getBoundingClientRect();
+  const r = el.sceneRect();
   const c = r.left - box.left + r.width / 2;
   return c > box.width * pad && c < box.width * (1 - pad);
 }
@@ -2601,7 +2688,7 @@ const flipTurn = () => { turnNo++; rideTurn = (turnNo % 4 === 0); };
 
 function offerCorn(force){
   if (calm()) return;
-  const box = sceneEl.getBoundingClientRect();
+  const box = sceneEl.sceneRect();
   /* Deliberately does NOT bail on sceneBusy(). The marked figure is the only
      one the player can act through, so suppressing it during a chase left YOU
      standing there unable to do anything. The chase and the fire still exclude
@@ -2615,13 +2702,16 @@ function offerCorn(force){
      with no instruction, and tapping did nothing, because a busy figure is
      excluded from the safety net too. Three reported symptoms, one line. */
   /* no shop in frame means nowhere to run to — offering it would be a lie */
-  if (!cornShop || !cornShop.isConnected || !inFrame(cornShop, box)){
+  const tradeDone = el => el.dataset.trade && s && s.tradeDay === s.day;
+  if (!cornShop || !cornShop.isConnected || !inFrame(cornShop, box) || tradeDone(cornShop)){
     /* Pick among the shops in frame, not the first one in document order.
        `.find()` always returned the earliest in the DOM that qualified, so of
        five shops only two were ever offered — measured over 33s: roasted corn
        28%, jollof 17%, and the charger, provisions and streaming chair never
        once. */
-    const open = [...sceneEl.querySelectorAll('.shop[data-errand]')].filter(el => inFrame(el, box));
+    const open = [...sceneEl.querySelectorAll('.shop[data-errand]')]
+      .filter(el => inFrame(el, box))
+      .filter(el => !tradeDone(el));
     cornShop = open.length ? open[Math.floor(Math.random() * open.length)] : null;
     /* Which of the shop's errands this time, chosen when the shop is. Choosing
        it per frame would make the label flicker between the two. */
@@ -2656,7 +2746,7 @@ function offerCorn(force){
   cornTag.textContent = ((alt ? cornShop.dataset.errand2 : cornShop.dataset.errand)
                          || 'TAP TO GO SHOP')
     + (cost && s ? `  \u20a6${cost.toLocaleString()}` : '');
-  const r = cornTarget.getBoundingClientRect();
+  const r = cornTarget.sceneRect();
   cornTag.style.display = 'block';
   pinInside(cornTag, box, r.left - box.left + r.width / 2);
   cornTag.style.bottom = Math.round(box.bottom - r.top + 40) + 'px';
@@ -2676,7 +2766,7 @@ let rideTarget = null;
 function offerRide(force){
   if (calm()) return;
   if ((!rideTurn && !force) || cornTarget){ clearRide(); return; }
-  const box = sceneEl.getBoundingClientRect();
+  const box = sceneEl.sceneRect();
   if (!rideTarget || !rideTarget.isConnected || !freeFig(rideTarget)
       || !inFrame(rideTarget, box, EDGE)){
     if (rideTarget){ unmark(rideTarget); rideTarget.classList.remove('wantsRide'); }
@@ -2687,7 +2777,7 @@ function offerRide(force){
   markTappable(rideTarget);
   rideTag.textContent = 'TAP TO RIDE KEKE';
   rideTag.style.display = 'block';
-  const r = rideTarget.getBoundingClientRect();
+  const r = rideTarget.sceneRect();
   pinInside(rideTag, box, r.left - box.left + r.width / 2);
   rideTag.style.bottom = Math.round(box.bottom - r.top + 40) + 'px';
 }
@@ -2719,8 +2809,8 @@ function offerTick(){
       jumpTag.textContent = 'TAP TO JUMP MR. POTHOLE';
       jumpTag.style.display = 'block';
     }
-    const box = sceneEl.getBoundingClientRect();
-    const r = jumpShown.getBoundingClientRect();
+    const box = sceneEl.sceneRect();
+    const r = jumpShown.sceneRect();
     pinInside(jumpTag, box, r.left - box.left + r.width / 2);
     jumpTag.style.bottom = Math.round(box.bottom - r.top + 40) + 'px';
     sweepOffers();
@@ -2853,7 +2943,7 @@ sceneEl.addEventListener('click', e => {
      and every branch above can miss in some arrangement of the scene. */
   if (p){
     const spare = [...sceneEl.querySelectorAll(':scope > .corper')]
-      .filter(freeFig).find(q => inFrame(q, sceneEl.getBoundingClientRect(), 0.05));
+      .filter(freeFig).find(q => inFrame(q, sceneEl.sceneRect(), 0.05));
     if (spare){ hintUsed(); backToTrekking(); hailRide(spare); return; }
   }
   /* Safety net: any trekker who is not already doing something answers a tap.
@@ -3005,10 +3095,12 @@ function agberoChase(){
   cast.forEach(c => {
     const wrap = document.createElement('div');
     wrap.className = 'runner' + (c.rags ? ' thief' : '') + (c.raised ? ' raised' : '');
+    wrap.style.animationDuration = (12 * TS) + 's';     // both of its animations
     wrap.style.width = Math.round(46 * c.scale) + 'px';
     wrap.style.setProperty('--trail', c.trail + 'px');
     const flip = document.createElement('span');
     flip.className = 'flip';
+    flip.style.animationDuration = (12 * TS) + 's';
     flip.innerHTML = civilian(SKINS[c.skin % SKINS.length], c.scale, 9, 0,
                               c.tone, !!c.rags, !!c.stick, !!c.raised);
     wrap.appendChild(flip);
@@ -3035,9 +3127,9 @@ function agberoChase(){
       sceneEl.appendChild(tag);
       const follow = () => {
         if (!fig.isConnected){ tag.remove(); return; }
-        const box = sceneEl.getBoundingClientRect(), r = fig.getBoundingClientRect();
+        const box = sceneEl.sceneRect(), r = fig.sceneRect();
         /* Outbound leg only, the moment his feet reach the hole. */
-        if (trips && !wrap.dataset.caught && performance.now() - chaseT0 < 5200){
+        if (trips && !wrap.dataset.caught && performance.now() - chaseT0 < 5200 * TS){
           const cx = r.left - box.left + r.width / 2;
           if (cx >= potX() - 4 && cx <= potX() + 40) mobCatch(wrap);
         }
@@ -3051,7 +3143,7 @@ function agberoChase(){
       follow();
     }
     wrap.addEventListener('animationend', () => wrap.remove());
-    setTimeout(() => wrap.remove(), 16000);   // see burningDanfo: frozen tabs
+    setTimeout(() => wrap.remove(), 16000 * TS);   // see burningDanfo: frozen tabs
   });
 }
 
@@ -3079,7 +3171,7 @@ function burningDanfo(){
   v.dataset.fire = '3';
   v.style.width = '96px';
   v.style.bottom = '34px';
-  v.style.animationDuration = '15s';           // the slow lane, so it is hittable
+  v.style.animationDuration = (15 * TS) + 's'; // the slow lane, so it is hittable
   v.style.animationIterationCount = '1';
   /* Two flames, not one: a single flame on a 96px bus read as a small problem,
      and the tap tag had to do all the work of saying this is an emergency. */
@@ -3138,8 +3230,8 @@ function douse(v){
 /* Per-event, because they are no longer the same length: the danfo crosses
    once in 15s, the chase makes one round trip in 7.5s. One shared number
    would either cut the bus off or leave dead air after the chase. */
-const FIRE_LEN  = 15500;
-const CHASE_LEN = 12500;
+const FIRE_LEN  = 15500 * TS;
+const CHASE_LEN = 12500 * TS;
 const EVENT_GAP = 4000;     // a breath of ordinary street between them
 let fireNext = true;        // fire leads: it is the one with the louder label
 
@@ -3153,12 +3245,15 @@ function nextSceneEvent(){
      ones alternate so the same surprise never comes twice running. The
      fire/chase alternation is left where it was, so a rare slot delays the
      next regular event rather than skipping it. */
-  slotNo++;
-  const forceRare = !rareSeen && slotNo === 4;
-  if (forceRare || Math.random() < RARE_ODDS){
-    rareSeen = true;
-    if (rareNext === 'convoy'){ convoy();       len = CONVOY_LEN; rareNext = 'goat'; }
-    else                      { goatCrossing(); len = GOAT_LEN;   rareNext = 'convoy'; }
+  /* The convoys left the queue for their own clock (see onSchedule); the goat
+     is the one rare event left in it. */
+  /* The fire and the goat share the far lane with the convoys; if one is due
+     before they would clear it, this slot goes to the chase (near pavement)
+     instead, and the fire keeps its place next in line. */
+  if (Math.random() < RARE_ODDS && !convoySoon(GOAT_LEN)){
+    goatCrossing(); len = GOAT_LEN;
+  } else if (fireNext && convoySoon(FIRE_LEN)){
+    agberoChase(); len = CHASE_LEN;
   } else {
     len = fireNext ? FIRE_LEN : CHASE_LEN;
     if (fireNext) burningDanfo(); else agberoChase();
@@ -3167,22 +3262,14 @@ function nextSceneEvent(){
   setTimeout(nextSceneEvent, len + EVENT_GAP);
 }
 /* ---------- rare events ----------
-   One slot in five, and the two alternate. Rare is the point: at these odds a
-   player sees one every couple of minutes and cannot predict which — the
-   fixed cycle is learned in two minutes, these are not. (One in eight was the
-   first setting; the user waited too long to see a convoy.)
-   And one guarantee: if the dice have not produced a rare event by the fourth
-   slot — about a minute in — the fourth slot is one. A first visit is the one
-   that decides whether there is a second, and it must not be the visit that
-   happens to roll four plain events in a row. */
-let slotNo = 0, rareSeen = false;
+   The goat takes one queue slot in five. The convoys used to share this slot
+   and came round minutes apart; they now run on their own clock (onSchedule),
+   which also covers "a first visit sees something rare inside a minute" — the
+   oga is due at 0:50 — so the old fourth-slot guarantee went with them. */
 const RARE_ODDS  = 0.2;
 const TRIP_ODDS  = 0.125;    // one chase in eight, the thief trips on Mr. Pothole
-/* The convoy is two passes: the oga's, then — a few seconds behind, using the
-   gap his escort just opened — the Odogwu's. CONVOY_LEN covers both. */
-const CONVOY_PASS = 5600, ODOGWU_AFTER = [2600, 4400], GOAT_LEN = 10800;
-const CONVOY_LEN  = CONVOY_PASS + ODOGWU_AFTER[1] + CONVOY_PASS;
-let rareNext = 'convoy';
+/* Each convoy pass — the oga's or the Odogwu's — is on screen this long. */
+const CONVOY_PASS = 5600 * TS, GOAT_LEN = (3400 + 3200) * TS + 3800 + 400;
 
 /* An oga's convoy: two outriders, two black SUVs with the flag on the bonnet,
    strobes going, straight through the far lane at twice traffic speed. "Oga"
@@ -3220,22 +3307,18 @@ function pickup(){
   </svg>`;
 }
 function convoy(){
-  if (calm() || sceneBusy()) return;
+  if (calm()) return;
   const c = document.createElement('div');
   c.className = 'convoy';
+  const D = (4.6 * TS) + 's', dl = t => (t * TS) + 's';
   c.innerHTML =
-    `<div class="car rider" style="width:48px;bottom:10px;animation-delay:0s">${okada(false)}<i class="lightB"></i></div>` +
-    `<div class="car rider" style="width:48px;bottom:14px;animation-delay:.24s">${okada(false)}<i class="lightR"></i></div>` +
-    `<div class="car" style="width:86px;bottom:4px;animation-delay:.56s">${suv()}</div>` +
-    `<div class="car" style="width:86px;bottom:7px;animation-delay:.9s">${suv()}</div>`;
+    `<div class="car rider" style="width:48px;bottom:10px;animation-duration:${D};animation-delay:0s">${okada(false)}<i class="lightB"></i></div>` +
+    `<div class="car rider" style="width:48px;bottom:14px;animation-duration:${D};animation-delay:${dl(.24)}">${okada(false)}<i class="lightR"></i></div>` +
+    `<div class="car" style="width:86px;bottom:4px;animation-duration:${D};animation-delay:${dl(.56)}">${suv()}</div>` +
+    `<div class="car" style="width:86px;bottom:7px;animation-duration:${D};animation-delay:${dl(.9)}">${suv()}</div>`;
   sceneEl.appendChild(c);
   if (shoutSign) shoutSign(['OGA DEY PASS!', '#1d1d1b', '#ffd34d']);
   setTimeout(() => c.remove(), CONVOY_PASS);
-  /* …and a few seconds behind him, the Odogwu, with the same siren and none of
-     the entitlement to it. The gap is random so the second pass is not a
-     pattern the eye learns. */
-  const after = ODOGWU_AFTER[0] + Math.random() * (ODOGWU_AFTER[1] - ODOGWU_AFTER[0]);
-  setTimeout(odogwuConvoy, CONVOY_PASS + after);
 }
 /* The rich man's: a police pickup out front, then a white SUV and a black one,
    no flag on any bonnet. */
@@ -3246,16 +3329,50 @@ function odogwuConvoy(){
   /* Odogwus dash money. The white SUV is the one you tap — up to three times
      a pass, a few hundred naira each — and the tag on it says so. */
   c.dataset.dash = '3';
+  const D = (4.6 * TS) + 's', dl = t => (t * TS) + 's';
   c.innerHTML =
-    `<div class="car" style="width:84px;bottom:10px;animation-delay:0s">${pickup()}</div>` +
-    `<div class="car dash" style="width:90px;bottom:4px;animation-delay:.5s">${suv('#f3f1e8', false, '#c9c4b6')}<i class="tapTag">TAP FOR MONEY</i></div>` +
-    `<div class="car" style="width:86px;bottom:7px;animation-delay:.92s">${suv('#141414', false)}</div>`;
+    `<div class="car" style="width:84px;bottom:10px;animation-duration:${D};animation-delay:0s">${pickup()}</div>` +
+    `<div class="car dash" style="width:90px;bottom:4px;animation-duration:${D};animation-delay:${dl(.5)}">${suv('#f3f1e8', false, '#c9c4b6')}<i class="tapTag">TAP FOR MONEY</i></div>` +
+    `<div class="car" style="width:86px;bottom:7px;animation-duration:${D};animation-delay:${dl(.92)}">${suv('#141414', false)}</div>`;
   c.setAttribute('role', 'button');
   c.setAttribute('aria-label', 'Odogwu passing. Tap for money');
   sceneEl.appendChild(c);
   if (shoutSign) shoutSign(['ODOGWU PASSING', '#c9a227', '#1d1a10']);
   setTimeout(() => c.remove(), CONVOY_PASS);
 }
+/* ---------- the convoys, on a schedule ----------
+   The user's numbers: the oga at 0:50, the Odogwu at 1:15, and the pair round
+   again every 50s. Off the random queue and on their own clock — the queue
+   left them minutes apart. Each pass waits, up to CONVOY_MAX_WAIT, for a
+   burning danfo or the goat to clear their lane (they would drive straight
+   through either), and is skipped if the lane is still blocked; the base
+   schedule never drifts. The chase is on the near pavement and does not
+   count as a clash. The queue already holds back while a convoy is out. */
+const OGA_FIRST = 50000, ODOGWU_LAG = 25000, CONVOY_EVERY = 50000, CONVOY_MAX_WAIT = 15000;
+const convoyClash = () => !!sceneEl.querySelector('.vehicle.ablaze, .goat, .convoy');
+const convoyNext = [];               // the due time of each schedule, for the queue
+function onSchedule(at, run){
+  const slot = convoyNext.push(at) - 1;
+  const due = () => {
+    const late = performance.now() - at;
+    if (convoyClash() && late < CONVOY_MAX_WAIT){ setTimeout(due, 1000); return; }
+    if (!convoyClash()) run();
+    at += CONVOY_EVERY;
+    convoyNext[slot] = at;
+    setTimeout(due, Math.max(0, at - performance.now()));
+  };
+  setTimeout(due, Math.max(0, at - performance.now()));
+}
+/* Is a convoy due before something of this length would have cleared the far
+   lane? The queue asks before starting a fire or a goat, so the convoys come
+   on time instead of waiting behind a burning bus. */
+const convoySoon = ms => convoyNext.some(at => at - performance.now() < ms + 1000);
+if (!calm()){
+  const t0 = performance.now();
+  onSchedule(t0 + OGA_FIRST, convoy);
+  onSchedule(t0 + OGA_FIRST + ODOGWU_LAG, odogwuConvoy);
+}
+
 /* A tap on the Odogwu: notes fly out of the window, and some land on you. */
 function dashMoney(c, x, y){
   const left = (+c.dataset.dash || 0) - 1;
@@ -3270,9 +3387,13 @@ function dashMoney(c, x, y){
     floatCost(car, `+₦${got.toLocaleString()}`);
   }
   /* the spray: a few notes out of the window, each on its own arc */
-  const box = sceneEl.getBoundingClientRect();
-  const r = car.getBoundingClientRect();
-  const ox = (x ?? r.left + r.width * .55) - box.left, oy = (y ?? r.top + r.height * .35) - box.top;
+  const box = sceneEl.sceneRect();
+  const r = car.sceneRect();
+  /* x/y are screen pixels from the tap; the scene is scaled, so they are
+     brought down to scene pixels before being used as a position in it. */
+  const k = sceneEl.getBoundingClientRect().width / sceneEl.offsetWidth;
+  const ox = x != null ? (x - box.left) / k : r.left + r.width * .55 - box.left;
+  const oy = y != null ? (y - box.top)  / k : r.top + r.height * .35 - box.top;
   for (let i = 0; i < 5; i++){
     const n = document.createElement('i');
     n.className = 'cashNote';
@@ -3323,18 +3444,19 @@ function goatCrossing(){
   g.className = 'goat';
   g.innerHTML = goatSvg();
   g.style.left = '104%';
+  g.style.transition = `left ${3.4 * TS}s linear`;
   sceneEl.appendChild(g);
   requestAnimationFrame(() => requestAnimationFrame(() => { g.style.left = '46%'; }));
-  const STAND_AT = 3500, STAND_FOR = 3800;
+  const STAND_AT = 3500 * TS, STAND_FOR = 3800;
   let hold = null, honked = false;
   setTimeout(() => {
     g.classList.add('stand');
     hold = setInterval(() => {
-      const box = sceneEl.getBoundingClientRect();
-      const gr = g.getBoundingClientRect();
+      const box = sceneEl.sceneRect();
+      const gr = g.sceneRect();
       const gx = gr.left - box.left + gr.width / 2;
       sceneEl.querySelectorAll('.vehicle').forEach(v => {
-        const r = v.getBoundingClientRect();
+        const r = v.sceneRect();
         const vx = r.left - box.left + r.width;          // its nose
         const behind = vx < gx - 6 && vx > gx - 150;      // queued up behind her
         v.style.animationPlayState = behind ? 'paused' : '';
@@ -3346,7 +3468,7 @@ function goatCrossing(){
     clearInterval(hold);
     g.classList.remove('stand');
     sceneEl.querySelectorAll('.vehicle').forEach(v => { v.style.animationPlayState = ''; });
-    g.style.transition = 'left 3.2s linear';
+    g.style.transition = `left ${3.2 * TS}s linear`;
     g.style.left = '-14%';
   }, STAND_AT + STAND_FOR);
   setTimeout(() => g.remove(), GOAT_LEN);
@@ -3469,7 +3591,7 @@ function snackRun(preferred, target, paid){
   const sc = $('scene');
   if (!stillWatching()) return true;
   if (sc.classList.contains('dancing')) return false;
-  const box = sc.getBoundingClientRect();
+  const box = sc.sceneRect();
   /* Settle first. A dance that just ended leaves transforms unwinding for .7s,
      and measuring mid-unwind gives a false origin — every offset computed from
      it is then wrong by whatever was left on the clock. Clearing is safe here
@@ -3480,7 +3602,7 @@ function snackRun(preferred, target, paid){
   crew.forEach(p => { p.style.transition = 'none'; p.style.transform = 'none'; });
   void sc.offsetWidth;
   const place = el => {
-    const r = el.getBoundingClientRect();
+    const r = el.sceneRect();
     const c = r.left - box.left + r.width / 2;
     return { el, c, ok: c > box.width * 0.12 && c < box.width * 0.88 };
   };
@@ -3497,6 +3619,10 @@ function snackRun(preferred, target, paid){
   const runner = (picked && picked.ok) ? picked : crew.filter(freeFig).map(place).find(x => x.ok);
   crew.forEach(p => { p.style.transition = ''; });     // restore the CSS glide
   if (!stall || !runner) return false;
+  /* Learning a trade is claimed the moment he sets off, not when he arrives.
+     Marking it in buy() left a second's window — the run to the stall — in
+     which the offer system was free to offer the bakery again the same day. */
+  if (paid && stall.el.dataset.trade && s) s.tradeDay = s.day;
 
   const who = runner.el;
   const home = runner.c;
@@ -3505,7 +3631,7 @@ function snackRun(preferred, target, paid){
   who.classList.add('running');
 
   const stallNow = () => {
-    const r = stall.el.getBoundingClientRect();
+    const r = stall.el.sceneRect();
     return r.left - box.left + r.width / 2;
   };
   const park = x => {
@@ -3564,6 +3690,7 @@ function buy(shopEl, who){
      nobody was offered still falls back to the shop's own price. */
   const cost  = +shopEl.dataset.livePrice || +shopEl.dataset.price || 0;
   const belle = +shopEl.dataset.belle || 0;
+  const cred  = +shopEl.dataset.cred  || 0;
   if (!s || !cost) return;
   /* The full price, every time, below zero if that is where it lands. The old
      cap made everything free once you hit ₦0 — a player could keep tapping
@@ -3571,8 +3698,10 @@ function buy(shopEl, who){
      lesson about money. Debt shows in red. */
   s.money -= cost;
   if (belle) s.belle = Math.min(100, s.belle + belle);
+  if (cred)  s.cred  = (s.cred || 0) + cred;
+  if (shopEl.dataset.trade) s.tradeDay = s.day;
   render();
-  floatCost(who, `-₦${cost.toLocaleString()}`);
+  floatCost(who, `-₦${cost.toLocaleString()}` + (cred ? `  +${cred} CRED` : ''));
 }
 
 /* A number that lifts off the buyer, so the deduction is seen and not just
@@ -3582,8 +3711,8 @@ function buy(shopEl, who){
 const naira = n => (n < 0 ? '-' : '') + '₦' + Math.abs(n).toLocaleString();
 
 function floatCost(who, text){
-  const box = sceneEl.getBoundingClientRect();
-  const r   = who.getBoundingClientRect();
+  const box = sceneEl.sceneRect();
+  const r   = who.sceneRect();
   const tag = document.createElement('div');
   tag.className = 'costFloat' + (text.startsWith('+') ? ' gain' : '');
   tag.textContent = text;
