@@ -277,6 +277,7 @@
   .goat.stand .head{animation:goatChew .5s ease-in-out infinite;transform-box:fill-box;transform-origin:right center}
 
   .pothole{position:absolute;bottom:1px;z-index:1;width:80px;pointer-events:none}
+  .pothole.live{pointer-events:auto;cursor:pointer}
   /* On the kerb between the two potholes, in front of the shops that drift
      behind it, behind the walkers. 36% keeps it clear of Mrs. Pothole (21%),
      Mr. Pothole (58%) and the figures' labels, which pin toward the middle. */
@@ -1252,7 +1253,7 @@
 <script type="module">
 import { newGame, doAction, canDo, unlocked, ACTIONS, phaseOf, nextUnlock, postingOdds, rivalOf,
          computePosting,
-         shareText, MAX_DAY } from './game.js?v=20261029162206';
+         shareText, MAX_DAY } from './game.js?v=20261029162456';
 
 /* ---------- scene coordinates ----------
    The scene is scaled by a transform (see the stage), so a native
@@ -1283,11 +1284,11 @@ const TS = (document.getElementById('scene').offsetWidth || 375) / 375;
 const ALLAWEE_NOTE = 'Allawee ₦77,000 — e never enter.';
 import { initNet, joinCamp, syncPlayer, platoonBoard, recentChat, postChat,
          postSuggestion, reportMessage, awardBoard, myAwards, laughChat,
-         setPresence, campRoster, renameMe, online } from './net.js?v=20261029162206';
-import { startMusic, stopMusic, musicOn, audioState, audioSupported, BEAT, BAR } from './audio.js?v=20261029162206';
+         setPresence, campRoster, renameMe, online } from './net.js?v=20261029162456';
+import { startMusic, stopMusic, musicOn, audioState, audioSupported, BEAT, BAR } from './audio.js?v=20261029162456';
 import { playHoop, playPenalty, playQuiz, playRegister, playParade,
          playMami, playHustle, playManOWar, playSaed, playSocial,
-         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261029162206';
+         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261029162456';
 
 /* Every dance animation is expressed in beats, so the steps are on-tempo
    whether or not the sound is playing — and genuinely on the beat when it is. */
@@ -2977,10 +2978,13 @@ function offerCorn(force){
   cornTag.textContent = ((alt ? cornShop.dataset.errand2 : cornShop.dataset.errand)
                          || 'TAP TO GO SHOP')
     + (cost && s ? `  \u20a6${cost.toLocaleString()}` : '');
-  const r = cornTarget.sceneRect();
+  /* The label sits on the SHOP, not over the walker: the instruction names
+     the place, the YOU marker names the person, and a tap on either sends him
+     there. (The barber's board rides above its roof, so that one gets room.) */
+  const r = cornShop.sceneRect();
   cornTag.style.display = 'block';
   pinInside(cornTag, box, r.left - box.left + r.width / 2);
-  cornTag.style.bottom = Math.round(box.bottom - r.top + 40) + 'px';
+  cornTag.style.bottom = Math.round(box.bottom - r.top + (cornShop.querySelector('svg[overflow]') ? 16 : 4)) + 'px';
 }
 
 function clearCorn(){
@@ -3030,6 +3034,7 @@ function offerTick(){
      others wait patiently while a shop drifts past, this one is gone the
      moment he reaches the hole — so it has to be able to interrupt them. */
   watchPothole();
+  pothole.classList.toggle('live', !!jumpTarget);
   if (jumpTarget){
     if (jumpTarget !== jumpShown){
       clearCorn(); clearRide();
@@ -3040,10 +3045,10 @@ function offerTick(){
       jumpTag.textContent = 'TAP TO JUMP MR. POTHOLE';
       jumpTag.style.display = 'block';
     }
+    /* On Mr. Pothole himself, not over the walker. */
     const box = sceneEl.sceneRect();
-    const r = jumpShown.sceneRect();
-    pinInside(jumpTag, box, r.left - box.left + r.width / 2);
-    jumpTag.style.bottom = Math.round(box.bottom - r.top + 40) + 'px';
+    pinInside(jumpTag, box, potX());
+    jumpTag.style.bottom = '74px';
     sweepOffers();
     return;
   }
@@ -3165,6 +3170,10 @@ sceneEl.addEventListener('click', e => {
      walk, and the corper branch would otherwise send someone else on a ride. */
   const hw = e.target.closest('.hawker');
   if (hw){ hintUsed(); buyWares(hw); return; }
+  /* The place carries the instruction now, so the place takes the tap. */
+  const sh = e.target.closest('.shop');
+  if (sh && sh === cornShop && takeOffer(cornTarget)) return;
+  if (e.target.closest('.pothole') && takeOffer(jumpShown)) return;
   const p = e.target.closest('.corper');
   if (p && takeOffer(p)) return;
   /* Figures overlap. When they do, the one in front takes the tap — and if he
