@@ -276,6 +276,19 @@
   .corper .arm{animation:swingB .62s ease-in-out infinite;transform-origin:20px 28px}
   .corper .arm2{animation:swingA .62s ease-in-out infinite;transform-origin:24px 28px}
   .corper .torso{animation:bob .31s ease-in-out infinite}
+  /* Knees and elbows. The thigh swings from the hip as before; the shin now
+     bends at the knee on the same clock, flexing as the leg swings through
+     and straightening as it lands — which is most of what makes a walk read
+     as a walk rather than as scissors. The forearm is held slightly bent in
+     front and bends a little more as the arm swings forward. Each joint's
+     origin is set inline by the builder, at the knee and the elbow. */
+  @keyframes knee{0%{transform:rotate(5deg)}28%{transform:rotate(46deg)}
+                  55%{transform:rotate(3deg)}80%{transform:rotate(14deg)}100%{transform:rotate(5deg)}}
+  @keyframes elbow{0%,100%{transform:rotate(-26deg)}50%{transform:rotate(-44deg)}}
+  .corper .shin{animation:knee .62s ease-in-out infinite}
+  .corper .leg2 .shin{animation-delay:-.31s}
+  .corper .fore{animation:elbow .62s ease-in-out infinite}
+  .corper .arm2 .fore{animation-delay:-.31s}
   @keyframes swingA{0%,100%{transform:rotate(20deg)}50%{transform:rotate(-20deg)}}
   @keyframes swingB{0%,100%{transform:rotate(-20deg)}50%{transform:rotate(20deg)}}
   @keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-1.6px)}}
@@ -293,6 +306,7 @@
   .scene.dancing > .corper .arm  {animation:pumpA  var(--beat,.42s) ease-in-out infinite}
   .scene.dancing > .corper .arm2 {animation:pumpB  var(--beat,.42s) ease-in-out infinite}
   .scene.dancing > .corper .torso{animation:hype   calc(var(--beat,.42s)/2) ease-in-out infinite}
+  .scene.dancing > .corper .shin,.scene.dancing > .corper .fore{animation-duration:var(--beat,.42s)}
   @keyframes zankuA{0%,100%{transform:rotate(-10deg)}
                     28%{transform:rotate(42deg)}58%{transform:rotate(-18deg)}}
   @keyframes zankuB{0%,100%{transform:rotate(12deg)}
@@ -309,6 +323,7 @@
   .scene.shaku > .corper .arm  {animation:shakuArmA calc(var(--beat,.5s)/2) ease-in-out infinite}
   .scene.shaku > .corper .arm2 {animation:shakuArmB calc(var(--beat,.5s)/2) ease-in-out infinite}
   .scene.shaku .torso{animation:shakuLean var(--beat,.5s) ease-in-out infinite}
+  .scene.shaku > .corper .shin,.scene.shaku > .corper .fore{animation-duration:var(--beat,.5s)}
   @keyframes shakuLegA{0%,100%{transform:rotate(-7deg)}50%{transform:rotate(15deg)}}
   @keyframes shakuLegB{0%,100%{transform:rotate(15deg)}50%{transform:rotate(-7deg)}}
   @keyframes shakuArmA{0%,100%{transform:rotate(54deg)}50%{transform:rotate(80deg)}}
@@ -323,7 +338,9 @@
   .corper.running .leg,.corper.running .leg2,
   .corper.running .arm,.corper.running .arm2{animation-duration:.26s}
   .corper.running .torso{animation-duration:.13s}
+  .corper.running .shin,.corper.running .fore{animation-duration:.26s}
   .corper.munching .leg,.corper.munching .leg2{animation:none}
+  .corper.munching .shin,.corper.munching .fore{animation:none}
   .corper.munching .torso{animation:munch .55s ease-in-out infinite}
   .corper.munching .arm {animation:toMouth .55s ease-in-out infinite}
   /* Crossing to a stall means crossing the road. The walkers sit on z-index 2,
@@ -336,6 +353,7 @@
   /* browsing a stall: stood still, looking. No munching — nobody eats a mattress. */
   .corper.shopping .leg,.corper.shopping .leg2{animation:none}
   .corper.shopping .arm,.corper.shopping .arm2{animation:none}
+  .corper.shopping .shin,.corper.shopping .fore{animation:none}
   .corper.shopping .torso{animation:bob .9s ease-in-out infinite}
 
   /* ---------- the scene answers back ----------
@@ -346,11 +364,13 @@
   .corper.hailing{animation-play-state:paused}
   .corper.hailing .leg,.corper.hailing .leg2{animation:none}
   .corper.hailing .arm2{animation:hail .46s ease-in-out infinite}
+  .corper.hailing .shin,.corper.hailing .arm2 .fore{animation:none}
   @keyframes hail{0%,100%{transform:rotate(-142deg)}50%{transform:rotate(-112deg)}}
   /* riding: everything stops swinging and the whole figure drops onto the seat */
   .corper.riding{animation-play-state:paused;transform:translateY(12px) scale(.86)}
   .corper.riding .leg,.corper.riding .leg2,.corper.riding .arm,
   .corper.riding .arm2,.corper.riding .torso{animation:none}
+  .corper.riding .shin,.corper.riding .fore{animation:none}
   .corper.sliding,.pickup.sliding{transition:left 1.5s cubic-bezier(.4,0,.6,1)}
   /* Level with the figures, not with the far-lane traffic. At z-index 1 the
      enlarged keke was drawn behind every passing corper, which puts a vehicle
@@ -400,6 +420,8 @@
   .runner .leg,.runner .leg2{animation-duration:.2s}
   .runner .arm,.runner .arm2{animation-duration:.2s}
   .runner .torso{animation-duration:.1s}
+  .runner .shin,.runner .fore{animation-duration:.2s}
+  .runner.raised .arm2 .fore{animation:none}      /* a raised arm is straight */
   /* One round trip, not two. Four crossings held the scene for 15s and the
      second lap told the player nothing the first had not. Halving the
      keyframes AND the duration keeps the running speed exactly as it was —
@@ -1097,18 +1119,18 @@
 <script type="module">
 import { newGame, doAction, canDo, unlocked, ACTIONS, phaseOf, nextUnlock, postingOdds, rivalOf,
          computePosting,
-         shareText, MAX_DAY } from './game.js?v=20261029110815';
+         shareText, MAX_DAY } from './game.js?v=20261029111512';
 
 /* Kept here, not exported from game.js: a new cross-file export breaks any
    client holding a cached game.js after a deploy. */
 const ALLAWEE_NOTE = 'Allawee ₦77,000 — e never enter.';
 import { initNet, joinCamp, syncPlayer, platoonBoard, recentChat, postChat,
          postSuggestion, reportMessage, awardBoard, myAwards, laughChat,
-         setPresence, campRoster, renameMe, online } from './net.js?v=20261029110815';
-import { startMusic, stopMusic, musicOn, audioState, audioSupported, BEAT, BAR } from './audio.js?v=20261029110815';
+         setPresence, campRoster, renameMe, online } from './net.js?v=20261029111512';
+import { startMusic, stopMusic, musicOn, audioState, audioSupported, BEAT, BAR } from './audio.js?v=20261029111512';
 import { playHoop, playPenalty, playQuiz, playRegister, playParade,
          playMami, playHustle, playManOWar, playSaed, playSocial,
-         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261029110815';
+         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261029111512';
 
 /* Every dance animation is expressed in beats, so the steps are on-tempo
    whether or not the sound is playing — and genuinely on the beat when it is. */
@@ -1155,56 +1177,82 @@ function corper(skin, scale, speed, delay, outfit = 0, carry = 0){
      <rect x="24.8" y="34" width="5.6" height="5.4" rx="1" fill="#7f9c5c"/>
      <rect x="24.8" y="33.4" width="5.6" height="2" rx="1" fill="#6d8a4b"/>`;
 
+  /* Shoulders wider than the waist — the one line that separates a body from
+     a box. 19 across at the shoulder, 16 at the belt. */
+  const body = c => `<path d="M13.5 31q0-3 3-3h13q3 0 3 3v9.5l-1.3 11.5h-16.4L13.5 40.5z" fill="${c}"/>`;
   const torso = tee
-    ? `<rect x="14" y="28" width="18" height="25" rx="6" fill="${TEE}"/>
-       <rect x="14" y="28" width="18" height="2.6" rx="1.3" fill="${TRIM}"/>
+    ? `${body(TEE)}
+       <path d="M13.5 31q0-3 3-3h13q3 0 3 3v.2h-19z" fill="${TRIM}"/>
        <path d="M19.5 28h7l-3.5 4.5z" fill="${TRIM}"/>
-       <circle cx="23" cy="37.5" r="3.1" fill="${TRIM}" opacity=".9"/>
-       <circle cx="23" cy="37.5" r="1.3" fill="${TEE}" opacity=".85"/>`
-    : `<rect x="14" y="28" width="18" height="25" rx="6" fill="#93b06d"/>
+       <circle cx="23" cy="38" r="3.1" fill="${TRIM}" opacity=".9"/>
+       <circle cx="23" cy="38" r="1.3" fill="${TEE}" opacity=".85"/>`
+    : `${body('#93b06d')}
        <path d="M19.5 28h7l-3.5 11z" fill="${TEE}"/>
        <rect x="22.6" y="30" width="0.9" height="22" fill="#7f9c5c"/>`;
 
-  /* sleeves: white with a green cuff on the tee, plain khaki otherwise */
+  /* An arm is two pieces now: the upper arm hangs from the shoulder (the
+     `.arm` group's origin), the forearm hangs from the elbow (`.fore`). The
+     hand is on the forearm. Sleeve: white with a green cuff on the tee, plain
+     khaki otherwise. */
   const arm = (x, shade) => tee
-    ? `<rect x="${x}" y="30" width="6" height="21" rx="3" fill="${TEE}"/>
-       <rect x="${x}" y="36.5" width="6" height="2.2" fill="${TRIM}"/>`
-    : `<rect x="${x}" y="30" width="6" height="21" rx="3" fill="${shade}"/>`;
+    ? `<rect x="${x}" y="29" width="6" height="12.5" rx="3" fill="${TEE}"/>
+       <g class="fore" style="transform-origin:${x+3}px 40px">
+         <rect x="${x+.3}" y="38.5" width="5.4" height="11.5" rx="2.7" fill="${TEE}"/>
+         <rect x="${x+.3}" y="39.5" width="5.4" height="2" fill="${TRIM}"/>
+         <circle cx="${x+3}" cy="51" r="3.3" fill="${skin}"/>`
+    : `<rect x="${x}" y="29" width="6" height="12.5" rx="3" fill="${shade}"/>
+       <g class="fore" style="transform-origin:${x+3}px 40px">
+         <rect x="${x+.3}" y="38.5" width="5.4" height="11.5" rx="2.7" fill="${shade}"/>
+         <circle cx="${x+3}" cy="51" r="3.3" fill="${skin}"/>`;
 
   /* outfit 2 wears the khaki shirt open over the tee */
   const openShirt = outfit === 2
-    ? `<path d="M13.4 28.5h4.2v24h-4.2z" fill="#7b9856"/>
-       <path d="M28.4 28.5h4.2v24h-4.2z" fill="#8aa863"/>`
+    ? `<path d="M13.6 29h4.2v23h-4.2z" fill="#7b9856"/>
+       <path d="M28.2 29h4.2v23h-4.2z" fill="#8aa863"/>`
     : '';
+
+  /* A leg is two pieces too: thigh from the hip (the `.leg` group's origin at
+     the hip), shin and boot from the knee (`.shin`). A small disc at the knee
+     covers the seam between them whatever angle it bends to. */
+  const leg = (x, trou, pocketX, bootX, boot, sole) =>
+    `<rect x="${x}" y="48" width="7.5" height="15.5" rx="3.4" fill="${trou}"/>
+     <rect x="${pocketX}" y="53" width="5" height="6" rx="1.2" fill="${POCKET}"/>
+     <g class="shin" style="transform-origin:${x+3.75}px 61.5px">
+       <rect x="${x+.3}" y="59" width="6.9" height="14" rx="3" fill="${trou}"/>
+       <circle cx="${x+3.75}" cy="61.5" r="3.4" fill="${trou}"/>
+       <rect x="${bootX}" y="70" width="9" height="4.6" rx="1.6" fill="${boot}"/>
+       <rect x="${bootX-1.5}" y="73" width="12" height="7" rx="3" fill="${boot}"/>
+       <rect x="${bootX-1.5}" y="77.6" width="12" height="2.4" rx="1.2" fill="${sole}"/>
+     </g>`;
 
   return `<svg class="corper" viewBox="0 0 46 86" aria-hidden="true" style="
       animation-duration:${speed}s;animation-delay:${delay}s;
       width:${46*scale}px;height:${86*scale}px">
     <ellipse cx="23" cy="81" rx="12" ry="2.6" fill="rgba(0,0,0,.16)"/>
-    <g class="leg"><rect x="16" y="50" width="7.5" height="26" rx="3.4" fill="${TROU_D}"/>
-      <rect x="16.3" y="58.5" width="5" height="6.4" rx="1.2" fill="${POCKET}"/>
-      <rect x="15" y="69.5" width="9" height="5" rx="1.6" fill="${BOOT}"/>
-      <rect x="13.5" y="73" width="12" height="7" rx="3" fill="${BOOT}"/>
-      <rect x="13.5" y="77.6" width="12" height="2.4" rx="1.2" fill="#2a2520"/></g>
-    <g class="leg2"><rect x="22.5" y="50" width="7.5" height="26" rx="3.4" fill="${TROU}"/>
-      <rect x="24.2" y="58.5" width="5" height="6.4" rx="1.2" fill="${POCKET}"/>
-      <rect x="22" y="69.5" width="9" height="5" rx="1.6" fill="${BOOT_D}"/>
-      <rect x="20.5" y="73" width="12" height="7" rx="3" fill="${BOOT_D}"/>
-      <rect x="20.5" y="77.6" width="12" height="2.4" rx="1.2" fill="#1f1b17"/></g>
+    <g class="leg">${leg(16, TROU_D, 16.3, 15, BOOT, '#2a2520')}</g>
+    <g class="leg2">${leg(22.5, TROU, 24.2, 22, BOOT_D, '#1f1b17')}</g>
     <g class="torso">
-      <g class="arm">${arm(10.5, '#7f9c5c')}
-        <circle cx="13.5" cy="52" r="3.6" fill="${skin}"/></g>
+      <g class="arm">${arm(10.5, '#7f9c5c')}</g></g>
       <g class="arm2">${arm(29.5, '#93b06d')}
-        <circle cx="32.5" cy="52" r="3.6" fill="${skin}"/>
-        ${carry === 1 ? `<path d="M29 56h7l-.9 8h-5.2z" fill="#cf5b4a"/>
-             <rect x="28.6" y="55" width="7.8" height="1.8" rx=".9" fill="#b14b3c"/>
-             <path d="M30 55c0-2 5-2 5 0" stroke="#b14b3c" stroke-width="1" fill="none"/>`
-          : carry === 2 ? `<rect x="29.2" y="55" width="6.6" height="7.5" rx="1.4" fill="#4a6fa5"/>
-             <rect x="29.2" y="57" width="6.6" height="1.6" fill="#3b5a86"/>` : ''}</g>
+        ${carry === 1 ? `<path d="M29 55h7l-.9 8h-5.2z" fill="#cf5b4a"/>
+             <rect x="28.6" y="54" width="7.8" height="1.8" rx=".9" fill="#b14b3c"/>
+             <path d="M30 54c0-2 5-2 5 0" stroke="#b14b3c" stroke-width="1" fill="none"/>`
+          : carry === 2 ? `<rect x="29.2" y="54" width="6.6" height="7.5" rx="1.4" fill="#4a6fa5"/>
+             <rect x="29.2" y="56" width="6.6" height="1.6" fill="#3b5a86"/>` : ''}</g></g>
+      <!-- neck, then a torso with shoulders and a waist rather than a box -->
+      <rect x="20.6" y="22" width="4.8" height="8" rx="2" fill="${skin}"/>
       ${torso}${openShirt}${pockets}${epaulettes}
-      <rect x="14" y="44" width="18" height="3.6" rx="1" fill="${BELT}"/>
-      <rect x="21.5" y="44" width="3.4" height="3.6" rx=".6" fill="#d7dbd0"/>
+      <rect x="14" y="45" width="18" height="3.6" rx="1" fill="${BELT}"/>
+      <rect x="21.5" y="45" width="3.4" height="3.6" rx=".6" fill="#d7dbd0"/>
+      <circle cx="13.9" cy="16.8" r="1.7" fill="${skin}"/>
+      <circle cx="32.1" cy="16.8" r="1.7" fill="${skin}"/>
       <circle cx="23" cy="16" r="9.6" fill="${skin}"/>
+      <!-- a face: two eyes and a mouth are all it takes for a head to stop
+           being a ball. Small on purpose — at 2x they read, at 1x they are a
+           hint, and bigger ones turn the figure into a toy. -->
+      <circle cx="19.9" cy="17.2" r="1.15" fill="#1d1812"/>
+      <circle cx="26.1" cy="17.2" r="1.15" fill="#1d1812"/>
+      <path d="M20.6 21.3q2.4 1.7 4.8 0" stroke="#4a2e1c" stroke-width=".8" fill="none" stroke-linecap="round"/>
       <!-- white crown, green round the back and along the peak. No wordmark or
            crest: at this size it would be an illegible smudge, and the agency's
            insignia on the kit would imply an affiliation the game does not have. -->
@@ -1289,7 +1337,7 @@ function civilian(skin, scale, speed, delay, tone = 0, rags = false, stick = fal
 
   /* a torn hem reads as rags far better than dirt does at this size */
   const hem = rags
-    ? `<path d="M13.2 50 l3 3.5 l3-3.5 l3 3.5 l3-3.5 l3 3.5 l3-3.5 v-2.6 H13.2z"
+    ? `<path d="M14.8 50 l2.8 3.5 l2.8-3.5 l2.8 3.5 l2.8-3.5 l2.8 3.5 l2.4-3.5 v-2.4 H14.8z"
              fill="${topDk}"/>`
     : '';
   const patches = rags
@@ -1299,31 +1347,55 @@ function civilian(skin, scale, speed, delay, tone = 0, rags = false, stick = fal
              transform="rotate(12 27 41)"/>
        <path d="M27 29 l4 5" stroke="#6d6049" stroke-width="1.2"/>`
     : '';
-  /* a knee out on one leg: the one detail everybody reads instantly */
+  /* a knee out on one leg: the one detail everybody reads instantly — on
+     the shin now, just below the joint, so it bends with the leg */
   const kneeHole = rags
-    ? `<path d="M17.2 60 h5.5 v3.4 h-5.5z" fill="${skin}"/>` : '';
+    ? `<path d="M17 63 h5.5 v3.2 h-5.5z" fill="${skin}"/>` : '';
+
+  /* Same two-piece limbs as corper(): thigh from the hip, shin from the knee,
+     upper arm from the shoulder, forearm from the elbow. The stick lives on
+     the forearm so it swings with the hand that holds it. */
+  const leg = (x, c, extra) =>
+    `<rect x="${x}" y="48" width="7.5" height="15.5" rx="3.4" fill="${c}"/>
+     <g class="shin" style="transform-origin:${x+3.75}px 61.5px">
+       <rect x="${x+.3}" y="59" width="6.9" height="15" rx="3" fill="${c}"/>
+       <circle cx="${x+3.75}" cy="61.5" r="3.4" fill="${c}"/>
+       ${extra}
+       <rect x="${x-1.8}" y="74" width="11" height="6" rx="2.6" fill="${shoe}"/>
+     </g>`;
+  const arm = (x, c, held) =>
+    `<rect x="${x}" y="29" width="6" height="12.5" rx="3" fill="${c}"/>
+     <g class="fore" style="transform-origin:${x+3}px 40px">
+       <rect x="${x+.3}" y="38.5" width="5.4" height="11.5" rx="2.7" fill="${c}"/>
+       <circle cx="${x+3}" cy="51" r="3.3" fill="${skin}"/>
+       ${held}
+     </g>`;
+  const stickHeld = stick && !raised
+    ? `<g transform="rotate(-38 32.5 51)">
+         <rect x="31.2" y="17" width="2.6" height="36" rx="1.3" fill="#7a5630"/>
+         <rect x="31.2" y="17" width="2.6" height="7"  rx="1.3" fill="#6a4927"/>
+       </g>` : '';
 
   return `<svg class="corper civ" viewBox="0 0 46 86" aria-hidden="true" style="
       animation-duration:${speed}s;animation-delay:${delay}s;
       width:${46*scale}px;height:${86*scale}px">
     <ellipse cx="23" cy="81" rx="12" ry="2.6" fill="rgba(0,0,0,.16)"/>
-    <g class="leg"><rect x="16" y="50" width="7.5" height="26" rx="3.4" fill="${trouDk}"/>
-      ${kneeHole}
-      <rect x="14.2" y="74" width="11" height="6" rx="2.6" fill="${shoe}"/></g>
-    <g class="leg2"><rect x="22.5" y="50" width="7.5" height="26" rx="3.4" fill="${trou}"/>
-      <rect x="21" y="74" width="11" height="6" rx="2.6" fill="${shoe}"/></g>
+    <g class="leg">${leg(16, trouDk, kneeHole)}</g>
+    <g class="leg2">${leg(22.5, trou, '')}</g>
     <g class="torso">
-      <g class="arm"><rect x="10.5" y="30" width="6" height="21" rx="3" fill="${topDk}"/>
-        <circle cx="13.5" cy="52" r="3.6" fill="${skin}"/></g>
-      <g class="arm2"><rect x="29.5" y="30" width="6" height="21" rx="3" fill="${top}"/>
-        <circle cx="32.5" cy="52" r="3.6" fill="${skin}"/>
-        ${stick && !raised ? `<g transform="rotate(-38 32.5 52)">
-             <rect x="31.2" y="18" width="2.6" height="36" rx="1.3" fill="#7a5630"/>
-             <rect x="31.2" y="18" width="2.6" height="7"  rx="1.3" fill="#6a4927"/>
-           </g>` : ''}</g>
-      <rect x="13.2" y="28" width="19.6" height="22" rx="3.2" fill="${top}"/>
+      <g class="arm">${arm(10.5, topDk, '')}</g>
+      <g class="arm2">${arm(29.5, top, stickHeld)}</g>
+      <rect x="20.6" y="22" width="4.8" height="8" rx="2" fill="${skin}"/>
+      <path d="M13.5 31q0-3 3-3h13q3 0 3 3v9.5l-1.3 11.5h-16.4L13.5 40.5z" fill="${top}"/>
       ${hem}${patches}
+      <circle cx="13.9" cy="16.8" r="1.7" fill="${skin}"/>
+      <circle cx="32.1" cy="16.8" r="1.7" fill="${skin}"/>
       <circle cx="23" cy="16" r="9.6" fill="${skin}"/>
+      <circle cx="19.9" cy="17.2" r="1.15" fill="#1d1812"/>
+      <circle cx="26.1" cy="17.2" r="1.15" fill="#1d1812"/>
+      ${rags
+        ? `<path d="M20.4 21.6q2.6-1.4 5.2 0" stroke="#4a2e1c" stroke-width=".8" fill="none" stroke-linecap="round"/>`
+        : `<path d="M20.6 21.3q2.4 1.7 4.8 0" stroke="#4a2e1c" stroke-width=".8" fill="none" stroke-linecap="round"/>`}
       ${rags
         ? `<path d="M13.6 12 q3-7 9.4-7 t9.4 7 q-4-3-9.4-2.4 T13.6 12z" fill="#2b241c"/>
            <path d="M15 9.5 l-2.4-3M31 9.5 l2.4-3" stroke="#2b241c" stroke-width="1.4"
@@ -2777,7 +2849,7 @@ function mobCatch(run){
   sceneEl.querySelectorAll('.runner, .runner .flip').forEach(el => {
     el.style.animationPlayState = 'paused';
   });
-  sceneEl.querySelectorAll('.runner .leg, .runner .leg2, .runner .arm, .runner .arm2, .runner .torso')
+  sceneEl.querySelectorAll('.runner .leg, .runner .leg2, .runner .arm, .runner .arm2, .runner .torso, .runner .shin, .runner .fore')
     .forEach(el => { el.style.animation = 'none'; });
   const tag = sceneEl.querySelector('.runnerTag');
   if (tag){ tag.textContent = 'HE DON FALL!'; tag.classList.add('caught'); }
@@ -2822,7 +2894,7 @@ function catchThief(run){
   sceneEl.querySelectorAll('.runner, .runner .flip').forEach(el => {
     el.style.animationPlayState = 'paused';
   });
-  sceneEl.querySelectorAll('.runner .leg, .runner .leg2, .runner .arm, .runner .arm2, .runner .torso')
+  sceneEl.querySelectorAll('.runner .leg, .runner .leg2, .runner .arm, .runner .arm2, .runner .torso, .runner .shin, .runner .fore')
     .forEach(el => { el.style.animation = 'none'; });
 
   const tag = sceneEl.querySelector('.runnerTag');
@@ -2916,7 +2988,7 @@ function agberoChase(){
     /* Running in lockstep would have all four putting the same foot down at
        the same instant, which reads as a drill rather than a chase. Offsetting
        the stride phase costs nothing and breaks the formation up. */
-    wrap.querySelectorAll('.leg,.leg2,.arm,.arm2,.torso').forEach(el => {
+    wrap.querySelectorAll('.leg,.leg2,.arm,.arm2,.torso,.shin,.fore').forEach(el => {
       el.style.animationDelay = (-c.trail / 420) + 's';
     });
     markTappable(wrap);
