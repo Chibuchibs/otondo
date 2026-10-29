@@ -172,6 +172,28 @@
      the air. Dropped. The lights, the board, the generator and the spark carry
      the moment on their own. */
 
+  /* ---------- rare events ----------
+     Variable reward: the fixed cycle is learned in two minutes, and these are
+     what make somebody say "did you see the…" to the next person. */
+  .convoy{position:absolute;left:0;right:0;bottom:30px;height:64px;z-index:1;pointer-events:none}
+  .convoy .car{position:absolute;animation:drive 4.6s linear both}
+  .convoy .car svg{width:100%;display:block}
+  @keyframes strobe{0%,49%{opacity:1}50%,100%{opacity:.12}}
+  .convoy .lightR,.convoy .lightB{animation:strobe .22s steps(1) infinite}
+  .convoy .lightB{animation-delay:.11s}
+  .convoy .rider i{position:absolute;left:44%;top:0;width:7px;height:7px;border-radius:50%;
+    background:#3b7bff;box-shadow:0 0 6px 2px rgba(59,123,255,.7)}
+  .convoy .rider i.lightR{background:#ff3b3b;box-shadow:0 0 6px 2px rgba(255,59,59,.7)}
+  .goat{position:absolute;bottom:36px;z-index:1;width:40px;pointer-events:none;
+    transition:left 3.4s linear}
+  .goat svg{width:100%;display:block}
+  @keyframes goatLeg{0%,100%{transform:rotate(14deg)}50%{transform:rotate(-14deg)}}
+  .goat .gl{animation:goatLeg .42s ease-in-out infinite;transform-box:fill-box;transform-origin:top center}
+  .goat .gl2{animation-delay:-.21s}
+  .goat.stand .gl{animation:none}
+  @keyframes goatChew{0%,100%{transform:rotate(0)}50%{transform:rotate(-7deg)}}
+  .goat.stand .head{animation:goatChew .5s ease-in-out infinite;transform-box:fill-box;transform-origin:right center}
+
   .pothole{position:absolute;bottom:1px;z-index:1;width:80px;pointer-events:none}
   /* On the kerb between the two potholes, in front of the shops that drift
      behind it, behind the walkers. 36% keeps it clear of Mrs. Pothole (21%),
@@ -1072,18 +1094,18 @@
 <script type="module">
 import { newGame, doAction, canDo, unlocked, ACTIONS, phaseOf, nextUnlock, postingOdds, rivalOf,
          computePosting,
-         shareText, MAX_DAY } from './game.js?v=20261028223013';
+         shareText, MAX_DAY } from './game.js?v=20261028224100';
 
 /* Kept here, not exported from game.js: a new cross-file export breaks any
    client holding a cached game.js after a deploy. */
 const ALLAWEE_NOTE = 'Allawee ₦77,000 — e never enter.';
 import { initNet, joinCamp, syncPlayer, platoonBoard, recentChat, postChat,
          postSuggestion, reportMessage, awardBoard, myAwards, laughChat,
-         setPresence, campRoster, renameMe, online } from './net.js?v=20261028223013';
-import { startMusic, stopMusic, musicOn, audioState, audioSupported, BEAT, BAR } from './audio.js?v=20261028223013';
+         setPresence, campRoster, renameMe, online } from './net.js?v=20261028224100';
+import { startMusic, stopMusic, musicOn, audioState, audioSupported, BEAT, BAR } from './audio.js?v=20261028224100';
 import { playHoop, playPenalty, playQuiz, playRegister, playParade,
          playMami, playHustle, playManOWar, playSaed, playSocial,
-         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261028223013';
+         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261028224100';
 
 /* Every dance animation is expressed in beats, so the steps are on-tempo
    whether or not the sound is playing — and genuinely on the beat when it is. */
@@ -2631,6 +2653,50 @@ sceneEl.addEventListener('click', e => {
   if (v){ hintUsed(); douse(v); }
 });
 
+/* ---- the mob catches him ----
+   Same freeze as catchThief, but he goes down over the pothole, the chasers
+   pile on one after another, and the player gets nothing back — they were
+   not the one who caught him, and the label says so. */
+function mobCatch(run){
+  if (run.dataset.caught) return;
+  run.dataset.caught = '1';
+  sceneEl.querySelectorAll('.runner, .runner .flip').forEach(el => {
+    el.style.animationPlayState = 'paused';
+  });
+  sceneEl.querySelectorAll('.runner .leg, .runner .leg2, .runner .arm, .runner .arm2, .runner .torso')
+    .forEach(el => { el.style.animation = 'none'; });
+  const tag = sceneEl.querySelector('.runnerTag');
+  if (tag){ tag.textContent = 'HE DON FALL!'; tag.classList.add('caught'); }
+  const fig = run.querySelector('svg.corper');
+  if (fig){
+    fig.style.transition = 'transform .32s ease-in';
+    fig.style.transform  = 'rotate(82deg) translate(12px,-10px)';
+  }
+  /* a puff of dust off the hole */
+  const puff = document.createElement('div');
+  puff.className = 'puff';
+  puff.style.left = Math.round(potX()) + 'px';
+  puff.style.bottom = '10px';
+  puff.innerHTML = `<svg viewBox="0 0 34 34" aria-hidden="true">
+    <circle cx="12" cy="20" r="9"  fill="#cfc8bb" opacity=".9"/>
+    <circle cx="21" cy="16" r="10" fill="#ded8cc" opacity=".85"/>
+    <circle cx="26" cy="23" r="7"  fill="#cfc8bb" opacity=".8"/></svg>`;
+  sceneEl.appendChild(puff);
+  setTimeout(() => puff.remove(), 1100);
+  /* the chasers close the gap one at a time — the trail is a custom property,
+     so shrinking it moves them even while the animation is paused */
+  const chasers = [...sceneEl.querySelectorAll('.runner:not(.thief)')];
+  chasers.forEach((c, i) => setTimeout(() => {
+    c.style.transition = 'transform .35s ease-out';
+    c.style.setProperty('--trail', (12 + i * 9) + 'px');
+  }, 380 + i * 170));
+  setTimeout(() => { if (tag) tag.textContent = 'MOB DON CATCH AM!'; }, 1000);
+  setTimeout(() => {
+    sceneEl.querySelectorAll('.runner').forEach(el => el.remove());
+    sceneEl.querySelectorAll('.runnerTag').forEach(el => el.remove());
+  }, 2800);
+}
+
 /* ---- catching him ----
    Everything stops where it stands, the label turns, and the whole chase
    clears a beat later. Whatever he took comes back to you — the errands take
@@ -2693,10 +2759,15 @@ function trip(run){
    Pure ambience: it is not tappable and it does not block anything. */
 /* The road already carries four walkers, five vehicles and five stalls. One
    event on top of that reads as life; two at once reads as noise. */
-const sceneBusy = () => !!sceneEl.querySelector('.runner, .ablaze');
+const sceneBusy = () => !!sceneEl.querySelector('.runner, .ablaze, .goat, .convoy');
 
 function agberoChase(){
   if (calm() || sceneBusy()) return;
+  /* One chase in eight, he trips on Mr. Pothole on the way out and the mob
+     catches him without you. The pothole is on the pavement he runs along,
+     so he passes over it every time; the dice only decide whether he looks. */
+  const trips = Math.random() < TRIP_ODDS;
+  const chaseT0 = performance.now();
   /* The agbero is not a corps member and neither is the crowd after him —
      he runs in rags, they run in ordinary clothes. */
   /* Spaced in pixels, not in seconds. 58px is about a figure's width, so they
@@ -2747,6 +2818,11 @@ function agberoChase(){
       const follow = () => {
         if (!fig.isConnected){ tag.remove(); return; }
         const box = sceneEl.getBoundingClientRect(), r = fig.getBoundingClientRect();
+        /* Outbound leg only, the moment his feet reach the hole. */
+        if (trips && !wrap.dataset.caught && performance.now() - chaseT0 < 5200){
+          const cx = r.left - box.left + r.width / 2;
+          if (cx >= potX() - 4 && cx <= potX() + 40) mobCatch(wrap);
+        }
         /* Tracked exactly, NOT clamped. Clamping kept the label parked at the
            edge of the scene while the thief had already run off it — the sign
            has to leave with the man it is pointing at. */
@@ -2854,11 +2930,118 @@ function nextSceneEvent(){
   /* Never forfeits a turn. A tap-driven errand or a lingering event only
      delays the queue; it does not cost an event. */
   if (sceneBusy()){ setTimeout(nextSceneEvent, 2000); return; }
-  const len = fireNext ? FIRE_LEN : CHASE_LEN;
-  if (fireNext) burningDanfo(); else agberoChase();
-  fireNext = !fireNext;
+  let len;
+  /* About one slot in eight goes to something rare instead, and the two rare
+     ones alternate so the same surprise never comes twice running. The
+     fire/chase alternation is left where it was, so a rare slot delays the
+     next regular event rather than skipping it. */
+  if (Math.random() < RARE_ODDS){
+    if (rareNext === 'convoy'){ convoy();       len = CONVOY_LEN; rareNext = 'goat'; }
+    else                      { goatCrossing(); len = GOAT_LEN;   rareNext = 'convoy'; }
+  } else {
+    len = fireNext ? FIRE_LEN : CHASE_LEN;
+    if (fireNext) burningDanfo(); else agberoChase();
+    fireNext = !fireNext;
+  }
   setTimeout(nextSceneEvent, len + EVENT_GAP);
 }
+/* ---------- rare events ----------
+   One slot in eight, and the two alternate. Rare is the point: at these odds a
+   player sees one every few minutes and cannot predict which — the fixed
+   cycle is learned in two minutes, these are not. */
+const RARE_ODDS  = 0.12;
+const TRIP_ODDS  = 0.125;    // one chase in eight, the thief trips on Mr. Pothole
+const CONVOY_LEN = 5600, GOAT_LEN = 10800;
+let rareNext = 'convoy';
+
+/* An oga's convoy: two outriders, two black SUVs with the flag on the bonnet,
+   strobes going, straight through the far lane at twice traffic speed. "Oga"
+   on purpose — a big man is passing, and whose big man is nobody's business. */
+function suv(){
+  return `<svg viewBox="0 0 90 40" aria-hidden="true">
+    <path d="M6 31 h78 v-9 a5 5 0 0 0 -5 -5 h-9 l-9 -9 h-33 l-8 9 h-9 a5 5 0 0 0 -5 5z" fill="#141414"/>
+    <path d="M29 17 l6 -7 h25 l7 7z" fill="#2e3b4a"/>
+    <path d="M31 17 l5 -5 h9 v5z M47 12 h11 l5 5 h-16z" fill="#4a6078" opacity=".55"/>
+    <rect x="6" y="24" width="78" height="2" fill="#0a0a0a"/>
+    <rect x="80" y="10" width="1.4" height="12" fill="#2a2a2a"/>
+    <rect x="81.4" y="10" width="2.4" height="5.4" fill="#1d6b3a"/>
+    <rect x="83.8" y="10" width="2.4" height="5.4" fill="#f3f1e8"/>
+    <rect x="86.2" y="10" width="2.4" height="5.4" fill="#1d6b3a"/>
+    <circle class="lightR" cx="38" cy="8.5" r="2.6" fill="#ff3b3b"/>
+    <circle class="lightB" cx="52" cy="8.5" r="2.6" fill="#3b7bff"/>
+    <rect x="84" y="26" width="3" height="2.4" rx=".8" fill="#ffd34d"/>
+    ${wheel(22,32,6)}${wheel(68,32,6)}
+  </svg>`;
+}
+function convoy(){
+  if (calm() || sceneBusy()) return;
+  const c = document.createElement('div');
+  c.className = 'convoy';
+  c.innerHTML =
+    `<div class="car rider" style="width:48px;bottom:10px;animation-delay:0s">${okada(false)}<i class="lightB"></i></div>` +
+    `<div class="car rider" style="width:48px;bottom:14px;animation-delay:.24s">${okada(false)}<i class="lightR"></i></div>` +
+    `<div class="car" style="width:86px;bottom:4px;animation-delay:.56s">${suv()}</div>` +
+    `<div class="car" style="width:86px;bottom:7px;animation-delay:.9s">${suv()}</div>`;
+  sceneEl.appendChild(c);
+  if (shoutSign) shoutSign(['OGA DEY PASS!', '#1d1d1b', '#ffd34d']);
+  setTimeout(() => c.remove(), CONVOY_LEN);
+}
+
+/* A goat wanders in from the right, stops in the far lane to chew, and the
+   traffic behind it has to wait — the cars ahead carry on, which is what makes
+   it a hold-up rather than a freeze. Then it ambles off and everyone goes. */
+function goatSvg(){
+  return `<svg viewBox="0 0 40 30" aria-hidden="true">
+    <g class="gl"><rect x="12" y="16" width="2.6" height="12" rx="1.2" fill="#d9d2c4"/></g>
+    <g class="gl gl2"><rect x="17" y="16" width="2.6" height="12" rx="1.2" fill="#cfc7b8"/></g>
+    <g class="gl gl2"><rect x="26" y="16" width="2.6" height="12" rx="1.2" fill="#d9d2c4"/></g>
+    <g class="gl"><rect x="31" y="16" width="2.6" height="12" rx="1.2" fill="#cfc7b8"/></g>
+    <ellipse cx="23" cy="14" rx="12.5" ry="6" fill="#e9e2d4"/>
+    <path d="M35 12 l4 -4" stroke="#e9e2d4" stroke-width="2" stroke-linecap="round"/>
+    <g class="head">
+      <path d="M12 12 l-7 1 l-1 6 l5 2 l4 -3z" fill="#e9e2d4"/>
+      <path d="M8 13 l-3 -6 M11 12 l-1 -7" stroke="#8a7a60" stroke-width="1.6" stroke-linecap="round"/>
+      <path d="M5 19 l-1 3.5" stroke="#d9d2c4" stroke-width="1.8" stroke-linecap="round"/>
+      <circle cx="8.5" cy="15" r="1" fill="#2a2622"/>
+      <path d="M11 11 l2 -2.4 l1 2.6z" fill="#cfc7b8"/>
+    </g>
+  </svg>`;
+}
+function goatCrossing(){
+  if (calm() || sceneBusy()) return;
+  const g = document.createElement('div');
+  g.className = 'goat';
+  g.innerHTML = goatSvg();
+  g.style.left = '104%';
+  sceneEl.appendChild(g);
+  requestAnimationFrame(() => requestAnimationFrame(() => { g.style.left = '46%'; }));
+  const STAND_AT = 3500, STAND_FOR = 3800;
+  let hold = null, honked = false;
+  setTimeout(() => {
+    g.classList.add('stand');
+    hold = setInterval(() => {
+      const box = sceneEl.getBoundingClientRect();
+      const gr = g.getBoundingClientRect();
+      const gx = gr.left - box.left + gr.width / 2;
+      sceneEl.querySelectorAll('.vehicle').forEach(v => {
+        const r = v.getBoundingClientRect();
+        const vx = r.left - box.left + r.width;          // its nose
+        const behind = vx < gx - 6 && vx > gx - 150;      // queued up behind her
+        v.style.animationPlayState = behind ? 'paused' : '';
+        if (behind && !honked){ honked = true; floatCost(v, 'PEEM PEEM!'); }
+      });
+    }, 90);
+  }, STAND_AT);
+  setTimeout(() => {
+    clearInterval(hold);
+    g.classList.remove('stand');
+    sceneEl.querySelectorAll('.vehicle').forEach(v => { v.style.animationPlayState = ''; });
+    g.style.transition = 'left 3.2s linear';
+    g.style.left = '-14%';
+  }, STAND_AT + STAND_FOR);
+  setTimeout(() => g.remove(), GOAT_LEN);
+}
+
 /* Early enough that a quick visitor still sees something tappable. */
 if (!calm()) setTimeout(nextSceneEvent, 3000);
 
