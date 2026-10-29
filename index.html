@@ -271,11 +271,15 @@
     transform-origin:center}
   @keyframes spin{to{transform:rotate(360deg)}}
   @keyframes march{from{left:-16%}to{left:112%}}
-  .corper .leg{animation:swingA .62s ease-in-out infinite;transform-origin:21px 45px}
-  .corper .leg2{animation:swingB .62s ease-in-out infinite;transform-origin:21px 45px}
-  .corper .arm{animation:swingB .62s ease-in-out infinite;transform-origin:20px 28px}
-  .corper .arm2{animation:swingA .62s ease-in-out infinite;transform-origin:24px 28px}
-  .corper .torso{animation:bob .31s ease-in-out infinite}
+  /* Tempo and swing come from the element: --stride is the period of a step,
+     --sw scales how far the limbs swing. Two walkers on the same clock move
+     like a drill; a brisk one and a strutting one move like two people. The
+     running, dance and chase rules set their own durations and still win. */
+  .corper .leg{animation:swingA var(--stride,.62s) ease-in-out infinite;transform-origin:21px 45px}
+  .corper .leg2{animation:swingB var(--stride,.62s) ease-in-out infinite;transform-origin:21px 45px}
+  .corper .arm{animation:swingB var(--stride,.62s) ease-in-out infinite;transform-origin:20px 28px}
+  .corper .arm2{animation:swingA var(--stride,.62s) ease-in-out infinite;transform-origin:24px 28px}
+  .corper .torso{animation:bob calc(var(--stride,.62s)/2) ease-in-out infinite}
   /* Knees and elbows. The thigh swings from the hip as before; the shin now
      bends at the knee on the same clock, flexing as the leg swings through
      and straightening as it lands — which is most of what makes a walk read
@@ -285,12 +289,12 @@
   @keyframes knee{0%{transform:rotate(5deg)}28%{transform:rotate(46deg)}
                   55%{transform:rotate(3deg)}80%{transform:rotate(14deg)}100%{transform:rotate(5deg)}}
   @keyframes elbow{0%,100%{transform:rotate(-26deg)}50%{transform:rotate(-44deg)}}
-  .corper .shin{animation:knee .62s ease-in-out infinite}
-  .corper .leg2 .shin{animation-delay:-.31s}
-  .corper .fore{animation:elbow .62s ease-in-out infinite}
-  .corper .arm2 .fore{animation-delay:-.31s}
-  @keyframes swingA{0%,100%{transform:rotate(20deg)}50%{transform:rotate(-20deg)}}
-  @keyframes swingB{0%,100%{transform:rotate(-20deg)}50%{transform:rotate(20deg)}}
+  .corper .shin{animation:knee var(--stride,.62s) ease-in-out infinite}
+  .corper .leg2 .shin{animation-delay:calc(var(--stride,.62s) / -2)}
+  .corper .fore{animation:elbow var(--stride,.62s) ease-in-out infinite}
+  .corper .arm2 .fore{animation-delay:calc(var(--stride,.62s) / -2)}
+  @keyframes swingA{0%,100%{transform:rotate(calc(20deg * var(--sw,1)))}50%{transform:rotate(calc(-20deg * var(--sw,1)))}}
+  @keyframes swingB{0%,100%{transform:rotate(calc(-20deg * var(--sw,1)))}50%{transform:rotate(calc(20deg * var(--sw,1)))}}
   @keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-1.6px)}}
 
   /* ---------- the dance break ----------
@@ -1119,18 +1123,18 @@
 <script type="module">
 import { newGame, doAction, canDo, unlocked, ACTIONS, phaseOf, nextUnlock, postingOdds, rivalOf,
          computePosting,
-         shareText, MAX_DAY } from './game.js?v=20261029111512';
+         shareText, MAX_DAY } from './game.js?v=20261029153132';
 
 /* Kept here, not exported from game.js: a new cross-file export breaks any
    client holding a cached game.js after a deploy. */
 const ALLAWEE_NOTE = 'Allawee ₦77,000 — e never enter.';
 import { initNet, joinCamp, syncPlayer, platoonBoard, recentChat, postChat,
          postSuggestion, reportMessage, awardBoard, myAwards, laughChat,
-         setPresence, campRoster, renameMe, online } from './net.js?v=20261029111512';
-import { startMusic, stopMusic, musicOn, audioState, audioSupported, BEAT, BAR } from './audio.js?v=20261029111512';
+         setPresence, campRoster, renameMe, online } from './net.js?v=20261029153132';
+import { startMusic, stopMusic, musicOn, audioState, audioSupported, BEAT, BAR } from './audio.js?v=20261029153132';
 import { playHoop, playPenalty, playQuiz, playRegister, playParade,
          playMami, playHustle, playManOWar, playSaed, playSocial,
-         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261029111512';
+         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261029153132';
 
 /* Every dance animation is expressed in beats, so the steps are on-tempo
    whether or not the sound is playing — and genuinely on the beat when it is. */
@@ -1153,7 +1157,11 @@ const ICONS = {register:'📋',parade:'🎖️',mami:'🍜',hustle:NAIRA,manowar
    outfit 0 = full khaki  ·  1 = white crested tee + khaki trousers
    outfit 2 = white tee under an open khaki shirt
    No crest or wordmark: illegible at this size, and it is a federal mark. */
-function corper(skin, scale, speed, delay, outfit = 0, carry = 0){
+/* extra: 'shades' | 'scarf' | '' — one thing that is only this person's.
+   gait: { stride, swing } — the period of a step and how far the limbs
+   swing, so two walkers do not move in lockstep like a drill. */
+function corper(skin, scale, speed, delay, outfit = 0, carry = 0, extra = '', gait = {}){
+  const stride = gait.stride || .62, swing = gait.swing || 1;
   const TEE = '#fbf9f2', TRIM = '#0a7a43';
   const BOOT = '#e0762a', BOOT_D = '#c96620';      // the orange jungle boots
   /* The trousers are green, not khaki-brown — that and the cargo pockets are
@@ -1227,6 +1235,7 @@ function corper(skin, scale, speed, delay, outfit = 0, carry = 0){
 
   return `<svg class="corper" viewBox="0 0 46 86" aria-hidden="true" style="
       animation-duration:${speed}s;animation-delay:${delay}s;
+      --stride:${stride}s;--sw:${swing};
       width:${46*scale}px;height:${86*scale}px">
     <ellipse cx="23" cy="81" rx="12" ry="2.6" fill="rgba(0,0,0,.16)"/>
     <g class="leg">${leg(16, TROU_D, 16.3, 15, BOOT, '#2a2520')}</g>
@@ -1242,6 +1251,14 @@ function corper(skin, scale, speed, delay, outfit = 0, carry = 0){
       <!-- neck, then a torso with shoulders and a waist rather than a box -->
       <rect x="20.6" y="22" width="4.8" height="8" rx="2" fill="${skin}"/>
       ${torso}${openShirt}${pockets}${epaulettes}
+      ${extra === 'scarf' ? `<g class="scarf">
+        <path d="M14.2 27.6q8.8 7.2 17.6 0v4.4q-8.8 6.2-17.6 0z" fill="#d6342c"/>
+        ${[15.4,18,20.6,23.2,25.8,28.4].map(x => `<rect x="${x}" y="29.1" width="1.4" height="1.4" fill="#fff" opacity=".9"/>`).join('')}
+        ${[16.7,19.3,21.9,24.5,27.1].map(x => `<rect x="${x}" y="31.1" width="1.4" height="1.4" fill="#fff" opacity=".9"/>`).join('')}
+        <path d="M26.2 31.4l4.4 12.2l-4.8 1.4l-2.8-12.4z" fill="#d6342c"/>
+        ${[[27.2,34],[28.6,37.4],[29.6,40.6],[25.6,37.2],[26.6,40.4]].map(([x,y]) => `<rect x="${x}" y="${y}" width="1.3" height="1.3" fill="#fff" opacity=".9"/>`).join('')}
+        <path d="M26 44.8l.5 2.2M27.8 44.3l.5 2.2M29.6 43.8l.5 2.2" stroke="#d6342c" stroke-width=".9" stroke-linecap="round"/>
+      </g>` : ''}
       <rect x="14" y="45" width="18" height="3.6" rx="1" fill="${BELT}"/>
       <rect x="21.5" y="45" width="3.4" height="3.6" rx=".6" fill="#d7dbd0"/>
       <circle cx="13.9" cy="16.8" r="1.7" fill="${skin}"/>
@@ -1253,6 +1270,14 @@ function corper(skin, scale, speed, delay, outfit = 0, carry = 0){
       <circle cx="19.9" cy="17.2" r="1.15" fill="#1d1812"/>
       <circle cx="26.1" cy="17.2" r="1.15" fill="#1d1812"/>
       <path d="M20.6 21.3q2.4 1.7 4.8 0" stroke="#4a2e1c" stroke-width=".8" fill="none" stroke-linecap="round"/>
+      ${extra === 'shades' ? `<g class="shades">
+        <rect x="16.4" y="15.2" width="6" height="3.8" rx="1.5" fill="#1d1812"/>
+        <rect x="23.6" y="15.2" width="6" height="3.8" rx="1.5" fill="#1d1812"/>
+        <path d="M22.4 16.7h1.2" stroke="#1d1812" stroke-width="1.1"/>
+        <path d="M16.4 16.4l-2.4.7M29.6 16.4l2.4.7" stroke="#1d1812" stroke-width="1"/>
+        <rect x="17.5" y="15.9" width="1.8" height=".9" rx=".45" fill="#fff" opacity=".5"/>
+        <rect x="24.7" y="15.9" width="1.8" height=".9" rx=".45" fill="#fff" opacity=".5"/>
+      </g>` : ''}
       <!-- white crown, green round the back and along the peak. No wordmark or
            crest: at this size it would be an illegible smudge, and the agency's
            insignia on the kit would imply an affiliation the game does not have. -->
@@ -1589,6 +1614,11 @@ function fillScene(el, n, big){
      somebody worth pointing at. Variety now comes from scale, kit and skin
      rather than from speed. */
   const CYCLE = 13.5;
+  /* One in sunglasses who walks briskly with tight arms; one with the
+     checked scarf who struts — longer stride, big swing. Different kit,
+     different carry, different skin, different gait: two people, not a pair. */
+  const EXTRA = ['shades', 'scarf'];
+  const GAIT  = [{ stride: .56, swing: .85 }, { stride: .70, swing: 1.35 }];
   const figs = Array.from({length:n}, (_,i) =>
     corper(SKINS[i % SKINS.length],
            /* 0.94 / 1.00 / 1.08. The old spread went to 1.39 — a 120px figure
@@ -1599,7 +1629,9 @@ function fillScene(el, n, big){
            big ? 7 : CYCLE,
            big ? 0 : -(i * CYCLE / n),
            big ? 1 : OUTFITS[i % OUTFITS.length],
-           big ? 0 : CARRY[i % CARRY.length]));
+           big ? 0 : CARRY[i % CARRY.length],
+           big ? '' : EXTRA[i % EXTRA.length],
+           big ? {} : GAIT[i % GAIT.length]));
   el.insertAdjacentHTML('beforeend', figs.join('') + extra);
 }
 roadside($('scene'));
