@@ -150,8 +150,13 @@
   .corper{transition:transform .7s ease}
   .scene.w-storm .corper{transform:rotate(2.5deg)}
   .scene.w-wind  .corper{transform:rotate(-6deg)}
-  .road{position:absolute;left:0;right:0;bottom:0;height:62px;background:#cdc0a0;
-    border-top:3px solid #b8aa88}
+  .road{position:absolute;left:0;right:0;bottom:0;height:62px;background:#cdc0a0}
+  /* The kerb, painted in black and white blocks the way every Lagos road's
+     is. A plain stripe read as a shadow; the alternation is what reads as a
+     kerb at all. */
+  .road::before{content:"";position:absolute;left:0;right:0;top:0;height:4px;
+    background:repeating-linear-gradient(90deg,#1d1d1b 0 18px,#f4f1e8 18px 36px);
+    box-shadow:0 1px 0 rgba(0,0,0,.18)}
   .road::after{content:"";position:absolute;top:30px;left:0;right:0;height:3px;
     background:repeating-linear-gradient(90deg,#e8ddc0 0 22px,transparent 22px 44px);
     animation:road 1.1s linear infinite}
@@ -215,6 +220,12 @@
      new button, nothing in the event queue: a few seconds of recognition
      every minute or so, which is the cheapest attention this scene can buy. */
   .shop .door,.shop .win{transition:fill .45s ease,opacity .45s ease}
+  /* People at the windows. Still nearly all the time, with a small shift every
+     few seconds on different clocks — the difference between a customer and a
+     painted head. */
+  @keyframes peek{0%,78%,100%{transform:translateY(0)}
+                  84%{transform:translateY(-1.3px)} 90%{transform:translateY(.4px)}}
+  .shop .peek{animation:peek 9s ease-in-out infinite}
   .scene.light .shop .door{fill:#ffcf5c;opacity:.88}
   .scene.light .shop .win{fill:#fff3bd;opacity:1}
   /* "I better pass my neighbour", coughing away beside the food joint while
@@ -1241,7 +1252,7 @@
 <script type="module">
 import { newGame, doAction, canDo, unlocked, ACTIONS, phaseOf, nextUnlock, postingOdds, rivalOf,
          computePosting,
-         shareText, MAX_DAY } from './game.js?v=20261029161107';
+         shareText, MAX_DAY } from './game.js?v=20261029162206';
 
 /* ---------- scene coordinates ----------
    The scene is scaled by a transform (see the stage), so a native
@@ -1272,11 +1283,11 @@ const TS = (document.getElementById('scene').offsetWidth || 375) / 375;
 const ALLAWEE_NOTE = 'Allawee ₦77,000 — e never enter.';
 import { initNet, joinCamp, syncPlayer, platoonBoard, recentChat, postChat,
          postSuggestion, reportMessage, awardBoard, myAwards, laughChat,
-         setPresence, campRoster, renameMe, online } from './net.js?v=20261029161107';
-import { startMusic, stopMusic, musicOn, audioState, audioSupported, BEAT, BAR } from './audio.js?v=20261029161107';
+         setPresence, campRoster, renameMe, online } from './net.js?v=20261029162206';
+import { startMusic, stopMusic, musicOn, audioState, audioSupported, BEAT, BAR } from './audio.js?v=20261029162206';
 import { playHoop, playPenalty, playQuiz, playRegister, playParade,
          playMami, playHustle, playManOWar, playSaed, playSocial,
-         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261029161107';
+         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261029162206';
 
 /* Every dance animation is expressed in beats, so the steps are on-tempo
    whether or not the sound is playing — and genuinely on the beat when it is. */
@@ -1664,13 +1675,14 @@ function hawker(skin, wares = 'water'){
    The roofs take a darker shade of the same hue — a grey-brown roof on a
    bright wall reads as a mistake. */
 const SHOPS = [
-  { sign: 'FOOD JOINT',      w: 104, body: '#b9683f', roof: '#6d6450',
+  /* door: each shop's own paint. heads: who is at the window (0–2). */
+  { sign: 'FOOD JOINT',      w: 104, body: '#b9683f', roof: '#6d6450', door: '#d6342c', heads: 2,
     errand: 'TAP TO BUY JOLLOF RICE', price: 600, belle: 9, food: true },
   { sign: 'ROASTED CORN',    w: 76,  body: '#8a6b3f', roof: '#5f5a38', stall: true,
     errand: 'TAP FOR ROASTED CORN', price: 200,  belle: 5, food: true },
-  { sign: 'PROVISION STORE', w: 112, body: '#0fa3a0', roof: '#0a7d79',
+  { sign: 'PROVISION STORE', w: 112, body: '#0fa3a0', roof: '#0a7d79', door: '#f3c53d', heads: 1,
     errand: 'TAP TO BUY PROVISIONS', price: 450 },
-  { sign: 'ELECTRONICS',     w: 110, body: '#f7b31c', roof: '#c9820d',
+  { sign: 'ELECTRONICS',     w: 110, body: '#f7b31c', roof: '#c9820d', door: '#2b6cb0', heads: 1,
     errand: 'TAP TO BUY PHONE CHARGER', price: 500,
     /* A second errand on the same shop, picked at random each time it is
        offered. Recharge card is the thing anyone actually walks into an
@@ -1684,9 +1696,9 @@ const SHOPS = [
      negative, an uncapped paid credibility tap is an infinite one. The day it
      is used, it simply stops being offered. Not food: the corper goes in to
      learn, he does not stand there eating. */
-  { sign: 'BAKERY',          w: 104, body: '#d98f7e', roof: '#8a4b2a', bakery: true,
+  { sign: 'BAKERY',          w: 104, body: '#d98f7e', roof: '#8a4b2a', bakery: true, door: '#1f7a46', heads: 1,
     errand: 'TAP TO LEARN A TRADE', price: 1000, cred: 2, trade: true },
-  { sign: 'BARBING SALON',   w: 116, body: '#ece4cf', roof: '#6d6450', barber: true,
+  { sign: 'BARBING SALON',   w: 116, body: '#ece4cf', roof: '#6d6450', barber: true, door: '#7b3fa0', heads: 2,
     errand: 'TAP FOR A HAIRCUT', price: 500, belle: 8 },
 ];
 
@@ -1699,6 +1711,35 @@ const board = (txt, x, y, w) =>
    <text x="${x + w/2}" y="${y + 9}" text-anchor="middle" font-size="8.6"
          font-weight="800" font-family="system-ui,sans-serif" fill="#241f14"
          textLength="${w - 8}" lengthAdjust="spacingAndGlyphs">${txt}</text>`;
+
+/* A painted door with a glass pane in it. The pane keeps the `door` class so
+   UP NEPA! lights the glass, not the paint. Half the shops stand ajar. */
+const DOOR_PALETTE = ['#2b6cb0', '#d6342c', '#f3c53d', '#1f7a46', '#7b3fa0'];
+function door(cfg){
+  const c = cfg.door || DOOR_PALETTE[(cfg.sign.length) % DOOR_PALETTE.length];
+  return `<rect x="15" y="31" width="28" height="25" fill="#2e2a20" opacity=".55"/>
+    <rect x="16.5" y="32.5" width="25" height="23.5" rx=".8" fill="${c}"/>
+    <rect x="16.5" y="32.5" width="25" height="23.5" rx=".8" fill="none" stroke="rgba(0,0,0,.22)" stroke-width="1"/>
+    <rect class="door" x="20" y="35" width="18" height="8" rx="1" fill="#2e2a20" opacity=".55"/>
+    <rect x="20" y="45.5" width="18" height="8" rx="1" fill="rgba(0,0,0,.12)"/>
+    <circle cx="37" cy="45" r="1.1" fill="#f2e6c2"/>`;
+}
+/* Who is at the window: head and shoulders behind the glass, on a slow clock
+   of their own so no two shops shift at once. */
+const WIN_SKIN = ['#6b4423', '#8d5524', '#4a2e1c', '#a0673f'];
+function heads(cfg){
+  const n = cfg.heads || 0;
+  if (!n) return '';
+  const seed = cfg.sign.length;
+  const one = (cx, r, i) =>
+    `<g class="peek" style="animation-delay:${-(seed * 1.7 + i * 3.1) % 9}s">
+       <path d="M${cx-6} 46 q6-5.5 12 0z" fill="${WIN_SKIN[(seed + i) % 4]}"/>
+       <path d="M${cx-6} 46 q6-4 12 0z" fill="${['#c14f3e','#3d6ea8','#f2d2a0','#2f7a63'][(seed + i) % 4]}"/>
+       <circle cx="${cx}" cy="${40.6}" r="${r}" fill="${WIN_SKIN[(seed + i) % 4]}"/>
+       <path d="M${cx-r} 39.5 q${r}-${r*1.3} ${2*r} 0 q-${r}-${r*.5} -${2*r} 0z" fill="#241c15"/>
+     </g>`;
+  return n === 1 ? one(60 + (seed % 3) * 5, 3.4, 0) : one(59, 3.4, 0) + one(73, 3, 1);
+}
 
 /* Six heads, six cuts, painted on one board the way every salon's is: afro,
    low cut, mohawk, high-top, dreads, side part. Bold shapes only — each head
@@ -1748,8 +1789,9 @@ function shop(cfg){
   return `<svg viewBox="0 0 100 60" aria-hidden="true"${cfg.barber ? ' overflow="visible"' : ''}>
     <rect x="8" y="22" width="84" height="34" rx="2" fill="${cfg.body}"/>
     <path d="M3 22h94l-6-8H9z" fill="${cfg.roof}"/>
-    <rect class="door" x="16" y="32" width="26" height="24" fill="#2e2a20" opacity=".5"/>
+    ${door(cfg)}
     <rect class="win" x="52" y="34" width="30" height="12" rx="1.5" fill="#efe7d2" opacity=".55"/>
+    ${heads(cfg)}
 
     ${cfg.furniture ? `
       <rect x="54" y="44" width="13" height="12" rx="1" fill="#a9703f"/>
@@ -2474,6 +2516,18 @@ const POS_DEFAULT = ['POS', '#1e3a6e', '#fff'];
     <rect x="2" y="36" width="2" height="10" rx=".8" fill="#f0f0ea"/>
     <rect x="3" y="46" width="1.6" height="14" fill="#f0f0ea"/>
     <rect x="10" y="46" width="1.6" height="14" fill="#f0f0ea"/>
+    <!-- the agent, on the chair, one hand on the table by the terminal -->
+    <g class="agent">
+      <rect x="11" y="46" width="3.2" height="11" rx="1.4" fill="#2f3a4a"/>
+      <rect x="10" y="56" width="5.5" height="2.6" rx="1.2" fill="#241f1a"/>
+      <rect x="4.5" y="43" width="10" height="4" rx="1.6" fill="#2f3a4a"/>
+      <path d="M4.2 37.5q0-2 2-2h4q2 0 2 2v7.5H4.2z" fill="#c14f3e"/>
+      <rect x="9" y="38.5" width="7.5" height="2.4" rx="1.2" fill="#c14f3e"/>
+      <circle cx="16.4" cy="39.7" r="1.4" fill="#6b4423"/>
+      <rect x="6.4" y="30.5" width="3.4" height="5" rx="1.4" fill="#6b4423"/>
+      <circle cx="8.1" cy="28.8" r="3.3" fill="#6b4423"/>
+      <path d="M4.8 28.4q3.3-4.6 6.6 0q-3.3-1.8-6.6 0z" fill="#241c15"/>
+    </g>
   </svg>`;
   onKerb(el);
 })();
