@@ -1072,18 +1072,18 @@
 <script type="module">
 import { newGame, doAction, canDo, unlocked, ACTIONS, phaseOf, nextUnlock, postingOdds, rivalOf,
          computePosting,
-         shareText, MAX_DAY } from './game.js?v=20261028222347';
+         shareText, MAX_DAY } from './game.js?v=20261028223013';
 
 /* Kept here, not exported from game.js: a new cross-file export breaks any
    client holding a cached game.js after a deploy. */
 const ALLAWEE_NOTE = 'Allawee ₦77,000 — e never enter.';
 import { initNet, joinCamp, syncPlayer, platoonBoard, recentChat, postChat,
          postSuggestion, reportMessage, awardBoard, myAwards, laughChat,
-         setPresence, campRoster, renameMe, online } from './net.js?v=20261028222347';
-import { startMusic, stopMusic, musicOn, audioState, audioSupported, BEAT, BAR } from './audio.js?v=20261028222347';
+         setPresence, campRoster, renameMe, online } from './net.js?v=20261028223013';
+import { startMusic, stopMusic, musicOn, audioState, audioSupported, BEAT, BAR } from './audio.js?v=20261028223013';
 import { playHoop, playPenalty, playQuiz, playRegister, playParade,
          playMami, playHustle, playManOWar, playSaed, playSocial,
-         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261028222347';
+         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261028223013';
 
 /* Every dance animation is expressed in beats, so the steps are on-tempo
    whether or not the sound is playing — and genuinely on the beat when it is. */
@@ -2805,6 +2805,15 @@ function burningDanfo(){
 function douse(v){
   const left = (+v.dataset.fire || 1) - 1;
   v.dataset.fire = String(left);
+  /* Every tap pays, not just the one that finishes it: three flames, three
+     taps, three points. Paying only at the end made the first two taps feel
+     like nothing happened. Still bounded — the queue runs one event at a
+     time, so a fire comes round only every ~32s. */
+  if (s){
+    s.cred = (s.cred || 0) + 1;
+    render();
+    floatCost(v, '+1 CRED');
+  }
   if (left > 0) return;
   v.querySelectorAll('.flame').forEach(f => f.remove());
   v.querySelector('.tapTag')?.remove();
