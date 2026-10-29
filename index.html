@@ -126,7 +126,11 @@
      still now: at 112px it shared a row with the shop boards and the two kept
      colliding, so FOOD JOINT and the sign overlapped on a narrow phone. The
      top-right corner is the one piece of sky nothing else uses. */
-  .sign{position:absolute;right:14px;bottom:150px;z-index:3;text-align:center}
+  /* Planted on the kerb at 66px — the same line the ballot boxes stand on —
+     rather than stopping in mid-air at 150 with 60px of sky between the sign
+     and the thing it is announcing. The board stays exactly where it was; the
+     post grew to meet the ground, so the two now read as one display. */
+  .sign{position:absolute;right:14px;bottom:66px;z-index:3;text-align:center}
   /* Colour comes from JS, one per phrase. A roadside board here is painted in
      whatever the signwriter had — pink beside green beside yellow — and a
      single corporate green read as an official road sign rather than as the
@@ -135,7 +139,7 @@
     letter-spacing:.1em;padding:5px 9px;border-radius:4px;white-space:nowrap;
     box-shadow:0 2px 5px rgba(0,0,0,.22);
     transition:opacity .4s ease, background .4s ease, color .4s ease}
-  .sign i{display:block;width:4px;height:34px;background:#8c7f5e;margin:0 auto}
+  .sign i{display:block;width:4px;height:118px;background:#8c7f5e;margin:0 auto}
 
   /* ---------- Mr. Pothole ----------
      Fixed, not drifting. A hazard you can learn the position of is fair; one
@@ -1012,18 +1016,18 @@
 <script type="module">
 import { newGame, doAction, canDo, unlocked, ACTIONS, phaseOf, nextUnlock, postingOdds, rivalOf,
          computePosting,
-         shareText, MAX_DAY } from './game.js?v=20261028070306';
+         shareText, MAX_DAY } from './game.js?v=20261028214111';
 
 /* Kept here, not exported from game.js: a new cross-file export breaks any
    client holding a cached game.js after a deploy. */
 const ALLAWEE_NOTE = 'Allawee ₦77,000 — e never enter.';
 import { initNet, joinCamp, syncPlayer, platoonBoard, recentChat, postChat,
          postSuggestion, reportMessage, awardBoard, myAwards, laughChat,
-         setPresence, campRoster, renameMe, online } from './net.js?v=20261028070306';
-import { startMusic, stopMusic, musicOn, audioState, audioSupported, BEAT, BAR } from './audio.js?v=20261028070306';
+         setPresence, campRoster, renameMe, online } from './net.js?v=20261028214111';
+import { startMusic, stopMusic, musicOn, audioState, audioSupported, BEAT, BAR } from './audio.js?v=20261028214111';
 import { playHoop, playPenalty, playQuiz, playRegister, playParade,
          playMami, playHustle, playManOWar, playSaed, playSocial,
-         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261028070306';
+         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261028214111';
 
 /* Every dance animation is expressed in beats, so the steps are on-tempo
    whether or not the sound is playing — and genuinely on the beat when it is. */
@@ -1399,7 +1403,11 @@ function fillScene(el, n, big){
   const CYCLE = 13.5;
   const figs = Array.from({length:n}, (_,i) =>
     corper(SKINS[i % SKINS.length],
-           big ? 1 : (0.95 + (i%3)*0.22),
+           /* 0.94 / 1.00 / 1.08. The old spread went to 1.39 — a 120px figure
+              beside 72px shopfronts, which read as a giant rather than as
+              someone nearer the camera. Enough variety to tell them apart,
+              not enough to break the scale of the street. */
+           big ? 1 : (0.94 + (i%3)*0.07),
            big ? 7 : CYCLE,
            big ? 0 : -(i * CYCLE / n),
            big ? 1 : OUTFITS[i % OUTFITS.length],
@@ -1592,7 +1600,17 @@ function lineUp(){
 
 function backToTrekking(){
   const sc = $('scene');
+  /* Only re-slot when a dance is actually ending. The tap handler calls this
+     too, as a precaution, and with no dance running there is no transform
+     glide to hide the correction — so the figure the player had just tapped
+     snapped to its slot and THEN set off for the shop. That snap is the
+     "hyper activity right before the copper went to the foodstore". */
+  const wasDancing = sc.classList.contains('dancing');
   sc.classList.remove('dancing', 'shaku');          // march unpauses mid-stride
+  if (!wasDancing){
+    sc.querySelectorAll(':scope > .corper').forEach(p => { p.style.transform = ''; });
+    return;
+  }
   /* Put everyone back on their slot while the transforms are unwinding.
      The three only stay evenly spaced while nothing re-phases them, and a
      snack run pauses one figure's march for ~3.4s — a quarter of the cycle,
