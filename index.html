@@ -146,7 +146,58 @@
      Fixed, not drifting. A hazard you can learn the position of is fair; one
      that wanders is just bad luck, and the whole point is that the player gets
      a chance to react to it. Behind the walkers so they pass over it. */
+  /* ---------- UP NEPA! ----------
+     The whole row lights up, the generator cuts out, the board shouts, the
+     corpers throw their hands up — then NEPA takes it back. No new figure, no
+     new button, nothing in the event queue: a few seconds of recognition
+     every minute or so, which is the cheapest attention this scene can buy. */
+  .shop .door,.shop .win{transition:fill .45s ease,opacity .45s ease}
+  .scene.light .shop .door{fill:#ffcf5c;opacity:.88}
+  .scene.light .shop .win{fill:#fff3bd;opacity:1}
+  /* "I better pass my neighbour", coughing away beside the food joint while
+     there is no light. Three puffs on staggered delays read as a steady
+     exhaust; one would read as a hiccup. */
+  @keyframes genPuff{from{transform:translate(0,0);opacity:.78}
+                     to{transform:translate(-5px,-16px);opacity:0}}
+  @keyframes genShake{0%,100%{transform:translate(0,0)}
+                      25%{transform:translate(.4px,-.5px)} 75%{transform:translate(-.4px,.3px)}}
+  .genSet{position:absolute;left:74%;bottom:62px;width:36px;z-index:1;
+    pointer-events:none;transform:translateX(-50%)}
+  .genSet .smoke{animation:genPuff 1.2s linear infinite}
+  .genSet .engine{animation:genShake .11s linear infinite}
+  .scene.light .genSet .smoke{animation:none;opacity:0}
+  .scene.light .genSet .engine{animation:none}
+  /* Both hands up, from each shoulder outward. brandish already lifts the
+     right arm for the chasers; the left needs the mirror or it swings across
+     the body. Figures mid-errand keep their own arms. */
+  @keyframes brandishL{0%,100%{transform:rotate(150deg)}50%{transform:rotate(169deg)}}
+  .scene.light > .corper:not(.running):not(.munching):not(.shopping):not(.jumping):not(.sunk):not(.hailing):not(.riding):not(.inRide) .arm {animation:brandishL .3s ease-in-out infinite}
+  .scene.light > .corper:not(.running):not(.munching):not(.shopping):not(.jumping):not(.sunk):not(.hailing):not(.riding):not(.inRide) .arm2{animation:brandish  .3s ease-in-out infinite}
+
   .pothole{position:absolute;bottom:1px;z-index:1;width:80px;pointer-events:none}
+  /* On the kerb between the two potholes, in front of the shops that drift
+     behind it, behind the walkers. 36% keeps it clear of Mrs. Pothole (21%),
+     Mr. Pothole (58%) and the figures' labels, which pin toward the middle. */
+  .posStand{position:absolute;left:36%;bottom:62px;width:46px;z-index:1;
+    pointer-events:none;transform:translateX(-50%)}
+  /* Towers: bases hidden behind the shops, tops kept under the signboard
+     (bottom 150) on the right and clear of the sun on the left by the
+     padding. Lit windows join the UP NEPA! moment. */
+  .skyline{position:absolute;left:0;right:0;bottom:58px;padding:0 17% 0 16%;
+    display:flex;justify-content:space-between;align-items:flex-end;
+    pointer-events:none;opacity:.92}
+  .skyline .tower{display:block;overflow:visible;flex:none}
+  .tower .tw{transition:fill .5s ease,opacity .5s ease}
+  .scene.light .tower .tw{fill:#ffe9a0;opacity:1}
+  /* The pole stands at 47%, base behind the shops; the wires span the scene
+     at the crossarm's height. */
+  .nepaPole{position:absolute;left:47%;bottom:40px;width:40px;pointer-events:none;
+    transform:translateX(-50%)}
+  .nepaWires{position:absolute;left:0;right:0;bottom:40px;height:150px;pointer-events:none}
+  .nepaWires svg{width:100%;height:100%;display:block}
+  /* When light comes, the transformer throws a spark — three blinks and done. */
+  @keyframes sparkle{0%,100%{opacity:0}50%{opacity:1}}
+  .scene.light .nepaPole .spark{animation:sparkle .18s linear 4}
   /* Letters only — no plate. A second dark pill down among the figures read as
      another instruction to press; the name is scenery, not a button. Pink
      because nothing else in the scene is, so it reads as a label rather than
@@ -1006,18 +1057,18 @@
 <script type="module">
 import { newGame, doAction, canDo, unlocked, ACTIONS, phaseOf, nextUnlock, postingOdds, rivalOf,
          computePosting,
-         shareText, MAX_DAY } from './game.js?v=20261028214523';
+         shareText, MAX_DAY } from './game.js?v=20261028215608';
 
 /* Kept here, not exported from game.js: a new cross-file export breaks any
    client holding a cached game.js after a deploy. */
 const ALLAWEE_NOTE = 'Allawee ₦77,000 — e never enter.';
 import { initNet, joinCamp, syncPlayer, platoonBoard, recentChat, postChat,
          postSuggestion, reportMessage, awardBoard, myAwards, laughChat,
-         setPresence, campRoster, renameMe, online } from './net.js?v=20261028214523';
-import { startMusic, stopMusic, musicOn, audioState, audioSupported, BEAT, BAR } from './audio.js?v=20261028214523';
+         setPresence, campRoster, renameMe, online } from './net.js?v=20261028215608';
+import { startMusic, stopMusic, musicOn, audioState, audioSupported, BEAT, BAR } from './audio.js?v=20261028215608';
 import { playHoop, playPenalty, playQuiz, playRegister, playParade,
          playMami, playHustle, playManOWar, playSaed, playSocial,
-         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261028214523';
+         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261028215608';
 
 /* Every dance animation is expressed in beats, so the steps are on-tempo
    whether or not the sound is playing — and genuinely on the beat when it is. */
@@ -1272,8 +1323,11 @@ const SHOPS = [
        offered. Recharge card is the thing anyone actually walks into an
        electronics kiosk for, and it was lost when the charger replaced it. */
     errand2: 'TAP TO BUY RECHARGE CARD', price2: 200 },
-  { sign: 'FURNITURE',       w: 116, body: '#7d4b2c', roof: '#6d6450', furniture: true,
-    errand: 'TAP TO BUY STREAMING CHAIR', price: 2500 },
+  /* The hand-painted board with six hairstyles on it, where FURNITURE was. A
+     whitewashed front so the painted board is the colour on it, and a haircut
+     is the errand — 500 and a lift to belle, because a fresh cut IS belle. */
+  { sign: 'BARBING SALON',   w: 116, body: '#ece4cf', roof: '#6d6450', barber: true,
+    errand: 'TAP FOR A HAIRCUT', price: 500, belle: 8 },
 ];
 
 /* signboard: textLength forces any wording to fit, so a long brand name
@@ -1285,6 +1339,35 @@ const board = (txt, x, y, w) =>
    <text x="${x + w/2}" y="${y + 9}" text-anchor="middle" font-size="8.6"
          font-weight="800" font-family="system-ui,sans-serif" fill="#241f14"
          textLength="${w - 8}" lengthAdjust="spacingAndGlyphs">${txt}</text>`;
+
+/* Six heads, six cuts, painted on one board the way every salon's is: afro,
+   low cut, mohawk, high-top, dreads, side part. Bold shapes only — each head
+   is nine units across and anything finer vanishes. */
+function barberBoard(x, y, w){
+  const heads = [
+    (cx,cy) => `<circle cx="${cx}" cy="${cy-2.2}" r="4.6" fill="#1d1812"/>`,                 // afro
+    (cx,cy) => `<path d="M${cx-3.4} ${cy-1.6} a3.4 3 0 0 1 6.8 0z" fill="#1d1812"/>`,         // low cut
+    (cx,cy) => `<rect x="${cx-1.1}" y="${cy-7}" width="2.2" height="5.5" rx="1" fill="#1d1812"/>`, // mohawk
+    (cx,cy) => `<rect x="${cx-3.6}" y="${cy-6.4}" width="7.2" height="4.6" rx=".8" fill="#1d1812"/>`, // high-top
+    (cx,cy) => [-3,-1.5,0,1.5,3].map(d =>
+      `<rect x="${cx+d-.5}" y="${cy-3}" width="1" height="5.2" rx=".5" fill="#1d1812"/>`).join('') // dreads
+      + `<path d="M${cx-3.4} ${cy-1.8} a3.4 3 0 0 1 6.8 0z" fill="#1d1812"/>`,
+    (cx,cy) => `<path d="M${cx-3.4} ${cy-1.4} a3.4 3 0 0 1 6.8 0z" fill="#1d1812"/>
+                <path d="M${cx-1} ${cy-4.2} l1.6 2.6" stroke="#ece4cf" stroke-width=".7"/>`, // side part
+  ];
+  const step = (w - 8) / 6;
+  const row = heads.map((hair, i) => {
+    const cx = x + 4 + step * i + step / 2, cy = y + 11;
+    return `<circle cx="${cx}" cy="${cy}" r="3.4" fill="#8d5524"/>${hair(cx, cy)}`;
+  }).join('');
+  return `<rect x="${x}" y="${y}" width="${w}" height="26" rx="2" fill="#f7f4ea"/>
+   <rect x="${x}" y="${y}" width="${w}" height="26" rx="2" fill="none"
+         stroke="#2e2a20" stroke-opacity=".35" stroke-width="1"/>
+   ${row}
+   <text x="${x + w/2}" y="${y + 23}" text-anchor="middle" font-size="7.6"
+         font-weight="800" font-family="system-ui,sans-serif" fill="#241f14"
+         textLength="${w - 10}" lengthAdjust="spacingAndGlyphs">BARBING SALON</text>`;
+}
 
 function shop(cfg){
   /* a corn seller is a brazier under an umbrella, not a building */
@@ -1300,17 +1383,20 @@ function shop(cfg){
       ${board(cfg.sign, 10, 8, 56)}
     </svg>`;
   }
-  return `<svg viewBox="0 0 100 60" aria-hidden="true">
+  /* The barber's board is taller than a sign and rides above the roof, so that
+     one shop lets its drawing spill past the viewBox. */
+  return `<svg viewBox="0 0 100 60" aria-hidden="true"${cfg.barber ? ' overflow="visible"' : ''}>
     <rect x="8" y="22" width="84" height="34" rx="2" fill="${cfg.body}"/>
     <path d="M3 22h94l-6-8H9z" fill="${cfg.roof}"/>
-    <rect x="16" y="32" width="26" height="24" fill="#2e2a20" opacity=".5"/>
-    <rect x="52" y="34" width="30" height="12" rx="1.5" fill="#efe7d2" opacity=".55"/>
+    <rect class="door" x="16" y="32" width="26" height="24" fill="#2e2a20" opacity=".5"/>
+    <rect class="win" x="52" y="34" width="30" height="12" rx="1.5" fill="#efe7d2" opacity=".55"/>
+
     ${cfg.furniture ? `
       <rect x="54" y="44" width="13" height="12" rx="1" fill="#a9703f"/>
       <rect x="54" y="40" width="13" height="4"  rx="1" fill="#8a5a31"/>
       <rect x="70" y="46" width="12" height="10" rx="1" fill="#95633a"/>
       <rect x="70" y="42" width="12" height="4"  rx="1" fill="#7d4b2c"/>` : ''}
-    ${board(cfg.sign, 10, 6, 80)}
+    ${cfg.barber ? barberBoard(8, -8, 84) : board(cfg.sign, 10, 6, 80)}
   </svg>`;
 }
 
@@ -1515,28 +1601,32 @@ function paintSign(board, entry){
    other slots. */
 const SIGN_SPONSOR = null;   // e.g. ['MTN · 2GB ₦500', '#ffcc00', '#111']
 
+/* Set by the rotation below; stays null under reduced motion, and the one
+   caller (UP NEPA!) checks before using it. */
+let shoutSign = null;
 (() => {
   const board = $('scene').querySelector('.sign b');
   if (!board) return;
   let i = Math.floor(Math.random() * SIGN_LINES.length);
-  let sponsorTurn = false;
+  let sponsorTurn = false, timer = null;
   paintSign(board, SIGN_LINES[i]);
   /* A changing sign is still motion. Under reduced-motion it keeps whichever
      line it opened on rather than flickering in the corner. */
   if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-  setInterval(() => {
+  const swapTo = entry => {
     board.style.opacity = '0';
-    setTimeout(() => {
-      if (SIGN_SPONSOR && !sponsorTurn){
-        paintSign(board, SIGN_SPONSOR);
-      } else {
-        i = (i + 1) % SIGN_LINES.length;
-        paintSign(board, SIGN_LINES[i]);
-      }
-      if (SIGN_SPONSOR) sponsorTurn = !sponsorTurn;
-      board.style.opacity = '1';
-    }, 400);                                   // matches the CSS transition
-  }, 5200);
+    setTimeout(() => { paintSign(board, entry); board.style.opacity = '1'; }, 400);
+  };                                             // 400 matches the CSS transition
+  const tick = () => {
+    if (SIGN_SPONSOR && !sponsorTurn) swapTo(SIGN_SPONSOR);
+    else { i = (i + 1) % SIGN_LINES.length; swapTo(SIGN_LINES[i]); }
+    if (SIGN_SPONSOR) sponsorTurn = !sponsorTurn;
+  };
+  const start = () => { clearInterval(timer); timer = setInterval(tick, 5200); };
+  start();
+  /* A shouted line interrupts whatever is up and restarts the clock, so it
+     holds for a full turn rather than being replaced 200ms later. */
+  shoutSign = entry => { swapTo(entry); start(); };
 })();
 
 /* ---------- dance break ----------
@@ -1924,6 +2014,156 @@ const potholeMrs = makePothole('potArcMrs', 'MRS. POTHOLE');
 potholeMrs.style.width  = MRS_W + 'px';
 potholeMrs.style.bottom = MRS_BOTTOM + 'px';
 potholeMrs.style.zIndex = '0';            // traffic drives over her
+
+/* ---------- POS stand ----------
+   The branded umbrella with a plastic chair and a terminal on a trestle — on
+   every corner now, and the one piece of street furniture that is literally
+   paid-for signage. Scenery, not a button. The canopy is the ad slot:
+   POS_SPONSOR takes [text, canopy colour, ink], same shape as the signboard
+   sponsor, so a brand brings its own colours. The default is a navy nobody
+   owns, deliberately: a green canopy would read as one particular company's. */
+const POS_SPONSOR = null;   // e.g. ['OPAY', '#1ec37a', '#fff']
+const POS_DEFAULT = ['POS', '#1e3a6e', '#fff'];
+(() => {
+  const [txt, top, ink] = POS_SPONSOR || POS_DEFAULT;
+  const el = document.createElement('div');
+  el.className = 'posStand';
+  el.innerHTML = `<svg viewBox="0 0 60 64" aria-hidden="true">
+    <path d="M2 24 Q30 2 58 24 Z" fill="${top}"/>
+    <path d="M2 24 Q30 14 58 24 L58 27 Q30 19 2 27 Z" fill="#fff" opacity=".85"/>
+    <path d="M10 25 Q30 8 50 25" fill="none" stroke="#fff" stroke-opacity=".35" stroke-width="1"/>
+    <text x="30" y="21" text-anchor="middle" font-size="9" font-weight="900"
+          font-family="system-ui,sans-serif" fill="${ink}">${txt}</text>
+    <rect x="29" y="24" width="2.2" height="36" fill="#6f6756"/>
+    <rect x="13" y="42" width="34" height="3" rx="1" fill="#8a6b3f"/>
+    <rect x="16" y="45" width="2" height="15" fill="#6d5230"/>
+    <rect x="42" y="45" width="2" height="15" fill="#6d5230"/>
+    <rect x="34" y="36" width="8" height="6" rx="1" fill="#1d1d1b"/>
+    <rect x="35.4" y="37.2" width="5.2" height="2.4" rx=".5" fill="#7fe0a8"/>
+    <rect x="2" y="44" width="10" height="2.4" rx="1" fill="#f0f0ea"/>
+    <rect x="2" y="36" width="2" height="10" rx=".8" fill="#f0f0ea"/>
+    <rect x="3" y="46" width="1.6" height="14" fill="#f0f0ea"/>
+    <rect x="10" y="46" width="1.6" height="14" fill="#f0f0ea"/>
+  </svg>`;
+  sceneEl.appendChild(el);
+})();
+
+/* ---------- skyline ----------
+   Towers behind the shops, each with its name on the roof the way the banks
+   do on the Island. Pale and desaturated so they sit a long way back, and
+   placed after the sun in the DOM but before the clouds, so cloud drifts in
+   front of them and the sun is never covered. Names are generic on purpose
+   and are the ad slot: TOWERS[].name is where a real one goes. */
+const TOWERS = [
+  { name: 'BANK',      w: 44, h: 86,  body: '#b9c3cf', win: '#e9edf2' },
+  { name: 'HOLDINGS',  w: 54, h: 112, body: '#c6c9cf', win: '#eef0f3', mast: true },
+  { name: 'INSURANCE', w: 40, h: 96,  body: '#cfc5ab', win: '#f1ecdd' },
+  { name: 'AGENCY',    w: 48, h: 74,  body: '#b8c2b6', win: '#e8ede6' },
+  { name: 'PLAZA',     w: 42, h: 90,  body: '#c4b7bc', win: '#efe8ea' },
+];
+function tower(t){
+  const cols = Math.max(2, Math.floor((t.w - 10) / 9));
+  const rows = Math.max(3, Math.floor((t.h - 26) / 10));
+  const cw = (t.w - 10) / cols, rh = (t.h - 26) / rows;
+  let wins = '';
+  for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++)
+    wins += `<rect class="tw" x="${(5 + c*cw + 1.6).toFixed(1)}" y="${(18 + r*rh + 1.6).toFixed(1)}"
+               width="${(cw - 3.2).toFixed(1)}" height="${(rh - 3.2).toFixed(1)}" rx=".6"
+               fill="${t.win}" opacity=".75"/>`;
+  return `<svg class="tower" viewBox="0 0 ${t.w} ${t.h}" width="${t.w}" height="${t.h}" aria-hidden="true">
+    ${t.mast ? `<rect x="${t.w/2 - .8}" y="-14" width="1.6" height="16" fill="#8a8f96"/>` : ''}
+    <rect x="0" y="4" width="${t.w}" height="${t.h - 4}" rx="1.5" fill="${t.body}"/>
+    <rect x="0" y="4" width="${t.w}" height="4" fill="rgba(0,0,0,.08)"/>
+    ${wins}
+    <rect x="4" y="6.5" width="${t.w - 8}" height="9" rx="1.2" fill="#2e2a20" opacity=".85"/>
+    <text x="${t.w/2}" y="13.3" text-anchor="middle" font-size="6.2" font-weight="800"
+          font-family="system-ui,sans-serif" fill="#f7f4ea" letter-spacing=".4"
+          textLength="${t.w - 14}" lengthAdjust="spacingAndGlyphs">${t.name}</text>
+  </svg>`;
+}
+(() => {
+  const sky = document.createElement('div');
+  sky.className = 'skyline';
+  sky.innerHTML = TOWERS.map(tower).join('');
+  const sun = sceneEl.querySelector('.sun');
+  if (sun) sun.insertAdjacentElement('afterend', sky); else sceneEl.prepend(sky);
+})();
+
+/* ---------- NEPA pole ----------
+   Mid-background: in front of the towers, behind the shops. Concrete pole,
+   crossarm, the drum transformer, and wires that sag away to both edges with
+   a tangle at the arm — the tangle is the part everyone recognises. The wires
+   are a separate full-width svg stretched in x only, so they reach the edges
+   on any phone without stretching the pole with them. */
+(() => {
+  const pole = document.createElement('div');
+  pole.className = 'nepaPole';
+  pole.innerHTML = `<svg viewBox="0 0 40 150" aria-hidden="true">
+    <rect x="18" y="8" width="4" height="142" fill="#9a9385"/>
+    <rect x="18" y="8" width="1.4" height="142" fill="#b5ae9f"/>
+    <rect x="4" y="14" width="32" height="3" rx="1" fill="#6f6a60"/>
+    <rect x="6" y="26" width="28" height="2.6" rx="1" fill="#6f6a60"/>
+    <circle cx="8"  cy="13" r="1.8" fill="#3b4a5a"/><circle cx="20" cy="13" r="1.8" fill="#3b4a5a"/>
+    <circle cx="32" cy="13" r="1.8" fill="#3b4a5a"/>
+    <rect x="24" y="30" width="13" height="20" rx="2.4" fill="#4b5563"/>
+    <rect x="24" y="30" width="13" height="3" rx="1.5" fill="#374151"/>
+    <rect x="26.5" y="35" width="8" height="1.4" fill="#374151"/><rect x="26.5" y="39" width="8" height="1.4" fill="#374151"/>
+    <rect x="26.5" y="43" width="8" height="1.4" fill="#374151"/>
+    <path d="M30 26 v4 M34 26 v4" stroke="#2a2622" stroke-width="1"/>
+    <g class="spark" opacity="0">
+      <path d="M30 29 l-3 -5 l5 2 l-1 -5 l4 6 l-4 0 z" fill="#ffd34d"/>
+    </g>
+  </svg>`;
+  const wires = document.createElement('div');
+  wires.className = 'nepaWires';
+  wires.innerHTML = `<svg viewBox="0 0 1000 150" preserveAspectRatio="none" aria-hidden="true">
+    <path d="M0 24 Q235 46 470 20" fill="none" stroke="#2a2622" stroke-width="1.1" opacity=".7"/>
+    <path d="M0 34 Q230 60 470 32" fill="none" stroke="#2a2622" stroke-width="1" opacity=".55"/>
+    <path d="M470 20 Q735 52 1000 18" fill="none" stroke="#2a2622" stroke-width="1.1" opacity=".7"/>
+    <path d="M470 32 Q740 66 1000 30" fill="none" stroke="#2a2622" stroke-width="1" opacity=".55"/>
+    <path d="M452 20 q8 14 18 2 q6 -10 14 4 q7 12 16 -2 q5 -8 12 6" fill="none"
+          stroke="#2a2622" stroke-width="1" opacity=".75"/>
+    <path d="M458 32 q10 -12 20 0 q6 8 14 -4" fill="none" stroke="#2a2622" stroke-width="1" opacity=".6"/>
+  </svg>`;
+  const firstShop = sceneEl.querySelector('.shop');
+  sceneEl.insertBefore(wires, firstShop);
+  sceneEl.insertBefore(pole,  firstShop);
+})();
+
+/* ---------- the generator ----------
+   "I better pass my neighbour", on the kerb, running whenever there is no
+   light. It began as an 11-unit box tucked into the food joint's corner and
+   read as a blue blob with smoke; at this size, with the round fan housing,
+   the pull cord, the red tank and the exhaust, it reads at a glance — and the
+   shudder while it runs is what says "engine" before any of the detail does. */
+(() => {
+  const el = document.createElement('div');
+  el.className = 'genSet';
+  el.innerHTML = `<svg viewBox="0 0 44 30" aria-hidden="true">
+    <g class="engine">
+      <rect x="3" y="7" width="38" height="20" rx="2.5" fill="none" stroke="#2a2622" stroke-width="1.6"/>
+      <rect x="9" y="3.5" width="19" height="7.5" rx="2" fill="#d6342c"/>
+      <rect x="9" y="3.5" width="19" height="2.4" rx="1.2" fill="#b32a24"/>
+      <circle cx="24" cy="4" r="1.6" fill="#2a2622"/>
+      <rect x="8" y="11" width="21" height="12" rx="1.5" fill="#55534f"/>
+      <rect x="10" y="13" width="17" height="2" rx="1" fill="#3a3835"/>
+      <rect x="10" y="17" width="17" height="2" rx="1" fill="#3a3835"/>
+      <circle cx="34" cy="17" r="7" fill="#1f1d1a"/>
+      <circle cx="34" cy="17" r="4.2" fill="#3b3835"/>
+      <circle cx="34" cy="17" r="1.4" fill="#8a8378"/>
+      <rect x="38.5" y="9" width="4" height="2.2" rx="1" fill="#1f1d1a"/>
+      <rect x="1" y="12" width="7" height="3.2" rx="1" fill="#2a2622"/>
+    </g>
+    <rect x="5" y="26.5" width="5" height="2.5" rx="1" fill="#1f1d1a"/>
+    <rect x="34" y="26.5" width="5" height="2.5" rx="1" fill="#1f1d1a"/>
+    <g class="exhaust">
+      <circle class="smoke" cx="2.5" cy="12" r="2.4" fill="#8a8378"/>
+      <circle class="smoke" cx="2.5" cy="12" r="2.9" fill="#8a8378" style="animation-delay:-.4s"/>
+      <circle class="smoke" cx="2.5" cy="12" r="2.1" fill="#8a8378" style="animation-delay:-.8s"/>
+    </g>
+  </svg>`;
+  sceneEl.appendChild(el);
+})();
 
 const potX = () => sceneEl.getBoundingClientRect().width * POT_AT;
 function placePothole(){
@@ -2560,6 +2800,29 @@ function nextSceneEvent(){
 }
 /* Early enough that a quick visitor still sees something tappable. */
 if (!calm()) setTimeout(nextSceneEvent, 3000);
+
+/* ---------- UP NEPA! ----------
+   Runs beside the event queue, not in it: it blocks nothing and nothing
+   blocks it, except a dance (the arms would fight) — then it waits a moment.
+   Light comes, light goes. The second line is the half everybody forgets to
+   put in, and it is the half that gets the laugh. */
+const NEPA_FIRST = 25000, NEPA_EVERY = 80000, LIGHT_FOR = 6500;
+const UP_NEPA  = ['UP NEPA!',         '#fff2b8', '#5a3b00'];   // bulb light
+const NEPA_OFF = ['NEPA DON TAKE AM', '#3b332a', '#f0e6cf'];   // and gone
+function upNepa(){
+  if (calm()) return;
+  if (sceneEl.classList.contains('dancing')){ setTimeout(upNepa, 2500); return; }
+  sceneEl.classList.add('light');
+  if (shoutSign) shoutSign(UP_NEPA);
+  setTimeout(() => {
+    sceneEl.classList.remove('light');
+    if (shoutSign) shoutSign(NEPA_OFF);
+  }, LIGHT_FOR);
+}
+if (!calm()){
+  setTimeout(upNepa, NEPA_FIRST);
+  setInterval(upNepa, NEPA_EVERY);
+}
 
 /* Off by default on purpose: most arrivals come from TikTok with their own
    music already playing, and hijacking that costs more players than it wins. */
