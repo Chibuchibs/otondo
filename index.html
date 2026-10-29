@@ -241,20 +241,12 @@
      so the outline keeps it legible on dust without thinning the letters. */
   .potName{fill:#ff4d9d;stroke:rgba(30,22,18,.75);stroke-width:2.1;
     paint-order:stroke fill;stroke-linejoin:round}
-  /* The march animates `left`, so the hop is free to own `transform`. */
-  @keyframes hopOver{0%,100%{transform:translateY(0)}
-    38%{transform:translateY(-30px)} 58%{transform:translateY(-30px)}}
-  .corper.jumping{animation-name:march,hopOver;
-    animation-duration:var(--dur,13.5s),.62s;
-    animation-timing-function:linear,cubic-bezier(.3,0,.4,1);
-    animation-iteration-count:infinite,1}
-  @keyframes sink{0%{transform:translateY(0) scale(1);opacity:1}
-    50%{transform:translateY(17px) scale(.9);opacity:1}
-    100%{transform:translateY(32px) scale(.74);opacity:0}}
-  .corper.sunk{animation-name:march,sink;
-    animation-duration:var(--dur,13.5s),.75s;
-    animation-timing-function:linear,ease-in;
-    animation-iteration-count:infinite,1;animation-fill-mode:none,forwards}
+  /* The hop and the sink are Web Animations (see hopPothole / fallIn), not
+     CSS classes. They used to be a second entry in the march's animation
+     list — but every figure carries its march duration and delay INLINE, and
+     a single inline value applies to every animation in the list. So the hop
+     ran for 13.5s with the march's negative delay and was never really seen.
+     `.jumping` and `.sunk` are markers only now. */
   .corper.gone{opacity:0;pointer-events:none}
 
   .corper{position:absolute;bottom:4px;width:46px;height:86px;z-index:2;
@@ -1094,18 +1086,18 @@
 <script type="module">
 import { newGame, doAction, canDo, unlocked, ACTIONS, phaseOf, nextUnlock, postingOdds, rivalOf,
          computePosting,
-         shareText, MAX_DAY } from './game.js?v=20261028224100';
+         shareText, MAX_DAY } from './game.js?v=20261028225402';
 
 /* Kept here, not exported from game.js: a new cross-file export breaks any
    client holding a cached game.js after a deploy. */
 const ALLAWEE_NOTE = 'Allawee ₦77,000 — e never enter.';
 import { initNet, joinCamp, syncPlayer, platoonBoard, recentChat, postChat,
          postSuggestion, reportMessage, awardBoard, myAwards, laughChat,
-         setPresence, campRoster, renameMe, online } from './net.js?v=20261028224100';
-import { startMusic, stopMusic, musicOn, audioState, audioSupported, BEAT, BAR } from './audio.js?v=20261028224100';
+         setPresence, campRoster, renameMe, online } from './net.js?v=20261028225402';
+import { startMusic, stopMusic, musicOn, audioState, audioSupported, BEAT, BAR } from './audio.js?v=20261028225402';
 import { playHoop, playPenalty, playQuiz, playRegister, playParade,
          playMami, playHustle, playManOWar, playSaed, playSocial,
-         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261028224100';
+         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261028225402';
 
 /* Every dance animation is expressed in beats, so the steps are on-tempo
    whether or not the sound is playing — and genuinely on the beat when it is. */
@@ -1714,6 +1706,36 @@ function lineUp(){
   });
 }
 
+/* Put the walkers back a third of a cycle apart, by setting each march's
+   current time rather than its delay. The delay-based version was a no-op:
+   drift comes from an errand PAUSING one figure's march for ~3.4s, which
+   leaves the delay value untouched, so "setting it back to the slot" changed
+   nothing. The one figure that is free and on screen keeps its phase; the
+   others are placed relative to it, in slot order. Callers make sure this
+   runs while a transform glide (dance end) or invisibility (ride) hides the
+   jump. */
+function syncToSlots(){
+  const sc = $('scene');
+  const walkers = [...sc.querySelectorAll(':scope > .corper')]
+    .map(p => ({ p, slot: parseFloat(p.dataset.slot) || 0,
+                 anim: p.getAnimations().find(a => a.animationName === 'march') }))
+    .filter(w => w.anim && w.anim.effect);
+  if (walkers.length < 2) return;
+  const dur = walkers[0].anim.effect.getTiming().duration;
+  const ref = walkers.find(w => !w.p.matches('.riding, .hailing, .inRide, .gone, .running, .munching, .shopping'))
+           || walkers[0];
+  const refPhase = ((ref.anim.currentTime % dur) + dur) % dur;
+  walkers.forEach(w => {
+    if (w === ref) return;
+    /* slots are 0, -4.5, -9 on a 13.5 cycle: a negative delay of -4.5s means
+       "a third of the way round", so the gap from the reference is the
+       difference of the two slots. */
+    const offset = ((w.slot - ref.slot) * -1000) % dur;
+    let target = (refPhase + offset) % dur; if (target < 0) target += dur;
+    w.anim.currentTime = target;
+  });
+}
+
 function backToTrekking(){
   const sc = $('scene');
   /* Only re-slot when a dance is actually ending. The tap handler calls this
@@ -1734,15 +1756,8 @@ function backToTrekking(){
      standing on top of each other. Resetting the phase here is free: the line
      is already gliding apart, so the correction rides along with a movement
      the player is watching anyway, instead of being a jump of its own. */
-  sc.querySelectorAll(':scope > .corper').forEach(p => {
-    if (p.dataset.slot && !p.matches('.riding, .hailing, .running, .munching, .shopping, .inRide')){
-      p.style.left = '';
-      p.style.animation = '';
-      p.style.animationDuration = p.dataset.dur;
-      p.style.animationDelay = p.dataset.slot;
-    }
-    p.style.transform = '';
-  });
+  syncToSlots();
+  sc.querySelectorAll(':scope > .corper').forEach(p => { p.style.transform = ''; });
 }
 
 /* Legwork first, then shaku shaku, then back to the trek. */
@@ -1851,10 +1866,14 @@ function hailRide(p){
       if (p.dataset.slot){
         /* Back into his own slot rather than resuming from the drop point.
            `inRide` is still on him here, so he is hidden while the phase is
-           reset and there is no visible jump. */
+           reset and there is no visible jump. Re-adding the animation gives
+           it a fresh start time, so the slot DELAY alone would land him off
+           the others' grid — syncToSlots places him relative to them. */
         p.style.left = ''; p.style.animation = '';
         p.style.animationDuration = p.dataset.dur;
         p.style.animationDelay = p.dataset.slot;
+        void p.offsetWidth;
+        syncToSlots();
       } else {
         resumeMarch(p, drop);
       }
@@ -2258,8 +2277,15 @@ function hopPothole(p, paid){
   if (p.dataset.hop) return;
   p.dataset.hop = '1';
   if (paid) potReadyAt = performance.now() + POT_COOLDOWN;
-  p.style.setProperty('--dur', (parseFloat(p.dataset.dur) || 13.5) + 's');
   p.classList.add('jumping');
+  /* composite:'add' stacks the lift on whatever transform the figure already
+     has — the dance's translateX, for one — instead of replacing it. */
+  p.animate([
+    { transform: 'translateY(0)' },
+    { transform: 'translateY(-30px)', offset: .38 },
+    { transform: 'translateY(-30px)', offset: .58 },
+    { transform: 'translateY(0)' },
+  ], { duration: 620, easing: 'cubic-bezier(.3,0,.4,1)', composite: 'add' });
   setTimeout(() => { p.classList.remove('jumping'); }, 640);
   if (paid && s){
     s.energy = Math.max(0, s.energy - JUMP_COST);
@@ -2272,23 +2298,37 @@ function fallIn(p){
   if (p.dataset.hop) return;
   p.dataset.hop = '1';
   potReadyAt = performance.now() + POT_COOLDOWN;
-  p.style.setProperty('--dur', (parseFloat(p.dataset.dur) || 13.5) + 's');
   p.classList.add('sunk');
+  const sink = p.animate([
+    { transform: 'translateY(0) scale(1)',       opacity: 1 },
+    { transform: 'translateY(17px) scale(.9)',   opacity: 1, offset: .5 },
+    { transform: 'translateY(32px) scale(.74)',  opacity: 0 },
+  ], { duration: 750, easing: 'ease-in', fill: 'forwards', composite: 'add' });
   if (s){
     s.energy = Math.max(0, s.energy - FALL_COST);
     render();
     floatCost(p, `-${FALL_COST} energy`);
   }
   setTimeout(() => {
+    sink.cancel();                 // forwards-fill would hold him invisible
     p.classList.remove('sunk');
     p.classList.add('gone');
-    /* Back to the start of the march, off-screen left, then shown again —
-       he climbs out somewhere behind us and walks back in. Resetting the
-       phase while he is invisible means there is no teleport to see. */
-    p.style.left = ''; p.style.animation = '';
-    p.style.animationDuration = p.dataset.dur;
-    p.style.animationDelay = '0s';
-    setTimeout(() => { p.classList.remove('gone'); delete p.dataset.hop; }, 400);
+    /* He keeps his SLOT. The first version restarted him from phase zero so he
+       would re-enter from the left — and threw his place in the procession
+       away with it. After two or three falls all three figures sat at the
+       same phase, walking as one clump, and every dance had to fling them
+       160-200px apart at ~290px/s to make a line. That was the "hyperactive"
+       figure. Now his march runs on untouched while he is hidden, and he is
+       shown again only once his slot has carried him off the left edge — so he
+       still re-enters from the left, in his own place, with no teleport. */
+    const box = sceneEl.getBoundingClientRect();
+    const reappear = () => {
+      if (!p.isConnected) return;
+      const r = p.getBoundingClientRect();
+      if (r.right < box.left){ p.classList.remove('gone'); delete p.dataset.hop; }
+      else setTimeout(reappear, 200);
+    };
+    setTimeout(reappear, 200);
   }, 760);
 }
 
