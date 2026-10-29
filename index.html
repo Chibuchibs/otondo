@@ -47,13 +47,40 @@
      scene inside it is drawn at a fixed scale and scaled by --k. The stage's
      own background repeats the scene's sky and road, for the rare window shape
      (ultrawide, phone on its side) where the scene does not fill the width. */
+  /* The sky and the ground are four variables, set by the time of day on the
+     stage and inherited by the scene, so the weather (below) and the clock
+     can each have a say without one repainting the other's gradient. */
   .stage{position:relative;left:50%;width:var(--vw,100vw);margin:0 0 16px calc(var(--vw,100vw) / -2);
     height:calc(218px * var(--k,1));overflow:hidden;
-    background:linear-gradient(#f7edd6 0%,#f2e4c6 62%,var(--dust) 62%,#d6caa8 100%)}
+    --sky1:#f7edd6;--sky2:#f2e4c6;--dust1:var(--dust);--dust2:#d6caa8;
+    background:linear-gradient(var(--sky1) 0%,var(--sky2) 62%,var(--dust1) 62%,var(--dust2) 100%)}
   html{overflow-x:clip}
   .scene{position:absolute;left:50%;top:0;height:218px;margin:0;overflow:hidden;
     transform:translateX(-50%) scale(var(--k,1));transform-origin:50% 0;
-    background:linear-gradient(#f7edd6 0%,#f2e4c6 62%,var(--dust) 62%,#d6caa8 100%)}
+    background:linear-gradient(var(--sky1) 0%,var(--sky2) 62%,var(--dust1) 62%,var(--dust2) 100%)}
+  /* ---------- time of day ----------
+     The player's clock lights the street: a pale haze before nine, the plain
+     day, an orange dusk, and night — navy sky, a moon, the towers' windows lit
+     (banks run generators), and a blue wash over everything below the labels.
+     The shops stay dark at night until UP NEPA!, which is the joke landing
+     where it belongs. The wash sits at z-index 4: above the street and the
+     people, below every instruction, so the words stay bright. */
+  .tod-morning{--sky1:#ebe6da;--sky2:#e6dcc4;--dust1:#d2c8ae;--dust2:#c6bb9c}
+  .tod-dusk{--sky1:#e98a5c;--sky2:#f3c48e;--dust1:#c6b08c;--dust2:#b59c79}
+  .tod-night{--sky1:#1a2342;--sky2:#2d3a5e;--dust1:#5b5d6c;--dust2:#474a5c}
+  .scene::after{content:'';position:absolute;inset:0;z-index:4;pointer-events:none;
+    opacity:0;transition:opacity 1.6s ease}
+  .scene.tod-morning::after{background:#fff9ea;opacity:.22}
+  .scene.tod-dusk::after{background:#e8632a;opacity:.1}
+  .scene.tod-night::after{background:#101a3c;opacity:.42}
+  .scene.tod-night .sun{opacity:0;transform:translateY(-16px)}
+  .moon{position:absolute;left:150px;top:12px;width:30px;height:30px;z-index:1;
+    opacity:0;transition:opacity 1.6s ease}
+  .scene.tod-night .moon{opacity:1}
+  .scene.tod-night .tower .tw{fill:#ffe9a0;opacity:.95}
+  .scene.tod-night .star{opacity:1}
+  .star{position:absolute;width:2px;height:2px;border-radius:50%;background:#fff;
+    z-index:1;opacity:0;transition:opacity 1.6s ease}
   /* ---------- weather over the trek ----------
      Three moods on a loop: hot sun, storm, harmattan wind. The sun is the joke —
      it flexes at you while you suffer under it. Everything is CSS off one class
@@ -155,6 +182,33 @@
      Fixed, not drifting. A hazard you can learn the position of is fair; one
      that wanders is just bad luck, and the whole point is that the player gets
      a chance to react to it. Behind the walkers so they pass over it. */
+  /* ---------- the hawkers ----------
+     Pure water and akara, on the far pavement: a basin or a tray on the head,
+     one walking against the traffic and one with it. Behind the cars, in
+     front of the shops, where they cannot collide with the corpers, the chase
+     or the fire. Pure water is the one thing on this street that gives energy
+     BACK: ₦100 a sachet, two per pass, and the label quotes the price. */
+  @keyframes hawk{from{left:112%}to{left:-18%}}
+  @keyframes hawkR{from{left:-18%}to{left:112%}}
+  .hawker.akara{animation-name:hawkR;--face:1}
+  /* Two-thirds of a corper: she is on the far pavement, a lane further back
+     than the walkers, and the far lane's traffic is drawn smaller for the
+     same reason. */
+  /* No z-index on the seller herself: she must not be a stacking context, so
+     that her figure can sit behind the traffic (1) while her label rises
+     above the walkers (2), the chase (3) and the night (4) — a label a
+     walker can cover is a tap that buys provisions instead of water. */
+  .hawker{position:absolute;bottom:54px;width:28px;height:52px;cursor:pointer;
+    -webkit-tap-highlight-color:transparent;animation:hawk linear forwards}
+  .hawker .corper{position:absolute;left:-2px;bottom:0;width:32px;height:60px;z-index:1;
+    animation:none;transform:scaleX(var(--face,-1));transition:none}
+  .hawker .corper{--stride:.8s}
+  .hawker .tapTag{background:#2f7fc1;bottom:122%;z-index:6}
+  .hawker.paused,.hawker.paused .leg,.hawker.paused .leg2,.hawker.paused .arm,
+  .hawker.paused .arm2,.hawker.paused .torso,.hawker.paused .shin,.hawker.paused .fore{
+    animation-play-state:paused}
+  .scene.w-storm .hawker .corper,.scene.w-wind .hawker .corper{transform:scaleX(var(--face,-1))}
+
   /* ---------- UP NEPA! ----------
      The whole row lights up, the generator cuts out, the board shouts, the
      corpers throw their hands up — then NEPA takes it back. No new figure, no
@@ -221,6 +275,13 @@
      over cars and over people, because it was added to the page after them. */
   .posStand{position:absolute;left:36%;bottom:62px;width:46px;z-index:0;
     pointer-events:none;transform:translateX(-50%)}
+  /* The street name, on a Lagos State green plate on the kerb. It drifts with
+     the shops, and each time it comes round it carries the next name — Broad
+     Street, then Marina, then Allen — so the trek reads as a walk through
+     the city rather than past one row of shops. Scenery, not a button. */
+  .streetPost{position:absolute;bottom:62px;width:64px;z-index:0;pointer-events:none;
+    animation:shopDrive linear infinite}
+  .streetPost svg{width:100%;display:block;overflow:visible}
   /* Towers: bases hidden behind the shops, tops kept under the signboard
      (bottom 150) on the right and clear of the sun on the left by the
      padding. Lit windows join the UP NEPA! moment. */
@@ -894,6 +955,11 @@
   .msg{margin:0 0 8px;font-size:14.5px;line-height:1.35}
   .msg b{color:var(--green-dk)}
   .msg em{font-style:normal;color:var(--muted);font-size:11px;font-weight:700}
+  /* A title earned on the street, worn in chat. Small and warm, not a badge
+     the size of the name: the name is the person, the title is the hat. */
+  .msg .ttl{display:inline-block;margin-left:4px;padding:1px 6px;border-radius:99px;
+    background:#f6e7c8;color:#8a4b2a;font-size:10px;font-weight:800;letter-spacing:.03em;
+    vertical-align:1px}
   .flag{float:right;background:none;border:0;color:#c9c0a6;font-size:14px;
     min-height:44px;min-width:36px;margin:-14px 0;
     display:inline-flex;align-items:center;justify-content:center;
@@ -967,6 +1033,13 @@
       <path d="M20 35.5 q6 5.5 12 -1.5" stroke="#8a6a1f" stroke-width="2.2"
             stroke-linecap="round" fill="none"/>
     </svg>
+    <svg class="moon" viewBox="0 0 30 30" aria-hidden="true">
+      <circle cx="15" cy="15" r="11" fill="#f4edd2"/>
+      <circle cx="19.5" cy="12" r="9.5" fill="var(--sky1,#1a2342)"/>
+    </svg>
+    <i class="star" style="left:22%;top:14px"></i><i class="star" style="left:31%;top:34px"></i>
+    <i class="star" style="left:48%;top:9px"></i><i class="star" style="left:58%;top:28px"></i>
+    <i class="star" style="left:9%;top:40px"></i><i class="star" style="left:78%;top:18px"></i>
     <svg class="cloud cloudDrift" width="96" height="40" viewBox="0 0 120 50"
          style="top:4px;animation-duration:26s" aria-hidden="true">
       <g fill="#4a515c">
@@ -1168,7 +1241,7 @@
 <script type="module">
 import { newGame, doAction, canDo, unlocked, ACTIONS, phaseOf, nextUnlock, postingOdds, rivalOf,
          computePosting,
-         shareText, MAX_DAY } from './game.js?v=20261029154750';
+         shareText, MAX_DAY } from './game.js?v=20261029161107';
 
 /* ---------- scene coordinates ----------
    The scene is scaled by a transform (see the stage), so a native
@@ -1199,11 +1272,11 @@ const TS = (document.getElementById('scene').offsetWidth || 375) / 375;
 const ALLAWEE_NOTE = 'Allawee ₦77,000 — e never enter.';
 import { initNet, joinCamp, syncPlayer, platoonBoard, recentChat, postChat,
          postSuggestion, reportMessage, awardBoard, myAwards, laughChat,
-         setPresence, campRoster, renameMe, online } from './net.js?v=20261029154750';
-import { startMusic, stopMusic, musicOn, audioState, audioSupported, BEAT, BAR } from './audio.js?v=20261029154750';
+         setPresence, campRoster, renameMe, online } from './net.js?v=20261029161107';
+import { startMusic, stopMusic, musicOn, audioState, audioSupported, BEAT, BAR } from './audio.js?v=20261029161107';
 import { playHoop, playPenalty, playQuiz, playRegister, playParade,
          playMami, playHustle, playManOWar, playSaed, playSocial,
-         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261029154750';
+         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261029161107';
 
 /* Every dance animation is expressed in beats, so the steps are on-tempo
    whether or not the sound is playing — and genuinely on the beat when it is. */
@@ -1499,6 +1572,80 @@ function civilian(skin, scale, speed, delay, tone = 0, rags = false, stick = fal
     </g></svg>`;
 }
 
+
+/* ---- the pure-water hawker ----
+   Same skeleton again, so she walks on the same limb clocks. What makes her
+   a woman selling water at this size: the wrapper (a print, not trousers),
+   the headtie, and the basin on her head stacked with sachets — the one
+   silhouette nobody in Lagos has to look at twice. */
+function hawker(skin, wares = 'water'){
+  const akara = wares === 'akara';
+  /* Two women, two palettes, so they are never mistaken for one another. */
+  const WRAP = akara ? '#3d6ea8' : '#2f7a63', WRAP2 = akara ? '#2f5886' : '#245f4d';
+  const DOT = '#f3c53d', BLOUSE = akara ? '#d96fa0' : '#f2d2a0', TIE = akara ? '#f3c53d' : '#c14f3e';
+  const leg = (x, c) =>
+    `<rect x="${x}" y="48" width="7.5" height="15.5" rx="3.4" fill="${c}"/>
+     <circle cx="${x+2.4}" cy="52" r=".9" fill="${DOT}"/><circle cx="${x+5.2}" cy="57" r=".9" fill="${DOT}"/>
+     <g class="shin" style="transform-origin:${x+3.75}px 61.5px">
+       <rect x="${x+.3}" y="59" width="6.9" height="15" rx="3" fill="${c}"/>
+       <circle cx="${x+3.75}" cy="61.5" r="3.4" fill="${c}"/>
+       <circle cx="${x+2.6}" cy="66" r=".9" fill="${DOT}"/><circle cx="${x+5}" cy="70.5" r=".9" fill="${DOT}"/>
+       <rect x="${x-1.8}" y="74" width="11" height="6" rx="2.6" fill="#241f1a"/>
+     </g>`;
+  /* Arms up, steadying the basin — the pose that says "carrying on the head"
+     even before the basin is read. The forearm groups keep their class so the
+     elbow clock still moves them a little. */
+  /* Upper arm up and out from the shoulder, forearm folded back in from the
+     elbow so the hand lands on the rim of the basin. */
+  const arm = (x, up) =>
+    `<g transform="rotate(${up} ${x+3} 30)">
+       <rect x="${x}" y="29" width="6" height="12.5" rx="3" fill="${BLOUSE}"/>
+       <g class="fore" style="transform-origin:${x+3}px 40px">
+         <g transform="rotate(${up > 0 ? 50 : -50} ${x+3} 40)">
+           <rect x="${x+.3}" y="38.5" width="5.4" height="11.5" rx="2.7" fill="${skin}"/>
+           <circle cx="${x+3}" cy="51" r="3.3" fill="${skin}"/>
+         </g>
+       </g>
+     </g>`;
+  const sachet = (x, y, r) =>
+    `<rect x="${x}" y="${y}" width="6.2" height="4.2" rx="1.2" fill="#e9f4fb" stroke="#8fc3e6" stroke-width=".7"
+           transform="rotate(${r} ${x+3.1} ${y+2.1})"/>
+     <rect x="${x+1}" y="${y+1.6}" width="4.2" height=".9" fill="#3b8fd0" opacity=".8"
+           transform="rotate(${r} ${x+3.1} ${y+2.1})"/>`;
+  return `<svg class="corper civ" viewBox="0 0 46 86" aria-hidden="true" style="overflow:visible">
+    <ellipse cx="23" cy="81" rx="12" ry="2.6" fill="rgba(0,0,0,.16)"/>
+    <g class="leg">${leg(16, WRAP2)}</g>
+    <g class="leg2">${leg(22.5, WRAP)}</g>
+    <g class="torso">
+      <g class="arm">${arm(10.5, 150)}</g>
+      <g class="arm2">${arm(29.5, -150)}</g>
+      <rect x="20.6" y="22" width="4.8" height="8" rx="2" fill="${skin}"/>
+      <path d="M13.5 31q0-3 3-3h13q3 0 3 3v9.5l-1.3 11.5h-16.4L13.5 40.5z" fill="${BLOUSE}"/>
+      <rect x="14.6" y="44" width="16.8" height="8" fill="${WRAP}"/>
+      <circle cx="18" cy="47.5" r=".9" fill="${DOT}"/><circle cx="23" cy="49.5" r=".9" fill="${DOT}"/><circle cx="28" cy="47.5" r=".9" fill="${DOT}"/>
+      <circle cx="13.9" cy="16.8" r="1.7" fill="${skin}"/>
+      <circle cx="32.1" cy="16.8" r="1.7" fill="${skin}"/>
+      <circle cx="23" cy="16" r="9.6" fill="${skin}"/>
+      <circle cx="19.9" cy="17.2" r="1.15" fill="#1d1812"/>
+      <circle cx="26.1" cy="17.2" r="1.15" fill="#1d1812"/>
+      <path d="M20.6 21.3q2.4 1.7 4.8 0" stroke="#4a2e1c" stroke-width=".8" fill="none" stroke-linecap="round"/>
+      <!-- headtie: a wrap with a knot at the side -->
+      <path d="M12.8 13.5a10.4 10.4 0 0 1 20.4 0c0 1.3-.9 2.2-2.2 2.2H15c-1.3 0-2.2-.9-2.2-2.2z" fill="${TIE}"/>
+      <path d="M31.5 9.5l4-3.5l-1 5.2z" fill="${TIE}"/>
+      ${akara
+        ? /* a wide tray lined with paper, the akara piled on it */
+          `<ellipse cx="23" cy="6" rx="16.5" ry="4.2" fill="#8a5a2a"/>
+           <ellipse cx="23" cy="4.6" rx="14.5" ry="3" fill="#f0e2c4"/>
+           ${[[11.5,2.6],[16.5,.8],[21.5,-.2],[26.5,.6],[31.5,2.4],[14,4.2],[19,3],[24,2.8],[29,3.8]]
+             .map(([x,y]) => `<circle cx="${x}" cy="${y}" r="2.5" fill="#c9772a" stroke="#9a5518" stroke-width=".5"/>
+                              <circle cx="${x-.7}" cy="${y-.8}" r=".8" fill="#e9a35c"/>`).join('')}`
+        : /* the basin, and the water on it */
+          `<path d="M8 2.5h30l-3 7H11z" fill="#3a3f8a"/>
+           <path d="M8 2.5h30v1.6H8z" fill="#5a60b8"/>
+           ${sachet(10.5, -2.5, -8)}${sachet(17.5, -3.4, 4)}${sachet(24.5, -2.8, -3)}${sachet(31, -2.2, 7)}
+           ${sachet(14, -6.6, 6)}${sachet(21, -7.2, -5)}${sachet(28, -6.4, 3)}`}
+    </g></svg>`;
+}
 
 /* ---- roadside Nigeria: what actually lines every road ----
    Each `sign` is an ad slot: swap the text and body colour for a brand. */
@@ -2331,6 +2478,36 @@ const POS_DEFAULT = ['POS', '#1e3a6e', '#fff'];
   onKerb(el);
 })();
 
+/* ---------- the street name ----------
+   Famous Lagos streets, one per lap of the kerb. The plate is the state's:
+   green, white lettering, white border. It rides on the same clock as the
+   shops, in front of the corn stall, which is the narrow one. */
+const STREETS = ['BROAD STREET', 'MARINA', 'ALLEN AVENUE', 'AWOLOWO ROAD',
+                 'ADEOLA ODEKU', 'BODE THOMAS', 'OPEBI ROAD', 'IKORODU ROAD',
+                 'HERBERT MACAULAY', 'ADMIRALTY WAY'];
+(() => {
+  const el = document.createElement('div');
+  el.className = 'streetPost';
+  let i = Math.floor(Math.random() * STREETS.length);
+  const paint = () => {
+    el.innerHTML = `<svg viewBox="0 0 64 42" aria-hidden="true">
+      <rect x="30.6" y="16" width="2.8" height="26" fill="#6f6756"/>
+      <rect x="2" y="4" width="60" height="15" rx="2" fill="#f7f4ea"/>
+      <rect x="3.6" y="5.6" width="56.8" height="11.8" rx="1.4" fill="#157347"/>
+      <text x="32" y="14.4" text-anchor="middle" font-size="7.4" font-weight="800"
+            font-family="system-ui,sans-serif" fill="#f7f4ea" letter-spacing=".3"
+            textLength="52" lengthAdjust="spacingAndGlyphs">${STREETS[i]}</text>
+    </svg>`;
+  };
+  paint();
+  el.style.animationDuration = SHOP_CYCLE + 's';
+  el.style.animationDelay = -(1 * SHOP_CYCLE / SHOPS.length) + 's';   // the corn stall's slot
+  el.style.marginLeft = '-22px';
+  /* A new street each time the post comes round from the left. */
+  el.addEventListener('animationiteration', () => { i = (i + 1) % STREETS.length; paint(); });
+  onKerb(el);
+})();
+
 /* ---------- skyline ----------
    Towers behind the shops, each with its name on the roof the way the banks
    do on the Island. Pale and desaturated so they sit a long way back, and
@@ -2930,6 +3107,10 @@ sceneEl.addEventListener('click', e => {
     if (run.classList.contains('thief')) catchThief(run); else trip(run);
     return;
   }
+  /* Before the corper branch: her figure carries the corper class for the
+     walk, and the corper branch would otherwise send someone else on a ride. */
+  const hw = e.target.closest('.hawker');
+  if (hw){ hintUsed(); buyWares(hw); return; }
   const p = e.target.closest('.corper');
   if (p && takeOffer(p)) return;
   /* Figures overlap. When they do, the one in front takes the tap — and if he
@@ -3039,8 +3220,10 @@ function catchThief(run){
        the activities meant to carry the game have to stay worth more than a
        street scuffle. */
     s.cred = (s.cred || 0) + 1;
+    s.thieves = (s.thieves || 0) + 1;
     render();
     floatCost(fig, `+₦${back.toLocaleString()}  +1 CRED`);
+    titleCheck();
   }
 
   setTimeout(() => {
@@ -3197,8 +3380,10 @@ function douse(v){
      time, so a fire comes round only every ~32s. */
   if (s){
     s.cred = (s.cred || 0) + 1;
+    s.fires = (s.fires || 0) + 1;
     render();
     floatCost(v, '+1 CRED');
+    titleCheck();
   }
   if (left > 0) return;
   v.querySelectorAll('.flame').forEach(f => f.remove());
@@ -3214,6 +3399,61 @@ function douse(v){
   v.appendChild(puff);
   setTimeout(() => puff.remove(), 1100);
 }
+
+/* ---------- pure water ----------
+   On her own clock, outside the event queue: the far pavement is hers alone,
+   so she blocks nothing and nothing blocks her. */
+/* Two sellers a cycle: pure water walks in against the traffic; just before
+   she is gone, akara walks in the other way; thirty seconds after akara has
+   gone, round again. Water is the energy back, akara is belle. */
+const WARES = {
+  water: { tag: 'TAP FOR PURE WATER ₦100', price: 100, energy: 5, belle: 0, skin: '#6b4423' },
+  akara: { tag: 'TAP FOR AKARA ₦200',      price: 200, energy: 0, belle: 8, skin: '#8d5524' },
+};
+const HAWK_FIRST = 20000, HAWK_LEN = 26, AKARA_AT = 20, HAWK_REST = 30000;
+function sendHawker(kind){
+  if (calm() || sceneEl.querySelector('.hawker.' + kind)) return;
+  const w = WARES[kind];
+  const el = document.createElement('div');
+  el.className = 'hawker ' + kind;
+  el.dataset.kind = kind;
+  el.dataset.left = '2';
+  /* What buy() reads, the same way it reads a shop. */
+  el.dataset.price = w.price; el.dataset.belle = w.belle; el.dataset.energy = w.energy;
+  el.dataset.food = '1';
+  el.style.animationDuration = (HAWK_LEN * TS) + 's';
+  el.innerHTML = hawker(w.skin, kind) + `<i class="tapTag">${w.tag}</i>`;
+  el.setAttribute('role', 'button');
+  el.setAttribute('aria-label', w.tag.replace('TAP FOR ', '') + '. Tap to buy');
+  /* Behind every vehicle, in front of the shops and the kerb. */
+  const v = sceneEl.querySelector('.vehicle');
+  if (v) v.before(el); else sceneEl.appendChild(el);
+  el.addEventListener('animationend', () => el.remove());
+  setTimeout(() => el.remove(), HAWK_LEN * TS * 1000 + 3000);
+}
+function hawkerCycle(){
+  if (calm()) return;
+  sendHawker('water');
+  setTimeout(() => sendHawker('akara'), AKARA_AT * TS * 1000);
+  setTimeout(hawkerCycle, (AKARA_AT + HAWK_LEN) * TS * 1000 + HAWK_REST);
+}
+/* A tap on a seller works like a tap on a shop: YOU runs over, buys, and
+   comes back (snackRun, which knows her speed). Two sales a pass; the label
+   comes down with the last one. She stops while he is with her, so the sale
+   is made standing still rather than on the move. */
+function buyWares(hw){
+  const left = (+hw.dataset.left || 0) - 1;
+  if (left < 0) return;
+  const who = cornTarget || rideTarget || jumpShown || null;
+  clearCorn(); clearRide();
+  backToTrekking();
+  if (!snackRun(who, hw, true)) return;        // at the edge, or mid-dance: not now
+  hw.dataset.left = String(left);
+  if (left === 0){ hw.querySelector('.tapTag')?.remove(); hw.removeAttribute('aria-label'); }
+  setTimeout(() => hw.classList.add('paused'), RUN_MS);
+  setTimeout(() => hw.classList.remove('paused'), RUN_MS + EAT_MS);
+}
+if (!calm()) setTimeout(hawkerCycle, HAWK_FIRST);
 
 /* ---------- one queue for the two big events ----------
    The chase and the burning danfo each take 15s to cross and they refuse to
@@ -3640,7 +3880,12 @@ function snackRun(preferred, target, paid){
 
   /* Dash to where the stall WILL be when they arrive. Its speed is exact —
      140% of the scene width every SHOP_CYCLE seconds — so no sampling needed. */
-  const speed = (box.width * SHOP_TRAVEL) / (SHOP_CYCLE * 1000);   // px per ms
+  /* A hawker walks 130% of the scene in HAWK_LEN seconds, water leftwards
+     and akara rightwards; a shop drifts rightwards on the shop clock. */
+  const hawk = stall.el.classList.contains('hawker');
+  const speed = hawk
+    ? (box.width * 1.30) / (HAWK_LEN * TS * 1000) * (stall.el.classList.contains('akara') ? 1 : -1)
+    : (box.width * SHOP_TRAVEL) / (SHOP_CYCLE * 1000);   // px per ms
   park(stallNow() + speed * RUN_MS);
 
   let pin = 0;
@@ -3691,17 +3936,20 @@ function buy(shopEl, who){
   const cost  = +shopEl.dataset.livePrice || +shopEl.dataset.price || 0;
   const belle = +shopEl.dataset.belle || 0;
   const cred  = +shopEl.dataset.cred  || 0;
+  const energy = +shopEl.dataset.energy || 0;     // pure water, so far
   if (!s || !cost) return;
   /* The full price, every time, below zero if that is where it lands. The old
      cap made everything free once you hit ₦0 — a player could keep tapping
      errands and watch the balance sit at zero, which is the opposite of a
      lesson about money. Debt shows in red. */
   s.money -= cost;
-  if (belle) s.belle = Math.min(100, s.belle + belle);
-  if (cred)  s.cred  = (s.cred || 0) + cred;
+  if (belle)  s.belle  = Math.min(100, s.belle + belle);
+  if (energy) s.energy = Math.min(100, (s.energy || 0) + energy);
+  if (cred)   s.cred   = (s.cred || 0) + cred;
   if (shopEl.dataset.trade) s.tradeDay = s.day;
   render();
-  floatCost(who, `-₦${cost.toLocaleString()}` + (cred ? `  +${cred} CRED` : ''));
+  floatCost(who, `-₦${cost.toLocaleString()}` + (cred ? `  +${cred} CRED` : '')
+                                               + (energy ? `  +${energy} ENERGY` : ''));
 }
 
 /* A number that lifts off the buyer, so the deduction is seen and not just
@@ -3745,6 +3993,24 @@ function cycleWeather(){
 }
 cycleWeather();
 setInterval(cycleWeather, 11000);
+
+/* The clock lights the street. The player's own clock, not Lagos time: a
+   corper in Lagos at 8pm sees night, and so does anyone else playing at
+   night. Checked every minute; the classes carry the whole look (see CSS). */
+const TOD = ['tod-morning', 'tod-day', 'tod-dusk', 'tod-night'];
+function todNow(d = new Date()){
+  const h = d.getHours() + d.getMinutes() / 60;
+  return h < 5.5 || h >= 19.5 ? 'tod-night' : h < 9.5 ? 'tod-morning' : h < 17.5 ? 'tod-day' : 'tod-dusk';
+}
+function setTod(){
+  const c = todNow();
+  [$('scene'), $('stage')].forEach(el => {
+    if (!el || el.classList.contains(c)) return;
+    el.classList.remove(...TOD); el.classList.add(c);
+  });
+}
+setTod();
+setInterval(setTod, 60000);
 
 /* Where this player came from — an ad links to otondo.ng/?r=nl. Stored rather
    than read at join time because people often arrive, look around, and only
@@ -4355,13 +4621,33 @@ const AWARDS = [
   { slug:'otondo',  emoji:'🤡',  title:'Otondo of the Week',  blurb:'Passed out by grace alone' },
 ];
 
+/* Titles earned on the street, worn in chat. Ten of each: a chase comes
+   round every half minute or so, so ten is a session of actually playing,
+   not a tap. The thresholds live here AND in supabase/titles.sql
+   (street_title): the server stamps the title on each chat message from the
+   synced counts, so a title in chat cannot simply be typed. */
+const TITLES = [
+  { key: 'thieves', n: 10, emoji: '🕵️', title: 'Thief Catcher' },
+  { key: 'fires',   n: 10, emoji: '🚒', title: 'Fire Marshal' },
+];
+const titlesOf = st => st ? TITLES.filter(t => (st[t.key] || 0) >= t.n) : [];
+function titleCheck(){
+  const hit = TITLES.find(t => (s[t.key] || 0) === t.n);
+  if (!hit) return;
+  if (shoutSign) shoutSign([hit.title.toUpperCase() + '!', '#8a4b2a', '#f6e7c8']);
+  drawBadges();
+  syncPlayer(s, { force: true });     // so the next chat message wears it
+}
+
 let mine = [];
 function drawBadges(){
-  $('badges').innerHTML = mine.map(slug => {
+  $('badges').innerHTML = titlesOf(s).map(t => `<span>${t.emoji} ${t.title}</span>`).join('')
+    + mine.map(slug => {
     const a = AWARDS.find(x => x.slug === slug);
     return a ? `<span>${a.emoji} ${a.title}</span>` : '';
   }).join('');
 }
+drawBadges();   // a title earned last session is worn from the first paint
 
 async function drawAwards(){
   const [rows, held] = await Promise.all([awardBoard(), myAwards()]);
@@ -4402,6 +4688,7 @@ function addMsg(m, scroll = true){
   const box = $('chatBox');
   box.insertAdjacentHTML('beforeend',
     `<p class="msg"><b>${esc(m.nickname)}</b> <em>P${m.platoon}</em>` +
+    (m.title ? `<span class="ttl">${esc(m.title)}</span>` : '') +
     `<button class="flag" data-id="${m.id}" title="Report">⚑</button>` +
     `<button class="laugh" data-id="${m.id}" title="Funny">` +
       `😂<span>${Number(m.laughs) || 0}</span></button>` +

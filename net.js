@@ -2,7 +2,7 @@
    Every function is failure-tolerant on purpose: if Supabase is unset, slow,
    or down, the game must still be playable. Nothing here throws upward. */
 
-import { SUPABASE_URL, SUPABASE_ANON_KEY } from './config.js?v=20261029154750';
+import { SUPABASE_URL, SUPABASE_ANON_KEY } from './config.js?v=20261029161107';
 
 const TOKEN_KEY = 'otondo:token';
 let sb = null, token = null, channel = null;
@@ -108,6 +108,7 @@ export async function joinCamp(nickname, platoon, source) {
 /* Throttled: the state machine may call this on every action, but we only
    reach the network every 30s (or immediately when a run ends). */
 let lastSync = 0, pending = null, timer = null;
+let slimSync = false;   // see flush()
 export function syncPlayer(s, { force = false } = {}) {
   if (!sb || !token) return;
   pending = s;
@@ -120,12 +121,23 @@ async function flush() {
   const s = pending; pending = null;
   if (!s || !sb || !token) return;
   lastSync = Date.now();
+  const args = {
+    p_token: token, p_day: s.day, p_cred: s.cred, p_money: s.money,
+    p_finished: s.phase === 'ending', p_posting: s.posting ? s.posting.place : null,
+    p_drills: s.drills || 0,
+  };
+  /* The street counts (titles.sql). A database that has not had that
+     migration has no sync_player taking them; PostgREST says so with
+     PGRST202, and from then on this session sends the older shape. */
+  if (!slimSync){ args.p_thieves = s.thieves || 0; args.p_fires = s.fires || 0; }
   try {
-    await sb.rpc('sync_player', {
-      p_token: token, p_day: s.day, p_cred: s.cred, p_money: s.money,
-      p_finished: s.phase === 'ending', p_posting: s.posting ? s.posting.place : null,
-      p_drills: s.drills || 0,
-    });
+    const { error } = await sb.rpc('sync_player', args);
+    if (error && error.code === 'PGRST202' && !slimSync){
+      slimSync = true;
+      delete args.p_thieves; delete args.p_fires;
+      const r2 = await sb.rpc('sync_player', args);
+      if (r2.error) throw r2.error;
+    } else if (error) throw error;
   } catch (e) { console.warn('[otondo] sync failed:', e.message); }
 }
 
@@ -145,8 +157,10 @@ export async function platoonBoard() {
 export async function recentChat(limit = 30) {
   if (!sb) return [];
   try {
+    /* '*' rather than a column list: it picks up `title` once titles.sql has
+       run, and keeps working on a database where it has not. */
     const { data, error } = await sb.from('chat')
-      .select('id,nickname,platoon,body,laughs,created_at')
+      .select('*')
       .order('id', { ascending: false }).limit(limit);
     if (error) throw error;
     return (data || []).reverse();
