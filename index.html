@@ -256,6 +256,8 @@
      a single inline value applies to every animation in the list. So the hop
      ran for 13.5s with the march's negative delay and was never really seen.
      `.jumping` and `.sunk` are markers only now. */
+  /* Behind the pothole's rim (z1) while he goes under; the clip does the rest. */
+  .corper.sunk{z-index:0;transform-origin:50% 100%}
   .corper.gone{opacity:0;pointer-events:none}
 
   .corper{position:absolute;bottom:4px;width:46px;height:86px;z-index:2;
@@ -1095,18 +1097,18 @@
 <script type="module">
 import { newGame, doAction, canDo, unlocked, ACTIONS, phaseOf, nextUnlock, postingOdds, rivalOf,
          computePosting,
-         shareText, MAX_DAY } from './game.js?v=20261029104039';
+         shareText, MAX_DAY } from './game.js?v=20261029104759';
 
 /* Kept here, not exported from game.js: a new cross-file export breaks any
    client holding a cached game.js after a deploy. */
 const ALLAWEE_NOTE = 'Allawee ₦77,000 — e never enter.';
 import { initNet, joinCamp, syncPlayer, platoonBoard, recentChat, postChat,
          postSuggestion, reportMessage, awardBoard, myAwards, laughChat,
-         setPresence, campRoster, renameMe, online } from './net.js?v=20261029104039';
-import { startMusic, stopMusic, musicOn, audioState, audioSupported, BEAT, BAR } from './audio.js?v=20261029104039';
+         setPresence, campRoster, renameMe, online } from './net.js?v=20261029104759';
+import { startMusic, stopMusic, musicOn, audioState, audioSupported, BEAT, BAR } from './audio.js?v=20261029104759';
 import { playHoop, playPenalty, playQuiz, playRegister, playParade,
          playMami, playHustle, playManOWar, playSaed, playSocial,
-         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261029104039';
+         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261029104759';
 
 /* Every dance animation is expressed in beats, so the steps are on-tempo
    whether or not the sound is playing — and genuinely on the beat when it is. */
@@ -2308,10 +2310,16 @@ function fallIn(p){
   p.dataset.hop = '1';
   potReadyAt = performance.now() + POT_COOLDOWN;
   p.classList.add('sunk');
+  /* Into the hole, not down the screen. The first version slid him 32px down
+     and faded him out, which read as a figure sliding off the bottom. Now he
+     pitches forward and the ground takes him from the feet up — a clip that
+     rises from the bottom of the figure — while `.sunk` drops him behind the
+     hole's rim, so his legs are already inside it as he goes. */
   const sink = p.animate([
-    { transform: 'translateY(0) scale(1)',       opacity: 1 },
-    { transform: 'translateY(17px) scale(.9)',   opacity: 1, offset: .5 },
-    { transform: 'translateY(32px) scale(.74)',  opacity: 0 },
+    { transform: 'translateY(0) rotate(0deg)',    clipPath: 'inset(0 0 0% 0)' },
+    { transform: 'translateY(8px) rotate(9deg)',  clipPath: 'inset(0 0 22% 0)', offset: .3 },
+    { transform: 'translateY(22px) rotate(14deg)', clipPath: 'inset(0 0 68% 0)', offset: .7 },
+    { transform: 'translateY(34px) rotate(16deg)', clipPath: 'inset(0 0 100% 0)' },
   ], { duration: 750, easing: 'ease-in', fill: 'forwards', composite: 'add' });
   if (s){
     s.energy = Math.max(0, s.energy - FALL_COST);
