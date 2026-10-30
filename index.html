@@ -1254,7 +1254,7 @@
 <script type="module">
 import { newGame, doAction, canDo, unlocked, ACTIONS, phaseOf, nextUnlock, postingOdds, rivalOf,
          computePosting,
-         shareText, MAX_DAY } from './game.js?v=20261029231554';
+         shareText, MAX_DAY } from './game.js?v=20261029232450';
 
 /* ---------- scene coordinates ----------
    The scene is scaled by a transform (see the stage), so a native
@@ -1285,11 +1285,11 @@ const TS = (document.getElementById('scene').offsetWidth || 375) / 375;
 const ALLAWEE_NOTE = 'Allawee ₦77,000 — e never enter.';
 import { initNet, joinCamp, syncPlayer, platoonBoard, recentChat, postChat,
          postSuggestion, reportMessage, awardBoard, myAwards, laughChat,
-         setPresence, campRoster, renameMe, online } from './net.js?v=20261029231554';
-import { startMusic, stopMusic, musicOn, audioState, audioSupported, BEAT, BAR } from './audio.js?v=20261029231554';
+         setPresence, campRoster, renameMe, online } from './net.js?v=20261029232450';
+import { startMusic, stopMusic, musicOn, audioState, audioSupported, BEAT, BAR } from './audio.js?v=20261029232450';
 import { playHoop, playPenalty, playQuiz, playRegister, playParade,
          playMami, playHustle, playManOWar, playSaed, playSocial,
-         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261029231554';
+         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261029232450';
 
 /* Every dance animation is expressed in beats, so the steps are on-tempo
    whether or not the sound is playing — and genuinely on the beat when it is. */
@@ -2972,7 +2972,7 @@ function inFrame(el, box, pad = 0.12){
   return c > box.width * pad && c < box.width * (1 - pad);
 }
 
-let cornShop = null;
+let cornShop = null, lastShop = null, usedShop = null;
 let cornPick = 1;              // which of the shop's errands is on offer
 let jumpShown = null;
 const jumpTag = document.createElement('div');
@@ -3023,7 +3023,22 @@ function offerCorn(force){
     const open = [...sceneEl.querySelectorAll('.shop[data-errand]')]
       .filter(el => inFrame(el, box))
       .filter(el => !tradeDone(el));
-    cornShop = open.length ? open[Math.floor(Math.random() * open.length)] : null;
+    /* Sticky. The pothole and the keke interrupt the shop offer and hand it
+       back a few seconds later; re-rolling then made the label hop to another
+       shop (or land on the same one again, which read as "roasted corn twice
+       in a row"). So: the shop we were on, if it is still in frame; else a
+       different one than last time, chosen from those with road ahead of them
+       (centre left of 72%: one picked at 87% was dropped within a second). */
+    const ahead = open.filter(el => inFrame(el, box, 0.12) && el.sceneRect().left - box.left + el.sceneRect().width / 2 < box.width * 0.72);
+    if (lastShop && lastShop !== usedShop && open.includes(lastShop)) cornShop = lastShop;
+    else {
+      /* not the one just bought from either: "buy jollof" straight after
+         buying jollof is the other way to read as a repeat */
+      const pool = (ahead.length ? ahead : open).filter(el => el !== lastShop && el !== usedShop);
+      const from = pool.length ? pool : open;
+      cornShop = from.length ? from[Math.floor(Math.random() * from.length)] : null;
+    }
+    if (cornShop) lastShop = cornShop;
     /* Which of the shop's errands this time, chosen when the shop is. Choosing
        it per frame would make the label flicker between the two. */
     cornPick = cornShop && cornShop.dataset.errand2 && Math.random() < 0.5 ? 2 : 1;
@@ -3157,8 +3172,12 @@ function offerTick(){
        and on a ride turn nothing had cleared it yet — so the ride offer bailed
        every tick, offerCorn(true) immediately re-asserted corn, and the keke
        was never offered again after the first corn target was picked. */
-    clearCorn();
-    offerRide();
+    /* ...but only clear it when the keke is actually in frame to take over.
+       Clearing on EVERY tick of a ride turn threw the shop away and re-rolled
+       a random one 150ms later, so the label flipped between two shops six
+       times a second whenever the keke was elsewhere. */
+    const kk = sceneEl.querySelector('.vehicle.keke');
+    if (kk && inFrame(kk, sceneEl.sceneRect(), 0.08)){ clearCorn(); offerRide(); }
     if (!rideTarget) offerCorn(true);
   } else {
     offerCorn();
@@ -3230,6 +3249,7 @@ function takeOffer(p){
       && (p === cornTarget || p.classList.contains('wantsCorn'))){
     hintUsed();
     const who = p, where = cornShop;
+    usedShop = where;
     clearCorn();
     flipTurn();
     backToTrekking();            // snackRun refuses to start mid-dance
