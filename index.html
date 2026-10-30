@@ -598,14 +598,14 @@
   .runnerTag.caught{background:#1f7a46}
   .runnerTag.caught::after{border-top-color:#1f7a46}
   .runnerTag{position:absolute;z-index:6;transform:translateX(-50%);
-    background:#b3281c;color:#fff;font:800 9px/1 system-ui,sans-serif;
-    letter-spacing:.1em;padding:4px 6px;border-radius:3px;white-space:nowrap;
+    background:#b3281c;color:#fff;font:800 7.5px/1 system-ui,sans-serif;
+    letter-spacing:.09em;padding:3px 5px;border-radius:3px;white-space:nowrap;
     cursor:pointer;-webkit-tap-highlight-color:transparent;
     box-shadow:0 2px 5px rgba(0,0,0,.3)}
   .runnerTag::after{content:'';position:absolute;left:50%;top:100%;margin-left:-3px;
     border:3px solid transparent;border-top-color:#b3281c}
 
-  .rideTag{background:#8a5a1f !important;transition:left .15s linear}
+  .rideTag{background:#8a5a1f !important}
   .rideTag::after{border-top-color:#8a5a1f !important}
   /* The label IS the button. It says TAP TO BUY PHONE CHARGER in a rounded
      green pill with a pointer tail — every cue says press me — and it carried
@@ -614,16 +614,16 @@
      it ends up nowhere near the small sliver of figure still on screen. */
   .cornTag{position:absolute;z-index:7;transform:translateX(-50%);cursor:pointer;
     -webkit-tap-highlight-color:transparent;
-    background:#1f7a46;color:#fff;font:800 9.5px/1 system-ui,sans-serif;
-    letter-spacing:.07em;padding:5px 7px;border-radius:4px;white-space:nowrap;
+    background:#1f7a46;color:#fff;font:800 8px/1 system-ui,sans-serif;
+    letter-spacing:.06em;padding:4px 6px;border-radius:4px;white-space:nowrap;
     box-shadow:0 2px 6px rgba(0,0,0,.28);
     animation:tagBob .8s ease-in-out infinite alternate}
   .cornTag::after{content:'';position:absolute;left:50%;top:100%;margin-left:-4px;
     border:4px solid transparent;border-top-color:#1f7a46;pointer-events:none}
 
   .tapTag{position:absolute;left:50%;bottom:112%;transform:translateX(-50%);
-    background:#e0452b;color:#fff;font:800 9px/1 system-ui,sans-serif;
-    letter-spacing:.09em;padding:4px 6px;border-radius:4px;cursor:pointer;
+    background:#e0452b;color:#fff;font:800 7.5px/1 system-ui,sans-serif;
+    letter-spacing:.08em;padding:3px 5px;border-radius:4px;cursor:pointer;
     white-space:nowrap;animation:tagBob .7s ease-in-out infinite alternate}
   @keyframes tagBob{from{transform:translateX(-50%) translateY(0)}
                     to  {transform:translateX(-50%) translateY(-3px)}}
@@ -1255,7 +1255,7 @@
 <script type="module">
 import { newGame, doAction, canDo, unlocked, ACTIONS, phaseOf, nextUnlock, postingOdds, rivalOf,
          computePosting,
-         shareText, MAX_DAY } from './game.js?v=20261029164939';
+         shareText, MAX_DAY } from './game.js?v=20261029172208';
 
 /* ---------- scene coordinates ----------
    The scene is scaled by a transform (see the stage), so a native
@@ -1286,11 +1286,11 @@ const TS = (document.getElementById('scene').offsetWidth || 375) / 375;
 const ALLAWEE_NOTE = 'Allawee ₦77,000 — e never enter.';
 import { initNet, joinCamp, syncPlayer, platoonBoard, recentChat, postChat,
          postSuggestion, reportMessage, awardBoard, myAwards, laughChat,
-         setPresence, campRoster, renameMe, online } from './net.js?v=20261029164939';
-import { startMusic, stopMusic, musicOn, audioState, audioSupported, BEAT, BAR } from './audio.js?v=20261029164939';
+         setPresence, campRoster, renameMe, online } from './net.js?v=20261029172208';
+import { startMusic, stopMusic, musicOn, audioState, audioSupported, BEAT, BAR } from './audio.js?v=20261029172208';
 import { playHoop, playPenalty, playQuiz, playRegister, playParade,
          playMami, playHustle, playManOWar, playSaed, playSocial,
-         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261029164939';
+         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261029172208';
 
 /* Every dance animation is expressed in beats, so the steps are on-tempo
    whether or not the sound is playing — and genuinely on the beat when it is. */
@@ -3021,12 +3021,14 @@ function offerRide(force){
   markTappable(rideTarget);
   rideTag.textContent = 'TAP TO RIDE KEKE';
   rideTag.style.display = 'block';
-  const r = (onKeke ? kk : rideTarget).sceneRect();
+  rideAnchor = onKeke ? kk : rideTarget;
+  const r = rideAnchor.sceneRect();
   pinInside(rideTag, box, r.left - box.left + r.width / 2);
   rideTag.style.bottom = Math.round(box.bottom - r.top + (onKeke ? 6 : 40)) + 'px';
 }
 function clearRide(){
   rideTag.style.display = 'none';
+  rideAnchor = null;
   if (rideTarget){ rideTarget.classList.remove('wantsRide'); unmark(rideTarget); }
   rideTarget = null;
 }
@@ -3034,6 +3036,17 @@ const rideTag = document.createElement('div');
 rideTag.className = 'cornTag rideTag';
 rideTag.style.display = 'none';
 sceneEl.appendChild(rideTag);
+/* The keke crosses the scene in under ten seconds; a label re-pinned every
+   150ms trailed it by a car length. Between ticks the label follows its
+   anchor every frame, so it sits on the keke rather than behind it. */
+let rideAnchor = null;
+(function followRide(){
+  if (rideTag.style.display !== 'none' && rideAnchor && rideAnchor.isConnected){
+    const box = sceneEl.sceneRect(), r = rideAnchor.sceneRect();
+    pinInside(rideTag, box, r.left - box.left + r.width / 2);
+  }
+  requestAnimationFrame(followRide);
+})();
 /* The turn picks which offer leads; if it cannot be made the other one takes
    the tick. Running the two on independent timers meant a turn with no shop in
    frame produced no label at all, and the YOU marker sat over a figure with
