@@ -618,6 +618,11 @@
     letter-spacing:.06em;padding:4px 6px;border-radius:4px;white-space:nowrap;
     box-shadow:0 2px 6px rgba(0,0,0,.28);
     animation:tagBob .8s ease-in-out infinite alternate}
+  /* The words are small now; the thing you tap is not. An invisible pad
+     around each label (and the keke, below) makes a moving 8px label a
+     thumb-sized target. */
+  .cornTag::before,.tapTag::before,.runnerTag::before{content:'';position:absolute;
+    inset:-12px -14px}
   .cornTag::after{content:'';position:absolute;left:50%;top:100%;margin-left:-4px;
     border:4px solid transparent;border-top-color:#1f7a46;pointer-events:none}
 
@@ -1255,7 +1260,7 @@
 <script type="module">
 import { newGame, doAction, canDo, unlocked, ACTIONS, phaseOf, nextUnlock, postingOdds, rivalOf,
          computePosting,
-         shareText, MAX_DAY } from './game.js?v=20261029172208';
+         shareText, MAX_DAY } from './game.js?v=20261029172719';
 
 /* ---------- scene coordinates ----------
    The scene is scaled by a transform (see the stage), so a native
@@ -1286,11 +1291,11 @@ const TS = (document.getElementById('scene').offsetWidth || 375) / 375;
 const ALLAWEE_NOTE = 'Allawee ₦77,000 — e never enter.';
 import { initNet, joinCamp, syncPlayer, platoonBoard, recentChat, postChat,
          postSuggestion, reportMessage, awardBoard, myAwards, laughChat,
-         setPresence, campRoster, renameMe, online } from './net.js?v=20261029172208';
-import { startMusic, stopMusic, musicOn, audioState, audioSupported, BEAT, BAR } from './audio.js?v=20261029172208';
+         setPresence, campRoster, renameMe, online } from './net.js?v=20261029172719';
+import { startMusic, stopMusic, musicOn, audioState, audioSupported, BEAT, BAR } from './audio.js?v=20261029172719';
 import { playHoop, playPenalty, playQuiz, playRegister, playParade,
          playMami, playHustle, playManOWar, playSaed, playSocial,
-         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261029172208';
+         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261029172719';
 
 /* Every dance animation is expressed in beats, so the steps are on-tempo
    whether or not the sound is playing — and genuinely on the beat when it is. */
@@ -1867,7 +1872,7 @@ function traffic(el){
   const fleet = [
     { svg: danfo(),       w: 88, bottom: 34, speed: 8.0,  delay: -0.5 },
     { svg: okada(true),   w: 60, bottom: 37, speed: 5.6,  delay: -3.6 },
-    { svg: keke(),        w: 62, bottom: 33, speed: 9.5,  delay: -6.6, cls: 'keke' },
+    { svg: keke(),        w: 62, bottom: 33, speed: 12.5, delay: -6.6, cls: 'keke' },
     { svg: okada(false),  w: 54, bottom: 41, speed: 6.4,  delay: -9.4 },
     { svg: danfoLoaded(), w: 94, bottom: 34, speed: 11.0, delay: -13.5 },
   ];
@@ -3196,6 +3201,15 @@ sceneEl.addEventListener('click', e => {
   const sh = e.target.closest('.shop');
   if (sh && sh === cornShop && takeOffer(cornTarget)) return;
   if (e.target.closest('.vehicle.keke') && takeOffer(rideTarget)) return;
+  /* A tap NEAR the keke counts: it is small, it is moving, and the walkers
+     in front of it take the tap if it lands on them. 18 scene px around it. */
+  if (rideAnchor && rideAnchor.classList.contains('keke')){
+    const k = sceneEl.getBoundingClientRect().width / sceneEl.offsetWidth;
+    const r = rideAnchor.getBoundingClientRect(), pad = 18 * k;
+    if (e.clientX > r.left - pad && e.clientX < r.right + pad
+        && e.clientY > r.top - pad && e.clientY < r.bottom + pad
+        && takeOffer(rideTarget)) return;
+  }
   if (e.target.closest('.pothole') && takeOffer(jumpShown)) return;
   const p = e.target.closest('.corper');
   if (p && takeOffer(p)) return;
