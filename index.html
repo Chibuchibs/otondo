@@ -671,6 +671,15 @@
   .stat.belle {--stat-bg:#fbe6e0;--stat-line:#eec4b8;--stat-hot:#f29a8a;--stat-bar:#d9573f}
   .stat.money {--stat-bg:#e3f1e6;--stat-line:#b9d9c3;--stat-hot:#7fd99a;--stat-bar:var(--green)}
   .stat.cred  {--stat-bg:#e4ecf6;--stat-line:#bccbe3;--stat-hot:#8fb7ee;--stat-bar:#3b6fb6}
+  /* Running low: the card pulses red and says where that stat comes from, so
+     an empty bar is a prompt to go and do something rather than a verdict.
+     Listed before .up/.down so a gain or loss pulse wins while it plays. */
+  .stat.low{animation:statLow 1.5s ease-in-out infinite}
+  .stat .tip{display:none;margin-top:5px;font-size:10.5px;line-height:1.25;font-weight:700;
+    color:var(--red)}
+  .stat.low .tip{display:block}
+  @keyframes statLow{0%,100%{background:var(--stat-bg);border-color:var(--stat-line)}
+                     50%{background:#f6cfc6;border-color:#d9573f}}
   .stat.up  {animation:statUp .9s ease-out}
   .stat.down{animation:statDown .9s ease-out}
   .stat.up span,.stat.down span{display:inline-block;animation:statPop .5s cubic-bezier(.2,1.4,.4,1)}
@@ -679,7 +688,8 @@
   @keyframes statDown{0%{background:#f4b9ae;box-shadow:0 0 0 4px #f4b9ae}
                       100%{background:var(--stat-bg);box-shadow:0 0 0 0 transparent}}
   @keyframes statPop {0%{transform:scale(1.35)}100%{transform:scale(1)}}
-  @media (prefers-reduced-motion:reduce){.stat.up,.stat.down,.stat.up span,.stat.down span{animation:none}}
+  @media (prefers-reduced-motion:reduce){.stat.up,.stat.down,.stat.up span,.stat.down span{animation:none}
+    .stat.low{animation:none;background:#f6cfc6;border-color:#d9573f}}
   .stat b{display:block;font-size:10px;text-transform:uppercase;letter-spacing:.1em;
     color:var(--muted);font-weight:800}
   .stat span.debt{color:var(--red)}
@@ -1186,11 +1196,15 @@
   <section id="game" class="hidden">
     <div class="stats">
       <div class="stat energy"><b>Energy</b><span id="sEnergy"></span>
-        <div class="bar" id="bEnergy"><i></i></div></div>
+        <div class="bar" id="bEnergy"><i></i></div>
+        <small class="tip">Low. Look for pure water, or chop for mami market.</small></div>
       <div class="stat belle"><b>Belle</b><span id="sBelle"></span>
-        <div class="bar" id="bBelle"><i></i></div></div>
-      <div class="stat money"><b>Your money</b><span id="sMoney"></span></div>
-      <div class="stat cred"><b>Credibility</b><span id="sCred"></span></div>
+        <div class="bar" id="bBelle"><i></i></div>
+        <small class="tip">Hungry. Jollof, roasted corn or akara.</small></div>
+      <div class="stat money"><b>Your money</b><span id="sMoney"></span>
+        <small class="tip">Broke. Tap Odogwu when he pass, or hustle for mami market.</small></div>
+      <div class="stat cred"><b>Credibility</b><span id="sCred"></span>
+        <small class="tip">Earn am: parade, drills, Man O War.</small></div>
     </div>
     <div class="live" id="live" role="button" tabindex="0"
          aria-expanded="false" aria-controls="whoList"><i></i><span>Single player</span></div>
@@ -1287,7 +1301,7 @@
 <script type="module">
 import { newGame, doAction, canDo, unlocked, ACTIONS, phaseOf, nextUnlock, postingOdds, rivalOf,
          computePosting,
-         shareText, MAX_DAY } from './game.js?v=20261030100802';
+         shareText, MAX_DAY } from './game.js?v=20261030102457';
 
 /* ---------- scene coordinates ----------
    The scene is scaled by a transform (see the stage), so a native
@@ -1318,11 +1332,11 @@ const TS = (document.getElementById('scene').offsetWidth || 375) / 375;
 const ALLAWEE_NOTE = 'Allawee ₦77,000 — e never enter.';
 import { initNet, joinCamp, syncPlayer, platoonBoard, recentChat, postChat,
          postSuggestion, reportMessage, awardBoard, myAwards, laughChat,
-         setPresence, campRoster, renameMe, setAvatar, online } from './net.js?v=20261030100802';
-import { startMusic, stopMusic, musicOn, audioState, audioSupported, BEAT, BAR } from './audio.js?v=20261030100802';
+         setPresence, campRoster, renameMe, setAvatar, online } from './net.js?v=20261030102457';
+import { startMusic, stopMusic, musicOn, audioState, audioSupported, BEAT, BAR } from './audio.js?v=20261030102457';
 import { playHoop, playPenalty, playQuiz, playRegister, playParade,
          playMami, playHustle, playManOWar, playSaed, playSocial,
-         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261030100802';
+         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261030102457';
 
 /* Every dance animation is expressed in beats, so the steps are on-tempo
    whether or not the sound is playing — and genuinely on the beat when it is. */
@@ -4510,6 +4524,12 @@ function render(){
   $('sMoney').classList.toggle('debt', s.money < 0);
   $('sCred').textContent = s.cred;
   flashStats();
+  /* Low marks. Credibility starts at zero for everybody, so that one only
+     nags once there has been a day to earn some. */
+  $('sEnergy').closest('.stat').classList.toggle('low', s.energy < 25);
+  $('sBelle').closest('.stat').classList.toggle('low', s.belle < 25);
+  $('sMoney').closest('.stat').classList.toggle('low', s.money < 300);
+  $('sCred').closest('.stat').classList.toggle('low', s.cred < 5 && s.day > 1);
   bar($('bEnergy'), s.energy); bar($('bBelle'), s.belle);
   drawWhoami();
   drawOdds();
