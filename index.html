@@ -234,8 +234,8 @@
                      to{transform:translate(-5px,-16px);opacity:0}}
   @keyframes genShake{0%,100%{transform:translate(0,0)}
                       25%{transform:translate(.4px,-.5px)} 75%{transform:translate(-.4px,.3px)}}
-  .genSet{position:absolute;left:74%;bottom:62px;width:36px;z-index:0;
-    pointer-events:none;transform:translateX(-50%)}
+  .genSet{position:absolute;bottom:62px;width:36px;z-index:0;
+    pointer-events:none;transform:translateX(-50%);animation:shopDrive linear infinite}
   .genSet .smoke{animation:genPuff 1.2s linear infinite}
   .genSet .engine{animation:genShake .11s linear infinite}
   .scene.light .genSet .smoke{animation:none;opacity:0}
@@ -348,7 +348,7 @@
   /* roadside stalls: furthest back, drifting slower than traffic (parallax).
      Each signboard is an ad slot — swap SHOPS[].sign for a brand. */
   .shop{position:absolute;z-index:0;animation:shopDrive linear infinite}
-  .shop svg,.posStand svg,.streetPost svg{display:block;width:100%}
+  .shop svg,.posStand svg,.streetPost svg,.genSet svg{display:block;width:100%}
   @keyframes shopDrive{from{left:-50%}to{left:118%}}
   @keyframes drive{from{left:-22%}to{left:118%}}
   .wheel{animation:spin .5s linear infinite;transform-box:fill-box;
@@ -1253,7 +1253,7 @@
 <script type="module">
 import { newGame, doAction, canDo, unlocked, ACTIONS, phaseOf, nextUnlock, postingOdds, rivalOf,
          computePosting,
-         shareText, MAX_DAY } from './game.js?v=20261029230146';
+         shareText, MAX_DAY } from './game.js?v=20261029230954';
 
 /* ---------- scene coordinates ----------
    The scene is scaled by a transform (see the stage), so a native
@@ -1284,11 +1284,11 @@ const TS = (document.getElementById('scene').offsetWidth || 375) / 375;
 const ALLAWEE_NOTE = 'Allawee ₦77,000 — e never enter.';
 import { initNet, joinCamp, syncPlayer, platoonBoard, recentChat, postChat,
          postSuggestion, reportMessage, awardBoard, myAwards, laughChat,
-         setPresence, campRoster, renameMe, online } from './net.js?v=20261029230146';
-import { startMusic, stopMusic, musicOn, audioState, audioSupported, BEAT, BAR } from './audio.js?v=20261029230146';
+         setPresence, campRoster, renameMe, online } from './net.js?v=20261029230954';
+import { startMusic, stopMusic, musicOn, audioState, audioSupported, BEAT, BAR } from './audio.js?v=20261029230954';
 import { playHoop, playPenalty, playQuiz, playRegister, playParade,
          playMami, playHustle, playManOWar, playSaed, playSocial,
-         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261029230146';
+         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261029230954';
 
 /* Every dance animation is expressed in beats, so the steps are on-tempo
    whether or not the sound is playing — and genuinely on the beat when it is. */
@@ -2758,14 +2758,19 @@ function tower(t){
       <rect x="38.5" y="9" width="4" height="2.2" rx="1" fill="#1f1d1a"/>
       <rect x="1" y="12" width="7" height="3.2" rx="1" fill="#2a2622"/>
     </g>
-    <rect x="5" y="26.5" width="5" height="2.5" rx="1" fill="#1f1d1a"/>
-    <rect x="34" y="26.5" width="5" height="2.5" rx="1" fill="#1f1d1a"/>
+    <rect x="5" y="26.5" width="5" height="3.5" rx="1" fill="#1f1d1a"/>
+    <rect x="34" y="26.5" width="5" height="3.5" rx="1" fill="#1f1d1a"/>
     <g class="exhaust">
       <circle class="smoke" cx="2.5" cy="12" r="2.4" fill="#8a8378"/>
       <circle class="smoke" cx="2.5" cy="12" r="2.9" fill="#8a8378" style="animation-delay:-.4s"/>
       <circle class="smoke" cx="2.5" cy="12" r="2.1" fill="#8a8378" style="animation-delay:-.8s"/>
     </g>
   </svg>`;
+  /* On the shops' track like the POS stand and the street sign, in the gap
+     after the provision store (slot 2.82). Pinned at 74% it hung in the air
+     while the buildings slid past it. */
+  el.style.animationDuration = SHOP_CYCLE + 's';
+  el.style.animationDelay = -(2.82 * SHOP_CYCLE / SHOPS.length) + 's';
   onKerb(el);
 })();
 
