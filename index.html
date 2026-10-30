@@ -428,11 +428,12 @@
   /* ---------- the boli run ----------
      One of them breaks off, sprints to a food stall, eats, then catches back
      up. Scaled down on arrival because the stalls sit further back. */
-  .corper.running{transition:transform .95s cubic-bezier(.3,.7,.4,1)}
+  /* 1.35s, down from .95: the dash read as frantic. Keep in step with RUN_MS. */
+  .corper.running{transition:transform 1.35s cubic-bezier(.3,.7,.4,1)}
   .corper.running .leg,.corper.running .leg2,
-  .corper.running .arm,.corper.running .arm2{animation-duration:.26s}
-  .corper.running .torso{animation-duration:.13s}
-  .corper.running .shin,.corper.running .fore{animation-duration:.26s}
+  .corper.running .arm,.corper.running .arm2{animation-duration:.34s}
+  .corper.running .torso{animation-duration:.17s}
+  .corper.running .shin,.corper.running .fore{animation-duration:.34s}
   .corper.munching .leg,.corper.munching .leg2{animation:none}
   .corper.munching .shin,.corper.munching .fore{animation:none}
   .corper.munching .torso{animation:munch .55s ease-in-out infinite}
@@ -1253,7 +1254,7 @@
 <script type="module">
 import { newGame, doAction, canDo, unlocked, ACTIONS, phaseOf, nextUnlock, postingOdds, rivalOf,
          computePosting,
-         shareText, MAX_DAY } from './game.js?v=20261029230954';
+         shareText, MAX_DAY } from './game.js?v=20261029231554';
 
 /* ---------- scene coordinates ----------
    The scene is scaled by a transform (see the stage), so a native
@@ -1284,11 +1285,11 @@ const TS = (document.getElementById('scene').offsetWidth || 375) / 375;
 const ALLAWEE_NOTE = 'Allawee ₦77,000 — e never enter.';
 import { initNet, joinCamp, syncPlayer, platoonBoard, recentChat, postChat,
          postSuggestion, reportMessage, awardBoard, myAwards, laughChat,
-         setPresence, campRoster, renameMe, online } from './net.js?v=20261029230954';
-import { startMusic, stopMusic, musicOn, audioState, audioSupported, BEAT, BAR } from './audio.js?v=20261029230954';
+         setPresence, campRoster, renameMe, online } from './net.js?v=20261029231554';
+import { startMusic, stopMusic, musicOn, audioState, audioSupported, BEAT, BAR } from './audio.js?v=20261029231554';
 import { playHoop, playPenalty, playQuiz, playRegister, playParade,
          playMami, playHustle, playManOWar, playSaed, playSocial,
-         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261029230954';
+         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261029231554';
 
 /* Every dance animation is expressed in beats, so the steps are on-tempo
    whether or not the sound is playing — and genuinely on the beat when it is. */
@@ -3995,7 +3996,8 @@ function onMusicBar(b){
    Every so often one corper peels off to a food stall and catches back up.
    Skipped during the dance, and skipped if no food stall is currently in frame
    — running to a shop that is off-screen just looks like someone leaving. */
-const SNACK_EVERY = 23000, RUN_MS = 950, EAT_MS = 1500, IN_MS = 320;
+/* RUN_MS matches the .corper.running transition in the stylesheet. */
+const SNACK_EVERY = 23000, RUN_MS = 1350, EAT_MS = 1500, IN_MS = 320;
 
 /* Returns false when it could not go — the caller retries soon rather than
    forfeiting a whole 23s turn. The dance and the run overlap often enough that
