@@ -661,13 +661,31 @@
     .wrap{max-width:720px}
     .stats{grid-template-columns:repeat(4,1fr)}
   }
-  .stat{background:var(--white);border:1px solid var(--line);border-radius:12px;padding:9px 11px}
+  /* Each card wears its own colour, so a glance tells them apart, and the
+     card FLASHES when its number moves: a bright pulse of its own colour on
+     a gain, a red one on a loss, with the number jumping. Four cream boxes
+     that quietly changed a digit were easy to miss. */
+  .stat{background:var(--stat-bg,var(--white));border:1px solid var(--stat-line,var(--line));
+    border-radius:12px;padding:9px 11px;position:relative}
+  .stat.energy{--stat-bg:#fdf3d8;--stat-line:#ecd9a0;--stat-hot:#f7c948;--stat-bar:#e0a21f}
+  .stat.belle {--stat-bg:#fbe6e0;--stat-line:#eec4b8;--stat-hot:#f29a8a;--stat-bar:#d9573f}
+  .stat.money {--stat-bg:#e3f1e6;--stat-line:#b9d9c3;--stat-hot:#7fd99a;--stat-bar:var(--green)}
+  .stat.cred  {--stat-bg:#e4ecf6;--stat-line:#bccbe3;--stat-hot:#8fb7ee;--stat-bar:#3b6fb6}
+  .stat.up  {animation:statUp .9s ease-out}
+  .stat.down{animation:statDown .9s ease-out}
+  .stat.up span,.stat.down span{display:inline-block;animation:statPop .5s cubic-bezier(.2,1.4,.4,1)}
+  @keyframes statUp  {0%{background:var(--stat-hot);box-shadow:0 0 0 4px var(--stat-hot)}
+                      100%{background:var(--stat-bg);box-shadow:0 0 0 0 transparent}}
+  @keyframes statDown{0%{background:#f4b9ae;box-shadow:0 0 0 4px #f4b9ae}
+                      100%{background:var(--stat-bg);box-shadow:0 0 0 0 transparent}}
+  @keyframes statPop {0%{transform:scale(1.35)}100%{transform:scale(1)}}
+  @media (prefers-reduced-motion:reduce){.stat.up,.stat.down,.stat.up span,.stat.down span{animation:none}}
   .stat b{display:block;font-size:10px;text-transform:uppercase;letter-spacing:.1em;
     color:var(--muted);font-weight:800}
   .stat span.debt{color:var(--red)}
   .stat span{font-size:19px;font-weight:800}
   .bar{height:6px;background:var(--line);border-radius:3px;margin-top:6px;overflow:hidden}
-  .bar i{display:block;height:100%;background:var(--green);transition:width .25s}
+  .bar i{display:block;height:100%;background:var(--stat-bar,var(--green));transition:width .25s}
   .bar.low i{background:var(--red)}
 
   .tag{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;
@@ -1167,12 +1185,12 @@
 
   <section id="game" class="hidden">
     <div class="stats">
-      <div class="stat"><b>Energy</b><span id="sEnergy"></span>
+      <div class="stat energy"><b>Energy</b><span id="sEnergy"></span>
         <div class="bar" id="bEnergy"><i></i></div></div>
-      <div class="stat"><b>Belle</b><span id="sBelle"></span>
+      <div class="stat belle"><b>Belle</b><span id="sBelle"></span>
         <div class="bar" id="bBelle"><i></i></div></div>
-      <div class="stat"><b>Your money</b><span id="sMoney"></span></div>
-      <div class="stat"><b>Credibility</b><span id="sCred"></span></div>
+      <div class="stat money"><b>Your money</b><span id="sMoney"></span></div>
+      <div class="stat cred"><b>Credibility</b><span id="sCred"></span></div>
     </div>
     <div class="live" id="live" role="button" tabindex="0"
          aria-expanded="false" aria-controls="whoList"><i></i><span>Single player</span></div>
@@ -1269,7 +1287,7 @@
 <script type="module">
 import { newGame, doAction, canDo, unlocked, ACTIONS, phaseOf, nextUnlock, postingOdds, rivalOf,
          computePosting,
-         shareText, MAX_DAY } from './game.js?v=20261030100434';
+         shareText, MAX_DAY } from './game.js?v=20261030100802';
 
 /* ---------- scene coordinates ----------
    The scene is scaled by a transform (see the stage), so a native
@@ -1300,11 +1318,11 @@ const TS = (document.getElementById('scene').offsetWidth || 375) / 375;
 const ALLAWEE_NOTE = 'Allawee ₦77,000 — e never enter.';
 import { initNet, joinCamp, syncPlayer, platoonBoard, recentChat, postChat,
          postSuggestion, reportMessage, awardBoard, myAwards, laughChat,
-         setPresence, campRoster, renameMe, setAvatar, online } from './net.js?v=20261030100434';
-import { startMusic, stopMusic, musicOn, audioState, audioSupported, BEAT, BAR } from './audio.js?v=20261030100434';
+         setPresence, campRoster, renameMe, setAvatar, online } from './net.js?v=20261030100802';
+import { startMusic, stopMusic, musicOn, audioState, audioSupported, BEAT, BAR } from './audio.js?v=20261030100802';
 import { playHoop, playPenalty, playQuiz, playRegister, playParade,
          playMami, playHustle, playManOWar, playSaed, playSocial,
-         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261030100434';
+         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261030100802';
 
 /* Every dance animation is expressed in beats, so the steps are on-tempo
    whether or not the sound is playing — and genuinely on the beat when it is. */
@@ -4447,6 +4465,23 @@ function bar(el, v){
   el.classList.toggle('low', v < 25);
 }
 
+/* The cards pulse when a number moves. Compared against what was last drawn,
+   not against the previous state object, so a redraw with nothing changed
+   stays quiet. The first draw of a run sets the baseline without a pulse. */
+let lastStats = null;
+function flashStats(){
+  const now = { energy: s.energy, belle: s.belle, money: s.money, cred: s.cred };
+  if (lastStats && lastStats.run === s){     // same run: a new game starts quiet
+    for (const k of Object.keys(now)){
+      if (now[k] === lastStats[k]) continue;
+      const card = $('s' + k[0].toUpperCase() + k.slice(1)).closest('.stat');
+      card.classList.remove('up', 'down');
+      void card.offsetWidth;                       // restart the animation
+      card.classList.add(now[k] > lastStats[k] ? 'up' : 'down');
+    }
+  }
+  lastStats = { ...now, run: s };
+}
 function render(){
   const intro = !s, over = s && s.phase === 'ending';
   $('intro').classList.toggle('hidden', !intro);
@@ -4474,6 +4509,7 @@ function render(){
   $('sMoney').textContent = naira(s.money);
   $('sMoney').classList.toggle('debt', s.money < 0);
   $('sCred').textContent = s.cred;
+  flashStats();
   bar($('bEnergy'), s.energy); bar($('bBelle'), s.belle);
   drawWhoami();
   drawOdds();
