@@ -2,7 +2,7 @@
    Every function is failure-tolerant on purpose: if Supabase is unset, slow,
    or down, the game must still be playable. Nothing here throws upward. */
 
-import { SUPABASE_URL, SUPABASE_ANON_KEY } from './config.js?v=20261029234429';
+import { SUPABASE_URL, SUPABASE_ANON_KEY } from './config.js?v=20261030100434';
 
 const TOKEN_KEY = 'otondo:token';
 let sb = null, token = null, channel = null;
@@ -77,7 +77,8 @@ export function campRoster() {
     return Object.values(channel.presenceState())
       .filter(metas => metas && metas.length)
       .map(metas => metas[metas.length - 1])
-      .map(p => ({ nick: p.nick || null, platoon: p.platoon || null, day: p.day || null }));
+      .map(p => ({ nick: p.nick || null, platoon: p.platoon || null, day: p.day || null,
+                   av: Number.isInteger(p.av) ? p.av : null }));
   } catch { return []; }
 }
 
@@ -91,6 +92,18 @@ export async function renameMe(nickname) {
     if (error) throw error;
     return data === true;
   } catch (e) { console.warn('[otondo] rename failed:', e.message); return false; }
+}
+
+/* The face you picked (avatars.sql). Past messages are updated server-side.
+   On a database without the migration the RPC is missing and this returns
+   false; the choice still lives in local state and the default face shows. */
+export async function setAvatar(n) {
+  if (!sb || !token) return false;
+  try {
+    const { data, error } = await sb.rpc('set_avatar', { p_token: token, p_avatar: n });
+    if (error) throw error;
+    return data === true;
+  } catch (e) { console.warn('[otondo] avatar failed:', e.message); return false; }
 }
 
 export async function joinCamp(nickname, platoon, source) {
