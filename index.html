@@ -67,12 +67,12 @@
      people, below every instruction, so the words stay bright. */
   .tod-morning{--sky1:#ebe6da;--sky2:#e6dcc4;--dust1:#d2c8ae;--dust2:#c6bb9c}
   .tod-dusk{--sky1:#e98a5c;--sky2:#f3c48e;--dust1:#c6b08c;--dust2:#b59c79}
-  .tod-night{--sky1:#1a2342;--sky2:#2d3a5e;--dust1:#5b5d6c;--dust2:#474a5c}
+  .tod-night{--sky1:#273358;--sky2:#3d4c78;--dust1:#6e7080;--dust2:#5a5d70}
   .scene::after{content:'';position:absolute;inset:0;z-index:4;pointer-events:none;
     opacity:0;transition:opacity 1.6s ease}
   .scene.tod-morning::after{background:#fff9ea;opacity:.22}
   .scene.tod-dusk::after{background:#e8632a;opacity:.1}
-  .scene.tod-night::after{background:#101a3c;opacity:.42}
+  .scene.tod-night::after{background:#101a3c;opacity:.3}
   .scene.tod-night .sun{opacity:0;transform:translateY(-16px)}
   .moon{position:absolute;left:150px;top:12px;width:30px;height:30px;z-index:1;
     opacity:0;transition:opacity 1.6s ease}
@@ -1260,7 +1260,7 @@
 <script type="module">
 import { newGame, doAction, canDo, unlocked, ACTIONS, phaseOf, nextUnlock, postingOdds, rivalOf,
          computePosting,
-         shareText, MAX_DAY } from './game.js?v=20261029173050';
+         shareText, MAX_DAY } from './game.js?v=20261029215605';
 
 /* ---------- scene coordinates ----------
    The scene is scaled by a transform (see the stage), so a native
@@ -1291,11 +1291,11 @@ const TS = (document.getElementById('scene').offsetWidth || 375) / 375;
 const ALLAWEE_NOTE = 'Allawee ₦77,000 — e never enter.';
 import { initNet, joinCamp, syncPlayer, platoonBoard, recentChat, postChat,
          postSuggestion, reportMessage, awardBoard, myAwards, laughChat,
-         setPresence, campRoster, renameMe, online } from './net.js?v=20261029173050';
-import { startMusic, stopMusic, musicOn, audioState, audioSupported, BEAT, BAR } from './audio.js?v=20261029173050';
+         setPresence, campRoster, renameMe, online } from './net.js?v=20261029215605';
+import { startMusic, stopMusic, musicOn, audioState, audioSupported, BEAT, BAR } from './audio.js?v=20261029215605';
 import { playHoop, playPenalty, playQuiz, playRegister, playParade,
          playMami, playHustle, playManOWar, playSaed, playSocial,
-         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261029173050';
+         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261029215605';
 
 /* Every dance animation is expressed in beats, so the steps are on-tempo
    whether or not the sound is playing — and genuinely on the beat when it is. */
@@ -4100,9 +4100,18 @@ setInterval(cycleWeather, 11000);
    corper in Lagos at 8pm sees night, and so does anyone else playing at
    night. Checked every minute; the classes carry the whole look (see CSS). */
 const TOD = ['tod-morning', 'tod-day', 'tod-dusk', 'tod-night'];
-function todNow(d = new Date()){
-  const h = d.getHours() + d.getMinutes() / 60;
-  return h < 5.5 || h >= 19.5 ? 'tod-night' : h < 9.5 ? 'tod-morning' : h < 17.5 ? 'tod-day' : 'tod-dusk';
+/* Game clock, not the wall clock: a wall clock left evening players in the
+   dark for the whole session. Every session opens in full daylight and then
+   runs a short day: day 3:00 → dusk 0:45 → night 1:15 → morning 0:45, and
+   round again (6 minutes), so everyone sees all four lights and most of the
+   time is bright. */
+const TOD_PLAN = [['tod-day', 180], ['tod-dusk', 45], ['tod-night', 75], ['tod-morning', 45]];
+const TOD_CYCLE = TOD_PLAN.reduce((a, [, n]) => a + n, 0);
+const TOD_T0 = Date.now();
+function todNow(now = Date.now()){
+  let t = ((now - TOD_T0) / 1000) % TOD_CYCLE;
+  for (const [c, n] of TOD_PLAN){ if (t < n) return c; t -= n; }
+  return 'tod-day';
 }
 function setTod(){
   const c = todNow();
@@ -4112,7 +4121,7 @@ function setTod(){
   });
 }
 setTod();
-setInterval(setTod, 60000);
+setInterval(setTod, 5000);
 
 /* Where this player came from — an ad links to otondo.ng/?r=nl. Stored rather
    than read at join time because people often arrive, look around, and only
