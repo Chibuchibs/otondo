@@ -1260,7 +1260,7 @@
 <script type="module">
 import { newGame, doAction, canDo, unlocked, ACTIONS, phaseOf, nextUnlock, postingOdds, rivalOf,
          computePosting,
-         shareText, MAX_DAY } from './game.js?v=20261029172719';
+         shareText, MAX_DAY } from './game.js?v=20261029173050';
 
 /* ---------- scene coordinates ----------
    The scene is scaled by a transform (see the stage), so a native
@@ -1291,11 +1291,11 @@ const TS = (document.getElementById('scene').offsetWidth || 375) / 375;
 const ALLAWEE_NOTE = 'Allawee ₦77,000 — e never enter.';
 import { initNet, joinCamp, syncPlayer, platoonBoard, recentChat, postChat,
          postSuggestion, reportMessage, awardBoard, myAwards, laughChat,
-         setPresence, campRoster, renameMe, online } from './net.js?v=20261029172719';
-import { startMusic, stopMusic, musicOn, audioState, audioSupported, BEAT, BAR } from './audio.js?v=20261029172719';
+         setPresence, campRoster, renameMe, online } from './net.js?v=20261029173050';
+import { startMusic, stopMusic, musicOn, audioState, audioSupported, BEAT, BAR } from './audio.js?v=20261029173050';
 import { playHoop, playPenalty, playQuiz, playRegister, playParade,
          playMami, playHustle, playManOWar, playSaed, playSocial,
-         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261029172719';
+         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261029173050';
 
 /* Every dance animation is expressed in beats, so the steps are on-tempo
    whether or not the sound is playing — and genuinely on the beat when it is. */
@@ -3609,7 +3609,9 @@ function nextSceneEvent(){
 const RARE_ODDS  = 0.2;
 const TRIP_ODDS  = 0.125;    // one chase in eight, the thief trips on Mr. Pothole
 /* Each convoy pass — the oga's or the Odogwu's — is on screen this long. */
-const CONVOY_PASS = 5600 * TS, GOAT_LEN = (3400 + 3200) * TS + 3800 + 400;
+/* The Odogwu cruises — slower than the politician, and on screen long enough
+   to be tapped five times, because that is the whole point of him. */
+const CONVOY_PASS = 5600 * TS, ODOGWU_PASS = 9800 * TS, ODOGWU_DRIVE = 8, GOAT_LEN = (3400 + 3200) * TS + 3800 + 400;
 
 /* An oga's convoy: two outriders, two black SUVs with the flag on the bonnet,
    strobes going, straight through the far lane at twice traffic speed. "Oga"
@@ -3666,10 +3668,10 @@ function odogwuConvoy(){
   if (calm()) return;
   const c = document.createElement('div');
   c.className = 'convoy odogwu';
-  /* Odogwus dash money. The white SUV is the one you tap — up to three times
+  /* Odogwus dash money. The white SUV is the one you tap — up to five times
      a pass, a few hundred naira each — and the tag on it says so. */
-  c.dataset.dash = '3';
-  const D = (4.6 * TS) + 's', dl = t => (t * TS) + 's';
+  c.dataset.dash = '5';
+  const D = (ODOGWU_DRIVE * TS) + 's', dl = t => (t * TS) + 's';
   c.innerHTML =
     `<div class="car" style="width:84px;bottom:10px;animation-duration:${D};animation-delay:0s">${pickup()}</div>` +
     `<div class="car dash" style="width:90px;bottom:4px;animation-duration:${D};animation-delay:${dl(.5)}">${suv('#f3f1e8', false, '#c9c4b6')}<i class="tapTag">TAP FOR MONEY</i></div>` +
@@ -3678,7 +3680,7 @@ function odogwuConvoy(){
   c.setAttribute('aria-label', 'Odogwu passing. Tap for money');
   sceneEl.appendChild(c);
   if (shoutSign) shoutSign(['ODOGWU PASSING', '#c9a227', '#1d1a10']);
-  setTimeout(() => c.remove(), CONVOY_PASS);
+  setTimeout(() => c.remove(), ODOGWU_PASS);
 }
 /* ---------- the convoys, on a schedule ----------
    The user's numbers: the oga at 0:50, the Odogwu at 1:15, and the pair round
