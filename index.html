@@ -287,8 +287,8 @@
      behind the far-lane traffic (z1), the walkers (z2) and a corper standing
      at a stall (z0 but later in the DOM). At z1 the kerb furniture painted
      over cars and over people, because it was added to the page after them. */
-  .posStand{position:absolute;left:36%;bottom:62px;width:46px;z-index:0;
-    pointer-events:none;transform:translateX(-50%)}
+  .posStand{position:absolute;bottom:62px;width:46px;z-index:0;
+    pointer-events:none;transform:translateX(-50%);animation:shopDrive linear infinite}
   /* The street name, on a Lagos State green plate on the kerb. It drifts with
      the shops, and each time it comes round it carries the next name — Broad
      Street, then Marina, then Allen — so the trek reads as a walk through
@@ -1260,7 +1260,7 @@
 <script type="module">
 import { newGame, doAction, canDo, unlocked, ACTIONS, phaseOf, nextUnlock, postingOdds, rivalOf,
          computePosting,
-         shareText, MAX_DAY } from './game.js?v=20261029215605';
+         shareText, MAX_DAY } from './game.js?v=20261029220423';
 
 /* ---------- scene coordinates ----------
    The scene is scaled by a transform (see the stage), so a native
@@ -1291,11 +1291,11 @@ const TS = (document.getElementById('scene').offsetWidth || 375) / 375;
 const ALLAWEE_NOTE = 'Allawee ₦77,000 — e never enter.';
 import { initNet, joinCamp, syncPlayer, platoonBoard, recentChat, postChat,
          postSuggestion, reportMessage, awardBoard, myAwards, laughChat,
-         setPresence, campRoster, renameMe, online } from './net.js?v=20261029215605';
-import { startMusic, stopMusic, musicOn, audioState, audioSupported, BEAT, BAR } from './audio.js?v=20261029215605';
+         setPresence, campRoster, renameMe, online } from './net.js?v=20261029220423';
+import { startMusic, stopMusic, musicOn, audioState, audioSupported, BEAT, BAR } from './audio.js?v=20261029220423';
 import { playHoop, playPenalty, playQuiz, playRegister, playParade,
          playMami, playHustle, playManOWar, playSaed, playSocial,
-         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261029215605';
+         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261029220423';
 
 /* Every dance animation is expressed in beats, so the steps are on-tempo
    whether or not the sound is playing — and genuinely on the beat when it is. */
@@ -2508,6 +2508,12 @@ const POS_DEFAULT = ['POS', '#1e3a6e', '#fff'];
   const [txt, top, ink] = POS_SPONSOR || POS_DEFAULT;
   const el = document.createElement('div');
   el.className = 'posStand';
+  /* On the shops' track, in the gap before the bakery (slot 4.82: a shop
+     spans .64 of its 28% slot, so .82 is the middle of the gap). Pinned to
+     one spot it stood still while the buildings and the street sign drifted
+     through it. */
+  el.style.animationDuration = SHOP_CYCLE + 's';
+  el.style.animationDelay = -(4.82 * SHOP_CYCLE / SHOPS.length) + 's';
   el.innerHTML = `<svg viewBox="0 0 60 64" aria-hidden="true">
     <path d="M2 24 Q30 2 58 24 Z" fill="${top}"/>
     <path d="M2 24 Q30 14 58 24 L58 27 Q30 19 2 27 Z" fill="#fff" opacity=".85"/>
