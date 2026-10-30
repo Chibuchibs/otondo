@@ -1254,7 +1254,7 @@
 <script type="module">
 import { newGame, doAction, canDo, unlocked, ACTIONS, phaseOf, nextUnlock, postingOdds, rivalOf,
          computePosting,
-         shareText, MAX_DAY } from './game.js?v=20261029232450';
+         shareText, MAX_DAY } from './game.js?v=20261029234429';
 
 /* ---------- scene coordinates ----------
    The scene is scaled by a transform (see the stage), so a native
@@ -1285,11 +1285,11 @@ const TS = (document.getElementById('scene').offsetWidth || 375) / 375;
 const ALLAWEE_NOTE = 'Allawee ₦77,000 — e never enter.';
 import { initNet, joinCamp, syncPlayer, platoonBoard, recentChat, postChat,
          postSuggestion, reportMessage, awardBoard, myAwards, laughChat,
-         setPresence, campRoster, renameMe, online } from './net.js?v=20261029232450';
-import { startMusic, stopMusic, musicOn, audioState, audioSupported, BEAT, BAR } from './audio.js?v=20261029232450';
+         setPresence, campRoster, renameMe, online } from './net.js?v=20261029234429';
+import { startMusic, stopMusic, musicOn, audioState, audioSupported, BEAT, BAR } from './audio.js?v=20261029234429';
 import { playHoop, playPenalty, playQuiz, playRegister, playParade,
          playMami, playHustle, playManOWar, playSaed, playSocial,
-         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261029232450';
+         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261029234429';
 
 /* Every dance animation is expressed in beats, so the steps are on-tempo
    whether or not the sound is playing — and genuinely on the beat when it is. */
@@ -3934,8 +3934,9 @@ if (!calm()){
   setInterval(upNepa, NEPA_EVERY);
 }
 
-/* Off by default on purpose: most arrivals come from TikTok with their own
-   music already playing, and hijacking that costs more players than it wins. */
+/* On by default now that the groove is a real track: it starts on the first
+   thing the player touches (browsers refuse to start audio without a gesture)
+   and the header button turns it off, remembered per device. */
 const SND_KEY = 'otondo:sound';
 if (audioSupported()) $('snd').classList.remove('hidden');
 function toggleSound(){
@@ -3984,11 +3985,13 @@ function soundHint(){
   }, 700);
 }
 
-/* Browsers will not start audio without a gesture, so a remembered preference
-   cannot auto-play on load. Instead it arms itself and starts on whatever the
-   player touches first — which honours the choice without ambushing anyone. */
+/* Browsers will not start audio without a gesture, so it cannot auto-play on
+   load. Instead it arms itself and starts on whatever the player touches
+   first — unless they turned it off on this device before. */
 try {
-  if (localStorage.getItem(SND_KEY) === '1') {
+  let pref = null;
+  try { pref = localStorage.getItem(SND_KEY); } catch {}
+  if (pref !== '0' && audioSupported()) {
     const arm = () => {
       document.removeEventListener('pointerdown', arm);
       if (!musicOn()) toggleSound();
@@ -4009,7 +4012,7 @@ setTimeout(() => { danceBreak(); startDanceTimers(); }, 6000);
 /* The bar index comes straight off the audio element's clock, so the routine
    cannot drift from the music no matter how long the page is left open. */
 function onMusicBar(b){
-  if (b === 0) danceBreak();    // danceBreak itself ends it one bar later
+  if (b % 8 === 0) danceBreak();    // danceBreak itself ends it one bar later
 }
 
 /* ---------- the boli run ----------

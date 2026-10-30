@@ -1,6 +1,11 @@
 /* Otondo — the camp groove.
-   Synthesised, nothing licensed and nothing downloaded. Rendered once offline
-   into an AudioBuffer and looped straight out of a live AudioContext.
+   A real track now: a 16-bar loop cut from "Amapiano Beats Log Drum Groove"
+   by alex-morgan on Pixabay (Pixabay Content License: free for commercial
+   use, no attribution required, not for resale as a standalone file). The
+   loop is fetched and decoded at load, so the first tap only has to open a
+   context and press play. The synthesised groove below stays as the fallback
+   for when the file cannot be fetched or decoded, so the game is never
+   silent for want of a download.
 
    The iOS story, because it cost two attempts:
    Web Audio defaults to the AMBIENT category, which on iPhone is the ringer
@@ -19,10 +24,13 @@
    broken. Everywhere else (desktop, Android) plain Web Audio is fine.
    Off by default. */
 
-export const BPM  = 105;
-export const BEAT = 60 / BPM;            // 0.5714s
-export const BAR  = BEAT * 4;            // 2.2857s
-const BARS = 8;                          // one full dance cycle per loop
+/* The track: measured from the cut itself (16 bars in 35.8921s). */
+const TRACK = { url: './groove.mp3', bpm: 106.987, bars: 16, level: 0.5 };
+export const BPM  = TRACK.bpm;
+export const BEAT = 60 / BPM;            // 0.5608s
+export const BAR  = BEAT * 4;            // 2.2433s
+const BARS = TRACK.bars;                 // bars in the loop that is playing
+const SYNTH_BARS = 8;                    // the fallback's own cycle
 const STEPS_PER_BAR = 16;
 const LOOP_SECONDS = BAR * BARS;
 const LEVEL = 0.09;            /* Deliberately low. A screen recording of the
@@ -134,7 +142,7 @@ export function renderLoop() {
     const AC  = window.AudioContext || window.webkitAudioContext;
     if (!OAC || !AC) throw new Error('no web audio');
     const rate = 44100;
-    const c = new OAC(1, Math.ceil(rate * LOOP_SECONDS), rate);
+    const c = new OAC(1, Math.ceil(rate * BAR * SYNTH_BARS), rate);
     const out = c.createGain(); out.gain.value = LEVEL;
     /* Two cascaded high-passes at 150Hz. This is the fix for "static on the
        phone, fine on the laptop": a small driver fed deep bass distorts
@@ -153,7 +161,7 @@ export function renderLoop() {
     out.connect(hp1).connect(hp2).connect(soft).connect(c.destination);
 
     const stepDur = BEAT / 4;
-    for (let b = 0; b < BARS; b++) {
+    for (let b = 0; b < SYNTH_BARS; b++) {
       const a = ARR[b];
       for (let i = 0; i < STEPS_PER_BAR; i++) {
         const at = b * BAR + i * stepDur;
@@ -185,6 +193,32 @@ export function renderLoop() {
    by the time anybody taps, the loop is already a finished AudioBuffer and the
    tap only has to open an AudioContext. */
 renderLoop().catch(e => console.warn('[otondo] audio build failed:', e.message));
+
+/* The track, fetched and decoded at load (no gesture needed for either). An
+   OfflineAudioContext decodes it so no live context has to exist yet. Any
+   failure — offline, a 404, a codec the browser lacks — resolves to null and
+   the synth loop plays instead. */
+let trackBuf = null, trackTried = null;
+export let usingTrack = false;
+function loadTrack() {
+  if (trackTried) return trackTried;
+  trackTried = (async () => {
+    const OAC = window.OfflineAudioContext || window.webkitOfflineAudioContext;
+    if (!OAC) return null;
+    const res = await fetch(TRACK.url);
+    if (!res.ok) throw new Error('track ' + res.status);
+    const bytes = await res.arrayBuffer();
+    const c = new OAC(1, 1, 44100);
+    const buf = await new Promise((ok, no) => {
+      const p = c.decodeAudioData(bytes, ok, no);
+      if (p && p.then) p.then(ok, no);
+    });
+    trackBuf = buf;
+    return buf;
+  })().catch(e => { console.warn('[otondo] track unavailable, using the synth groove:', e.message); return null; });
+  return trackTried;
+}
+loadTrack();
 
 /* THE iOS FIX. Web Audio defaults to the ambient category, which on iPhone
    means the ringer channel: the context reports itself running, the scheduler
@@ -232,7 +266,7 @@ function openCtx() {
 function watch() {
   if (!playing || !ctx) return;
   const t = ctx.currentTime - startedAt;
-  const b = Math.floor(t / BAR) % BARS;
+  const b = Math.floor(t / BAR) % (usingTrack ? BARS : SYNTH_BARS);
   if (b !== lastBar) { lastBar = b; try { onBar(b); } catch {} }
   raf = requestAnimationFrame(watch);
 }
@@ -243,13 +277,21 @@ export function startMusic(onBarCallback) {
   onBar = onBarCallback || onBar;
   const c = openCtx();
   if (!c) return false;
-  renderLoop().then(buf => {
+  loadTrack().then(track => track || renderLoop()).then(buf => {
     if (!buf) return;
     stopNode();
+    usingTrack = buf === trackBuf;
     node = c.createBufferSource();
     node.buffer = buf;
     node.loop = true;
-    node.connect(c.destination);
+    /* The track is mastered hot; the synth already carries its own level.
+       A gentle high-pass keeps the log drum from rattling a phone speaker
+       without gutting it the way the synth's 230Hz cut would. */
+    const g = c.createGain();
+    g.gain.value = usingTrack ? TRACK.level : 1;
+    const hp = c.createBiquadFilter();
+    hp.type = 'highpass'; hp.frequency.value = usingTrack ? 90 : 20; hp.Q.value = 0.7;
+    node.connect(g).connect(hp).connect(c.destination);
     startedAt = c.currentTime;
     node.start();
     playing = true; lastBar = -1;
@@ -276,7 +318,8 @@ export const musicOn = () => playing;
 export const audioState = () => ({
   ctx: ctx ? ctx.state : 'building',
   running: playing,
-  time: ctx && playing ? +((ctx.currentTime - startedAt) % LOOP_SECONDS).toFixed(2) : 0,
-  gain: LEVEL,
+  time: ctx && playing ? +((ctx.currentTime - startedAt) % (usingTrack ? LOOP_SECONDS : BAR * SYNTH_BARS)).toFixed(2) : 0,
+  gain: usingTrack ? TRACK.level : LEVEL,
+  source: usingTrack ? 'track' : 'synth',
   via: 'web audio' + (navigator.audioSession ? ' + playback category' : ''),
 });
