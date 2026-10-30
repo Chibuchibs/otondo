@@ -642,17 +642,9 @@
      which both hid them and looked like one more thing to press — and it is
      the one label that is NOT pressable. Letters and a shadow carry it fine
      over the road. */
-  .tapHint{position:absolute;left:8px;bottom:6px;z-index:5;pointer-events:none;
-    color:#ffe9a8;
-    font:800 10.5px/1 system-ui,sans-serif;letter-spacing:.03em;
-    padding:6px 2px;display:flex;gap:5px;align-items:center;
-    text-shadow:0 1px 3px rgba(0,0,0,.75),0 0 2px rgba(0,0,0,.6)}
-  .tapHint b{font-size:12px;animation:pokePoke .9s ease-in-out infinite}
-  @keyframes pokePoke{0%,100%{transform:translateY(0)}50%{transform:translateY(-2.5px)}}
-  .scene.played .tapHint{opacity:0;transition:opacity .5s ease;pointer-events:none}
 
   @media (prefers-reduced-motion: reduce){
-    .tapRing,.tapTag,.tapHint b{animation:none}
+    .tapRing,.tapTag{animation:none}
     .runner,.flame,.puff{animation:none}
     .corper.sliding,.pickup.sliding,.pickup{transition:none}
   }
@@ -1114,7 +1106,6 @@
     </svg>
     <div class="road"></div>
     <div class="sign"><b>NO WAHALA</b><i></i></div>
-    <div class="tapHint" id="tapHint"><b>👆</b><span>Tap the one with the sign</span></div>
   </div></div>
   <script>
   /* The stage. The scene is drawn at a fixed scale and SCALED to fill the
@@ -1261,7 +1252,7 @@
 <script type="module">
 import { newGame, doAction, canDo, unlocked, ACTIONS, phaseOf, nextUnlock, postingOdds, rivalOf,
          computePosting,
-         shareText, MAX_DAY } from './game.js?v=20261029222512';
+         shareText, MAX_DAY } from './game.js?v=20261029222849';
 
 /* ---------- scene coordinates ----------
    The scene is scaled by a transform (see the stage), so a native
@@ -1292,11 +1283,11 @@ const TS = (document.getElementById('scene').offsetWidth || 375) / 375;
 const ALLAWEE_NOTE = 'Allawee ₦77,000 — e never enter.';
 import { initNet, joinCamp, syncPlayer, platoonBoard, recentChat, postChat,
          postSuggestion, reportMessage, awardBoard, myAwards, laughChat,
-         setPresence, campRoster, renameMe, online } from './net.js?v=20261029222512';
-import { startMusic, stopMusic, musicOn, audioState, audioSupported, BEAT, BAR } from './audio.js?v=20261029222512';
+         setPresence, campRoster, renameMe, online } from './net.js?v=20261029222849';
+import { startMusic, stopMusic, musicOn, audioState, audioSupported, BEAT, BAR } from './audio.js?v=20261029222849';
 import { playHoop, playPenalty, playQuiz, playRegister, playParade,
          playMami, playHustle, playManOWar, playSaed, playSocial,
-         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261029222512';
+         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261029222849';
 
 /* Every dance animation is expressed in beats, so the steps are on-tempo
    whether or not the sound is playing — and genuinely on the beat when it is. */
