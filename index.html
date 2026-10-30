@@ -1253,7 +1253,7 @@
 <script type="module">
 import { newGame, doAction, canDo, unlocked, ACTIONS, phaseOf, nextUnlock, postingOdds, rivalOf,
          computePosting,
-         shareText, MAX_DAY } from './game.js?v=20261029224932';
+         shareText, MAX_DAY } from './game.js?v=20261029230146';
 
 /* ---------- scene coordinates ----------
    The scene is scaled by a transform (see the stage), so a native
@@ -1284,11 +1284,11 @@ const TS = (document.getElementById('scene').offsetWidth || 375) / 375;
 const ALLAWEE_NOTE = 'Allawee ₦77,000 — e never enter.';
 import { initNet, joinCamp, syncPlayer, platoonBoard, recentChat, postChat,
          postSuggestion, reportMessage, awardBoard, myAwards, laughChat,
-         setPresence, campRoster, renameMe, online } from './net.js?v=20261029224932';
-import { startMusic, stopMusic, musicOn, audioState, audioSupported, BEAT, BAR } from './audio.js?v=20261029224932';
+         setPresence, campRoster, renameMe, online } from './net.js?v=20261029230146';
+import { startMusic, stopMusic, musicOn, audioState, audioSupported, BEAT, BAR } from './audio.js?v=20261029230146';
 import { playHoop, playPenalty, playQuiz, playRegister, playParade,
          playMami, playHustle, playManOWar, playSaed, playSocial,
-         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261029224932';
+         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261029230146';
 
 /* Every dance animation is expressed in beats, so the steps are on-tempo
    whether or not the sound is playing — and genuinely on the beat when it is. */
@@ -2791,12 +2791,18 @@ const figX = (p, box) => {
    other walker is free to read, fall back to adding the time he stood still.
    Reading the other walker rather than adding a fixed figure means a dance
    that re-spaced everyone while he was down does not get counted twice. */
-function rejoinGrid(p, stoodStillMs){
+function rejoinGrid(p, stoodStillMs, glide = true){
   const march = p.getAnimations().find(a => a.animationName === 'march');
   if (!march || calm()) return;
   const before = p.sceneRect().left;
   const other = [...sceneEl.querySelectorAll(':scope > .corper')].find(q => q !== p && freeFig(q));
   const ref = other && other.getAnimations().find(a => a.animationName === 'march');
+  /* Hidden (stepping out of a shop): advance his own clock by the time he was
+     inside, so he comes out about where he would have walked to — usually in
+     frame — rather than at the grid's reference, which can be off the edge.
+     Equal durations mean his own clock IS the grid; the dance-end re-space
+     stays as the backstop for drift. */
+  if (!glide) { march.currentTime += stoodStillMs; return; }
   if (ref && ref.currentTime != null) march.currentTime = ref.currentTime;
   else march.currentTime += stoodStillMs;
   const after = p.sceneRect().left;
@@ -3984,7 +3990,7 @@ function onMusicBar(b){
    Every so often one corper peels off to a food stall and catches back up.
    Skipped during the dance, and skipped if no food stall is currently in frame
    — running to a shop that is off-screen just looks like someone leaving. */
-const SNACK_EVERY = 23000, RUN_MS = 950, EAT_MS = 1500;
+const SNACK_EVERY = 23000, RUN_MS = 950, EAT_MS = 1500, IN_MS = 320;
 
 /* Returns false when it could not go — the caller retries soon rather than
    forfeiting a whole 23s turn. The dance and the run overlap often enough that
@@ -4034,7 +4040,8 @@ function snackRun(preferred, target, paid){
 
   const stallNow = () => {
     const r = stall.el.sceneRect();
-    return r.left - box.left + r.width / 2;
+    /* the door sits 29% in from the left of every building drawing */
+    return r.left - box.left + (indoor ? r.width * 0.29 : r.width / 2);
   };
   const park = x => {
     who.style.transform = `translate(${Math.round(x - home)}px,-38px) scale(.8)`;
@@ -4045,16 +4052,29 @@ function snackRun(preferred, target, paid){
   /* A hawker walks 130% of the scene in HAWK_LEN seconds, water leftwards
      and akara rightwards; a shop drifts rightwards on the shop clock. */
   const hawk = stall.el.classList.contains('hawker');
+  /* A building you walk into — barber, bakery, provisions, electronics — as
+     against a stall or a hawker you buy from on the kerb. Indoors he steps in
+     at the door and is gone; the kerb sellers keep the stand-and-eat, because
+     watching him chew is the point of those. */
+  const indoor = !hawk && !stall.el.dataset.food;
   const speed = hawk
     ? (box.width * 1.30) / (HAWK_LEN * TS * 1000) * (stall.el.classList.contains('akara') ? 1 : -1)
     : (box.width * SHOP_TRAVEL) / (SHOP_CYCLE * 1000);   // px per ms
   park(stallNow() + speed * RUN_MS);
 
-  let pin = 0;
+  let pin = 0, fade = null, shrink = null;
   setTimeout(() => {
     /* You eat roasted corn. You do not eat a mattress. */
     who.classList.replace('running', stall.el.dataset.food ? 'munching' : 'shopping');
     if (paid) buy(stall.el, who);      // only a tap costs money
+    if (indoor){
+      /* In through the door: a quick shrink-and-fade. Two animations, since
+         opacity must replace and the scale must stack on the park transform. */
+      fade   = who.animate([{ opacity: 1 }, { opacity: 0 }], { duration: IN_MS, easing: 'ease-in', fill: 'forwards' });
+      shrink = who.animate([{ transform: 'scale(1)' }, { transform: 'scale(.55)' }],
+                           { duration: IN_MS, easing: 'ease-in', fill: 'forwards', composite: 'add' });
+      return;                           // nothing to follow while he is inside
+    }
     /* Eating: pin to the stall every frame with the transition off, so they
        stay with it as it drifts instead of being left behind. A single
        predicted position cannot hold for a second and a half. */
@@ -4062,6 +4082,26 @@ function snackRun(preferred, target, paid){
     const follow = () => { park(stallNow()); pin = requestAnimationFrame(follow); };
     follow();
   }, RUN_MS);
+
+  if (indoor){
+    /* Back out a beat later, straight into his slot on the lane — placed
+       while invisible, then faded in walking. No run back across the road,
+       no catch-up hurry: that double dash was the hectic part. */
+    setTimeout(() => {
+      who.classList.remove('shopping', 'running');
+      who.style.transition = 'none';
+      who.style.transform = '';
+      void who.offsetWidth;
+      who.style.transition = '';
+      who.style.animationPlayState = '';
+      delete stall.el.dataset.target;
+      rejoinGrid(who, RUN_MS + EAT_MS + IN_MS, false);
+      if (fade) fade.cancel();
+      if (shrink) shrink.cancel();
+      who.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 350, easing: 'ease-out' });
+    }, RUN_MS + EAT_MS + IN_MS);
+    return true;
+  }
 
   setTimeout(() => {
     cancelAnimationFrame(pin);
