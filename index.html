@@ -354,6 +354,12 @@
   .wheel{animation:spin .5s linear infinite;transform-box:fill-box;
     transform-origin:center}
   @keyframes spin{to{transform:rotate(360deg)}}
+  /* the bus sways on its springs; the conductor's free hand flags passengers */
+  .vehicle .cab{animation:sway .46s ease-in-out infinite alternate}
+  @keyframes sway{from{transform:translateY(0)}to{transform:translateY(-.7px)}}
+  .vehicle .cond .wave{animation:flag .55s ease-in-out infinite alternate;
+    transform-box:fill-box;transform-origin:0% 0%}
+  @keyframes flag{from{transform:rotate(-28deg)}to{transform:rotate(14deg)}}
   @keyframes march{from{left:-16%}to{left:112%}}
   /* Tempo and swing come from the element: --stride is the period of a step,
      --sw scales how far the limbs swing. Two walkers on the same clock move
@@ -1260,7 +1266,7 @@
 <script type="module">
 import { newGame, doAction, canDo, unlocked, ACTIONS, phaseOf, nextUnlock, postingOdds, rivalOf,
          computePosting,
-         shareText, MAX_DAY } from './game.js?v=20261029220423';
+         shareText, MAX_DAY } from './game.js?v=20261029221343';
 
 /* ---------- scene coordinates ----------
    The scene is scaled by a transform (see the stage), so a native
@@ -1291,11 +1297,11 @@ const TS = (document.getElementById('scene').offsetWidth || 375) / 375;
 const ALLAWEE_NOTE = 'Allawee ₦77,000 — e never enter.';
 import { initNet, joinCamp, syncPlayer, platoonBoard, recentChat, postChat,
          postSuggestion, reportMessage, awardBoard, myAwards, laughChat,
-         setPresence, campRoster, renameMe, online } from './net.js?v=20261029220423';
-import { startMusic, stopMusic, musicOn, audioState, audioSupported, BEAT, BAR } from './audio.js?v=20261029220423';
+         setPresence, campRoster, renameMe, online } from './net.js?v=20261029221343';
+import { startMusic, stopMusic, musicOn, audioState, audioSupported, BEAT, BAR } from './audio.js?v=20261029221343';
 import { playHoop, playPenalty, playQuiz, playRegister, playParade,
          playMami, playHustle, playManOWar, playSaed, playSocial,
-         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261029220423';
+         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261029221343';
 
 /* Every dance animation is expressed in beats, so the steps are on-tempo
    whether or not the sound is playing — and genuinely on the beat when it is. */
@@ -1459,19 +1465,70 @@ function wheel(cx, cy, r){
        + `<rect x="${cx-r*0.08}" y="${cy-r*0.42}" width="${r*0.16}" height="${r*0.84}" fill="#6b7075"/></g>`;
 }
 
-/* yellow danfo with the black stripes */
-function danfo(){
-  return `<svg viewBox="0 0 92 40" aria-hidden="true">
-    <rect x="3" y="4" width="84" height="25" rx="4" fill="${DANFO_Y}"/>
-    <rect x="3" y="12" width="84" height="3.4" fill="${DANFO_DK}"/>
-    <rect x="3" y="22" width="84" height="3.4" fill="${DANFO_DK}"/>
-    <rect x="8" y="6.5" width="15" height="5" rx="1.4" fill="#cfe6f2"/>
-    <rect x="27" y="6.5" width="15" height="5" rx="1.4" fill="#cfe6f2"/>
-    <rect x="46" y="6.5" width="15" height="5" rx="1.4" fill="#cfe6f2"/>
-    <rect x="65" y="6.5" width="17" height="5" rx="1.4" fill="#cfe6f2"/>
-    <rect x="84" y="16" width="4" height="4" rx="1" fill="#e0523a"/>
-    ${wheel(20,30,6.4)}${wheel(70,30,6.4)}
-  </svg>`;
+/* The danfo: yellow with the black stripes, a route painted on the panel,
+   faces in every window, the driver up front and the conductor hanging out
+   of the open sliding door with one hand on the roof rail — the way it
+   actually goes down the road. Front is on the right (they drive left to
+   right). Each window band is clipped so heads never poke out of the glass. */
+const BUS_ROUTES = ['OSHODI – CMS', 'IKEJA – OJUELEGBA', 'YABA – OBALENDE',
+                    'MILE 2 – OSHODI', 'IYANA IPAJA – CMS', 'KETU – OBALENDE',
+                    'OJOTA – CMS', 'IKORODU – YABA'];
+const BUS_SKIN = ['#6b4423', '#8d5524', '#4a2e1c', '#a0673f'];
+const BUS_WEAR = ['#d6342c', '#2f6b4f', '#f0a830', '#4a6fa5', '#fff'];
+let busN = 0;
+/* one rider: head and shoulders, some with a cap or a gele */
+function rider(cx, cy, k, hat){
+  const skin = BUS_SKIN[k % 4], wear = BUS_WEAR[k % 5];
+  return `<path d="M${cx-4} ${cy+6} q4-4 8 0z" fill="${wear}"/>
+    <circle cx="${cx}" cy="${cy}" r="2.5" fill="${skin}"/>
+    ${hat === 1 ? `<path d="M${cx-2.7} ${cy-.6} a2.7 2.7 0 0 1 5.4 0z" fill="#1d2023"/>` : ''}
+    ${hat === 2 ? `<path d="M${cx-3.2} ${cy-.4} q3.2-5 6.4 0z" fill="#b53a8f"/>` : ''}`;
+}
+function danfoBody(seed){
+  const id = 'bus' + (busN++), route = BUS_ROUTES[(seed + busN) % BUS_ROUTES.length];
+  /* three side windows, the open door, then the front window and screen */
+  const wins = [[7, 13], [23, 13], [39, 13]];
+  return `<defs><clipPath id="${id}">${wins.map(([x, w]) =>
+      `<rect x="${x}" y="6" width="${w}" height="7.5" rx="1.4"/>`).join('')}
+      <rect x="72" y="6" width="13" height="7.5" rx="1.4"/></clipPath></defs>
+    <g class="cab">
+      <rect x="3" y="3.5" width="84" height="25.5" rx="4" fill="${DANFO_Y}"/>
+      <rect x="34" y="2.4" width="52" height="1.8" rx=".9" fill="#55524a"/>   <!-- roof rail -->
+      <!-- windscreen, slanted, and the front window -->
+      ${wins.map(([x, w]) => `<rect x="${x}" y="6" width="${w}" height="7.5" rx="1.4" fill="#cfe6f2"/>`).join('')}
+      <rect x="72" y="6" width="13" height="7.5" rx="1.4" fill="#cfe6f2"/>
+      <g clip-path="url(#${id})">
+        ${rider(11, 10.2, seed, 0)}${rider(17.5, 10.6, seed + 1, 2)}
+        ${rider(28, 10.4, seed + 2, 1)}${rider(34.5, 10.8, seed + 3, 0)}
+        ${rider(44.5, 10.4, seed + 4, 2)}
+        ${rider(79, 10.2, seed + 5, 1)}   <!-- the driver -->
+      </g>
+      <!-- the open sliding door -->
+      <rect x="56" y="6" width="13" height="21" rx="1.2" fill="#2a2a28"/>
+      <rect x="56" y="6" width="13" height="7.5" rx="1.2" fill="#3a3e44"/>
+      ${rider(62.5, 11, seed + 6, 0)}
+      <rect x="3" y="14.4" width="84" height="2.6" fill="${DANFO_DK}"/>
+      <rect x="3" y="24.2" width="84" height="2.6" fill="${DANFO_DK}"/>
+      <text x="30" y="22.3" text-anchor="middle" font-size="4.6" font-weight="900"
+            font-family="system-ui,sans-serif" fill="${DANFO_DK}" letter-spacing=".2"
+            textLength="46" lengthAdjust="spacingAndGlyphs">${route}</text>
+      <rect x="85.5" y="18" width="2.5" height="4" rx="1" fill="#f6e7a1"/>
+      <rect x="3" y="18" width="2.4" height="4" rx="1" fill="#e0523a"/>
+      <!-- the conductor: feet on the step, body out past the sill, one hand
+           on the roof rail, the other flagging passengers -->
+      <g class="cond" transform="translate(61 30) rotate(-14)">
+        <path d="M-1.2 -15 L-3.5 -26.5" stroke="${BUS_SKIN[(seed + 7) % 4]}" stroke-width="2" stroke-linecap="round"/>
+        <rect x="-2.8" y="-17" width="5.6" height="9.5" rx="1.6" fill="${BUS_WEAR[(seed + 2) % 5]}"/>
+        <rect x="-2.6" y="-8" width="2.4" height="8" rx="1" fill="#2f3a4a"/>
+        <rect x="0.4" y="-8" width="2.4" height="8" rx="1" fill="#2f3a4a"/>
+        <circle cx="0" cy="-20" r="2.9" fill="${BUS_SKIN[(seed + 7) % 4]}"/>
+        <path class="wave" d="M1.8 -15 L10.5 -12.5" stroke="${BUS_SKIN[(seed + 7) % 4]}" stroke-width="2" stroke-linecap="round"/>
+      </g>
+    </g>
+    ${wheel(20,30,6.4)}${wheel(70,30,6.4)}`;
+}
+function danfo(seed = Math.floor(Math.random() * 8)){
+  return `<svg viewBox="0 0 92 40" aria-hidden="true">${danfoBody(seed)}</svg>`;
 }
 
 /* keke napep — Lagos yellow with the black stripe, black canopy */
@@ -1843,18 +1900,9 @@ function roadside(el){
 }
 
 /* a danfo loaded past all reason — bags, jerrycans, a mattress */
-function danfoLoaded(){
+function danfoLoaded(seed = Math.floor(Math.random() * 8)){
   return `<svg viewBox="0 0 92 62" aria-hidden="true">
-    <g transform="translate(0,22)">
-      <rect x="3" y="4" width="84" height="25" rx="4" fill="${DANFO_Y}"/>
-      <rect x="3" y="12" width="84" height="3.4" fill="${DANFO_DK}"/>
-      <rect x="3" y="22" width="84" height="3.4" fill="${DANFO_DK}"/>
-      <rect x="8" y="6.5" width="15" height="5" rx="1.4" fill="#cfe6f2"/>
-      <rect x="27" y="6.5" width="15" height="5" rx="1.4" fill="#cfe6f2"/>
-      <rect x="46" y="6.5" width="15" height="5" rx="1.4" fill="#cfe6f2"/>
-      <rect x="65" y="6.5" width="17" height="5" rx="1.4" fill="#cfe6f2"/>
-      ${wheel(20,30,6.4)}${wheel(70,30,6.4)}
-    </g>
+    <g transform="translate(0,22)">${danfoBody(seed)}</g>
     <g>
       <rect x="10" y="14" width="70" height="9" rx="2" fill="#8a6b3f"/>
       <rect x="14" y="6"  width="26" height="9" rx="2" fill="#b9683f"/>
