@@ -92,13 +92,12 @@
   .sun{position:absolute;left:14px;top:2px;width:80px;height:60px;z-index:1;
     transition:opacity .9s ease,transform .9s ease}
   .scene:not(.w-sun) .sun{opacity:0;transform:translateY(-16px)}
-  .sunRays{animation:sunSpin 24s linear infinite;transform-origin:26px 30px}
+  /* a plain hot sun: soft halo that breathes, bright disc, thin rays that
+     turn slowly. No face — the old flexing cartoon dated the whole scene. */
+  .sunRays{animation:sunSpin 90s linear infinite;transform-origin:30px 28px}
   @keyframes sunSpin{to{transform:rotate(360deg)}}
-  /* the flex: arm pumps up, bicep swells on the beat */
-  .sunArm{animation:sunFlex 1.6s ease-in-out infinite;transform-origin:38px 30px}
-  @keyframes sunFlex{0%,100%{transform:rotate(0)}50%{transform:rotate(-14deg)}}
-  .sunBicep{animation:sunBicep 1.6s ease-in-out infinite;transform-origin:50px 26px}
-  @keyframes sunBicep{0%,100%{transform:scale(1)}50%{transform:scale(1.25)}}
+  .sunGlow{animation:sunBreathe 5s ease-in-out infinite;transform-origin:30px 28px}
+  @keyframes sunBreathe{0%,100%{transform:scale(1);opacity:.85}50%{transform:scale(1.08);opacity:1}}
 
   .rain,.flash{position:absolute;inset:0;pointer-events:none;opacity:0}
   /* One light layer — the heavier sheet was reading as a downpour. */
@@ -1037,26 +1036,22 @@
 
   <div class="stage" id="stage"><div class="scene" id="scene">
     <svg class="sun" viewBox="0 0 80 60" aria-hidden="true">
-      <g class="sunRays" stroke="#f3c969" stroke-width="3" stroke-linecap="round">
-        <line x1="26" y1="6"  x2="26" y2="12"/><line x1="26" y1="48" x2="26" y2="54"/>
-        <line x1="2"  y1="30" x2="8"  y2="30"/><line x1="44" y1="30" x2="50" y2="30"/>
-        <line x1="9"  y1="13" x2="13" y2="17"/><line x1="39" y1="43" x2="43" y2="47"/>
-        <line x1="9"  y1="47" x2="13" y2="43"/><line x1="39" y1="17" x2="43" y2="13"/>
+      <defs>
+        <radialGradient id="sunGlow" cx="50%" cy="50%" r="50%">
+          <stop offset="0" stop-color="#ffd66a" stop-opacity=".7"/>
+          <stop offset=".55" stop-color="#ffd66a" stop-opacity=".22"/>
+          <stop offset="1" stop-color="#ffd66a" stop-opacity="0"/>
+        </radialGradient>
+        <radialGradient id="sunCore" cx="40%" cy="38%" r="65%">
+          <stop offset="0" stop-color="#fff1b3"/>
+          <stop offset="1" stop-color="#f5b93a"/>
+        </radialGradient>
+      </defs>
+      <circle class="sunGlow" cx="30" cy="28" r="27" fill="url(#sunGlow)"/>
+      <g class="sunRays" stroke="#f3c04f" stroke-width="1.6" stroke-linecap="round" opacity=".85">
+        <line x1="47.0" y1="28.0" x2="52.0" y2="28.0"/><line x1="44.7" y1="36.5" x2="49.1" y2="39.0"/><line x1="38.5" y1="42.7" x2="41.0" y2="47.1"/><line x1="30.0" y1="45.0" x2="30.0" y2="50.0"/><line x1="21.5" y1="42.7" x2="19.0" y2="47.1"/><line x1="15.3" y1="36.5" x2="10.9" y2="39.0"/><line x1="13.0" y1="28.0" x2="8.0" y2="28.0"/><line x1="15.3" y1="19.5" x2="10.9" y2="17.0"/><line x1="21.5" y1="13.3" x2="19.0" y2="8.9"/><line x1="30.0" y1="11.0" x2="30.0" y2="6.0"/><line x1="38.5" y1="13.3" x2="41.0" y2="8.9"/><line x1="44.7" y1="19.5" x2="49.1" y2="17.0"/>
       </g>
-      <circle cx="26" cy="30" r="15" fill="#f3c969"/>
-      <g class="sunArm">
-        <path d="M38 30 q8 2 12 -3" stroke="#f3c969" stroke-width="7"
-              stroke-linecap="round" fill="none"/>
-        <ellipse class="sunBicep" cx="50" cy="26" rx="7" ry="6" fill="#f3c969"/>
-        <path d="M56 24 L56 15" stroke="#f3c969" stroke-width="7" stroke-linecap="round"/>
-        <circle cx="56" cy="12" r="5.5" fill="#f3c969"/>
-      </g>
-      <path d="M17 24.5 L23 26.8" stroke="#9a7520" stroke-width="2.4" stroke-linecap="round"/>
-      <path d="M35 24.5 L29 26.8" stroke="#9a7520" stroke-width="2.4" stroke-linecap="round"/>
-      <ellipse cx="21" cy="30.5" rx="1.9" ry="2.3" fill="#8a6a1f"/>
-      <ellipse cx="31" cy="30.5" rx="1.9" ry="2.3" fill="#8a6a1f"/>
-      <path d="M20 35.5 q6 5.5 12 -1.5" stroke="#8a6a1f" stroke-width="2.2"
-            stroke-linecap="round" fill="none"/>
+      <circle cx="30" cy="28" r="13" fill="url(#sunCore)"/>
     </svg>
     <svg class="moon" viewBox="0 0 30 30" aria-hidden="true">
       <circle cx="15" cy="15" r="11" fill="#f4edd2"/>
@@ -1266,7 +1261,7 @@
 <script type="module">
 import { newGame, doAction, canDo, unlocked, ACTIONS, phaseOf, nextUnlock, postingOdds, rivalOf,
          computePosting,
-         shareText, MAX_DAY } from './game.js?v=20261029221814';
+         shareText, MAX_DAY } from './game.js?v=20261029222512';
 
 /* ---------- scene coordinates ----------
    The scene is scaled by a transform (see the stage), so a native
@@ -1297,11 +1292,11 @@ const TS = (document.getElementById('scene').offsetWidth || 375) / 375;
 const ALLAWEE_NOTE = 'Allawee ₦77,000 — e never enter.';
 import { initNet, joinCamp, syncPlayer, platoonBoard, recentChat, postChat,
          postSuggestion, reportMessage, awardBoard, myAwards, laughChat,
-         setPresence, campRoster, renameMe, online } from './net.js?v=20261029221814';
-import { startMusic, stopMusic, musicOn, audioState, audioSupported, BEAT, BAR } from './audio.js?v=20261029221814';
+         setPresence, campRoster, renameMe, online } from './net.js?v=20261029222512';
+import { startMusic, stopMusic, musicOn, audioState, audioSupported, BEAT, BAR } from './audio.js?v=20261029222512';
 import { playHoop, playPenalty, playQuiz, playRegister, playParade,
          playMami, playHustle, playManOWar, playSaed, playSocial,
-         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261029221814';
+         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261029222512';
 
 /* Every dance animation is expressed in beats, so the steps are on-tempo
    whether or not the sound is playing — and genuinely on the beat when it is. */
