@@ -972,10 +972,12 @@
   .goal .gk{font-size:10.5px;font-weight:800;letter-spacing:.1em;color:var(--muted);margin:0 0 6px}
   .goal p{margin:0;font-size:13.5px;line-height:1.35}
   .goal .chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
-  .goal .chips button{background:var(--cream);border:1.5px solid var(--line);border-radius:99px;
+  .goal .chips button,.hoorayCard .chips button{background:var(--cream);border:1.5px solid var(--line);border-radius:99px;
     padding:0 12px;min-height:38px;font:inherit;font-size:13px;font-weight:700;color:var(--ink);
     -webkit-text-fill-color:var(--ink)}
-  .goal .chips button:hover{border-color:var(--green)}
+  .goal .chips button:hover,.hoorayCard .chips button:hover{border-color:var(--green)}
+  .hoorayCard .chips{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin:-4px 0 16px}
+  .hoorayCard .chips.hidden{display:none}
   .goal .pips{display:flex;gap:4px;margin-top:8px}
   .goal .pips i{flex:1;height:6px;border-radius:3px;background:var(--line)}
   .goal .pips i.on{background:var(--green)}
@@ -1367,6 +1369,7 @@
     <div class="hoorayCard">
       <div class="hoorayBig" id="hoorayH">Hoorayyyy!</div>
       <p id="hoorayMsg"></p>
+      <div class="chips hidden" id="hoorayChips"></div>
       <button class="primary" type="button" id="hoorayOk">Oya, continue</button>
     </div>
   </div>
@@ -1382,7 +1385,7 @@
 <script type="module">
 import { newGame, doAction, canDo, unlocked, ACTIONS, phaseOf, nextUnlock, postingOdds, rivalOf,
          computePosting, CHOICES, GOAL, goalStatus,
-         shareText, MAX_DAY } from './game.js?v=20261031134652';
+         shareText, MAX_DAY } from './game.js?v=20261031134949';
 
 /* ---------- scene coordinates ----------
    The scene is scaled by a transform (see the stage), so a native
@@ -1413,11 +1416,11 @@ const TS = (document.getElementById('scene').offsetWidth || 375) / 375;
 const ALLAWEE_NOTE = 'Allawee ₦77,000 — e never enter.';
 import { initNet, joinCamp, syncPlayer, platoonBoard, recentChat, postChat,
          postSuggestion, reportMessage, awardBoard, myAwards, laughChat,
-         setPresence, campRoster, renameMe, setAvatar, online } from './net.js?v=20261031134652';
-import { startMusic, stopMusic, musicOn, audioState, audioSupported, setRain, BEAT, BAR } from './audio.js?v=20261031134652';
+         setPresence, campRoster, renameMe, setAvatar, online } from './net.js?v=20261031134949';
+import { startMusic, stopMusic, musicOn, audioState, audioSupported, setRain, BEAT, BAR } from './audio.js?v=20261031134949';
 import { playHoop, playPenalty, playQuiz, playRegister, playParade,
          playMami, playHustle, playManOWar, playSaed, playSocial,
-         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261031134652';
+         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261031134949';
 
 /* Every dance animation is expressed in beats, so the steps are on-tempo
    whether or not the sound is playing — and genuinely on the beat when it is. */
@@ -4937,6 +4940,8 @@ const choiceOrder = () => {
   if (s && s.platoon % 2 === 1) [idx[0], idx[1]] = [idx[1], idx[0]];
   return idx;
 };
+let pickAsked = false;
+const matchMsg = () => `You don match for <b>${esc(s.choice)}</b>! Keep credibility at ${GOAL.cred} till passing out and the letter is yours.`;
 function drawGoal(){
   const el = $('goal');
   if (!s || s.phase !== 'day') { el.classList.add('hidden'); return; }
@@ -4953,7 +4958,15 @@ function drawGoal(){
   /* Matched the first time all four are true together. */
   if (s.choice && !s.matched && g.all){
     s.matched = true; save();
-    hooray(`You don match for <b>${esc(s.choice)}</b>! Keep credibility at ${GOAL.cred} till passing out and the letter is yours.`);
+    hooray(matchMsg());
+  }
+  /* All four with no place picked used to do nothing at all — the player hit
+     every goal and the game stayed quiet. Celebrate, and ask the question in
+     the card itself; once a visit, so dismissing it is not nagged on every
+     render (the chips on the goal card are still there). */
+  if (!s.choice && !s.matched && g.all && !pickAsked){
+    pickAsked = true;
+    hooray('You don hit all four goals! Now tell dem where you wan serve:', true);
   }
 
   el.classList.toggle('matched', !!s.matched);
@@ -4983,9 +4996,13 @@ $('goal').addEventListener('click', e => {
 });
 
 /* The burst: a card over everything and a shower of paper in camp colours. */
-function hooray(msg){
+function hooray(msg, pick = false){
   const wrap = $('hooray');
   $('hoorayMsg').innerHTML = msg;
+  const chips = $('hoorayChips');
+  chips.classList.toggle('hidden', !pick);
+  chips.innerHTML = pick ? choiceOrder().map(i =>
+    `<button type="button" data-choice="${i}">${esc(CHOICES[i])}</button>`).join('') : '';
   const conf = wrap.querySelector('.confetti');
   const COLS = ['#0a7a43', '#ffffff', '#f3c53d', '#d6342c', '#3b6fb6', '#f29a8a'];
   conf.innerHTML = Array.from({ length: 70 }, (_, i) =>
@@ -4996,6 +5013,18 @@ function hooray(msg){
   $('hoorayOk').focus();
 }
 $('hoorayOk').onclick = () => $('hooray').classList.add('hidden');
+/* Picking from the card matches on the spot: the four goals are already met. */
+$('hoorayChips').addEventListener('click', e => {
+  const b = e.target.closest('[data-choice]');
+  if (!b || !s) return;
+  s.choice = CHOICES[+b.dataset.choice];
+  if (goalStatus(s).all) s.matched = true;
+  save(); render();
+  $('hoorayMsg').innerHTML = s.matched ? matchMsg()
+    : `<b>${esc(s.choice)}</b> it is. Hit all four goals again and dem go match you there.`;
+  $('hoorayChips').classList.add('hidden');
+  $('hoorayOk').focus();
+});
 
 function drawOdds(){
   const el = $('odds');
