@@ -294,6 +294,25 @@ const POSTINGS = {
   hard: ['Zamfara', 'Yobe', 'Taraba — deep inside', 'Bayelsa riverine', 'A village with no network', 'Borno'],
 };
 
+/* ---------- the goal ----------
+   A player names where they want to serve, from the soft list, and works to
+   four targets on the stat cards. Hitting all four at once MATCHES them: the
+   posting letter on day 21 is then their choice, as long as credibility is
+   still at the target. Without a match it is the usual weighted roll. */
+export const CHOICES = POSTINGS.soft;
+export const GOAL = { cred: 150, energy: 40, belle: 40, money: 0 };
+export function goalStatus(s) {
+  const g = {
+    energy: s.energy >= GOAL.energy,
+    belle:  s.belle  >= GOAL.belle,
+    money:  s.money  >= GOAL.money,
+    cred:   s.cred   >= GOAL.cred,
+  };
+  g.count = [g.energy, g.belle, g.money, g.cred].filter(Boolean).length;
+  g.all = g.count === 4;
+  return g;
+}
+
 /* The same arithmetic computePosting rolls against, exposed so the player can
    watch it move. Hidden, credibility was an abstract number climbing for no
    stated reason and the payoff — the posting — did not exist until day 21.
@@ -309,6 +328,8 @@ export function postingOdds(s) {
 }
 
 export function computePosting(s, rng) {
+  if (s.matched && s.choice && s.cred >= GOAL.cred)
+    return { tier: 'soft', place: s.choice, emoji: '🎉', matched: true };
   const roll = rng() * 100 + s.cred * 0.35;
   if (roll > 95) return { tier: 'soft', place: pick(rng, POSTINGS.soft), emoji: '🎉' };
   if (roll > 55) return { tier: 'mid', place: pick(rng, POSTINGS.mid), emoji: '🙂' };

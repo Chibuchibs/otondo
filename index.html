@@ -929,6 +929,40 @@
   .badges:empty{display:none}
   /* The goal, made visible. This is the single thing the whole 21 days is for,
      and until now it did not exist on screen until day 21. */
+  /* ---------- the goal ---------- */
+  .stat .goalLine{display:block;margin-top:4px;font-size:10px;font-weight:800;letter-spacing:.02em;
+    color:var(--muted)}
+  .stat .goalLine.met{color:var(--green)}
+  .goal{background:var(--white);border:1px solid var(--line);border-radius:12px;
+    padding:11px 13px;margin:0 2px 11px}
+  .goal .gk{font-size:10.5px;font-weight:800;letter-spacing:.1em;color:var(--muted);margin:0 0 6px}
+  .goal p{margin:0;font-size:13.5px;line-height:1.35}
+  .goal .chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+  .goal .chips button{background:var(--cream);border:1.5px solid var(--line);border-radius:99px;
+    padding:0 12px;min-height:38px;font:inherit;font-size:13px;font-weight:700;color:var(--ink);
+    -webkit-text-fill-color:var(--ink)}
+  .goal .chips button:hover{border-color:var(--green)}
+  .goal .pips{display:flex;gap:4px;margin-top:8px}
+  .goal .pips i{flex:1;height:6px;border-radius:3px;background:var(--line)}
+  .goal .pips i.on{background:var(--green)}
+  .goal.matched{background:#e3f1e6;border-color:#9fd0ae}
+  .goal .chg{background:none;border:0;padding:0;font:inherit;font-size:12.5px;font-weight:800;
+    color:var(--green-dk);-webkit-text-fill-color:var(--green-dk);text-decoration:underline;
+    text-underline-offset:3px;margin-left:4px}
+  .hooray{position:fixed;inset:0;z-index:1000;display:flex;align-items:center;justify-content:center;
+    background:rgba(20,30,20,.55);padding:16px}
+  .hooray.hidden{display:none}
+  .hoorayCard{position:relative;z-index:1;background:var(--white);border-radius:18px;padding:22px 20px 18px;
+    max-width:340px;width:100%;text-align:center;box-shadow:0 12px 40px rgba(0,0,0,.3);
+    animation:hoorayIn .5s cubic-bezier(.2,1.4,.4,1)}
+  .hoorayBig{font-size:34px;font-weight:900;color:var(--green);letter-spacing:.01em;line-height:1.1}
+  .hoorayCard p{font-size:16px;font-weight:700;margin:10px 0 16px;line-height:1.35}
+  @keyframes hoorayIn{from{transform:scale(.6);opacity:0}to{transform:scale(1);opacity:1}}
+  .confetti{position:absolute;inset:0;overflow:hidden;pointer-events:none}
+  .confetti i{position:absolute;top:-12px;width:8px;height:12px;border-radius:2px;
+    animation:confFall linear forwards}
+  @keyframes confFall{to{transform:translateY(110vh) rotate(720deg)}}
+  @media (prefers-reduced-motion:reduce){.hoorayCard,.confetti i{animation:none}.confetti{display:none}}
   .odds{display:block;width:100%;text-align:left;margin:0 2px 11px;padding:11px 13px 10px;
     background:var(--white);border:2px solid var(--line);border-radius:14px;
     font-family:inherit;color:var(--ink);-webkit-text-fill-color:var(--ink)}
@@ -1197,14 +1231,18 @@
     <div class="stats">
       <div class="stat energy"><b>Energy</b><span id="sEnergy"></span>
         <div class="bar" id="bEnergy"><i></i></div>
-        <small class="tip">Low. Buy kunu or pure water from the hawkers.</small></div>
+        <small class="tip">Low. Buy kunu or pure water from the hawkers.</small>
+        <small class="goalLine" id="gEnergy"></small></div>
       <div class="stat belle"><b>Belle</b><span id="sBelle"></span>
         <div class="bar" id="bBelle"><i></i></div>
-        <small class="tip">Hungry. Jollof, roasted corn or akara.</small></div>
+        <small class="tip">Hungry. Jollof, roasted corn or akara.</small>
+        <small class="goalLine" id="gBelle"></small></div>
       <div class="stat money"><b>Your money</b><span id="sMoney"></span>
-        <small class="tip">Broke. Tap Odogwu when he pass, or hustle for mami market.</small></div>
+        <small class="tip">Broke. Tap Odogwu when he pass, or hustle for mami market.</small>
+        <small class="goalLine" id="gMoney"></small></div>
       <div class="stat cred"><b>Credibility</b><span id="sCred"></span>
-        <small class="tip">Earn am: parade, drills, Man O War.</small></div>
+        <small class="tip">Earn am: parade, drills, Man O War.</small>
+        <small class="goalLine" id="gCred"></small></div>
     </div>
     <div class="live" id="live" role="button" tabindex="0"
          aria-expanded="false" aria-controls="whoList"><i></i><span>Single player</span></div>
@@ -1225,6 +1263,7 @@
         <button class="mg-skip" id="mgSkip">Skip this one</button>
       </div>
     </div>
+    <div class="goal hidden" id="goal"></div>
     <button class="odds" id="odds" type="button"></button>
     <div class="phases" id="phases"></div>
       <div class="tag" id="actLbl"></div>
@@ -1289,6 +1328,14 @@
     <button class="primary" id="share">Share my posting</button>
     <button class="primary ghost" id="again" style="margin-top:8px">Serve again</button>
   </section>
+  <div class="hooray hidden" id="hooray" role="dialog" aria-modal="true" aria-labelledby="hoorayH">
+    <div class="confetti" aria-hidden="true"></div>
+    <div class="hoorayCard">
+      <div class="hoorayBig" id="hoorayH">Hoorayyyy!</div>
+      <p id="hoorayMsg"></p>
+      <button class="primary" type="button" id="hoorayOk">Oya, continue</button>
+    </div>
+  </div>
   <footer>
     Advertise on Otondo — put your brand on the danfo, a Mami stall or the
     camp notice board.<br>
@@ -1300,8 +1347,8 @@
 
 <script type="module">
 import { newGame, doAction, canDo, unlocked, ACTIONS, phaseOf, nextUnlock, postingOdds, rivalOf,
-         computePosting,
-         shareText, MAX_DAY } from './game.js?v=20261031073015';
+         computePosting, CHOICES, GOAL, goalStatus,
+         shareText, MAX_DAY } from './game.js?v=20261031073314';
 
 /* ---------- scene coordinates ----------
    The scene is scaled by a transform (see the stage), so a native
@@ -1332,11 +1379,11 @@ const TS = (document.getElementById('scene').offsetWidth || 375) / 375;
 const ALLAWEE_NOTE = 'Allawee ₦77,000 — e never enter.';
 import { initNet, joinCamp, syncPlayer, platoonBoard, recentChat, postChat,
          postSuggestion, reportMessage, awardBoard, myAwards, laughChat,
-         setPresence, campRoster, renameMe, setAvatar, online } from './net.js?v=20261031073015';
-import { startMusic, stopMusic, musicOn, audioState, audioSupported, BEAT, BAR } from './audio.js?v=20261031073015';
+         setPresence, campRoster, renameMe, setAvatar, online } from './net.js?v=20261031073314';
+import { startMusic, stopMusic, musicOn, audioState, audioSupported, BEAT, BAR } from './audio.js?v=20261031073314';
 import { playHoop, playPenalty, playQuiz, playRegister, playParade,
          playMami, playHustle, playManOWar, playSaed, playSocial,
-         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261031073015';
+         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261031073314';
 
 /* Every dance animation is expressed in beats, so the steps are on-tempo
    whether or not the sound is playing — and genuinely on the beat when it is. */
@@ -4543,6 +4590,13 @@ function render(){
   if (intro) return;
 
   if (over){
+    /* Once per run: the passing-out burst, naming the posting. */
+    if (!s.hoorayEnd && s.posting){
+      s.hoorayEnd = true; save();
+      hooray(s.posting.matched
+        ? `You don complete camp, and dem post you to your choice: <b>${esc(s.posting.place)}</b>!`
+        : `You don complete camp! Dem post you to <b>${esc(s.posting.place)}</b>.`);
+    }
     $('eName').textContent = s.name;
     $('eMeta').textContent = `Platoon ${s.platoon} · Credibility ${s.cred} · ${naira(s.money)} · ${s.friends} friends`;
     $('ePlace').textContent = s.posting.place;
@@ -4567,6 +4621,7 @@ function render(){
   $('sBelle').closest('.stat').classList.toggle('low', s.belle < 25);
   $('sMoney').closest('.stat').classList.toggle('low', s.money < 300);
   $('sCred').closest('.stat').classList.toggle('low', s.cred < 5 && s.day > 1);
+  drawGoal();
   bar($('bEnergy'), s.energy); bar($('bBelle'), s.belle);
   drawWhoami();
   drawOdds();
@@ -4635,6 +4690,67 @@ function drawEndRival(){
    are postingOdds(), the exact arithmetic computePosting rolls against, so the
    bar cannot promise something the ending will not honour. */
 let lastSoft = null;
+/* ---------- the goal: choose a place, hit four targets, get matched ---------- */
+function drawGoal(){
+  const el = $('goal');
+  if (!s || s.phase !== 'day') { el.classList.add('hidden'); return; }
+  el.classList.remove('hidden');
+  const g = goalStatus(s);
+  const line = (id, met, text) => {
+    const n = $(id); n.textContent = (met ? '✓ ' : '') + text; n.classList.toggle('met', met);
+  };
+  line('gEnergy', g.energy, `Goal: ${GOAL.energy}+`);
+  line('gBelle',  g.belle,  `Goal: ${GOAL.belle}+`);
+  line('gMoney',  g.money,  'Goal: no debt');
+  line('gCred',   g.cred,   `Goal: ${GOAL.cred}`);
+
+  /* Matched the first time all four are true together. */
+  if (s.choice && !s.matched && g.all){
+    s.matched = true; save();
+    hooray(`You don match for <b>${esc(s.choice)}</b>! Keep credibility at ${GOAL.cred} till passing out and the letter is yours.`);
+  }
+
+  el.classList.toggle('matched', !!s.matched);
+  const pips = `<div class="pips">${['energy','belle','money','cred'].map(k => `<i class="${g[k] ? 'on' : ''}"></i>`).join('')}</div>`;
+  if (!s.choice){
+    el.innerHTML = `<p class="gk">WHERE YOU WAN SERVE?</p>
+      <p>Pick your place. Hit all four goals on the cards and dem go match you there.</p>
+      <div class="chips">${CHOICES.map((c, i) => `<button type="button" data-choice="${i}">${esc(c)}</button>`).join('')}</div>`;
+  } else if (s.matched){
+    const slip = s.cred < GOAL.cred;
+    el.innerHTML = `<p class="gk">${slip ? 'MATCH AT RISK' : 'MATCHED ✓'}</p>
+      <p><b>${esc(s.choice)}</b>. ${slip
+        ? `Your credibility don drop below ${GOAL.cred}. Bring am back before passing out.`
+        : `Keep credibility at ${GOAL.cred} till passing out.`}</p>`;
+  } else {
+    el.innerHTML = `<p class="gk">YOUR GOAL · ${g.count} OF 4</p>
+      <p><b>${esc(s.choice)}</b><button type="button" class="chg" data-choice="change">change</button></p>
+      ${pips}`;
+  }
+}
+$('goal').addEventListener('click', e => {
+  const b = e.target.closest('[data-choice]');
+  if (!b || !s) return;
+  if (b.dataset.choice === 'change'){ s.choice = null; }
+  else s.choice = CHOICES[+b.dataset.choice];
+  save(); drawGoal();
+});
+
+/* The burst: a card over everything and a shower of paper in camp colours. */
+function hooray(msg){
+  const wrap = $('hooray');
+  $('hoorayMsg').innerHTML = msg;
+  const conf = wrap.querySelector('.confetti');
+  const COLS = ['#0a7a43', '#ffffff', '#f3c53d', '#d6342c', '#3b6fb6', '#f29a8a'];
+  conf.innerHTML = Array.from({ length: 70 }, (_, i) =>
+    `<i style="left:${Math.random() * 100}%;background:${COLS[i % COLS.length]};
+       animation-duration:${2.2 + Math.random() * 2}s;animation-delay:${Math.random() * .8}s;
+       transform:rotate(${Math.random() * 360}deg)"></i>`).join('');
+  wrap.classList.remove('hidden');
+  $('hoorayOk').focus();
+}
+$('hoorayOk').onclick = () => $('hooray').classList.add('hidden');
+
 function drawOdds(){
   const el = $('odds');
   if (!s) { el.classList.add('hidden'); return; }
