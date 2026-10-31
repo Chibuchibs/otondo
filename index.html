@@ -1301,7 +1301,7 @@
 <script type="module">
 import { newGame, doAction, canDo, unlocked, ACTIONS, phaseOf, nextUnlock, postingOdds, rivalOf,
          computePosting,
-         shareText, MAX_DAY } from './game.js?v=20261031072750';
+         shareText, MAX_DAY } from './game.js?v=20261031073015';
 
 /* ---------- scene coordinates ----------
    The scene is scaled by a transform (see the stage), so a native
@@ -1332,11 +1332,11 @@ const TS = (document.getElementById('scene').offsetWidth || 375) / 375;
 const ALLAWEE_NOTE = 'Allawee ₦77,000 — e never enter.';
 import { initNet, joinCamp, syncPlayer, platoonBoard, recentChat, postChat,
          postSuggestion, reportMessage, awardBoard, myAwards, laughChat,
-         setPresence, campRoster, renameMe, setAvatar, online } from './net.js?v=20261031072750';
-import { startMusic, stopMusic, musicOn, audioState, audioSupported, BEAT, BAR } from './audio.js?v=20261031072750';
+         setPresence, campRoster, renameMe, setAvatar, online } from './net.js?v=20261031073015';
+import { startMusic, stopMusic, musicOn, audioState, audioSupported, BEAT, BAR } from './audio.js?v=20261031073015';
 import { playHoop, playPenalty, playQuiz, playRegister, playParade,
          playMami, playHustle, playManOWar, playSaed, playSocial,
-         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261031072750';
+         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261031073015';
 
 /* Every dance animation is expressed in beats, so the steps are on-tempo
    whether or not the sound is playing — and genuinely on the beat when it is. */
@@ -4505,6 +4505,21 @@ function bar(el, v){
    not against the previous state object, so a redraw with nothing changed
    stays quiet. The first draw of a run sets the baseline without a pulse. */
 let lastStats = null;
+
+/* Walking costs belle. Overnight already takes 10, but during the day the
+   street only ever gave belle back, so it climbed and the food stalls had
+   nothing to answer. One point every 25s while the street is actually on
+   screen and the camp day is running: about 2 a minute, a jollof's worth
+   every few minutes. Quiet: the number ticks down without the red pulse,
+   which is kept for things the player did. */
+const BELLE_WALK_MS = 25000;
+setInterval(() => {
+  if (!s || s.phase !== 'day' || document.visibilityState !== 'visible') return;
+  if ($('scene').classList.contains('hidden') || s.belle <= 0) return;
+  s.belle = Math.max(0, s.belle - 1);
+  if (lastStats && lastStats.run === s) lastStats.belle = s.belle;
+  save(); render();
+}, BELLE_WALK_MS);
 function flashStats(){
   const now = { energy: s.energy, belle: s.belle, money: s.money, cred: s.cred };
   if (lastStats && lastStats.run === s){     // same run: a new game starts quiet
