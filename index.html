@@ -1385,7 +1385,7 @@
 <script type="module">
 import { newGame, doAction, canDo, unlocked, ACTIONS, phaseOf, nextUnlock, postingOdds, rivalOf,
          computePosting, CHOICES, GOAL, goalStatus,
-         shareText, MAX_DAY } from './game.js?v=20261031134949';
+         shareText, MAX_DAY } from './game.js?v=20261031141805';
 
 /* ---------- scene coordinates ----------
    The scene is scaled by a transform (see the stage), so a native
@@ -1416,11 +1416,11 @@ const TS = (document.getElementById('scene').offsetWidth || 375) / 375;
 const ALLAWEE_NOTE = 'Allawee ₦77,000 — e never enter.';
 import { initNet, joinCamp, syncPlayer, platoonBoard, recentChat, postChat,
          postSuggestion, reportMessage, awardBoard, myAwards, laughChat,
-         setPresence, campRoster, renameMe, setAvatar, online } from './net.js?v=20261031134949';
-import { startMusic, stopMusic, musicOn, audioState, audioSupported, setRain, BEAT, BAR } from './audio.js?v=20261031134949';
+         setPresence, campRoster, renameMe, setAvatar, online } from './net.js?v=20261031141805';
+import { startMusic, stopMusic, musicOn, audioState, audioSupported, setRain, BEAT, BAR } from './audio.js?v=20261031141805';
 import { playHoop, playPenalty, playQuiz, playRegister, playParade,
          playMami, playHustle, playManOWar, playSaed, playSocial,
-         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261031134949';
+         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261031141805';
 
 /* Every dance animation is expressed in beats, so the steps are on-tempo
    whether or not the sound is playing — and genuinely on the beat when it is. */
@@ -3796,21 +3796,26 @@ function hawkerCycle(){
 function buyWares(hw){
   const left = (+hw.dataset.left || 0) - 1;
   if (left < 0) return;
+  hw.dataset.left = String(left);
+  if (left === 0){ hw.querySelector('.tapTag')?.remove(); hw.removeAttribute('aria-label'); }
   const who = cornTarget || rideTarget || jumpShown || null;
   clearCorn(); clearRide();
   backToTrekking();
-  /* The sale never depends on the walk. If nobody is free and in frame to
-     run over (they are at the edge, mid-dance, in the pothole), she hands it
-     over anyway and the tap still pays and still fills the meter. It used to
-     return here and do nothing, which with two or three walkers was most taps:
-     the player tapped kunu, saw nothing, and the energy stayed at zero. */
-  const ran = snackRun(who, hw, true);
-  if (!ran) buy(hw, hw);
-  hw.dataset.left = String(left);
-  if (left === 0){ hw.querySelector('.tapTag')?.remove(); hw.removeAttribute('aria-label'); }
-  if (!ran) return;
-  setTimeout(() => hw.classList.add('paused'), RUN_MS);
-  setTimeout(() => hw.classList.remove('paused'), RUN_MS + EAT_MS);
+  /* The dash across the road IS the purchase, as far as the player is
+     concerned, so it is worth waiting for. If every walker is busy or off
+     screen, hold the tap for up to 2.5s while one comes free or walks in;
+     only then does she hand it over on the spot, so a tap always pays. */
+  let tries = 0;
+  const go = () => {
+    if (snackRun(who, hw, true)){
+      setTimeout(() => hw.classList.add('paused'), RUN_MS);
+      setTimeout(() => hw.classList.remove('paused'), RUN_MS + EAT_MS);
+      return;
+    }
+    if (++tries < 10 && hw.isConnected){ setTimeout(go, 250); return; }
+    buy(hw, hw);
+  };
+  go();
 }
 if (!calm()) setTimeout(hawkerCycle, HAWK_FIRST);
 
@@ -4240,7 +4245,17 @@ function snackRun(preferred, target, paid){
   /* Only a figure who is free to go. Unfiltered, this sent whoever was first
      in frame — including a figure hidden in the pothole, who then surfaced at
      a shop 93px from where he fell — and a figure mid-hop or mid-ride. */
-  const runner = (picked && picked.ok) ? picked : crew.filter(freeFig).map(place).find(x => x.ok);
+  /* A paid tap sends SOMEONE if anyone is free and on screen at all: the one
+     nearest the seller, even near the edge. Holding to the 12-88% band left
+     a tap with nobody to send about one time in four (measured with two
+     walkers on a narrow screen), and the sale on the spot that followed read
+     as the corper ignoring the kunu seller. One just stepping in from the
+     left counts: he enters at a run. */
+  const nearest = paid && stall ? crew.filter(freeFig).map(place)
+      .filter(x => x.c > -box.width * 0.08 && x.c < box.width)
+      .sort((a, b) => Math.abs(a.c - stall.c) - Math.abs(b.c - stall.c))[0] : null;
+  const runner = (picked && picked.ok) ? picked
+               : crew.filter(freeFig).map(place).find(x => x.ok) || nearest;
   crew.forEach(p => { p.style.transition = ''; });     // restore the CSS glide
   if (!stall || !runner) return false;
   /* Learning a trade is claimed the moment he sets off, not when he arrives.
