@@ -295,6 +295,7 @@ export function startMusic(onBarCallback) {
     startedAt = c.currentTime;
     node.start();
     playing = true; lastBar = -1;
+    if (rainWanted) setRain(rainWanted);          // sound came on mid-shower
     cancelAnimationFrame(raf); watch();
   }).catch(e => console.warn('[otondo] play failed:', e.message));
   return true;
@@ -309,8 +310,50 @@ function stopNode() {
 
 export function stopMusic() {
   playing = false;
+  if (rainGain) rainGain.gain.setValueAtTime(0, ctx.currentTime);
   cancelAnimationFrame(raf);
   stopNode();
+}
+
+/* Rain on the street, under the music. Pink noise with sparse drop ticks,
+   band-limited so it reads as rain on a roof and a road rather than as tape
+   hiss, looped from a four-second buffer built once. It only sounds while
+   the music is on: the player's sound switch is for all of it. */
+const RAIN_LEVEL = 0.2;
+let rainGain = null, rainWanted = 0;
+export function setRain(level) {
+  rainWanted = level;
+  if (!ctx) return;
+  if (!rainGain) {
+    if (!level) return;
+    const c = ctx, n = c.sampleRate * 4;
+    const buf = c.createBuffer(1, n, c.sampleRate);
+    const d = buf.getChannelData(0);
+    let b0 = 0, b1 = 0, b2 = 0;
+    for (let i = 0; i < n; i++) {
+      const w = Math.random() * 2 - 1;
+      b0 = 0.99765 * b0 + w * 0.0990460;
+      b1 = 0.96300 * b1 + w * 0.2965164;
+      b2 = 0.57000 * b2 + w * 1.0526913;
+      d[i] = (b0 + b1 + b2 + w * 0.1848) * 0.16;
+    }
+    for (let k = 0; k < n / 300; k++) {
+      const at = Math.floor(Math.random() * (n - 80)), amp = 0.15 + Math.random() * 0.35;
+      for (let j = 0; j < 80; j++) d[at + j] += (Math.random() * 2 - 1) * amp * Math.pow(1 - j / 80, 3);
+    }
+    const fade = 2000;                              // no click at the loop seam
+    for (let i = 0; i < fade; i++) { const f = i / fade; d[i] *= f; d[n - 1 - i] *= f; }
+    const src = c.createBufferSource(); src.buffer = buf; src.loop = true;
+    const hp = c.createBiquadFilter(); hp.type = 'highpass'; hp.frequency.value = 400;
+    const lp = c.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 5200;
+    rainGain = c.createGain(); rainGain.gain.value = 0;
+    src.connect(hp).connect(lp).connect(rainGain).connect(c.destination);
+    src.start();
+  }
+  const t = ctx.currentTime, g = rainGain.gain;
+  g.cancelScheduledValues(t);
+  g.setValueAtTime(g.value, t);
+  g.linearRampToValueAtTime(playing && level ? level * RAIN_LEVEL : 0, t + (level ? 4 : 2.5));
 }
 
 export const musicOn = () => playing;
@@ -321,5 +364,6 @@ export const audioState = () => ({
   time: ctx && playing ? +((ctx.currentTime - startedAt) % (usingTrack ? LOOP_SECONDS : BAR * SYNTH_BARS)).toFixed(2) : 0,
   gain: usingTrack ? TRACK.level : LEVEL,
   source: usingTrack ? 'track' : 'synth',
+  rain: rainGain ? +rainGain.gain.value.toFixed(3) : 0,
   via: 'web audio' + (navigator.audioSession ? ' + playback category' : ''),
 });

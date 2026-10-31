@@ -145,9 +145,34 @@
     100%{left:112%;opacity:0;transform:translateY(-6px) rotate(620deg)}
   }
 
+  /* ---------- rain: the rainy-season downpour ----------
+     Separate from the storm. The storm is the joke (a bolt, a flash); this is
+     the ordinary July rain that settles in: a flat grey sky, a veil that
+     swallows the far end of the street, drops in three depths, splashes and
+     puddles on the road, umbrellas up. The drops and the ground are drawn on
+     two canvases by the rain engine in the module: drops above the walkers
+     (z4, under every label), splashes and puddles on the road (z1, under the
+     walkers, the potholes and the traffic). CSS carries only the light. */
+  .scene.w-rain{background:linear-gradient(#7b858e 0%,#9fa7ac 62%,#8e8773 62%,#7d7663 100%)}
+  .scene.w-rain .cloudDrift{opacity:.7}
+  .rainFx,.rainGround{position:absolute;left:0;pointer-events:none}
+  .rainFx{top:0;z-index:4}
+  .rainGround{z-index:1}
+  .rainMist{position:absolute;left:0;right:0;top:30px;height:132px;z-index:1;pointer-events:none;
+    opacity:0;transition:opacity 3s ease;
+    background:linear-gradient(rgba(206,214,220,0),rgba(206,214,220,.42) 72%,rgba(206,214,220,.18))}
+  .scene.w-rain .rainMist{opacity:1}
+  .road{transition:background-color 4s ease}
+  .scene.w-rain .road{background-color:#9b937f}
+  .corper.umbr{overflow:visible}
+  .corper .umb{opacity:0;transition:opacity .6s ease}
+  .scene.w-rain .corper .umb{opacity:1}
+  .scene.w-rain .corper.sunk .umb{opacity:0}
+
   /* the people react: hunch into the rain, lean into the wind */
   .corper{transition:transform .7s ease}
   .scene.w-storm .corper{transform:rotate(2.5deg)}
+  .scene.w-rain  .corper{transform:rotate(1.5deg)}
   .scene.w-wind  .corper{transform:rotate(-6deg)}
   .road{position:absolute;left:0;right:0;bottom:0;height:62px;background:#cdc0a0}
   /* The kerb, painted in black and white blocks the way every Lagos road's
@@ -211,7 +236,7 @@
   .hawker.paused,.hawker.paused .leg,.hawker.paused .leg2,.hawker.paused .arm,
   .hawker.paused .arm2,.hawker.paused .torso,.hawker.paused .shin,.hawker.paused .fore{
     animation-play-state:paused}
-  .scene.w-storm .hawker .corper,.scene.w-wind .hawker .corper{transform:scaleX(var(--face,-1))}
+  .scene.w-storm .hawker .corper,.scene.w-wind .hawker .corper,.scene.w-rain .hawker .corper{transform:scaleX(var(--face,-1))}
 
   /* ---------- UP NEPA! ----------
      The whole row lights up, the generator cuts out, the board shouts, the
@@ -1348,7 +1373,7 @@
 <script type="module">
 import { newGame, doAction, canDo, unlocked, ACTIONS, phaseOf, nextUnlock, postingOdds, rivalOf,
          computePosting, CHOICES, GOAL, goalStatus,
-         shareText, MAX_DAY } from './game.js?v=20261031073607';
+         shareText, MAX_DAY } from './game.js?v=20261031124835';
 
 /* ---------- scene coordinates ----------
    The scene is scaled by a transform (see the stage), so a native
@@ -1379,11 +1404,11 @@ const TS = (document.getElementById('scene').offsetWidth || 375) / 375;
 const ALLAWEE_NOTE = 'Allawee ₦77,000 — e never enter.';
 import { initNet, joinCamp, syncPlayer, platoonBoard, recentChat, postChat,
          postSuggestion, reportMessage, awardBoard, myAwards, laughChat,
-         setPresence, campRoster, renameMe, setAvatar, online } from './net.js?v=20261031073607';
-import { startMusic, stopMusic, musicOn, audioState, audioSupported, BEAT, BAR } from './audio.js?v=20261031073607';
+         setPresence, campRoster, renameMe, setAvatar, online } from './net.js?v=20261031124835';
+import { startMusic, stopMusic, musicOn, audioState, audioSupported, setRain, BEAT, BAR } from './audio.js?v=20261031124835';
 import { playHoop, playPenalty, playQuiz, playRegister, playParade,
          playMami, playHustle, playManOWar, playSaed, playSocial,
-         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261031073607';
+         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261031124835';
 
 /* Every dance animation is expressed in beats, so the steps are on-tempo
    whether or not the sound is playing — and genuinely on the beat when it is. */
@@ -4329,18 +4354,187 @@ const scheduleSnack = delay =>
   setTimeout(() => scheduleSnack(snackRun() ? SNACK_EVERY : 3500), delay);
 scheduleSnack(11000);
 
-/* Weather cycles on its own: sun -> storm -> wind. Long enough that each mood
-   registers, short enough that nobody waits to see the next one. */
-const WEATHER = ['w-sun', 'w-storm', 'w-wind'];
+/* Weather cycles on its own: sun -> rain -> wind -> sun -> storm. Long enough
+   that each mood registers, short enough that nobody waits to see the next
+   one. The rain gets longer than the rest because it builds: it starts as a
+   few drops, settles into a downpour, and the puddles need time to form. */
+const WEATHER = ['w-sun', 'w-rain', 'w-storm', 'w-wind'];
+const WEATHER_PLAN = [['w-sun', 11], ['w-rain', 22], ['w-wind', 11], ['w-sun', 11], ['w-storm', 11]];
 let wIdx = 0;
 function cycleWeather(){
   const el = $('scene');
+  const [w, secs] = WEATHER_PLAN[wIdx];
   el.classList.remove(...WEATHER);
-  el.classList.add(WEATHER[wIdx]);
-  wIdx = (wIdx + 1) % WEATHER.length;
+  el.classList.add(w);
+  rain.set(w === 'w-rain');
+  wIdx = (wIdx + 1) % WEATHER_PLAN.length;
+  setTimeout(cycleWeather, secs * 1000);
 }
+
+/* The rain engine. Drops fall in three depths — far ones short, faint and
+   slow, near ones long and bright — slanted by a wind that gusts. Each one
+   lands at a depth that matches its layer: far drops die at the kerb, near
+   ones on the front of the road, where they throw up a little crown of
+   droplets, or a ring if they hit a puddle. The road darkens and the puddles
+   fill the longer it rains, and dry off slowly after it stops, so a shower
+   leaves the street wet. Nothing runs while it is dry. */
+const rain = (() => {
+  const H = 218, KERB = H - 62, GTOP = KERB - 4, GH = H - GTOP;
+  const RM = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const sky = document.createElement('canvas'); sky.className = 'rainFx';
+  const gnd = document.createElement('canvas'); gnd.className = 'rainGround';
+  const mist = document.createElement('div'); mist.className = 'rainMist';
+  const road = sceneEl.querySelector('.road');
+  sceneEl.querySelector('.rain').insertAdjacentElement('afterend', sky);
+  road.insertAdjacentElement('beforebegin', mist);
+  road.insertAdjacentElement('afterend', gnd);
+  const sx = sky.getContext('2d'), gx = gnd.getContext('2d');
+  let W = 375, scale = 1;
+  function size(){
+    W = sceneEl.offsetWidth || 375;
+    const k = parseFloat(getComputedStyle($('stage')).getPropertyValue('--k')) || 1;
+    scale = Math.min(2, window.devicePixelRatio || 1) * k;
+    for (const [c, h, top] of [[sky, H, 0], [gnd, GH, GTOP]]){
+      c.style.width = W + 'px'; c.style.height = h + 'px'; c.style.top = top + 'px';
+      c.width = Math.round(W * scale); c.height = Math.round(h * scale);
+    }
+  }
+  size();
+  addEventListener('resize', () => setTimeout(size, 200));
+
+  /* Kept clear of both potholes (Mrs at 21%, Mr at 58%). */
+  const PUDDLES = [{ x: .07, y: 194, rx: 22, ry: 3.6 }, { x: .38, y: 207, rx: 27, ry: 4.4 },
+                   { x: .84, y: 186, rx: 28, ry: 3.9 }];
+  const inPuddle = (x, y) => PUDDLES.find(p => {
+    const dx = (x - p.x * W) / p.rx, dy = (y - p.y) / p.ry;
+    return dx * dx + dy * dy < 1;
+  });
+  const LAYERS = [
+    { share: .5,  len: [8, 12],  vy: [340, 410], a: [.3, .36],  w: .75, land: [KERB - 6, KERB + 10] },
+    { share: .32, len: [13, 18], vy: [510, 590], a: [.44, .5],  w: 1.05, land: [KERB + 14, KERB + 40] },
+    { share: .18, len: [21, 29], vy: [690, 790], a: [.6, .66],  w: 1.5, land: [KERB + 40, H - 2] },
+  ];
+  const rnd = ([a, b]) => a + Math.random() * (b - a);
+  const drops = [], bits = [], rings = [];
+  let on = false, level = 0, wet = 0, t = 0, last = 0, running = false;
+
+  function spawn(top){
+    const r = Math.random();
+    const li = r < LAYERS[0].share ? 0 : r < LAYERS[0].share + LAYERS[1].share ? 1 : 2;
+    const L = LAYERS[li];
+    drops.push({ li, x: Math.random() * (W + 80) - 80, y: top ? -Math.random() * 40 : Math.random() * H,
+      vy: rnd(L.vy), len: rnd(L.len), a: rnd(L.a), end: rnd(L.land) });
+  }
+  function land(d){
+    if (d.li === 0) return;
+    const p = inPuddle(d.x, d.end);
+    if (p || Math.random() < .25) { rings.push({ x: d.x, y: d.end, r: .5, max: d.li === 2 ? 6 : 3.5, life: 0, dur: .45 }); if (p) return; }
+    const n = d.li === 2 ? 3 : 2;
+    for (let i = 0; i < n; i++) bits.push({ x: d.x, y: d.end, vx: (Math.random() - .5) * 70,
+      vy: -(50 + Math.random() * (d.li === 2 ? 80 : 40)), life: 0, dur: .22 + Math.random() * .12 });
+  }
+
+  function frame(now){
+    /* Drops move on a capped step so a dropped frame cannot teleport them;
+       the build-up and the drying go by the wall clock. */
+    const real = Math.min(1, (now - last) / 1000 || .016), dt = Math.min(.05, real);
+    last = now; t += dt;
+    level += ((on ? 1 : 0) - level) * Math.min(1, real * (on ? .45 : .9));
+    wet = on ? Math.min(1, wet + real / 7) : Math.max(0, wet - real / 12);
+    /* the wind gusts; the rain leans with it */
+    const slope = .1 + .07 * Math.sin(t * .45) + .03 * Math.sin(t * 1.7);
+    const want = RM ? 0 : Math.round(level * 400 * W / 375);
+    while (drops.length < want) spawn(true);
+
+    sx.setTransform(scale, 0, 0, scale, 0, 0); sx.clearRect(0, 0, W, H);
+    sx.lineCap = 'round';
+    for (let li = 0; li < 3; li++){
+      sx.beginPath();
+      for (let i = drops.length - 1; i >= 0; i--){
+        const d = drops[i]; if (d.li !== li) continue;
+        d.y += d.vy * dt; d.x += d.vy * slope * dt;
+        if (d.y >= d.end){
+          land(d);
+          if (drops.length > want) { drops.splice(i, 1); continue; }
+          drops.splice(i, 1); spawn(true); continue;
+        }
+        sx.moveTo(d.x, d.y); sx.lineTo(d.x - d.len * slope, d.y - d.len);
+      }
+      const L = LAYERS[li];
+      sx.strokeStyle = `rgba(228,234,240,${((L.a[0] + L.a[1]) / 2).toFixed(2)})`;
+      sx.lineWidth = L.w; sx.stroke();
+    }
+
+    gx.setTransform(scale, 0, 0, scale, 0, -GTOP * scale); gx.clearRect(0, GTOP, W, GH);
+    if (wet > .01){
+      for (const p of PUDDLES){
+        const cx = p.x * W, a = wet;
+        gx.save(); gx.beginPath(); gx.ellipse(cx, p.y, p.rx * (.55 + .45 * a), p.ry * (.55 + .45 * a), 0, 0, Math.PI * 2);
+        const g = gx.createLinearGradient(0, p.y - p.ry, 0, p.y + p.ry);
+        g.addColorStop(0, `rgba(178,190,200,${.75 * a})`); g.addColorStop(1, `rgba(74,82,92,${.62 * a})`);
+        gx.fillStyle = g; gx.fill(); gx.clip();
+        gx.strokeStyle = `rgba(240,244,248,${.55 * a})`; gx.lineWidth = .8;
+        gx.beginPath(); gx.moveTo(cx - p.rx * .5, p.y - p.ry * .25); gx.lineTo(cx + p.rx * .15, p.y - p.ry * .25); gx.stroke();
+        gx.restore();
+        if (!RM && Math.random() < level * dt * 9)
+          rings.push({ x: cx + (Math.random() - .5) * p.rx * 1.4, y: p.y + (Math.random() - .5) * p.ry, r: .5, max: 3 + Math.random() * 3, life: 0, dur: .6 });
+      }
+    }
+    for (let i = rings.length - 1; i >= 0; i--){
+      const r = rings[i]; r.life += dt;
+      const k = r.life / r.dur; if (k >= 1) { rings.splice(i, 1); continue; }
+      gx.beginPath(); gx.ellipse(r.x, r.y, r.max * k + .5, (r.max * k + .5) * .32, 0, 0, Math.PI * 2);
+      gx.strokeStyle = `rgba(236,241,245,${(.6 * (1 - k)).toFixed(3)})`; gx.lineWidth = .7; gx.stroke();
+    }
+    gx.fillStyle = 'rgba(236,241,245,.75)';
+    for (let i = bits.length - 1; i >= 0; i--){
+      const b = bits[i]; b.life += dt;
+      if (b.life >= b.dur) { bits.splice(i, 1); continue; }
+      b.vy += 900 * dt; b.x += b.vx * dt; b.y += b.vy * dt;
+      gx.fillRect(b.x - .5, b.y - .5, 1.1, 1.1);
+    }
+
+    if (on || level > .01 || drops.length || bits.length || rings.length || wet > 0) requestAnimationFrame(frame);
+    else { running = false; sx.clearRect(0, 0, W, H); gx.clearRect(0, GTOP, W, GH); }
+  }
+
+  /* Umbrellas: every other walker puts one up. Mostly the plain black one,
+     with the odd striped golf umbrella. Held over the shoulder, inside the
+     torso so it bobs with the walk instead of swinging with the arm. */
+  const UMB = ['#1f2024', '#1f2024', '#c8372d', 'stripe'];
+  function umbrellas(){
+    sceneEl.querySelectorAll(':scope > .corper').forEach((p, i) => {
+      if (i % 2 || p.querySelector('.umb')) return;
+      const torso = p.querySelector('.torso'); if (!torso) return;
+      const c = UMB[(i / 2) % UMB.length];
+      const fill = c === 'stripe' ? 'url(#umbStripe)' : c;
+      torso.insertAdjacentHTML('beforeend', `<g class="umb" transform="rotate(-9 33 44)">
+        <path d="M33 -10V44q0 3.2-2.8 3.2" stroke="#3a332c" stroke-width="1.2" fill="none" stroke-linecap="round"/>
+        <path d="M1 -1Q4 -17 23 -18Q42 -17 45 -1Q41 -3.4 37.4 -1Q33.6 -3.4 30.2 -1Q26.6 -3.4 23 -1Q19.4 -3.4 15.8 -1Q12.4 -3.4 8.6 -1Q5 -3.4 1 -1Z"
+              fill="${fill}"/>
+        <path d="M9 -3Q12 -15 23 -17.6M37 -3Q34 -15 23 -17.6M23 -1V-17.6" stroke="rgba(255,255,255,.14)" stroke-width=".7" fill="none"/>
+        <circle cx="23" cy="-18.4" r="1" fill="#3a332c"/></g>`);
+      p.classList.add('umbr');
+    });
+  }
+  const defs = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+  defs.setAttribute('width', 0); defs.setAttribute('height', 0); defs.style.position = 'absolute';
+  defs.innerHTML = `<defs><pattern id="umbStripe" patternUnits="userSpaceOnUse" width="16" height="40">
+    <rect width="4" height="40" fill="#e3b23c"/><rect x="4" width="4" height="40" fill="#1f5f9e"/>
+    <rect x="8" width="4" height="40" fill="#f2f2f2"/><rect x="12" width="4" height="40" fill="#c8372d"/></pattern></defs>`;
+  document.body.appendChild(defs);
+
+  return {
+    set(v){
+      on = v;
+      if (v) umbrellas();
+      try { setRain(v ? 1 : 0); } catch {}
+      if (!running && (v || wet > 0)) { running = true; last = performance.now(); requestAnimationFrame(frame); }
+    },
+    state: () => ({ on, level: +level.toFixed(2), wet: +wet.toFixed(2), drops: drops.length, bits: bits.length, rings: rings.length }),
+  };
+})();
 cycleWeather();
-setInterval(cycleWeather, 11000);
 
 /* The clock lights the street. The player's own clock, not Lagos time: a
    corper in Lagos at 8pm sees night, and so does anyone else playing at
