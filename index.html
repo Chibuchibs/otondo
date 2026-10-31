@@ -99,12 +99,9 @@
   .sunGlow{animation:sunBreathe 5s ease-in-out infinite;transform-origin:30px 28px}
   @keyframes sunBreathe{0%,100%{transform:scale(1);opacity:.85}50%{transform:scale(1.08);opacity:1}}
 
-  .rain,.flash{position:absolute;inset:0;pointer-events:none;opacity:0}
-  /* One light layer — the heavier sheet was reading as a downpour. */
-  .rain{z-index:4;background:
-      repeating-linear-gradient(104deg,rgba(255,255,255,.30) 0 1px,transparent 1px 9px)}
-  .scene.w-storm .rain{opacity:1;animation:pour .38s linear infinite}
-  @keyframes pour{to{background-position:-9px 28px}}
+  /* The storm's rain is the rain engine's (see w-rain below); the old streak
+     layer is gone. */
+  .flash{position:absolute;inset:0;pointer-events:none;opacity:0}
   /* Storm clouds. One fixed "head" that the lightning drops out of, plus two
      drifting banks so the sky moves. Behind the rain, in front of the shops. */
   .cloud{position:absolute;z-index:3;opacity:0;transition:opacity 1s ease}
@@ -161,13 +158,13 @@
   .rainMist{position:absolute;left:0;right:0;top:30px;height:132px;z-index:1;pointer-events:none;
     opacity:0;transition:opacity 3s ease;
     background:linear-gradient(rgba(206,214,220,0),rgba(206,214,220,.42) 72%,rgba(206,214,220,.18))}
-  .scene.w-rain .rainMist{opacity:1}
+  .scene.w-rain .rainMist,.scene.w-storm .rainMist{opacity:1}
   .road{transition:background-color 4s ease}
-  .scene.w-rain .road{background-color:#9b937f}
+  .scene.w-rain .road,.scene.w-storm .road{background-color:#9b937f}
   .corper.umbr{overflow:visible}
   .corper .umb{opacity:0;transition:opacity .6s ease}
-  .scene.w-rain .corper .umb{opacity:1}
-  .scene.w-rain .corper.sunk .umb{opacity:0}
+  .scene.w-rain .corper .umb,.scene.w-storm .corper .umb{opacity:1}
+  .scene.w-rain .corper.sunk .umb,.scene.w-storm .corper.sunk .umb{opacity:0}
 
   /* the people react: hunch into the rain, lean into the wind */
   .corper{transition:transform .7s ease}
@@ -1199,7 +1196,6 @@
       <ellipse class="cloudGlow" cx="60" cy="33" rx="32" ry="16"
                fill="url(#otondoGlow)"/>
     </svg>
-    <div class="rain"></div>
     <svg class="bolt" viewBox="0 0 24 46" aria-hidden="true">
       <path d="M14 0 L4 26 h7 L8 46 L21 18 h-8 Z" fill="#fff8d6"
             stroke="#f3e08a" stroke-width="1.2"/>
@@ -1385,7 +1381,7 @@
 <script type="module">
 import { newGame, doAction, canDo, unlocked, ACTIONS, phaseOf, nextUnlock, postingOdds, rivalOf,
          computePosting, CHOICES, GOAL, goalStatus,
-         shareText, MAX_DAY } from './game.js?v=20261031150854';
+         shareText, MAX_DAY } from './game.js?v=20261031151230';
 
 /* ---------- scene coordinates ----------
    The scene is scaled by a transform (see the stage), so a native
@@ -1416,11 +1412,11 @@ const TS = (document.getElementById('scene').offsetWidth || 375) / 375;
 const ALLAWEE_NOTE = 'Allawee ₦77,000 — e never enter.';
 import { initNet, joinCamp, syncPlayer, platoonBoard, recentChat, postChat,
          postSuggestion, reportMessage, awardBoard, myAwards, laughChat,
-         setPresence, campRoster, renameMe, setAvatar, online } from './net.js?v=20261031150854';
-import { startMusic, stopMusic, musicOn, audioState, audioSupported, setRain, BEAT, BAR } from './audio.js?v=20261031150854';
+         setPresence, campRoster, renameMe, setAvatar, online } from './net.js?v=20261031151230';
+import { startMusic, stopMusic, musicOn, audioState, audioSupported, setRain, BEAT, BAR } from './audio.js?v=20261031151230';
 import { playHoop, playPenalty, playQuiz, playRegister, playParade,
          playMami, playHustle, playManOWar, playSaed, playSocial,
-         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261031150854';
+         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261031151230';
 
 /* Every dance animation is expressed in beats, so the steps are on-tempo
    whether or not the sound is playing — and genuinely on the beat when it is. */
@@ -4459,7 +4455,7 @@ function cycleWeather(){
   const [w, secs] = WEATHER_PLAN[wIdx];
   el.classList.remove(...WEATHER);
   el.classList.add(w);
-  rain.set(w === 'w-rain');
+  rain.set(w === 'w-rain' || w === 'w-storm');   // the storm rains too, under its lightning
   wIdx = (wIdx + 1) % WEATHER_PLAN.length;
   setTimeout(cycleWeather, secs * 1000);
 }
@@ -4478,7 +4474,7 @@ const rain = (() => {
   const gnd = document.createElement('canvas'); gnd.className = 'rainGround';
   const mist = document.createElement('div'); mist.className = 'rainMist';
   const road = sceneEl.querySelector('.road');
-  sceneEl.querySelector('.rain').insertAdjacentElement('afterend', sky);
+  sceneEl.querySelector('.bolt').insertAdjacentElement('beforebegin', sky);
   road.insertAdjacentElement('beforebegin', mist);
   road.insertAdjacentElement('afterend', gnd);
   const sx = sky.getContext('2d'), gx = gnd.getContext('2d');
