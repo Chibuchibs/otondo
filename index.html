@@ -1197,7 +1197,7 @@
     <div class="stats">
       <div class="stat energy"><b>Energy</b><span id="sEnergy"></span>
         <div class="bar" id="bEnergy"><i></i></div>
-        <small class="tip">Low. Look for pure water, or chop for mami market.</small></div>
+        <small class="tip">Low. Buy kunu or pure water from the hawkers.</small></div>
       <div class="stat belle"><b>Belle</b><span id="sBelle"></span>
         <div class="bar" id="bBelle"><i></i></div>
         <small class="tip">Hungry. Jollof, roasted corn or akara.</small></div>
@@ -1301,7 +1301,7 @@
 <script type="module">
 import { newGame, doAction, canDo, unlocked, ACTIONS, phaseOf, nextUnlock, postingOdds, rivalOf,
          computePosting,
-         shareText, MAX_DAY } from './game.js?v=20261030102457';
+         shareText, MAX_DAY } from './game.js?v=20261031072750';
 
 /* ---------- scene coordinates ----------
    The scene is scaled by a transform (see the stage), so a native
@@ -1332,11 +1332,11 @@ const TS = (document.getElementById('scene').offsetWidth || 375) / 375;
 const ALLAWEE_NOTE = 'Allawee ₦77,000 — e never enter.';
 import { initNet, joinCamp, syncPlayer, platoonBoard, recentChat, postChat,
          postSuggestion, reportMessage, awardBoard, myAwards, laughChat,
-         setPresence, campRoster, renameMe, setAvatar, online } from './net.js?v=20261030102457';
-import { startMusic, stopMusic, musicOn, audioState, audioSupported, BEAT, BAR } from './audio.js?v=20261030102457';
+         setPresence, campRoster, renameMe, setAvatar, online } from './net.js?v=20261031072750';
+import { startMusic, stopMusic, musicOn, audioState, audioSupported, BEAT, BAR } from './audio.js?v=20261031072750';
 import { playHoop, playPenalty, playQuiz, playRegister, playParade,
          playMami, playHustle, playManOWar, playSaed, playSocial,
-         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261030102457';
+         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261031072750';
 
 /* Every dance animation is expressed in beats, so the steps are on-tempo
    whether or not the sound is playing — and genuinely on the beat when it is. */
@@ -1709,10 +1709,14 @@ function civilian(skin, scale, speed, delay, tone = 0, rags = false, stick = fal
    the headtie, and the basin on her head stacked with sachets — the one
    silhouette nobody in Lagos has to look at twice. */
 function hawker(skin, wares = 'water'){
-  const akara = wares === 'akara';
-  /* Two women, two palettes, so they are never mistaken for one another. */
-  const WRAP = akara ? '#3d6ea8' : '#2f7a63', WRAP2 = akara ? '#2f5886' : '#245f4d';
-  const DOT = '#f3c53d', BLOUSE = akara ? '#d96fa0' : '#f2d2a0', TIE = akara ? '#f3c53d' : '#c14f3e';
+  const akara = wares === 'akara', kunu = wares === 'kunu';
+  /* Three women, three palettes, so they are never mistaken for one another. */
+  const PAL = {
+    water: ['#2f7a63', '#245f4d', '#f2d2a0', '#c14f3e'],
+    akara: ['#3d6ea8', '#2f5886', '#d96fa0', '#f3c53d'],
+    kunu:  ['#8a4b2a', '#6d3a20', '#f3efe2', '#2f6b4f'],
+  }[wares] || ['#2f7a63', '#245f4d', '#f2d2a0', '#c14f3e'];
+  const [WRAP, WRAP2, BLOUSE, TIE] = PAL, DOT = '#f3c53d';
   const leg = (x, c) =>
     `<rect x="${x}" y="48" width="7.5" height="15.5" rx="3.4" fill="${c}"/>
      <circle cx="${x+2.4}" cy="52" r=".9" fill="${DOT}"/><circle cx="${x+5.2}" cy="57" r=".9" fill="${DOT}"/>
@@ -1769,6 +1773,15 @@ function hawker(skin, wares = 'water'){
            ${[[11.5,2.6],[16.5,.8],[21.5,-.2],[26.5,.6],[31.5,2.4],[14,4.2],[19,3],[24,2.8],[29,3.8]]
              .map(([x,y]) => `<circle cx="${x}" cy="${y}" r="2.5" fill="#c9772a" stroke="#9a5518" stroke-width=".5"/>
                               <circle cx="${x-.7}" cy="${y-.8}" r=".8" fill="#e9a35c"/>`).join('')}`
+        : kunu
+        ? /* a basin of kunu in clear bottles, red caps, the drink the
+             colour of milky millet */
+          `<path d="M8 4.5h30l-3 6H11z" fill="#c14f3e"/>
+           <path d="M8 4.5h30v1.6H8z" fill="#de6b58"/>
+           ${[11.5, 16.5, 21.5, 26.5, 31.5].map((x, i) =>
+             `<rect x="${x - 2.2}" y="${-5.5 + (i % 2)}" width="4.4" height="10" rx="1.4" fill="#efe2c2" stroke="#d6c39a" stroke-width=".5"/>
+              <rect x="${x - 2.2}" y="${-1.5 + (i % 2)}" width="4.4" height="2" fill="#c9a86a" opacity=".55"/>
+              <rect x="${x - 1.2}" y="${-7.6 + (i % 2)}" width="2.4" height="2.4" rx=".6" fill="#d6342c"/>`).join('')}`
         : /* the basin, and the water on it */
           `<path d="M8 2.5h30l-3 7H11z" fill="#3a3f8a"/>
            <path d="M8 2.5h30v1.6H8z" fill="#5a60b8"/>
@@ -2530,8 +2543,10 @@ const POT_AT    = 0.58;    // across the scene; fixed so it can be learned
    given a fair chance; the jump is the one task with a deadline, so it gets
    the longest run-up. */
 const POT_WARN  = 150;     // px of approach you get to react in
-const JUMP_COST = 4;
-const FALL_COST = 12;
+/* Halved: at 4 and 12 against +5 for a sachet, one fall cost two and a half
+   waters and the meter lived at zero. A tapped jump stays cheaper than a fall. */
+const JUMP_COST = 2;
+const FALL_COST = 6;
 /* After a pothole is dealt with, nobody is asked again for a while. Without
    this it ran away with the scene: three figures a third of a lap apart means
    somebody enters the warning zone every ~4.5s, and each ask lasts ~2.7s, so
@@ -3645,11 +3660,17 @@ function douse(v){
 /* Two sellers a cycle: pure water walks in against the traffic; just before
    she is gone, akara walks in the other way; thirty seconds after akara has
    gone, round again. Water is the energy back, akara is belle. */
+/* Kunu is the real energy drink of the street: millet, ginger, cloves, cold
+   from the cooler. Pure water alone at +5 could not keep up with drills and a
+   pothole, so the meter sat at zero; kunu is the big top-up and costs more. */
 const WARES = {
-  water: { tag: 'TAP FOR PURE WATER ₦100', price: 100, energy: 5, belle: 0, skin: '#6b4423' },
-  akara: { tag: 'TAP FOR AKARA ₦200',      price: 200, energy: 0, belle: 8, skin: '#8d5524' },
+  water: { tag: 'TAP FOR PURE WATER ₦100', price: 100, energy: 8,  belle: 0, skin: '#6b4423' },
+  akara: { tag: 'TAP FOR AKARA ₦200',      price: 200, energy: 0,  belle: 8, skin: '#8d5524' },
+  kunu:  { tag: 'TAP FOR KUNU ₦250',       price: 250, energy: 18, belle: 2, skin: '#4a2e1c' },
 };
-const HAWK_FIRST = 20000, HAWK_LEN = 26, AKARA_AT = 20, HAWK_REST = 30000;
+/* Kunu walks the same way as pure water, once water has gone and while akara
+   is still crossing, so the far pavement always has someone on it. */
+const HAWK_FIRST = 20000, HAWK_LEN = 26, AKARA_AT = 20, KUNU_AT = 33, HAWK_REST = 30000;
 function sendHawker(kind){
   if (calm() || sceneEl.querySelector('.hawker.' + kind)) return;
   const w = WARES[kind];
@@ -3674,7 +3695,8 @@ function hawkerCycle(){
   if (calm()) return;
   sendHawker('water');
   setTimeout(() => sendHawker('akara'), AKARA_AT * TS * 1000);
-  setTimeout(hawkerCycle, (AKARA_AT + HAWK_LEN) * TS * 1000 + HAWK_REST);
+  setTimeout(() => sendHawker('kunu'), KUNU_AT * TS * 1000);
+  setTimeout(hawkerCycle, (KUNU_AT + HAWK_LEN) * TS * 1000 + HAWK_REST * 0.5);
 }
 /* A tap on a seller works like a tap on a shop: YOU runs over, buys, and
    comes back (snackRun, which knows her speed). Two sales a pass; the label
