@@ -1348,7 +1348,7 @@
 <script type="module">
 import { newGame, doAction, canDo, unlocked, ACTIONS, phaseOf, nextUnlock, postingOdds, rivalOf,
          computePosting, CHOICES, GOAL, goalStatus,
-         shareText, MAX_DAY } from './game.js?v=20261031073314';
+         shareText, MAX_DAY } from './game.js?v=20261031073607';
 
 /* ---------- scene coordinates ----------
    The scene is scaled by a transform (see the stage), so a native
@@ -1379,11 +1379,11 @@ const TS = (document.getElementById('scene').offsetWidth || 375) / 375;
 const ALLAWEE_NOTE = 'Allawee ₦77,000 — e never enter.';
 import { initNet, joinCamp, syncPlayer, platoonBoard, recentChat, postChat,
          postSuggestion, reportMessage, awardBoard, myAwards, laughChat,
-         setPresence, campRoster, renameMe, setAvatar, online } from './net.js?v=20261031073314';
-import { startMusic, stopMusic, musicOn, audioState, audioSupported, BEAT, BAR } from './audio.js?v=20261031073314';
+         setPresence, campRoster, renameMe, setAvatar, online } from './net.js?v=20261031073607';
+import { startMusic, stopMusic, musicOn, audioState, audioSupported, BEAT, BAR } from './audio.js?v=20261031073607';
 import { playHoop, playPenalty, playQuiz, playRegister, playParade,
          playMami, playHustle, playManOWar, playSaed, playSocial,
-         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261031073314';
+         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261031073607';
 
 /* Every dance animation is expressed in beats, so the steps are on-tempo
    whether or not the sound is playing — and genuinely on the beat when it is. */
@@ -4691,6 +4691,15 @@ function drawEndRival(){
    bar cannot promise something the ending will not honour. */
 let lastSoft = null;
 /* ---------- the goal: choose a place, hit four targets, get matched ---------- */
+/* Lagos and Abuja take turns at the front: Abuja is the one many corpers want
+   for the political connections, and always listing Lagos first quietly
+   steered everyone there. Fixed per run (odd platoon, Abuja first) so the
+   chips do not swap places between redraws. */
+const choiceOrder = () => {
+  const idx = CHOICES.map((_, i) => i);
+  if (s && s.platoon % 2 === 1) [idx[0], idx[1]] = [idx[1], idx[0]];
+  return idx;
+};
 function drawGoal(){
   const el = $('goal');
   if (!s || s.phase !== 'day') { el.classList.add('hidden'); return; }
@@ -4715,7 +4724,7 @@ function drawGoal(){
   if (!s.choice){
     el.innerHTML = `<p class="gk">WHERE YOU WAN SERVE?</p>
       <p>Pick your place. Hit all four goals on the cards and dem go match you there.</p>
-      <div class="chips">${CHOICES.map((c, i) => `<button type="button" data-choice="${i}">${esc(c)}</button>`).join('')}</div>`;
+      <div class="chips">${choiceOrder().map(i => `<button type="button" data-choice="${i}">${esc(CHOICES[i])}</button>`).join('')}</div>`;
   } else if (s.matched){
     const slip = s.cred < GOAL.cred;
     el.innerHTML = `<p class="gk">${slip ? 'MATCH AT RISK' : 'MATCHED ✓'}</p>
