@@ -1382,7 +1382,7 @@
 <script type="module">
 import { newGame, doAction, canDo, unlocked, ACTIONS, phaseOf, nextUnlock, postingOdds, rivalOf,
          computePosting, CHOICES, GOAL, goalStatus,
-         shareText, MAX_DAY } from './game.js?v=20261031134035';
+         shareText, MAX_DAY } from './game.js?v=20261031134652';
 
 /* ---------- scene coordinates ----------
    The scene is scaled by a transform (see the stage), so a native
@@ -1413,11 +1413,11 @@ const TS = (document.getElementById('scene').offsetWidth || 375) / 375;
 const ALLAWEE_NOTE = 'Allawee ₦77,000 — e never enter.';
 import { initNet, joinCamp, syncPlayer, platoonBoard, recentChat, postChat,
          postSuggestion, reportMessage, awardBoard, myAwards, laughChat,
-         setPresence, campRoster, renameMe, setAvatar, online } from './net.js?v=20261031134035';
-import { startMusic, stopMusic, musicOn, audioState, audioSupported, setRain, BEAT, BAR } from './audio.js?v=20261031134035';
+         setPresence, campRoster, renameMe, setAvatar, online } from './net.js?v=20261031134652';
+import { startMusic, stopMusic, musicOn, audioState, audioSupported, setRain, BEAT, BAR } from './audio.js?v=20261031134652';
 import { playHoop, playPenalty, playQuiz, playRegister, playParade,
          playMami, playHustle, playManOWar, playSaed, playSocial,
-         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261031134035';
+         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261031134652';
 
 /* Every dance animation is expressed in beats, so the steps are on-tempo
    whether or not the sound is playing — and genuinely on the beat when it is. */
@@ -3830,6 +3830,7 @@ const FIRE_LEN  = 15500 * TS;
 const CHASE_LEN = 12500 * TS;
 const EVENT_GAP = 4000;     // a breath of ordinary street between them
 let fireNext = true;        // fire leads: it is the one with the louder label
+let fireBumped = false;     // passed over once for a convoy already
 
 function nextSceneEvent(){
   if (calm()) return;
@@ -3848,10 +3849,17 @@ function nextSceneEvent(){
      instead, and the fire keeps its place next in line. */
   if (Math.random() < RARE_ODDS && !convoySoon(GOAT_LEN)){
     goatCrossing(); len = GOAT_LEN;
-  } else if (fireNext && convoySoon(FIRE_LEN)){
+  } else if (fireNext && convoySoon(FIRE_LEN) && !fireBumped){
     agberoChase(); len = CHASE_LEN;
+    fireBumped = true;
   } else {
     len = fireNext ? FIRE_LEN : CHASE_LEN;
+    /* The fire gives way to a convoy once, never twice. With a convoy due
+       every 25s and the bus taking 15.5s x TS to cross, there was no gap long
+       enough on a wide screen (TS 1.7: 27s) and the fire never ran again; on
+       a phone it got a few seconds in every 25. Second time round the convoys
+       wait for the bus instead. */
+    if (fireNext){ makeRoom(FIRE_LEN); fireBumped = false; }
     if (fireNext) burningDanfo(); else agberoChase();
     fireNext = !fireNext;
   }
@@ -3943,8 +3951,8 @@ function odogwuConvoy(){
    again every 50s. Off the random queue and on their own clock — the queue
    left them minutes apart. Each pass waits, up to CONVOY_MAX_WAIT, for a
    burning danfo or the goat to clear their lane (they would drive straight
-   through either), and is skipped if the lane is still blocked; the base
-   schedule never drifts. The chase is on the near pavement and does not
+   through either), and is skipped if the lane is still blocked. A burning
+   danfo can push them back (makeRoom) when it has already given way once. The chase is on the near pavement and does not
    count as a clash. The queue already holds back while a convoy is out. */
 const OGA_FIRST = 50000, ODOGWU_LAG = 25000, CONVOY_EVERY = 50000, CONVOY_MAX_WAIT = 15000;
 const convoyClash = () => !!sceneEl.querySelector('.vehicle.ablaze, .goat, .convoy');
@@ -3952,14 +3960,20 @@ const convoyNext = [];               // the due time of each schedule, for the q
 function onSchedule(at, run){
   const slot = convoyNext.push(at) - 1;
   const due = () => {
-    const late = performance.now() - at;
-    if (convoyClash() && late < CONVOY_MAX_WAIT){ setTimeout(due, 1000); return; }
+    const now = performance.now(), at = convoyNext[slot];
+    if (now < at - 50){ setTimeout(due, at - now); return; }   // pushed back by makeRoom
+    if (convoyClash() && now - at < CONVOY_MAX_WAIT){ setTimeout(due, 1000); return; }
     if (!convoyClash()) run();
-    at += CONVOY_EVERY;
-    convoyNext[slot] = at;
-    setTimeout(due, Math.max(0, at - performance.now()));
+    convoyNext[slot] = at + CONVOY_EVERY;
+    setTimeout(due, Math.max(0, convoyNext[slot] - performance.now()));
   };
   setTimeout(due, Math.max(0, at - performance.now()));
+}
+/* Push any convoy due inside the next `ms` to just after it, so a burning
+   danfo can cross the far lane. The schedule carries on from there. */
+function makeRoom(ms){
+  const clear = performance.now() + ms + 1000;
+  convoyNext.forEach((at, i) => { if (at < clear) convoyNext[i] = clear + i * 1500; });
 }
 /* Is a convoy due before something of this length would have cleared the far
    lane? The queue asks before starting a fire or a goat, so the convoys come
