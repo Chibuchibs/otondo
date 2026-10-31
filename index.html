@@ -1382,7 +1382,7 @@
 <script type="module">
 import { newGame, doAction, canDo, unlocked, ACTIONS, phaseOf, nextUnlock, postingOdds, rivalOf,
          computePosting, CHOICES, GOAL, goalStatus,
-         shareText, MAX_DAY } from './game.js?v=20261031133423';
+         shareText, MAX_DAY } from './game.js?v=20261031134035';
 
 /* ---------- scene coordinates ----------
    The scene is scaled by a transform (see the stage), so a native
@@ -1413,11 +1413,11 @@ const TS = (document.getElementById('scene').offsetWidth || 375) / 375;
 const ALLAWEE_NOTE = 'Allawee ₦77,000 — e never enter.';
 import { initNet, joinCamp, syncPlayer, platoonBoard, recentChat, postChat,
          postSuggestion, reportMessage, awardBoard, myAwards, laughChat,
-         setPresence, campRoster, renameMe, setAvatar, online } from './net.js?v=20261031133423';
-import { startMusic, stopMusic, musicOn, audioState, audioSupported, setRain, BEAT, BAR } from './audio.js?v=20261031133423';
+         setPresence, campRoster, renameMe, setAvatar, online } from './net.js?v=20261031134035';
+import { startMusic, stopMusic, musicOn, audioState, audioSupported, setRain, BEAT, BAR } from './audio.js?v=20261031134035';
 import { playHoop, playPenalty, playQuiz, playRegister, playParade,
          playMami, playHustle, playManOWar, playSaed, playSocial,
-         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261031133423';
+         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261031134035';
 
 /* Every dance animation is expressed in beats, so the steps are on-tempo
    whether or not the sound is playing — and genuinely on the beat when it is. */
@@ -2985,7 +2985,7 @@ function hopPothole(p, paid){
   setTimeout(() => { p.classList.remove('jumping'); }, 640);
   if (paid && s){
     s.energy = Math.max(0, s.energy - JUMP_COST);
-    render();
+    save(); render();
     floatCost(p, `-${JUMP_COST} energy`);
   }
 }
@@ -3013,7 +3013,7 @@ function fallIn(p){
   ], { duration: 750, easing: 'ease-in', fill: 'forwards', composite: 'add' });
   if (s){
     s.energy = Math.max(0, s.energy - FALL_COST);
-    render();
+    save(); render();
     floatCost(p, `-${FALL_COST} energy`);
   }
   setTimeout(() => {
@@ -3403,7 +3403,7 @@ function takeOffer(p){
     clearCorn();
     flipTurn();
     backToTrekking();            // snackRun refuses to start mid-dance
-    snackRun(who, where, true);
+    if (!snackRun(who, where, true)) buy(where, who);   // the tap still buys
     return true;
   }
   return false;
@@ -3796,9 +3796,16 @@ function buyWares(hw){
   const who = cornTarget || rideTarget || jumpShown || null;
   clearCorn(); clearRide();
   backToTrekking();
-  if (!snackRun(who, hw, true)) return;        // at the edge, or mid-dance: not now
+  /* The sale never depends on the walk. If nobody is free and in frame to
+     run over (they are at the edge, mid-dance, in the pothole), she hands it
+     over anyway and the tap still pays and still fills the meter. It used to
+     return here and do nothing, which with two or three walkers was most taps:
+     the player tapped kunu, saw nothing, and the energy stayed at zero. */
+  const ran = snackRun(who, hw, true);
+  if (!ran) buy(hw, hw);
   hw.dataset.left = String(left);
   if (left === 0){ hw.querySelector('.tapTag')?.remove(); hw.removeAttribute('aria-label'); }
+  if (!ran) return;
   setTimeout(() => hw.classList.add('paused'), RUN_MS);
   setTimeout(() => hw.classList.remove('paused'), RUN_MS + EAT_MS);
 }
@@ -4184,7 +4191,8 @@ const SNACK_EVERY = 23000, RUN_MS = 1350, EAT_MS = 1500, IN_MS = 320;
    skipping meant the run almost never happened. */
 function snackRun(preferred, target, paid){
   const sc = $('scene');
-  if (!stillWatching()) return true;
+  /* Reduced motion: no run, but a tap is still a purchase. */
+  if (!stillWatching()){ if (paid && target) buy(target, target); return true; }
   if (sc.classList.contains('dancing')) return false;
   const box = sc.sceneRect();
   /* Settle first. A dance that just ended leaves transforms unwinding for .7s,
@@ -4203,8 +4211,12 @@ function snackRun(preferred, target, paid){
   };
   /* Any shop will do now, not only food. A tap names a specific one; the
      timer-driven run takes whatever is in frame. */
-  const stall  = (target ? [place(target)].find(x => x.ok) : null)
-              || [...sc.querySelectorAll('.shop[data-errand]')].map(place).find(x => x.ok);
+  /* A tapped target is the only stall that will do. It used to fall back to
+     any shop in frame, so a tap on the kunu seller near the edge sent him into
+     the provision store and charged provisions — money gone, no energy. Now an
+     unreachable target returns false and the caller sells it where it stands. */
+  const stall  = target ? [place(target)].find(x => x.ok)
+                        : [...sc.querySelectorAll('.shop[data-errand]')].map(place).find(x => x.ok);
   /* A tapped corper goes if they are in frame; otherwise fall back to
      whoever is, so the timer-driven run still works. */
   const picked = preferred && crew.includes(preferred) ? place(preferred) : null;
@@ -4336,6 +4348,7 @@ function buy(shopEl, who){
   if (energy) s.energy = Math.min(100, (s.energy || 0) + energy);
   if (cred)   s.cred   = (s.cred || 0) + cred;
   if (shopEl.dataset.trade) s.tradeDay = s.day;
+  save();                       // a purchase that a refresh undoes is no purchase
   render();
   floatCost(who, `-₦${cost.toLocaleString()}` + (cred ? `  +${cred} CRED` : '')
                                                + (energy ? `  +${energy} ENERGY` : ''));
