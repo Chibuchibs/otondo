@@ -1381,7 +1381,7 @@
 <script type="module">
 import { newGame, doAction, canDo, unlocked, ACTIONS, phaseOf, nextUnlock, postingOdds, rivalOf,
          computePosting, CHOICES, GOAL, goalStatus,
-         shareText, MAX_DAY } from './game.js?v=20261101112434';
+         shareText, MAX_DAY } from './game.js?v=20261101114301';
 
 /* ---------- scene coordinates ----------
    The scene is scaled by a transform (see the stage), so a native
@@ -1412,11 +1412,11 @@ const TS = (document.getElementById('scene').offsetWidth || 375) / 375;
 const ALLAWEE_NOTE = 'Allawee ₦77,000 — e never enter.';
 import { initNet, joinCamp, syncPlayer, platoonBoard, recentChat, postChat,
          postSuggestion, reportMessage, awardBoard, myAwards, laughChat,
-         setPresence, campRoster, renameMe, setAvatar, online } from './net.js?v=20261101112434';
-import { startMusic, stopMusic, musicOn, audioState, audioSupported, setRain, whenSilenced, wakeAudio, audible, BEAT, BAR } from './audio.js?v=20261101112434';
+         setPresence, campRoster, renameMe, setAvatar, online } from './net.js?v=20261101114301';
+import { startMusic, stopMusic, musicOn, audioState, audioSupported, setRain, whenSilenced, wakeAudio, audible, say, BEAT, BAR } from './audio.js?v=20261101114301';
 import { playHoop, playPenalty, playQuiz, playRegister, playParade,
          playMami, playHustle, playManOWar, playSaed, playSocial,
-         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261101112434';
+         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261101114301';
 
 /* Every dance animation is expressed in beats, so the steps are on-tempo
    whether or not the sound is playing — and genuinely on the beat when it is. */
@@ -3821,6 +3821,8 @@ function sendHawker(kind){
   if (v) v.before(el); else sceneEl.appendChild(el);
   el.addEventListener('animationend', () => el.remove());
   setTimeout(() => el.remove(), HAWK_LEN * TS * 1000 + 3000);
+  /* She calls her wares as she steps into view: about 3s from either edge. */
+  setTimeout(() => { if (el.isConnected) say(kind); }, 3000 * TS);
 }
 function hawkerCycle(){
   if (calm()) return;
@@ -4345,7 +4347,7 @@ function snackRun(preferred, target, paid){
 
   const who = runner.el;
   const home = runner.c;
-  if (paid) paidRunner = who;
+  if (paid){ paidRunner = who; say('oya'); }      // "Oya, let's go!" as he sets off
   stall.el.dataset.target = '1';                  // marked so it can be verified
   who.style.animationPlayState = 'paused';        // drop out of the march
   who.classList.add('running');

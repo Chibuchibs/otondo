@@ -299,12 +299,14 @@ export function startMusic(onBarCallback) {
        without gutting it the way the synth's 230Hz cut would. */
     const g = c.createGain();
     g.gain.value = usingTrack ? TRACK.level : 1;
+    musicGain = g;
     const hp = c.createBiquadFilter();
     hp.type = 'highpass'; hp.frequency.value = usingTrack ? 90 : 20; hp.Q.value = 0.7;
     node.connect(g).connect(hp).connect(c.destination);
     startedAt = c.currentTime;
     node.start();
     playing = true; lastBar = -1;
+    Object.keys(VOICE).forEach(loadVoice);          // decoded before anyone speaks
     try { chan?.postMessage('playing'); } catch {}  // any other Otondo tab stops
     if (rainWanted) setRain(rainWanted);          // sound came on mid-shower
     cancelAnimationFrame(raf); watch();
@@ -397,6 +399,53 @@ document.addEventListener('visibilitychange', () => {
   else if (playing) ctx.resume().catch(() => {});
 });
 
+/* Voices: the player's own lines and the sellers' calls, recorded by the
+   maker and his wife. They only speak while the music is audible — the sound
+   button is for all of it — one at a time, and on an off-beat or beat of the
+   groove so they sit in the song rather than on top of it. The music dips a
+   little under each line so the words come through on a phone speaker. */
+const VOICE = {
+  oya:   './sfx/oya-letsgo.m4a',
+  water: './sfx/seller-water.m4a',
+  akara: './sfx/seller-akara.m4a',
+  kunu:  './sfx/seller-kunu.m4a',
+};
+const VOICE_LEVEL = 0.9, DUCK = 0.55;
+const VGRID = 0.058, VLEAD = 0.08; // the track's beats sit 58ms early; each clip has 80ms of lead-in
+let musicGain = null, voiceFree = 0, lastSaid = '';
+const voiceBufs = {};
+function loadVoice(name) {
+  if (!ctx || !VOICE[name]) return Promise.resolve(null);
+  if (!voiceBufs[name]) voiceBufs[name] = fetch(VOICE[name])
+    .then(r => { if (!r.ok) throw new Error(r.status); return r.arrayBuffer(); })
+    .then(b => new Promise((ok, no) => { const p = ctx.decodeAudioData(b, ok, no); if (p && p.then) p.then(ok, no); }))
+    .catch(e => { console.warn('[otondo] voice unavailable:', name, e.message); return null; });
+  return voiceBufs[name];
+}
+export function say(name) {
+  if (!playing || !ctx || ctx.state !== 'running' || ctx.currentTime < voiceFree) return;
+  loadVoice(name).then(buf => {
+    if (!buf || !playing || ctx.state !== 'running') return;
+    /* The next eighth-note of the groove: never more than a quarter-second
+       away, so a line still answers the tap that caused it. */
+    const step = BEAT / 2, offset = usingTrack ? VGRID : 0;
+    const pos = ctx.currentTime - startedAt + VLEAD + 0.03;
+    const at = startedAt + Math.ceil((pos + offset) / step) * step - offset - VLEAD;
+    if (at < voiceFree) return;
+    voiceFree = at + buf.duration;
+    lastSaid = name;
+    const src = ctx.createBufferSource(); src.buffer = buf;
+    const g = ctx.createGain(); g.gain.value = VOICE_LEVEL;
+    src.connect(g).connect(ctx.destination);
+    src.start(at);
+    if (musicGain) {
+      const full = musicGain.gain.value, mg = musicGain.gain;
+      mg.setTargetAtTime(full * DUCK, at, 0.03);
+      mg.setTargetAtTime(full, at + buf.duration - 0.1, 0.15);
+    }
+  });
+}
+
 export const musicOn = () => playing;
 
 export const audioState = () => ({
@@ -406,5 +455,6 @@ export const audioState = () => ({
   gain: usingTrack ? TRACK.level : LEVEL,
   source: usingTrack ? 'track' : 'synth',
   rain: rainGain ? +rainGain.gain.value.toFixed(3) : 0,
+  said: lastSaid,
   via: 'web audio' + (navigator.audioSession ? ' + playback category' : ''),
 });
