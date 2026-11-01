@@ -1381,7 +1381,7 @@
 <script type="module">
 import { newGame, doAction, canDo, unlocked, ACTIONS, phaseOf, nextUnlock, postingOdds, rivalOf,
          computePosting, CHOICES, GOAL, goalStatus,
-         shareText, MAX_DAY } from './game.js?v=20261031211842';
+         shareText, MAX_DAY } from './game.js?v=20261031212146';
 
 /* ---------- scene coordinates ----------
    The scene is scaled by a transform (see the stage), so a native
@@ -1412,11 +1412,11 @@ const TS = (document.getElementById('scene').offsetWidth || 375) / 375;
 const ALLAWEE_NOTE = 'Allawee ₦77,000 — e never enter.';
 import { initNet, joinCamp, syncPlayer, platoonBoard, recentChat, postChat,
          postSuggestion, reportMessage, awardBoard, myAwards, laughChat,
-         setPresence, campRoster, renameMe, setAvatar, online } from './net.js?v=20261031211842';
-import { startMusic, stopMusic, musicOn, audioState, audioSupported, setRain, BEAT, BAR } from './audio.js?v=20261031211842';
+         setPresence, campRoster, renameMe, setAvatar, online } from './net.js?v=20261031212146';
+import { startMusic, stopMusic, musicOn, audioState, audioSupported, setRain, BEAT, BAR } from './audio.js?v=20261031212146';
 import { playHoop, playPenalty, playQuiz, playRegister, playParade,
          playMami, playHustle, playManOWar, playSaed, playSocial,
-         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261031211842';
+         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261031212146';
 
 /* Every dance animation is expressed in beats, so the steps are on-tempo
    whether or not the sound is playing — and genuinely on the beat when it is. */
@@ -4489,12 +4489,15 @@ const scheduleSnack = delay =>
   setTimeout(() => scheduleSnack(snackRun() ? SNACK_EVERY : 3500), delay);
 scheduleSnack(11000);
 
-/* Weather cycles on its own: sun -> rain -> wind -> sun -> storm. Long enough
+/* Weather cycles on its own: sun -> wind -> rain -> sun -> storm. Long enough
    that each mood registers, short enough that nobody waits to see the next
    one. The rain gets longer than the rest because it builds: it starts as a
-   few drops, settles into a downpour, and the puddles need time to form. */
+   few drops, settles into a downpour, and the puddles need time to form.
+   It comes third, not second: arriving 11s in, it darkened the street and
+   cost frames while the player was still learning it, and the opening felt
+   slow. Now the first half-minute is bright. */
 const WEATHER = ['w-sun', 'w-rain', 'w-storm', 'w-wind'];
-const WEATHER_PLAN = [['w-sun', 11], ['w-rain', 22], ['w-wind', 11], ['w-sun', 11], ['w-storm', 11]];
+const WEATHER_PLAN = [['w-sun', 22], ['w-wind', 11], ['w-rain', 22], ['w-sun', 11], ['w-storm', 11]];
 let wIdx = 0;
 function cycleWeather(){
   const el = $('scene');
