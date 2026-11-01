@@ -1381,7 +1381,7 @@
 <script type="module">
 import { newGame, doAction, canDo, unlocked, ACTIONS, phaseOf, nextUnlock, postingOdds, rivalOf,
          computePosting, CHOICES, GOAL, goalStatus,
-         shareText, MAX_DAY } from './game.js?v=20261031212724';
+         shareText, MAX_DAY } from './game.js?v=20261031213902';
 
 /* ---------- scene coordinates ----------
    The scene is scaled by a transform (see the stage), so a native
@@ -1412,11 +1412,11 @@ const TS = (document.getElementById('scene').offsetWidth || 375) / 375;
 const ALLAWEE_NOTE = 'Allawee ₦77,000 — e never enter.';
 import { initNet, joinCamp, syncPlayer, platoonBoard, recentChat, postChat,
          postSuggestion, reportMessage, awardBoard, myAwards, laughChat,
-         setPresence, campRoster, renameMe, setAvatar, online } from './net.js?v=20261031212724';
-import { startMusic, stopMusic, musicOn, audioState, audioSupported, setRain, BEAT, BAR } from './audio.js?v=20261031212724';
+         setPresence, campRoster, renameMe, setAvatar, online } from './net.js?v=20261031213902';
+import { startMusic, stopMusic, musicOn, audioState, audioSupported, setRain, BEAT, BAR } from './audio.js?v=20261031213902';
 import { playHoop, playPenalty, playQuiz, playRegister, playParade,
          playMami, playHustle, playManOWar, playSaed, playSocial,
-         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261031212724';
+         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261031213902';
 
 /* Every dance animation is expressed in beats, so the steps are on-tempo
    whether or not the sound is playing — and genuinely on the beat when it is. */
@@ -2566,6 +2566,10 @@ pointer.innerHTML = `<svg viewBox="0 0 40 30" aria-hidden="true">
 sceneEl.appendChild(pointer);
 
 let lastAimed = 0;
+/* The figure on a run you paid for. Only paid runs: the street also sends
+   walkers shopping on its own, and YOU following those read as your corper
+   wandering off untapped. */
+let paidRunner = null;
 function aimPointer(){
   /* Deliberately NOT tied to hintDone. The chip is a tutorial and goes away
      once you have tapped; this marks which figure is yours, which stays true
@@ -2584,7 +2588,13 @@ function aimPointer(){
      at a figure with no instruction above them is the "YOU and no command" the
      player reports; pointing at one that is mid-errand is worse, because the
      tap then does nothing. */
-  let best = sceneEl.querySelector('.corper.wantsJump, .corper.wantsCorn, .corper.wantsRide');
+  /* A paid runner outranks everything, the half-second hold included. The
+     hold parked the marker while the dash covered most of the road in its
+     first half-second, so he reached the seller with YOU left behind. */
+  if (paidRunner && !(paidRunner.isConnected && paidRunner.matches('.running, .munching, .shopping')))
+    paidRunner = null;
+  let best = paidRunner
+    || sceneEl.querySelector('.corper.wantsJump, .corper.wantsCorn, .corper.wantsRide');
   if (best) lastAimed = performance.now();
   else {
     /* offerTick runs every 150ms and clears the old offer before setting the
@@ -3824,8 +3834,13 @@ function hawkerCycle(){
    comes down with the last one. She stops while he is with her, so the sale
    is made standing still rather than on the move. */
 function buyWares(hw){
+  /* One errand to her at a time. A second tap while the first was still
+     waiting for a runner sent a second corper and charged twice. */
+  if (hw.dataset.busy) return;
   const left = (+hw.dataset.left || 0) - 1;
   if (left < 0) return;
+  hw.dataset.busy = '1';
+  const done = () => { delete hw.dataset.busy; };
   hw.dataset.left = String(left);
   if (left === 0){ hw.querySelector('.tapTag')?.remove(); hw.removeAttribute('aria-label'); }
   const who = cornTarget || rideTarget || jumpShown || null;
@@ -3839,11 +3854,11 @@ function buyWares(hw){
   const go = () => {
     if (snackRun(who, hw, true)){
       setTimeout(() => hw.classList.add('paused'), RUN_MS);
-      setTimeout(() => hw.classList.remove('paused'), RUN_MS + EAT_MS);
+      setTimeout(() => { hw.classList.remove('paused'); done(); }, RUN_MS + EAT_MS);
       return;
     }
     if (++tries < 10 && hw.isConnected){ setTimeout(go, 250); return; }
-    buy(hw, hw);
+    buy(hw, hw); done();
   };
   go();
 }
@@ -4300,6 +4315,7 @@ function snackRun(preferred, target, paid){
 
   const who = runner.el;
   const home = runner.c;
+  if (paid) paidRunner = who;
   stall.el.dataset.target = '1';                  // marked so it can be verified
   who.style.animationPlayState = 'paused';        // drop out of the march
   who.classList.add('running');
