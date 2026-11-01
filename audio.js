@@ -356,6 +356,16 @@ export function setRain(level) {
   g.linearRampToValueAtTime(playing && level ? level * RAIN_LEVEL : 0, t + (level ? 4 : 2.5));
 }
 
+/* A tab you are not looking at goes quiet. Each reload or second window
+   opened its own copy of the game, and every one kept playing behind the
+   others, so the player heard the groove twice, out of step. Suspending the
+   context pauses the bar clock with it, so the dance picks up in step. */
+document.addEventListener('visibilitychange', () => {
+  if (!ctx) return;
+  if (document.hidden) ctx.suspend().catch(() => {});
+  else if (playing) ctx.resume().catch(() => {});
+});
+
 export const musicOn = () => playing;
 
 export const audioState = () => ({
