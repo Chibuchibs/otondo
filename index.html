@@ -1381,7 +1381,7 @@
 <script type="module">
 import { newGame, doAction, canDo, unlocked, ACTIONS, phaseOf, nextUnlock, postingOdds, rivalOf,
          computePosting, CHOICES, GOAL, goalStatus,
-         shareText, MAX_DAY } from './game.js?v=20261031213902';
+         shareText, MAX_DAY } from './game.js?v=20261031214305';
 
 /* ---------- scene coordinates ----------
    The scene is scaled by a transform (see the stage), so a native
@@ -1412,11 +1412,11 @@ const TS = (document.getElementById('scene').offsetWidth || 375) / 375;
 const ALLAWEE_NOTE = 'Allawee ₦77,000 — e never enter.';
 import { initNet, joinCamp, syncPlayer, platoonBoard, recentChat, postChat,
          postSuggestion, reportMessage, awardBoard, myAwards, laughChat,
-         setPresence, campRoster, renameMe, setAvatar, online } from './net.js?v=20261031213902';
-import { startMusic, stopMusic, musicOn, audioState, audioSupported, setRain, BEAT, BAR } from './audio.js?v=20261031213902';
+         setPresence, campRoster, renameMe, setAvatar, online } from './net.js?v=20261031214305';
+import { startMusic, stopMusic, musicOn, audioState, audioSupported, setRain, BEAT, BAR } from './audio.js?v=20261031214305';
 import { playHoop, playPenalty, playQuiz, playRegister, playParade,
          playMami, playHustle, playManOWar, playSaed, playSocial,
-         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261031213902';
+         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261031214305';
 
 /* Every dance animation is expressed in beats, so the steps are on-tempo
    whether or not the sound is playing — and genuinely on the beat when it is. */
@@ -4323,7 +4323,7 @@ function snackRun(preferred, target, paid){
   const stallNow = () => {
     const r = stall.el.sceneRect();
     /* the door sits 29% in from the left of every building drawing */
-    return r.left - box.left + (indoor ? r.width * 0.29 : r.width / 2);
+    return r.left - box.left + (indoor ? r.width * 0.29 : r.width / 2) + (hawk ? side * BESIDE : 0);
   };
   const park = x => {
     who.style.transform = `translate(${Math.round(x - home)}px,-38px) scale(.8)`;
@@ -4339,6 +4339,11 @@ function snackRun(preferred, target, paid){
      at the door and is gone; the kerb sellers keep the stand-and-eat, because
      watching him chew is the point of those. */
   const indoor = !hawk && !stall.el.dataset.food;
+  /* Beside a hawker, on the side he ran from, not on her spot. On her spot
+     he stood exactly behind her — she is drawn in front — so the frames
+     showed YOU over a seller with no corper anywhere: he had vanished. */
+  const BESIDE = 26;
+  const side = home < stall.c ? -1 : 1;
   const speed = hawk
     ? (box.width * 1.30) / (HAWK_LEN * TS * 1000) * (stall.el.classList.contains('akara') ? 1 : -1)
     : (box.width * SHOP_TRAVEL) / (SHOP_CYCLE * 1000);   // px per ms
