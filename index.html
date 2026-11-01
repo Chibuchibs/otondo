@@ -1381,7 +1381,7 @@
 <script type="module">
 import { newGame, doAction, canDo, unlocked, ACTIONS, phaseOf, nextUnlock, postingOdds, rivalOf,
          computePosting, CHOICES, GOAL, goalStatus,
-         shareText, MAX_DAY } from './game.js?v=20261031215441';
+         shareText, MAX_DAY } from './game.js?v=20261031220315';
 
 /* ---------- scene coordinates ----------
    The scene is scaled by a transform (see the stage), so a native
@@ -1412,11 +1412,11 @@ const TS = (document.getElementById('scene').offsetWidth || 375) / 375;
 const ALLAWEE_NOTE = 'Allawee ₦77,000 — e never enter.';
 import { initNet, joinCamp, syncPlayer, platoonBoard, recentChat, postChat,
          postSuggestion, reportMessage, awardBoard, myAwards, laughChat,
-         setPresence, campRoster, renameMe, setAvatar, online } from './net.js?v=20261031215441';
-import { startMusic, stopMusic, musicOn, audioState, audioSupported, setRain, whenSilenced, BEAT, BAR } from './audio.js?v=20261031215441';
+         setPresence, campRoster, renameMe, setAvatar, online } from './net.js?v=20261031220315';
+import { startMusic, stopMusic, musicOn, audioState, audioSupported, setRain, whenSilenced, wakeAudio, audible, BEAT, BAR } from './audio.js?v=20261031220315';
 import { playHoop, playPenalty, playQuiz, playRegister, playParade,
          playMami, playHustle, playManOWar, playSaed, playSocial,
-         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261031215441';
+         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261031220315';
 
 /* Every dance animation is expressed in beats, so the steps are on-tempo
    whether or not the sound is playing — and genuinely on the beat when it is. */
@@ -4180,8 +4180,18 @@ function showSoundOff(){
 /* Another Otondo tab started the groove, so this one went quiet. Not saved as
    the player's choice: they never turned the sound off. */
 whenSilenced(showSoundOff);
+function showSoundOn(){
+  const btn = $('snd');
+  btn.classList.add('on');
+  btn.setAttribute('aria-pressed', 'true');
+  btn.setAttribute('aria-label', 'Stop the camp groove');
+}
 function toggleSound(){
   const btn = $('snd');
+  /* On but still held back by the browser: a tap on the button means "let me
+     hear it", not "stop". Turning it off here would leave the player who
+     pressed it to get sound with silence and a button that says off. */
+  if (musicOn() && !audible()){ wakeAudio(); return; }
   if (musicOn()){
     stopMusic();
     showSoundOff();
@@ -4191,9 +4201,7 @@ function toggleSound(){
   const ok = startMusic(onMusicBar);
   if (!ok) return;
   clearInterval(danceTimer);                  // the bar clock takes over
-  btn.classList.add('on');
-  btn.setAttribute('aria-pressed', 'true');
-  btn.setAttribute('aria-label', 'Stop the camp groove');
+  showSoundOn();
   soundHint();
   try { localStorage.setItem(SND_KEY, '1'); } catch {}
 }
@@ -4223,27 +4231,42 @@ function soundHint(){
   }, 700);
 }
 
-/* Browsers will not start audio without a gesture, so it cannot auto-play on
-   load. Instead it arms itself and starts on whatever the player touches
-   first — unless they turned it off on this device before. */
+/* On from the moment the game opens, unless the player turned it off on this
+   device before. Where the browser allows sound without a touch, it plays at
+   once; elsewhere it is already loaded and running silent, and the first
+   touch of anything lets it out. That first touch used to be what STARTED
+   it, once, on pointerdown only — which Safari does not always count as a
+   gesture, so the music could stay silent until some later tap, half a
+   minute in. Now every kind of touch tries, until one works. */
 try {
   let pref = null;
   try { pref = localStorage.getItem(SND_KEY); } catch {}
   if (pref !== '0' && audioSupported()) {
-    const arm = () => {
-      document.removeEventListener('pointerdown', arm);
-      if (!musicOn()) toggleSound();
+    setTimeout(() => { if (!musicOn() && startMusic(onMusicBar)) showSoundOn(); }, 0);
+    const WAKE = ['pointerdown', 'pointerup', 'touchend', 'click', 'keydown'];
+    const wake = e => {
+      if (e.target.closest?.('#snd')) return;   // the button handles its own tap
+      if (!musicOn()) return;
+      wakeAudio();
+      setTimeout(() => {
+        if (!audible()) return;
+        clearInterval(danceTimer);              // the bar clock takes over
+        WAKE.forEach(t => document.removeEventListener(t, wake, true));
+      }, 120);
     };
-    document.addEventListener('pointerdown', arm, { once: true });
+    WAKE.forEach(t => document.addEventListener(t, wake, true));
   }
 } catch {}
 
 let danceTimer = null;
 function startDanceTimers(){
   clearInterval(danceTimer);
-  danceTimer = setInterval(danceBreak, DANCE_EVERY);
+  /* Stands down by itself once the music is audible: the bar clock leads
+     then, and two clocks would dance twice. */
+  danceTimer = setInterval(() => { if (!audible()) danceBreak(); }, DANCE_EVERY);
 }
-setTimeout(() => { danceBreak(); startDanceTimers(); }, 6000);
+/* Unless the music is already audible, in which case its bar clock leads. */
+setTimeout(() => { if (!audible()){ danceBreak(); startDanceTimers(); } }, 6000);
 
 /* With the music on the dance hangs off bar lines instead of a timer, so it
    cannot drift away from the beat however long the page is left open. */

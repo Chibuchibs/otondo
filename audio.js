@@ -256,9 +256,19 @@ function openCtx() {
   if (!AC) return null;
   claimPlayback();
   if (!ctx) ctx = new AC();
-  if (ctx.state === 'suspended') ctx.resume();
+  if (ctx.state === 'suspended') ctx.resume().catch(() => {});
   return ctx;
 }
+
+/* Started at load, the context usually waits: browsers hold sound back until
+   the visitor first touches the page. Every touch calls this until it takes. */
+export function wakeAudio() {
+  if (!ctx) return;
+  claimPlayback();
+  if (ctx.state !== 'running') ctx.resume().catch(() => {});
+}
+/* Whether sound is actually coming out, as against merely switched on. */
+export const audible = () => playing && !!ctx && ctx.state === 'running';
 
 /* The dance hangs off the audio clock, so it cannot drift from the music
    however long the page stays open. ctx.currentTime is sample-accurate —
