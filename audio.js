@@ -326,11 +326,15 @@ export function setRain(level) {
   if (!ctx) return;
   if (!rainGain) {
     if (!level) return;
-    const c = ctx, n = c.sampleRate * 4;
+    /* Built a little long, and the extra folded back over the start, so the
+       loop has no seam. It used to fade to silence at both ends instead: a
+       dip and a fresh wash every four seconds, which over the music sounded
+       like a second track cutting in. */
+    const c = ctx, n = c.sampleRate * 4, fade = Math.round(c.sampleRate * 0.25);
     const buf = c.createBuffer(1, n, c.sampleRate);
-    const d = buf.getChannelData(0);
+    const d = new Float32Array(n + fade);
     let b0 = 0, b1 = 0, b2 = 0;
-    for (let i = 0; i < n; i++) {
+    for (let i = 0; i < n + fade; i++) {
       const w = Math.random() * 2 - 1;
       b0 = 0.99765 * b0 + w * 0.0990460;
       b1 = 0.96300 * b1 + w * 0.2965164;
@@ -338,11 +342,14 @@ export function setRain(level) {
       d[i] = (b0 + b1 + b2 + w * 0.1848) * 0.16;
     }
     for (let k = 0; k < n / 300; k++) {
-      const at = Math.floor(Math.random() * (n - 80)), amp = 0.15 + Math.random() * 0.35;
+      const at = Math.floor(Math.random() * (n + fade - 80)), amp = 0.15 + Math.random() * 0.35;
       for (let j = 0; j < 80; j++) d[at + j] += (Math.random() * 2 - 1) * amp * Math.pow(1 - j / 80, 3);
     }
-    const fade = 2000;                              // no click at the loop seam
-    for (let i = 0; i < fade; i++) { const f = i / fade; d[i] *= f; d[n - 1 - i] *= f; }
+    for (let i = 0; i < fade; i++) {                // equal-power crossfade
+      const f = i / fade;
+      d[i] = d[i] * Math.sin(f * Math.PI / 2) + d[n + i] * Math.cos(f * Math.PI / 2);
+    }
+    buf.getChannelData(0).set(d.subarray(0, n));
     const src = c.createBufferSource(); src.buffer = buf; src.loop = true;
     const hp = c.createBiquadFilter(); hp.type = 'highpass'; hp.frequency.value = 400;
     const lp = c.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 5200;
