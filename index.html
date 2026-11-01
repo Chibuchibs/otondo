@@ -1381,7 +1381,7 @@
 <script type="module">
 import { newGame, doAction, canDo, unlocked, ACTIONS, phaseOf, nextUnlock, postingOdds, rivalOf,
          computePosting, CHOICES, GOAL, goalStatus,
-         shareText, MAX_DAY } from './game.js?v=20261031214932';
+         shareText, MAX_DAY } from './game.js?v=20261031215441';
 
 /* ---------- scene coordinates ----------
    The scene is scaled by a transform (see the stage), so a native
@@ -1412,11 +1412,11 @@ const TS = (document.getElementById('scene').offsetWidth || 375) / 375;
 const ALLAWEE_NOTE = 'Allawee ₦77,000 — e never enter.';
 import { initNet, joinCamp, syncPlayer, platoonBoard, recentChat, postChat,
          postSuggestion, reportMessage, awardBoard, myAwards, laughChat,
-         setPresence, campRoster, renameMe, setAvatar, online } from './net.js?v=20261031214932';
-import { startMusic, stopMusic, musicOn, audioState, audioSupported, setRain, BEAT, BAR } from './audio.js?v=20261031214932';
+         setPresence, campRoster, renameMe, setAvatar, online } from './net.js?v=20261031215441';
+import { startMusic, stopMusic, musicOn, audioState, audioSupported, setRain, whenSilenced, BEAT, BAR } from './audio.js?v=20261031215441';
 import { playHoop, playPenalty, playQuiz, playRegister, playParade,
          playMami, playHustle, playManOWar, playSaed, playSocial,
-         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261031214932';
+         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261031215441';
 
 /* Every dance animation is expressed in beats, so the steps are on-tempo
    whether or not the sound is playing — and genuinely on the beat when it is. */
@@ -4170,14 +4170,21 @@ if (!calm()){
    and the header button turns it off, remembered per device. */
 const SND_KEY = 'otondo:sound';
 if (audioSupported()) $('snd').classList.remove('hidden');
+function showSoundOff(){
+  const btn = $('snd');
+  startDanceTimers();                         // hand the dance back to the clock
+  btn.classList.remove('on');
+  btn.setAttribute('aria-pressed', 'false');
+  btn.setAttribute('aria-label', 'Play the camp groove');
+}
+/* Another Otondo tab started the groove, so this one went quiet. Not saved as
+   the player's choice: they never turned the sound off. */
+whenSilenced(showSoundOff);
 function toggleSound(){
   const btn = $('snd');
   if (musicOn()){
     stopMusic();
-    startDanceTimers();                       // hand the dance back to the clock
-    btn.classList.remove('on');
-    btn.setAttribute('aria-pressed', 'false');
-    btn.setAttribute('aria-label', 'Play the camp groove');
+    showSoundOff();
     try { localStorage.setItem(SND_KEY, '0'); } catch {}
     return;
   }

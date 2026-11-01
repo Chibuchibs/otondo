@@ -295,6 +295,7 @@ export function startMusic(onBarCallback) {
     startedAt = c.currentTime;
     node.start();
     playing = true; lastBar = -1;
+    try { chan?.postMessage('playing'); } catch {}  // any other Otondo tab stops
     if (rainWanted) setRain(rainWanted);          // sound came on mid-shower
     cancelAnimationFrame(raf); watch();
   }).catch(e => console.warn('[otondo] play failed:', e.message));
@@ -362,6 +363,19 @@ export function setRain(level) {
   g.setValueAtTime(g.value, t);
   g.linearRampToValueAtTime(playing && level ? level * RAIN_LEVEL : 0, t + (level ? 4 : 2.5));
 }
+
+/* One tab plays at a time. Two windows side by side, both on screen, still
+   played the groove twice out of step; hiding a tab only covered the case
+   where one of them was out of sight. Whichever starts last wins, and the
+   one it silences is told so it can show its button as off. */
+const chan = 'BroadcastChannel' in window ? new BroadcastChannel('otondo-sound') : null;
+let onSilenced = () => {};
+export const whenSilenced = cb => { onSilenced = cb; };
+if (chan) chan.onmessage = e => {
+  if (e.data !== 'playing' || !playing) return;
+  stopMusic();
+  try { onSilenced(); } catch {}
+};
 
 /* A tab you are not looking at goes quiet. Each reload or second window
    opened its own copy of the game, and every one kept playing behind the
