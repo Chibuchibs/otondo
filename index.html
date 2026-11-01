@@ -1381,7 +1381,7 @@
 <script type="module">
 import { newGame, doAction, canDo, unlocked, ACTIONS, phaseOf, nextUnlock, postingOdds, rivalOf,
          computePosting, CHOICES, GOAL, goalStatus,
-         shareText, MAX_DAY } from './game.js?v=20261031220315';
+         shareText, MAX_DAY } from './game.js?v=20261101112434';
 
 /* ---------- scene coordinates ----------
    The scene is scaled by a transform (see the stage), so a native
@@ -1412,11 +1412,11 @@ const TS = (document.getElementById('scene').offsetWidth || 375) / 375;
 const ALLAWEE_NOTE = 'Allawee ₦77,000 — e never enter.';
 import { initNet, joinCamp, syncPlayer, platoonBoard, recentChat, postChat,
          postSuggestion, reportMessage, awardBoard, myAwards, laughChat,
-         setPresence, campRoster, renameMe, setAvatar, online } from './net.js?v=20261031220315';
-import { startMusic, stopMusic, musicOn, audioState, audioSupported, setRain, whenSilenced, wakeAudio, audible, BEAT, BAR } from './audio.js?v=20261031220315';
+         setPresence, campRoster, renameMe, setAvatar, online } from './net.js?v=20261101112434';
+import { startMusic, stopMusic, musicOn, audioState, audioSupported, setRain, whenSilenced, wakeAudio, audible, BEAT, BAR } from './audio.js?v=20261101112434';
 import { playHoop, playPenalty, playQuiz, playRegister, playParade,
          playMami, playHustle, playManOWar, playSaed, playSocial,
-         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261031220315';
+         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261101112434';
 
 /* Every dance animation is expressed in beats, so the steps are on-tempo
    whether or not the sound is playing — and genuinely on the beat when it is. */
@@ -3797,7 +3797,7 @@ function douse(v){
 const WARES = {
   water: { tag: 'TAP FOR PURE WATER ₦100', price: 100, energy: 8,  belle: 0, skin: '#6b4423' },
   akara: { tag: 'TAP FOR AKARA ₦200',      price: 200, energy: 0,  belle: 8, skin: '#8d5524' },
-  kunu:  { tag: 'TAP FOR KUNU ₦250',       price: 250, energy: 18, belle: 2, skin: '#4a2e1c' },
+  kunu:  { tag: 'TAP FOR KUNU ₦100',       price: 100, energy: 18, belle: 2, skin: '#4a2e1c' },
 };
 /* Kunu walks the same way as pure water, once water has gone and while akara
    is still crossing, so the far pavement always has someone on it. */
