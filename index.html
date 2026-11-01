@@ -1381,7 +1381,7 @@
 <script type="module">
 import { newGame, doAction, canDo, unlocked, ACTIONS, phaseOf, nextUnlock, postingOdds, rivalOf,
          computePosting, CHOICES, GOAL, goalStatus,
-         shareText, MAX_DAY } from './game.js?v=20261031151230';
+         shareText, MAX_DAY } from './game.js?v=20261031184503';
 
 /* ---------- scene coordinates ----------
    The scene is scaled by a transform (see the stage), so a native
@@ -1412,11 +1412,11 @@ const TS = (document.getElementById('scene').offsetWidth || 375) / 375;
 const ALLAWEE_NOTE = 'Allawee ₦77,000 — e never enter.';
 import { initNet, joinCamp, syncPlayer, platoonBoard, recentChat, postChat,
          postSuggestion, reportMessage, awardBoard, myAwards, laughChat,
-         setPresence, campRoster, renameMe, setAvatar, online } from './net.js?v=20261031151230';
-import { startMusic, stopMusic, musicOn, audioState, audioSupported, setRain, BEAT, BAR } from './audio.js?v=20261031151230';
+         setPresence, campRoster, renameMe, setAvatar, online } from './net.js?v=20261031184503';
+import { startMusic, stopMusic, musicOn, audioState, audioSupported, setRain, BEAT, BAR } from './audio.js?v=20261031184503';
 import { playHoop, playPenalty, playQuiz, playRegister, playParade,
          playMami, playHustle, playManOWar, playSaed, playSocial,
-         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261031151230';
+         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261031184503';
 
 /* Every dance animation is expressed in beats, so the steps are on-tempo
    whether or not the sound is playing — and genuinely on the beat when it is. */
@@ -3430,7 +3430,14 @@ function labelUnder(x, y){
   /* One hit counts too: a label's speech-bubble tail is not part of its box
      but does take taps, and the corn label's tail lying over PURE WATER is
      what made the first tap buy corn — or nothing, mid-dance — every time. */
-  if (!hits.length) return null;
+  if (!hits.length){
+    /* Her figure counts too. She walks behind the traffic and the walkers, so
+       a tap on her body landed on a danfo or a passer-by — measured: every
+       body tap missed her. Only while she still has something to sell. */
+    const inside = r => x >= r.left && x <= r.right && y >= r.top && y <= r.bottom;
+    return [...sceneEl.querySelectorAll('.hawker')]
+      .find(h => h.querySelector('.tapTag') && inside(h.getBoundingClientRect())) || null;
+  }
   const d = ({ r }) => Math.hypot(x - (r.left + r.width / 2), y - (r.top + r.height / 2));
   return hits.sort((a, b) => d(a) - d(b))[0].t;
 }
