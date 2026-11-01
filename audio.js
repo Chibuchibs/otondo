@@ -416,7 +416,7 @@ const VOICE = {
 };
 const VOICE_LEVEL = 0.9, DUCK = 0.55;
 const VGRID = 0.058, VLEAD = 0.08; // the track's beats sit 58ms early; each clip has 80ms of lead-in
-let musicGain = null, voiceFree = 0, lastSaid = '';
+let musicGain = null, voiceFree = 0, lastSaid = '', saidCount = 0;
 const voiceBufs = {};
 function loadVoice(name) {
   if (!ctx || !VOICE[name]) return Promise.resolve(null);
@@ -442,13 +442,16 @@ export function say(name, { queue = false } = {}) {
     const at = startedAt + Math.ceil((pos + offset) / step) * step - offset - VLEAD;
     if (at < voiceFree - 0.001) return;
     voiceFree = at + buf.duration;
-    lastSaid = name;
+    lastSaid = name; saidCount++;
     const src = ctx.createBufferSource(); src.buffer = buf;
     const g = ctx.createGain(); g.gain.value = VOICE_LEVEL;
     src.connect(g).connect(ctx.destination);
     src.start(at);
     if (musicGain) {
-      const full = musicGain.gain.value, mg = musicGain.gain;
+      /* Back to the music's own level, not to whatever the gain read at the
+         moment: a line queued behind another was called mid-dip, and
+         "restoring" to that left the music a little quieter every time. */
+      const full = usingTrack ? TRACK.level : 1, mg = musicGain.gain;
       mg.setTargetAtTime(full * DUCK, at, 0.03);
       mg.setTargetAtTime(full, at + buf.duration - 0.1, 0.15);
     }
@@ -465,6 +468,7 @@ export const audioState = () => ({
   gain: usingTrack ? TRACK.level : LEVEL,
   source: usingTrack ? 'track' : 'synth',
   rain: rainGain ? +rainGain.gain.value.toFixed(3) : 0,
-  said: lastSaid,
+  said: lastSaid + ' #' + saidCount,
+  music: musicGain ? +musicGain.gain.value.toFixed(3) : 0,
   via: 'web audio' + (navigator.audioSession ? ' + playback category' : ''),
 });
