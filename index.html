@@ -1381,7 +1381,7 @@
 <script type="module">
 import { newGame, doAction, canDo, unlocked, ACTIONS, phaseOf, nextUnlock, postingOdds, rivalOf,
          computePosting, CHOICES, GOAL, goalStatus,
-         shareText, MAX_DAY } from './game.js?v=20261101115805';
+         shareText, MAX_DAY } from './game.js?v=20261101120310';
 
 /* ---------- scene coordinates ----------
    The scene is scaled by a transform (see the stage), so a native
@@ -1412,11 +1412,11 @@ const TS = (document.getElementById('scene').offsetWidth || 375) / 375;
 const ALLAWEE_NOTE = 'Allawee ₦77,000 — e never enter.';
 import { initNet, joinCamp, syncPlayer, platoonBoard, recentChat, postChat,
          postSuggestion, reportMessage, awardBoard, myAwards, laughChat,
-         setPresence, campRoster, renameMe, setAvatar, online } from './net.js?v=20261101115805';
-import { startMusic, stopMusic, musicOn, audioState, audioSupported, setRain, whenSilenced, wakeAudio, audible, say, BEAT, BAR } from './audio.js?v=20261101115805';
+         setPresence, campRoster, renameMe, setAvatar, online } from './net.js?v=20261101120310';
+import { startMusic, stopMusic, musicOn, audioState, audioSupported, setRain, whenSilenced, wakeAudio, audible, say, BEAT, BAR } from './audio.js?v=20261101120310';
 import { playHoop, playPenalty, playQuiz, playRegister, playParade,
          playMami, playHustle, playManOWar, playSaed, playSocial,
-         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261101115805';
+         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261101120310';
 
 /* Every dance animation is expressed in beats, so the steps are on-tempo
    whether or not the sound is playing — and genuinely on the beat when it is. */
@@ -2565,7 +2565,13 @@ pointer.innerHTML = `<svg viewBox="0 0 40 30" aria-hidden="true">
 </svg>`;
 sceneEl.appendChild(pointer);
 
-let lastAimed = 0;
+let lastAimed = 0, oyaSaid = -1e9;
+/* And once at the start, the moment the music can actually be heard. */
+const hello = setInterval(() => {
+  if (!audible()) return;
+  clearInterval(hello);
+  setTimeout(() => { if (say('oya')) oyaSaid = performance.now(); }, 800);
+}, 250);
 /* The figure on a run you paid for. Only paid runs: the street also sends
    walkers shopping on its own, and YOU following those read as your corper
    wandering off untapped. */
@@ -2616,6 +2622,10 @@ function aimPointer(){
      followed a departing target straight off the scene — measured at left:393
      on a 375px board, which is the "YOU is pegged off" the player sees. */
   if (centre < -4 || centre > box.width + 4){ pointer.style.opacity = '0'; return; }
+  /* YOU walking back in from the left edge, after the marker had gone — out
+     of the hole, or round again — gets "Oya, let's go!", spaced out. */
+  if (pointer.style.opacity === '0' && centre < box.width * 0.2
+      && performance.now() - oyaSaid > 30000 && say('oya')) oyaSaid = performance.now();
   pointer.style.opacity = '1';
   /* Clamped so the arrow itself can never hang over the bezel, however close
      to the edge its target gets. */
@@ -4356,7 +4366,7 @@ function snackRun(preferred, target, paid){
 
   const who = runner.el;
   const home = runner.c;
-  if (paid){ paidRunner = who; say('oya'); }      // "Oya, let's go!" as he sets off
+  if (paid) paidRunner = who;
   stall.el.dataset.target = '1';                  // marked so it can be verified
   who.style.animationPlayState = 'paused';        // drop out of the march
   who.classList.add('running');
