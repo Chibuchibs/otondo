@@ -410,10 +410,8 @@ const VOICE = {
   akara: './sfx/seller-akara.m4a',
   kunu:  './sfx/seller-kunu.m4a',
   shine:   './sfx/shine-your-eyes.m4a',
-  enter:   './sfx/e-enter.m4a',
-  wahala:  './sfx/no-wahala.m4a',
+  enter:   './sfx/haha-e-enter.m4a',    // "Haha, e enter!" — pidgin for: that satisfies
   toomuch: './sfx/you-too-much.m4a',
-  haha:    './sfx/haha.m4a',
 };
 const VOICE_LEVEL = 0.9, DUCK = 0.55;
 const VGRID = 0.058, VLEAD = 0.08; // the track's beats sit 58ms early; each clip has 80ms of lead-in

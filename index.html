@@ -1381,7 +1381,7 @@
 <script type="module">
 import { newGame, doAction, canDo, unlocked, ACTIONS, phaseOf, nextUnlock, postingOdds, rivalOf,
          computePosting, CHOICES, GOAL, goalStatus,
-         shareText, MAX_DAY } from './game.js?v=20261101120310';
+         shareText, MAX_DAY } from './game.js?v=20261101121324';
 
 /* ---------- scene coordinates ----------
    The scene is scaled by a transform (see the stage), so a native
@@ -1412,11 +1412,11 @@ const TS = (document.getElementById('scene').offsetWidth || 375) / 375;
 const ALLAWEE_NOTE = 'Allawee ₦77,000 — e never enter.';
 import { initNet, joinCamp, syncPlayer, platoonBoard, recentChat, postChat,
          postSuggestion, reportMessage, awardBoard, myAwards, laughChat,
-         setPresence, campRoster, renameMe, setAvatar, online } from './net.js?v=20261101120310';
-import { startMusic, stopMusic, musicOn, audioState, audioSupported, setRain, whenSilenced, wakeAudio, audible, say, BEAT, BAR } from './audio.js?v=20261101120310';
+         setPresence, campRoster, renameMe, setAvatar, online } from './net.js?v=20261101121324';
+import { startMusic, stopMusic, musicOn, audioState, audioSupported, setRain, whenSilenced, wakeAudio, audible, say, BEAT, BAR } from './audio.js?v=20261101121324';
 import { playHoop, playPenalty, playQuiz, playRegister, playParade,
          playMami, playHustle, playManOWar, playSaed, playSocial,
-         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261101120310';
+         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261101121324';
 
 /* Every dance animation is expressed in beats, so the steps are on-tempo
    whether or not the sound is playing — and genuinely on the beat when it is. */
@@ -3012,7 +3012,6 @@ function hopPothole(p, paid){
     { transform: 'translateY(0)' },
   ], { duration: 620, easing: 'cubic-bezier(.3,0,.4,1)', composite: 'add' });
   setTimeout(() => { p.classList.remove('jumping'); }, 640);
-  if (paid) say('wahala');                          // cleared it: "No wahala!"
   if (paid && s){
     s.energy = Math.max(0, s.energy - JUMP_COST);
     save(); render();
@@ -3023,7 +3022,6 @@ function hopPothole(p, paid){
 function fallIn(p){
   if (p.dataset.hop) return;
   p.dataset.hop = '1';
-  say('haha');                                     // the street laughs
   potReadyAt = performance.now() + POT_COOLDOWN;
   p.classList.add('sunk');
   /* Stop walking the moment he goes in. Left running, he covered 27px during
@@ -4407,8 +4405,8 @@ function snackRun(preferred, target, paid){
     if (paid) buy(stall.el, who);      // only a tap costs money
     /* Kunu and akara name their price as he reaches them, after his "Oya, let's go!" */
     if (paid && hawk && CALLS_ON_ARRIVAL.has(stall.el.dataset.kind)) say(stall.el.dataset.kind, { queue: true });
-    /* Jollof and roasted corn — the two food shops — get "E enter!": it
-       satisfies, it is good. Said as he reaches the stall and starts to eat. */
+    /* Jollof and roasted corn, the two food shops, get "Haha, e enter!":
+       pidgin for "that satisfies". Said as he reaches the stall and eats. */
     if (paid && !hawk && stall.el.dataset.food) say('enter', { queue: true });
     if (indoor){
       /* In through the door: a quick shrink-and-fade. Two animations, since
