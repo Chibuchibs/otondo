@@ -1381,7 +1381,7 @@
 <script type="module">
 import { newGame, doAction, canDo, unlocked, ACTIONS, phaseOf, nextUnlock, postingOdds, rivalOf,
          computePosting, CHOICES, GOAL, goalStatus,
-         shareText, MAX_DAY } from './game.js?v=20261031184503';
+         shareText, MAX_DAY } from './game.js?v=20261031205203';
 
 /* ---------- scene coordinates ----------
    The scene is scaled by a transform (see the stage), so a native
@@ -1412,11 +1412,11 @@ const TS = (document.getElementById('scene').offsetWidth || 375) / 375;
 const ALLAWEE_NOTE = 'Allawee ₦77,000 — e never enter.';
 import { initNet, joinCamp, syncPlayer, platoonBoard, recentChat, postChat,
          postSuggestion, reportMessage, awardBoard, myAwards, laughChat,
-         setPresence, campRoster, renameMe, setAvatar, online } from './net.js?v=20261031184503';
-import { startMusic, stopMusic, musicOn, audioState, audioSupported, setRain, BEAT, BAR } from './audio.js?v=20261031184503';
+         setPresence, campRoster, renameMe, setAvatar, online } from './net.js?v=20261031205203';
+import { startMusic, stopMusic, musicOn, audioState, audioSupported, setRain, BEAT, BAR } from './audio.js?v=20261031205203';
 import { playHoop, playPenalty, playQuiz, playRegister, playParade,
          playMami, playHustle, playManOWar, playSaed, playSocial,
-         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261031184503';
+         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261031205203';
 
 /* Every dance animation is expressed in beats, so the steps are on-tempo
    whether or not the sound is playing — and genuinely on the beat when it is. */
@@ -3824,8 +3824,14 @@ function hawkerCycle(){
    comes down with the last one. She stops while he is with her, so the sale
    is made standing still rather than on the move. */
 function buyWares(hw){
+  /* One errand to her at a time. A second tap while the first was still
+     waiting for her to come into frame sent a second corper and charged
+     twice. */
+  if (hw.dataset.busy) return;
   const left = (+hw.dataset.left || 0) - 1;
   if (left < 0) return;
+  hw.dataset.busy = '1';
+  const done = () => { delete hw.dataset.busy; };
   hw.dataset.left = String(left);
   if (left === 0){ hw.querySelector('.tapTag')?.remove(); hw.removeAttribute('aria-label'); }
   const who = cornTarget || rideTarget || jumpShown || null;
@@ -3839,11 +3845,11 @@ function buyWares(hw){
   const go = () => {
     if (snackRun(who, hw, true)){
       setTimeout(() => hw.classList.add('paused'), RUN_MS);
-      setTimeout(() => hw.classList.remove('paused'), RUN_MS + EAT_MS);
+      setTimeout(() => { hw.classList.remove('paused'); done(); }, RUN_MS + EAT_MS);
       return;
     }
     if (++tries < 10 && hw.isConnected){ setTimeout(go, 250); return; }
-    buy(hw, hw);
+    buy(hw, hw); done();
   };
   go();
 }
@@ -4272,7 +4278,19 @@ function snackRun(preferred, target, paid){
      any shop in frame, so a tap on the kunu seller near the edge sent him into
      the provision store and charged provisions — money gone, no energy. Now an
      unreachable target returns false and the caller sells it where it stands. */
-  const stall  = target ? [place(target)].find(x => x.ok)
+  /* A seller tapped near the edge is judged by where she will be when he
+     gets there, and with a wider margin. Held to the 12-88% band, a kunu
+     seller walking in from the right failed every check for up to 2.5s, the
+     first tap looked ignored, and the second tap sent a second corper. */
+  const hawkSpeed = el => el.classList.contains('paused') ? 0
+    : (box.width * 1.30) / (HAWK_LEN * TS * 1000) * (el.classList.contains('akara') ? 1 : -1);
+  const reach = el => {
+    const x = place(el);
+    if (!el.classList.contains('hawker')) return x;
+    const at = x.c + hawkSpeed(el) * RUN_MS;
+    return { ...x, ok: at > box.width * 0.05 && at < box.width * 0.95 };
+  };
+  const stall  = target ? [reach(target)].find(x => x.ok)
                         : [...sc.querySelectorAll('.shop[data-errand]')].map(place).find(x => x.ok);
   /* A tapped corper goes if they are in frame; otherwise fall back to
      whoever is, so the timer-driven run still works. */
@@ -4323,8 +4341,10 @@ function snackRun(preferred, target, paid){
      at the door and is gone; the kerb sellers keep the stand-and-eat, because
      watching him chew is the point of those. */
   const indoor = !hawk && !stall.el.dataset.food;
+  /* A seller already stopped for someone else is not walking, so he aims at
+     where she stands, not where she would have walked to. */
   const speed = hawk
-    ? (box.width * 1.30) / (HAWK_LEN * TS * 1000) * (stall.el.classList.contains('akara') ? 1 : -1)
+    ? hawkSpeed(stall.el)
     : (box.width * SHOP_TRAVEL) / (SHOP_CYCLE * 1000);   // px per ms
   park(stallNow() + speed * RUN_MS);
 
