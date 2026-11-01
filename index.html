@@ -1381,7 +1381,7 @@
 <script type="module">
 import { newGame, doAction, canDo, unlocked, ACTIONS, phaseOf, nextUnlock, postingOdds, rivalOf,
          computePosting, CHOICES, GOAL, goalStatus,
-         shareText, MAX_DAY } from './game.js?v=20261031211212';
+         shareText, MAX_DAY } from './game.js?v=20261031211842';
 
 /* ---------- scene coordinates ----------
    The scene is scaled by a transform (see the stage), so a native
@@ -1412,11 +1412,11 @@ const TS = (document.getElementById('scene').offsetWidth || 375) / 375;
 const ALLAWEE_NOTE = 'Allawee ₦77,000 — e never enter.';
 import { initNet, joinCamp, syncPlayer, platoonBoard, recentChat, postChat,
          postSuggestion, reportMessage, awardBoard, myAwards, laughChat,
-         setPresence, campRoster, renameMe, setAvatar, online } from './net.js?v=20261031211212';
-import { startMusic, stopMusic, musicOn, audioState, audioSupported, setRain, BEAT, BAR } from './audio.js?v=20261031211212';
+         setPresence, campRoster, renameMe, setAvatar, online } from './net.js?v=20261031211842';
+import { startMusic, stopMusic, musicOn, audioState, audioSupported, setRain, BEAT, BAR } from './audio.js?v=20261031211842';
 import { playHoop, playPenalty, playQuiz, playRegister, playParade,
          playMami, playHustle, playManOWar, playSaed, playSocial,
-         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261031211212';
+         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261031211842';
 
 /* Every dance animation is expressed in beats, so the steps are on-tempo
    whether or not the sound is playing — and genuinely on the beat when it is. */
@@ -2587,7 +2587,12 @@ function aimPointer(){
      at a figure with no instruction above them is the "YOU and no command" the
      player reports; pointing at one that is mid-errand is worse, because the
      tap then does nothing. */
-  let best = sceneEl.querySelector('.corper.wantsJump, .corper.wantsCorn, .corper.wantsRide');
+  /* YOU on an errand outranks everything, the half-second hold included. The
+     hold kept the marker parked while the dash did most of its distance in
+     its first half-second, so the runner reached the seller with YOU left
+     behind on the road. */
+  let best = youFig && youFig.isConnected && youFig.matches('.running, .munching, .shopping') ? youFig
+    : sceneEl.querySelector('.corper.wantsJump, .corper.wantsCorn, .corper.wantsRide');
   if (best) lastAimed = performance.now();
   else {
     /* offerTick runs every 150ms and clears the old offer before setting the
@@ -4331,6 +4336,7 @@ function snackRun(preferred, target, paid){
 
   const who = runner.el;
   const home = runner.c;
+  if (paid) youFig = who;                         // whoever spends your money is you
   stall.el.dataset.target = '1';                  // marked so it can be verified
   who.style.animationPlayState = 'paused';        // drop out of the march
   who.classList.add('running');
