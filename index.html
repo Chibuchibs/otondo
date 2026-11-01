@@ -1381,7 +1381,7 @@
 <script type="module">
 import { newGame, doAction, canDo, unlocked, ACTIONS, phaseOf, nextUnlock, postingOdds, rivalOf,
          computePosting, CHOICES, GOAL, goalStatus,
-         shareText, MAX_DAY } from './game.js?v=20261031205203';
+         shareText, MAX_DAY } from './game.js?v=20261031211212';
 
 /* ---------- scene coordinates ----------
    The scene is scaled by a transform (see the stage), so a native
@@ -1412,11 +1412,11 @@ const TS = (document.getElementById('scene').offsetWidth || 375) / 375;
 const ALLAWEE_NOTE = 'Allawee ₦77,000 — e never enter.';
 import { initNet, joinCamp, syncPlayer, platoonBoard, recentChat, postChat,
          postSuggestion, reportMessage, awardBoard, myAwards, laughChat,
-         setPresence, campRoster, renameMe, setAvatar, online } from './net.js?v=20261031205203';
-import { startMusic, stopMusic, musicOn, audioState, audioSupported, setRain, BEAT, BAR } from './audio.js?v=20261031205203';
+         setPresence, campRoster, renameMe, setAvatar, online } from './net.js?v=20261031211212';
+import { startMusic, stopMusic, musicOn, audioState, audioSupported, setRain, BEAT, BAR } from './audio.js?v=20261031211212';
 import { playHoop, playPenalty, playQuiz, playRegister, playParade,
          playMami, playHustle, playManOWar, playSaed, playSocial,
-         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261031205203';
+         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261031211212';
 
 /* Every dance animation is expressed in beats, so the steps are on-tempo
    whether or not the sound is playing — and genuinely on the beat when it is. */
@@ -2566,6 +2566,9 @@ pointer.innerHTML = `<svg viewBox="0 0 40 30" aria-hidden="true">
 sceneEl.appendChild(pointer);
 
 let lastAimed = 0;
+/* Whoever wears YOU right now. A tap on a seller sends this figure, so the
+   one the player was told is theirs is the one who crosses the road. */
+let youFig = null;
 function aimPointer(){
   /* Deliberately NOT tied to hintDone. The chip is a tutorial and goes away
      once you have tapped; this marks which figure is yours, which stays true
@@ -2595,10 +2598,15 @@ function aimPointer(){
        something (see the click handler's fallbacks). */
     if (performance.now() - lastAimed < 500) return;
     const box0 = sceneEl.sceneRect();
-    best = [...sceneEl.querySelectorAll(':scope > .corper')]
-      .filter(freeFig).find(p => inFrame(p, box0, 0.05)) || null;
+    /* Stay on YOU while he is off buying kunu. Moving the marker to the next
+       free walker the moment he set off made the runner look like a stranger. */
+    best = youFig && youFig.isConnected
+        && (onErrand(youFig) || (freeFig(youFig) && inFrame(youFig, box0, 0.05))) ? youFig
+      : [...sceneEl.querySelectorAll(':scope > .corper')]
+        .filter(freeFig).find(p => inFrame(p, box0, 0.05)) || null;
     if (!best){ pointer.style.opacity = '0'; return; }
   }
+  youFig = best;
   const box = sceneEl.sceneRect();
   const r = best.sceneRect();
   const centre = r.left - box.left + r.width / 2;
@@ -3834,7 +3842,7 @@ function buyWares(hw){
   const done = () => { delete hw.dataset.busy; };
   hw.dataset.left = String(left);
   if (left === 0){ hw.querySelector('.tapTag')?.remove(); hw.removeAttribute('aria-label'); }
-  const who = cornTarget || rideTarget || jumpShown || null;
+  const who = cornTarget || rideTarget || jumpShown || youFig || null;
   clearCorn(); clearRide();
   backToTrekking();
   /* The dash across the road IS the purchase, as far as the player is
@@ -4307,7 +4315,12 @@ function snackRun(preferred, target, paid){
   const nearest = paid && stall ? crew.filter(freeFig).map(place)
       .filter(x => x.c > -box.width * 0.08 && x.c < box.width)
       .sort((a, b) => Math.abs(a.c - stall.c) - Math.abs(b.c - stall.c))[0] : null;
-  const runner = (picked && picked.ok) ? picked
+  /* On a paid tap the named figure goes even near the edge, as long as he is
+     on screen and free. Held to the 12-88% band, a walker without the marker
+     went instead, and the player saw a stranger buy their kunu. */
+  const pickedGoes = picked && (picked.ok
+    || (paid && freeFig(picked.el) && picked.c > -box.width * 0.08 && picked.c < box.width));
+  const runner = pickedGoes ? picked
                : crew.filter(freeFig).map(place).find(x => x.ok) || nearest;
   settle.forEach(p => { p.style.transition = ''; });   // restore the CSS glide
   if (!stall || !runner) return false;
