@@ -427,16 +427,21 @@ function loadVoice(name) {
     .catch(e => { console.warn('[otondo] voice unavailable:', name, e.message); return null; });
   return voiceBufs[name];
 }
-export function say(name) {
-  if (!playing || !ctx || ctx.state !== 'running' || ctx.currentTime < voiceFree) return false;
+/* `queue`: if someone is already talking, wait for them to finish rather
+   than drop the line — up to two seconds. A seller answering "Oya, let's go!"
+   has to come after it, not instead of it. */
+export function say(name, { queue = false } = {}) {
+  if (!playing || !ctx || ctx.state !== 'running') return false;
+  const wait = voiceFree - ctx.currentTime;
+  if (wait > (queue ? 2 : 0)) return false;
   loadVoice(name).then(buf => {
     if (!buf || !playing || ctx.state !== 'running') return;
     /* The next eighth-note of the groove: never more than a quarter-second
        away, so a line still answers the tap that caused it. */
     const step = BEAT / 2, offset = usingTrack ? VGRID : 0;
-    const pos = ctx.currentTime - startedAt + VLEAD + 0.03;
+    const pos = Math.max(ctx.currentTime, voiceFree) - startedAt + VLEAD + 0.03;
     const at = startedAt + Math.ceil((pos + offset) / step) * step - offset - VLEAD;
-    if (at < voiceFree) return;
+    if (at < voiceFree - 0.001) return;
     voiceFree = at + buf.duration;
     lastSaid = name;
     const src = ctx.createBufferSource(); src.buffer = buf;
