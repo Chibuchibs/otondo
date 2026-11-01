@@ -1381,7 +1381,7 @@
 <script type="module">
 import { newGame, doAction, canDo, unlocked, ACTIONS, phaseOf, nextUnlock, postingOdds, rivalOf,
          computePosting, CHOICES, GOAL, goalStatus,
-         shareText, MAX_DAY } from './game.js?v=20261101114301';
+         shareText, MAX_DAY } from './game.js?v=20261101114924';
 
 /* ---------- scene coordinates ----------
    The scene is scaled by a transform (see the stage), so a native
@@ -1412,11 +1412,11 @@ const TS = (document.getElementById('scene').offsetWidth || 375) / 375;
 const ALLAWEE_NOTE = 'Allawee ₦77,000 — e never enter.';
 import { initNet, joinCamp, syncPlayer, platoonBoard, recentChat, postChat,
          postSuggestion, reportMessage, awardBoard, myAwards, laughChat,
-         setPresence, campRoster, renameMe, setAvatar, online } from './net.js?v=20261101114301';
-import { startMusic, stopMusic, musicOn, audioState, audioSupported, setRain, whenSilenced, wakeAudio, audible, say, BEAT, BAR } from './audio.js?v=20261101114301';
+         setPresence, campRoster, renameMe, setAvatar, online } from './net.js?v=20261101114924';
+import { startMusic, stopMusic, musicOn, audioState, audioSupported, setRain, whenSilenced, wakeAudio, audible, say, BEAT, BAR } from './audio.js?v=20261101114924';
 import { playHoop, playPenalty, playQuiz, playRegister, playParade,
          playMami, playHustle, playManOWar, playSaed, playSocial,
-         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261101114301';
+         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261101114924';
 
 /* Every dance animation is expressed in beats, so the steps are on-tempo
    whether or not the sound is playing — and genuinely on the beat when it is. */
@@ -3002,6 +3002,7 @@ function hopPothole(p, paid){
     { transform: 'translateY(0)' },
   ], { duration: 620, easing: 'cubic-bezier(.3,0,.4,1)', composite: 'add' });
   setTimeout(() => { p.classList.remove('jumping'); }, 640);
+  if (paid) say(Math.random() < 0.5 ? 'enter' : 'wahala');   // cleared it
   if (paid && s){
     s.energy = Math.max(0, s.energy - JUMP_COST);
     save(); render();
@@ -3012,6 +3013,7 @@ function hopPothole(p, paid){
 function fallIn(p){
   if (p.dataset.hop) return;
   p.dataset.hop = '1';
+  say('haha');                                     // the street laughs
   potReadyAt = performance.now() + POT_COOLDOWN;
   p.classList.add('sunk');
   /* Stop walking the moment he goes in. Left running, he covered 27px during
@@ -3312,6 +3314,7 @@ let rideAnchor = null;
    the tick. Running the two on independent timers meant a turn with no shop in
    frame produced no label at all, and the YOU marker sat over a figure with
    nothing written above them. */
+let shineSaid = -1e9;
 function offerTick(){
   /* Mr. Pothole first, always. It is the only offer with a deadline — the
      others wait patiently while a shop drifts past, this one is gone the
@@ -3324,6 +3327,8 @@ function offerTick(){
       if (jumpShown) { jumpShown.classList.remove('wantsJump'); unmark(jumpShown); }
       jumpShown = jumpTarget;
       jumpShown.classList.add('wantsJump');
+      /* A warning, not a nag: at most once every 25s. */
+      if (performance.now() - shineSaid > 25000 && say('shine')) shineSaid = performance.now();
       markTappable(jumpShown);
       jumpTag.textContent = 'TAP TO JUMP MR. POTHOLE';
       jumpTag.style.display = 'block';
@@ -5103,6 +5108,7 @@ $('goal').addEventListener('click', e => {
 
 /* The burst: a card over everything and a shower of paper in camp colours. */
 function hooray(msg, pick = false){
+  say('toomuch');                                  // "You are too much!"
   const wrap = $('hooray');
   $('hoorayMsg').innerHTML = msg;
   const chips = $('hoorayChips');

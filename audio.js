@@ -409,6 +409,11 @@ const VOICE = {
   water: './sfx/seller-water.m4a',
   akara: './sfx/seller-akara.m4a',
   kunu:  './sfx/seller-kunu.m4a',
+  shine:   './sfx/shine-your-eyes.m4a',
+  enter:   './sfx/e-enter.m4a',
+  wahala:  './sfx/no-wahala.m4a',
+  toomuch: './sfx/you-too-much.m4a',
+  haha:    './sfx/haha.m4a',
 };
 const VOICE_LEVEL = 0.9, DUCK = 0.55;
 const VGRID = 0.058, VLEAD = 0.08; // the track's beats sit 58ms early; each clip has 80ms of lead-in
@@ -423,7 +428,7 @@ function loadVoice(name) {
   return voiceBufs[name];
 }
 export function say(name) {
-  if (!playing || !ctx || ctx.state !== 'running' || ctx.currentTime < voiceFree) return;
+  if (!playing || !ctx || ctx.state !== 'running' || ctx.currentTime < voiceFree) return false;
   loadVoice(name).then(buf => {
     if (!buf || !playing || ctx.state !== 'running') return;
     /* The next eighth-note of the groove: never more than a quarter-second
@@ -444,6 +449,7 @@ export function say(name) {
       mg.setTargetAtTime(full, at + buf.duration - 0.1, 0.15);
     }
   });
+  return true;
 }
 
 export const musicOn = () => playing;
