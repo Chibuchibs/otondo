@@ -1273,7 +1273,7 @@
         <small class="tip">Broke. Tap Odogwu when he pass, or hustle for mami market.</small>
         <small class="goalLine" id="gMoney"></small></div>
       <div class="stat cred"><b>Credibility</b><span id="sCred"></span>
-        <small class="tip">Earn am: parade, drills, Man O War.</small>
+        <small class="tip">Low. Fall in for parade, do Man O War or play sports.</small>
         <small class="goalLine" id="gCred"></small></div>
     </div>
     <div class="live" id="live" role="button" tabindex="0"
@@ -1381,7 +1381,7 @@
 <script type="module">
 import { newGame, doAction, canDo, unlocked, ACTIONS, phaseOf, nextUnlock, postingOdds, rivalOf,
          computePosting, CHOICES, GOAL, goalStatus,
-         shareText, MAX_DAY } from './game.js?v=20261101195214';
+         shareText, MAX_DAY } from './game.js?v=20261101195405';
 
 /* ---------- scene coordinates ----------
    The scene is scaled by a transform (see the stage), so a native
@@ -1412,11 +1412,11 @@ const TS = (document.getElementById('scene').offsetWidth || 375) / 375;
 const ALLAWEE_NOTE = 'Allawee ₦77,000 — e never enter.';
 import { initNet, joinCamp, syncPlayer, platoonBoard, recentChat, postChat,
          postSuggestion, reportMessage, awardBoard, myAwards, laughChat,
-         setPresence, campRoster, renameMe, setAvatar, online } from './net.js?v=20261101195214';
-import { startMusic, stopMusic, musicOn, audioState, audioSupported, setRain, whenSilenced, wakeAudio, audible, say, BEAT, BAR } from './audio.js?v=20261101195214';
+         setPresence, campRoster, renameMe, setAvatar, online } from './net.js?v=20261101195405';
+import { startMusic, stopMusic, musicOn, audioState, audioSupported, setRain, whenSilenced, wakeAudio, audible, say, BEAT, BAR } from './audio.js?v=20261101195405';
 import { playHoop, playPenalty, playQuiz, playRegister, playParade,
          playMami, playHustle, playManOWar, playSaed, playSocial,
-         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261101195214';
+         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261101195405';
 
 /* Every dance animation is expressed in beats, so the steps are on-tempo
    whether or not the sound is playing — and genuinely on the beat when it is. */
@@ -4988,11 +4988,11 @@ function render(){
   $('sCred').textContent = s.cred;
   flashStats();
   /* Low marks. Credibility starts at zero for everybody, so that one only
-     nags once there has been a day to earn some. */
+     nags once there has been a day to earn some; from then on it warns at 10. */
   $('sEnergy').closest('.stat').classList.toggle('low', s.energy < 25);
   $('sBelle').closest('.stat').classList.toggle('low', s.belle < 25);
   $('sMoney').closest('.stat').classList.toggle('low', s.money < 300);
-  $('sCred').closest('.stat').classList.toggle('low', s.cred < 5 && s.day > 1);
+  $('sCred').closest('.stat').classList.toggle('low', s.cred <= 10 && s.day > 1);
   drawGoal();
   bar($('bEnergy'), s.energy); bar($('bBelle'), s.belle);
   drawWhoami();
