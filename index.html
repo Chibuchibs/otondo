@@ -1381,7 +1381,7 @@
 <script type="module">
 import { newGame, doAction, canDo, unlocked, ACTIONS, phaseOf, nextUnlock, postingOdds, rivalOf,
          computePosting, CHOICES, GOAL, goalStatus,
-         shareText, MAX_DAY } from './game.js?v=20261101201734';
+         shareText, MAX_DAY } from './game.js?v=20261101203949';
 
 /* ---------- scene coordinates ----------
    The scene is scaled by a transform (see the stage), so a native
@@ -1412,11 +1412,11 @@ const TS = (document.getElementById('scene').offsetWidth || 375) / 375;
 const ALLAWEE_NOTE = 'Allawee ₦77,000 — e never enter.';
 import { initNet, joinCamp, syncPlayer, platoonBoard, recentChat, postChat,
          postSuggestion, reportMessage, awardBoard, myAwards, laughChat,
-         setPresence, campRoster, renameMe, setAvatar, online } from './net.js?v=20261101201734';
-import { startMusic, stopMusic, musicOn, audioState, audioSupported, setRain, whenSilenced, wakeAudio, audible, say, BEAT, BAR } from './audio.js?v=20261101201734';
+         setPresence, campRoster, renameMe, setAvatar, online } from './net.js?v=20261101203949';
+import { startMusic, stopMusic, musicOn, audioState, audioSupported, setRain, whenSilenced, wakeAudio, audible, say, BEAT, BAR } from './audio.js?v=20261101203949';
 import { playHoop, playPenalty, playQuiz, playRegister, playParade,
          playMami, playHustle, playManOWar, playSaed, playSocial,
-         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261101201734';
+         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261101203949';
 
 /* Every dance animation is expressed in beats, so the steps are on-tempo
    whether or not the sound is playing — and genuinely on the beat when it is. */
@@ -5213,9 +5213,9 @@ function drawWhoami(force){
   const auto = isAutoName(s.name);
   el.innerHTML = `<button type="button" class="avBtn" id="avBtn" aria-label="Change your face">${avatarSvg(myAvatar())}</button>` +
                  `<b class="${auto ? 'auto' : ''}">${esc(s.name)}</b>` +
-                 `<button type="button" id="renameBtn">${auto ? 'pick a name' : 'change'}</button>` +
-                 `<button type="button" id="avLink">face</button>`;
-  $('renameBtn').onclick = startRename;
+                 `<button type="button" id="renameBtn">${auto ? 'pick a name' : 'rename'}</button>` +
+                 `<button type="button" id="avLink">change face</button>`;
+  $('renameBtn').onclick = () => startRename();   // not the click event as the host
   $('avBtn').onclick = $('avLink').onclick = () => startAvatarPick(el);
 }
 
