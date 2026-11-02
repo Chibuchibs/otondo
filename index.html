@@ -1445,7 +1445,7 @@
 <script type="module">
 import { newGame, doAction, canDo, unlocked, ACTIONS, phaseOf, nextUnlock, postingOdds, rivalOf,
          computePosting, CHOICES, GOAL, goalStatus,
-         shareText, MAX_DAY } from './game.js?v=20261101232723';
+         shareText, MAX_DAY } from './game.js?v=20261101233526';
 
 /* ---------- scene coordinates ----------
    The scene is scaled by a transform (see the stage), so a native
@@ -1476,11 +1476,11 @@ const TS = (document.getElementById('scene').offsetWidth || 375) / 375;
 const ALLAWEE_NOTE = 'Allawee ₦77,000 — e never enter.';
 import { initNet, joinCamp, syncPlayer, platoonBoard, recentChat, postChat,
          postSuggestion, reportMessage, awardBoard, myAwards, laughChat,
-         setPresence, campRoster, renameMe, setAvatar, online } from './net.js?v=20261101232723';
-import { startMusic, stopMusic, musicOn, audioState, audioSupported, setRain, whenSilenced, wakeAudio, audible, say, BEAT, BAR } from './audio.js?v=20261101232723';
+         setPresence, campRoster, renameMe, setAvatar, online } from './net.js?v=20261101233526';
+import { startMusic, stopMusic, musicOn, audioState, audioSupported, setRain, whenSilenced, wakeAudio, audible, say, BEAT, BAR } from './audio.js?v=20261101233526';
 import { playHoop, playPenalty, playQuiz, playRegister, playParade,
          playMami, playHustle, playManOWar, playSaed, playSocial,
-         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261101232723';
+         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261101233526';
 
 /* Every dance animation is expressed in beats, so the steps are on-tempo
    whether or not the sound is playing — and genuinely on the beat when it is. */
@@ -2374,7 +2374,7 @@ let shoutSign = null;
    stuck rather than dancing. A bar is 2.2857s and the steps are locked to it,
    so one bar is the shortest cut that does not fall out of time with the
    music: legwork for two beats, shaku for two. */
-const DANCE_EVERY = BAR * 8 * 1000, DANCE_FOR = BAR * 1 * 1000;
+const DANCE_FOR = BAR * 1 * 1000;
 const stillWatching = () =>
   !window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
@@ -3786,6 +3786,7 @@ function catchThief(run){
     render();
     floatCost(fig, `+₦${back.toLocaleString()}  +1 CRED`);
     titleCheck();
+    celebrate();
   }
 
   setTimeout(() => {
@@ -3948,6 +3949,7 @@ function douse(v){
     titleCheck();
   }
   if (left > 0) return;
+  celebrate();                                     // the last flame is out
   v.querySelectorAll('.flame').forEach(f => f.remove());
   v.querySelector('.tapTag')?.remove();
   v.classList.remove('ablaze');
@@ -4357,6 +4359,7 @@ function upNepa(){
   if (sceneEl.classList.contains('dancing')){ setTimeout(upNepa, 2500); return; }
   sceneEl.classList.add('light');
   if (shoutSign) shoutSign(UP_NEPA);
+  celebrate();
   setTimeout(() => {
     sceneEl.classList.remove('light');
     if (shoutSign) shoutSign(NEPA_OFF);
@@ -4374,7 +4377,7 @@ const SND_KEY = 'otondo:sound';
 if (audioSupported()) $('snd').classList.remove('hidden');
 function showSoundOff(){
   const btn = $('snd');
-  startDanceTimers();                         // hand the dance back to the clock
+  if (danceOwed){ danceOwed = false; setTimeout(danceBreak, 500); }   // no bar line coming now
   btn.classList.remove('on');
   btn.setAttribute('aria-pressed', 'false');
   btn.setAttribute('aria-label', 'Play the camp groove');
@@ -4402,7 +4405,6 @@ function toggleSound(){
   }
   const ok = startMusic(onMusicBar);
   if (!ok) return;
-  clearInterval(danceTimer);                  // the bar clock takes over
   showSoundOn();
   soundHint();
   try { localStorage.setItem(SND_KEY, '1'); } catch {}
@@ -4452,7 +4454,6 @@ try {
       wakeAudio();
       setTimeout(() => {
         if (!audible()) return;
-        clearInterval(danceTimer);              // the bar clock takes over
         WAKE.forEach(t => document.removeEventListener(t, wake, true));
       }, 120);
     };
@@ -4460,22 +4461,20 @@ try {
   }
 } catch {}
 
-let danceTimer = null;
-function startDanceTimers(){
-  clearInterval(danceTimer);
-  /* Stands down by itself once the music is audible: the bar clock leads
-     then, and two clocks would dance twice. */
-  danceTimer = setInterval(() => { if (!audible()) danceBreak(); }, DANCE_EVERY);
+/* The dance is a celebration, not a clock. On a timer it stopped the street
+   every 18s for nothing, and after the second time nobody saw it; now the
+   street dances when you have done something: goals hit, a thief caught, a
+   fire out, light back. With the music on it waits for the next bar line so
+   it lands on the beat; without, it goes straight away. */
+let danceOwed = false;
+function celebrate(){
+  if (audible()) { danceOwed = true; return; }
+  setTimeout(danceBreak, 500);
 }
-/* Unless the music is already audible, in which case its bar clock leads. */
-setTimeout(() => { if (!audible()){ danceBreak(); startDanceTimers(); } }, 6000);
-
-/* With the music on the dance hangs off bar lines instead of a timer, so it
-   cannot drift away from the beat however long the page is left open. */
-/* The bar index comes straight off the audio element's clock, so the routine
-   cannot drift from the music no matter how long the page is left open. */
-function onMusicBar(b){
-  if (b % 8 === 0) danceBreak();    // danceBreak itself ends it one bar later
+function onMusicBar(){
+  if (!danceOwed) return;
+  danceOwed = false;
+  danceBreak();                     // danceBreak itself ends it one bar later
 }
 
 /* ---------- the boli run ----------
@@ -5315,6 +5314,7 @@ $('goal').addEventListener('click', e => {
 /* The burst: a card over everything and a shower of paper in camp colours. */
 function hooray(msg, pick = false){
   say('toomuch');                                  // "You are too much!"
+  celebrate();
   const wrap = $('hooray');
   $('hoorayMsg').innerHTML = msg;
   const chips = $('hoorayChips');
