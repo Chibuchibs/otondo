@@ -333,6 +333,17 @@
     display:flex;justify-content:space-between;align-items:flex-end;
     pointer-events:none;opacity:.92}
   .skyline .tower{display:block;overflow:visible;flex:none}
+  /* Trees: a row further back than the towers, showing only in the gaps and
+     at the ends. Coconut palms and broad shade trees, the two that line a
+     Lagos road. Greens kept a step duller than the street so they read as
+     distance. They lean in the wind and the storm, from the root. */
+  .treeline{position:absolute;left:0;right:0;bottom:58px;height:120px;pointer-events:none;opacity:.9}
+  .treeline .tree{position:absolute;bottom:0;display:block;overflow:visible;
+    transform:translateX(-50%);transform-origin:50% 100%}
+  @keyframes treeSway{0%,100%{transform:translateX(-50%) rotate(0)}50%{transform:translateX(-50%) rotate(var(--lean,2deg))}}
+  .scene.w-wind .treeline .tree,.scene.w-storm .treeline .tree{animation:treeSway 2.4s ease-in-out infinite}
+  .scene.w-rain .treeline .tree{animation:treeSway 4s ease-in-out infinite;--lean:.8deg}
+  @media (prefers-reduced-motion: reduce){.treeline .tree{animation:none!important}}
   .tower .tw{transition:fill .5s ease,opacity .5s ease}
   .scene.light .tower .tw{fill:#ffe9a0;opacity:1}
   /* The pole stands at 47%, base behind the shops; the wires span the scene
@@ -1381,7 +1392,7 @@
 <script type="module">
 import { newGame, doAction, canDo, unlocked, ACTIONS, phaseOf, nextUnlock, postingOdds, rivalOf,
          computePosting, CHOICES, GOAL, goalStatus,
-         shareText, MAX_DAY } from './game.js?v=20261101203949';
+         shareText, MAX_DAY } from './game.js?v=20261101204754';
 
 /* ---------- scene coordinates ----------
    The scene is scaled by a transform (see the stage), so a native
@@ -1412,11 +1423,11 @@ const TS = (document.getElementById('scene').offsetWidth || 375) / 375;
 const ALLAWEE_NOTE = 'Allawee ₦77,000 — e never enter.';
 import { initNet, joinCamp, syncPlayer, platoonBoard, recentChat, postChat,
          postSuggestion, reportMessage, awardBoard, myAwards, laughChat,
-         setPresence, campRoster, renameMe, setAvatar, online } from './net.js?v=20261101203949';
-import { startMusic, stopMusic, musicOn, audioState, audioSupported, setRain, whenSilenced, wakeAudio, audible, say, BEAT, BAR } from './audio.js?v=20261101203949';
+         setPresence, campRoster, renameMe, setAvatar, online } from './net.js?v=20261101204754';
+import { startMusic, stopMusic, musicOn, audioState, audioSupported, setRain, whenSilenced, wakeAudio, audible, say, BEAT, BAR } from './audio.js?v=20261101204754';
 import { playHoop, playPenalty, playQuiz, playRegister, playParade,
          playMami, playHustle, playManOWar, playSaed, playSocial,
-         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261101203949';
+         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261101204754';
 
 /* Every dance animation is expressed in beats, so the steps are on-tempo
    whether or not the sound is playing — and genuinely on the beat when it is. */
@@ -2843,12 +2854,61 @@ function tower(t){
           textLength="${t.w - 14}" lengthAdjust="spacingAndGlyphs">${t.name}</text>
   </svg>`;
 }
+/* ---------- trees ----------
+   Behind the towers. A shade tree is a forked trunk under a crown of
+   overlapping leaf clumps in three greens, light from the upper left; a
+   coconut palm is a curved ringed trunk with drooping fronds. `at` is the
+   centre as a share of the scene, picked to land in the gaps between towers. */
+const TREES = [
+  { kind: 'shade', at: .07, s: 1.1 },
+  { kind: 'palm',  at: .245, s: 1.25 },
+  { kind: 'shade', at: .415, s: 1.05 },
+  { kind: 'palm',  at: .585, s: 1.15 },
+  { kind: 'shade', at: .745, s: 1.1 },
+  { kind: 'palm',  at: .92, s: 1.0 },
+];
+function shadeTree(s){
+  const w = Math.round(70 * s), h = Math.round(78 * s);
+  const clumps = (dx, dy, fill) => [[20, 34, 14], [35, 24, 17], [51, 33, 14], [27, 43, 12], [44, 43, 13], [35, 36, 14]]
+    .map(([x, y, r]) => `<circle cx="${x + dx}" cy="${y + dy}" r="${r}" fill="${fill}"/>`).join('');
+  return `<svg class="tree" viewBox="0 0 70 78" width="${w}" height="${h}" aria-hidden="true">
+    <path d="M32 78 L33 54 Q30 48 23 43 L25 41 Q31 45 34.5 50 Q37 44 45 40 L46.5 42 Q40 46 37.5 53 L39 78Z" fill="#6e5639"/>
+    <path d="M32 78 L33 54 Q31.5 51 29 48.5 L30.5 47.5 Q33 50 34.4 53 L35 78Z" fill="#87704f"/>
+    ${clumps(0, 0, '#3e6a39')}
+    ${clumps(-2.5, -3, '#548a45').replace(/r="(\d+)"/g, (m, r) => `r="${r - 3}"`)}
+    <circle cx="22" cy="27" r="5" fill="#73a557"/><circle cx="33" cy="17" r="6" fill="#73a557"/>
+    <circle cx="46" cy="25" r="4.5" fill="#73a557"/><circle cx="27" cy="38" r="3.5" fill="#6a9c50"/>
+  </svg>`;
+}
+function palmTree(s){
+  const w = Math.round(56 * s), h = Math.round(104 * s);
+  /* A frond: a tapered leaf from the crown, bent by its control point. */
+  const frond = (ex, ey, cx, cy, fill) =>
+    `<path d="M28 22 Q${cx} ${cy - 3} ${ex} ${ey} Q${cx} ${cy + 3} 28 22Z" fill="${fill}"/>`;
+  return `<svg class="tree" viewBox="0 0 56 104" width="${w}" height="${h}" aria-hidden="true">
+    <path d="M25 104 Q21 64 28 22" stroke="#8b7457" stroke-width="3.6" fill="none" stroke-linecap="round"/>
+    <path d="M25 104 Q21 64 28 22" stroke="#6c5841" stroke-width="3.6" fill="none" stroke-dasharray="1 4.5"/>
+    ${frond(2, 34, 12, 20, '#3e6a39')}${frond(54, 36, 44, 20, '#3e6a39')}
+    ${frond(6, 46, 14, 30, '#476f36')}${frond(50, 48, 44, 32, '#476f36')}
+    ${frond(8, 12, 16, 10, '#548a45')}${frond(48, 10, 40, 8, '#548a45')}
+    ${frond(30, 2, 28, 10, '#5f9449')}${frond(18, 28, 22, 20, '#6a9c50')}
+    <circle cx="26.5" cy="25" r="2" fill="#6e5639"/><circle cx="29.5" cy="25.5" r="2" fill="#6e5639"/>
+  </svg>`;
+}
 (() => {
   const sky = document.createElement('div');
   sky.className = 'skyline';
   sky.innerHTML = TOWERS.map(tower).join('');
   const sun = sceneEl.querySelector('.sun');
   if (sun) sun.insertAdjacentElement('afterend', sky); else sceneEl.prepend(sky);
+})();
+/* The trees go in just before the towers, so every tower stands in front. */
+(() => {
+  const row = document.createElement('div');
+  row.className = 'treeline';
+  row.innerHTML = TREES.map(t => (t.kind === 'palm' ? palmTree : shadeTree)(t.s)
+    .replace('class="tree"', `class="tree" style="left:${t.at * 100}%${t.kind === 'palm' ? ';--lean:3deg' : ''}"`)).join('');
+  sceneEl.querySelector('.skyline').insertAdjacentElement('beforebegin', row);
 })();
 
 /* ---------- NEPA pole ----------
