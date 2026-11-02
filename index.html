@@ -235,6 +235,48 @@
     animation-play-state:paused}
   .scene.w-storm .hawker .corper,.scene.w-wind .hawker .corper,.scene.w-rain .hawker .corper{transform:scaleX(var(--face,-1))}
 
+  /* ---------- the street's own people ----------
+     Customers at the shops and the POS stand, and passers-by on the far
+     pavement behind the sellers. Scenery only: nothing here takes a tap, so a
+     customer can never stand between a player and a shop or a seller. Each is
+     its own stacking context at z0, so it sits behind the sellers (z1), the
+     traffic and the walkers whatever order it was added in. */
+  .cust,.ped{position:absolute;bottom:-1px;z-index:0;pointer-events:none}
+  .cust{transform:translateX(-50%)}
+  /* The corn seller's fan, flapping at the coals. */
+  .cornSeller .fan{animation:fanCoals .32s ease-in-out infinite alternate;
+    transform-box:fill-box;transform-origin:10% 90%}
+  @keyframes fanCoals{from{transform:rotate(-22deg)}to{transform:rotate(18deg)}}
+  .cust.flip{transform:translateX(-50%) scaleX(-1)}
+  .cust .corper,.ped .corper{position:static;display:block;animation:none;cursor:default}
+  /* Standing about: feet still, a slow shift of weight, and now and then a
+     hand comes up — talking, pointing at something in the window. */
+  .cust.idle .corper .leg,.cust.idle .corper .leg2,.cust.idle .corper .shin,
+  .cust.idle .corper .arm,.cust.idle .corper .arm2,.cust.idle .corper .fore{animation:none}
+  .cust.idle .corper .torso{animation:custSway var(--idle,3.6s) ease-in-out infinite;transform-origin:23px 47px}
+  .cust.idle .corper .arm2 .fore{animation:custHand var(--hand,7s) ease-in-out infinite;animation-delay:var(--d,0s)}
+  @keyframes custSway{0%,100%{transform:rotate(-1.6deg)}50%{transform:rotate(1.6deg)}}
+  @keyframes custHand{0%,58%,100%{transform:rotate(-12deg)}66%,84%{transform:rotate(-78deg)}}
+  /* On the phone: the hand stays up at the ear. */
+  .cust.phone .corper .arm2{transform:rotate(-28deg)}
+  .cust.phone .corper .arm2 .fore{animation:none;transform:rotate(-150deg)}
+  /* Paying at the POS: reaching across the table to the terminal. */
+  .cust.pay .corper .arm{transform:rotate(48deg)}
+  .cust.pay .corper .arm .fore{transform:rotate(-20deg)}
+  /* Going in: walks up to the door, fades into it, and comes round again a
+     while later. Limbs on the ordinary walking clocks. */
+  .cust.enter{animation:custIn var(--cycle,18s) linear infinite;animation-delay:var(--d,0s);opacity:0}
+  .cust.enter .corper{--stride:.7s}
+  @keyframes custIn{0%{left:var(--from);opacity:0}5%{opacity:1}36%{left:var(--to);opacity:1}
+    44%{left:var(--to);opacity:0}100%{left:var(--to);opacity:0}}
+  /* Passers-by: a lane further back than the sellers, so a little smaller and
+     a little higher, and slower — strolling, not hawking. */
+  .ped{bottom:57px;animation:pedR linear forwards}
+  .ped.left{animation-name:pedL;transform:scaleX(-1)}
+  .ped .corper{--stride:.72s}
+  @keyframes pedR{from{left:-12%}to{left:112%}}
+  @keyframes pedL{from{left:112%}to{left:-12%}}
+
   /* ---------- UP NEPA! ----------
      The whole row lights up, the generator cuts out, the board shouts, the
      corpers throw their hands up — then NEPA takes it back. No new figure, no
@@ -1392,7 +1434,7 @@
 <script type="module">
 import { newGame, doAction, canDo, unlocked, ACTIONS, phaseOf, nextUnlock, postingOdds, rivalOf,
          computePosting, CHOICES, GOAL, goalStatus,
-         shareText, MAX_DAY } from './game.js?v=20261101204754';
+         shareText, MAX_DAY } from './game.js?v=20261101230741';
 
 /* ---------- scene coordinates ----------
    The scene is scaled by a transform (see the stage), so a native
@@ -1423,11 +1465,11 @@ const TS = (document.getElementById('scene').offsetWidth || 375) / 375;
 const ALLAWEE_NOTE = 'Allawee ₦77,000 — e never enter.';
 import { initNet, joinCamp, syncPlayer, platoonBoard, recentChat, postChat,
          postSuggestion, reportMessage, awardBoard, myAwards, laughChat,
-         setPresence, campRoster, renameMe, setAvatar, online } from './net.js?v=20261101204754';
-import { startMusic, stopMusic, musicOn, audioState, audioSupported, setRain, whenSilenced, wakeAudio, audible, say, BEAT, BAR } from './audio.js?v=20261101204754';
+         setPresence, campRoster, renameMe, setAvatar, online } from './net.js?v=20261101230741';
+import { startMusic, stopMusic, musicOn, audioState, audioSupported, setRain, whenSilenced, wakeAudio, audible, say, BEAT, BAR } from './audio.js?v=20261101230741';
 import { playHoop, playPenalty, playQuiz, playRegister, playParade,
          playMami, playHustle, playManOWar, playSaed, playSocial,
-         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261101204754';
+         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261101230741';
 
 /* Every dance animation is expressed in beats, so the steps are on-tempo
    whether or not the sound is playing — and genuinely on the beat when it is. */
@@ -2004,6 +2046,24 @@ function shop(cfg){
       <rect x="26" y="41" width="5" height="3" rx="1.2" fill="#e8c24a"/>
       <rect x="33" y="41" width="5" height="3" rx="1.2" fill="#e0a832"/>
       <rect x="40" y="41" width="5" height="3" rx="1.2" fill="#e8c24a"/>
+      <!-- the corn seller, on a low stool by the brazier, fanning the coals -->
+      <g class="cornSeller">
+        <rect x="4" y="52" width="11" height="2.4" rx="1" fill="#8a6b3f"/>
+        <rect x="5" y="54.4" width="1.6" height="5.6" fill="#6d5230"/>
+        <rect x="12.4" y="54.4" width="1.6" height="5.6" fill="#6d5230"/>
+        <rect x="8" y="49.6" width="10.5" height="4.2" rx="1.8" fill="#2f7a63"/>
+        <rect x="15.4" y="51" width="3.4" height="8" rx="1.5" fill="#2f7a63"/>
+        <rect x="14.8" y="58" width="5.6" height="2.2" rx="1" fill="#241f1a"/>
+        <path d="M6.6 43.2q0-2.2 2.2-2.2h4.4q2.2 0 2.2 2.2v8H6.6z" fill="#f2d2a0"/>
+        <rect x="9.3" y="37.2" width="3.4" height="4.6" rx="1.4" fill="#8d5524"/>
+        <circle cx="11" cy="35" r="3.3" fill="#8d5524"/>
+        <circle cx="12.4" cy="35.2" r=".5" fill="#1d1812"/>
+        <path d="M7.4 34.4a3.6 3.6 0 0 1 7.2 0z" fill="#c14f3e"/>
+        <path d="M7.6 33l-2.4-1.6l.6 2.6z" fill="#c14f3e"/>
+        <rect x="12.6" y="42.6" width="7.4" height="2.4" rx="1.2" fill="#f2d2a0"/>
+        <g class="fan"><circle cx="20.4" cy="43.8" r="1.3" fill="#8d5524"/>
+          <path d="M20.4 43.6l2.6-5.2a3.4 3.4 0 0 1 4.2 2.6z" fill="#d9b86a" stroke="#a8874a" stroke-width=".4"/></g>
+      </g>
       ${board(cfg.sign, 10, 8, 56)}
     </svg>`;
   }
@@ -2040,6 +2100,28 @@ function shop(cfg){
    bakery neither squeezes the row nor makes it drift faster. */
 const SHOP_CYCLE = 50.4 * TS, SHOP_TRAVEL = 1.68;
 
+/* Who is at each shop. `at` is a share of the shop's width (the door is at
+   .29, the window .52–.82); an `enter` walks from `from` to the door and goes
+   in. Keyed by sign like everything else here, so a brand taking a board
+   takes its customers with it. */
+const CUSTOMERS = {
+  'FOOD JOINT':      [{ kind: 'idle', at: .7, skin: 2, tone: 1 },
+                      { kind: 'enter', from: 1.08, to: .29, skin: 0, tone: 3, d: -3 }],
+  'ROASTED CORN':    [{ kind: 'pay', at: .86, skin: 1, tone: 4 }],
+  'PROVISION STORE': [{ kind: 'enter', from: -.12, to: .29, skin: 3, tone: 0, d: -10 }],
+  'ELECTRONICS':     [{ kind: 'phone', at: .64, skin: 4, tone: 2 }],
+  'BAKERY':          [{ kind: 'idle', at: .68, skin: 1, tone: 3, flip: true }],
+  'BARBING SALON':   [{ kind: 'enter', from: 1.08, to: .29, skin: 2, tone: 1, d: -6 },
+                      { kind: 'idle', at: .74, skin: 0, tone: 4 }],
+};
+function customer(c, scale = .42){
+  const pos = c.kind === 'enter'
+    ? `--from:${c.from * 100}%;--to:${c.to * 100}%;--d:${c.d || 0}s`
+    : `left:${c.at * 100}%;--idle:${(3.2 + c.skin * .35).toFixed(2)}s;--hand:${6 + c.tone}s;--d:${-c.skin * 1.3}s`;
+  return `<div class="cust ${c.kind === 'phone' ? 'idle phone' : c.kind === 'pay' ? 'idle pay' : c.kind}${c.flip ? ' flip' : ''}"
+    style="${pos}">${civilian(SKINS[c.skin % SKINS.length], scale, 1, 0, c.tone)}</div>`;
+}
+
 function roadside(el){
   /* one shared duration keeps them evenly spaced forever; different
      durations make them drift together and clump */
@@ -2053,7 +2135,8 @@ function roadside(el){
        ${cfg.errand2 ? `data-errand2="${cfg.errand2}" data-price2="${cfg.price2 || 0}"` : ''}
        style="width:${Math.round(cfg.w*1.12)}px;bottom:62px;
        animation-duration:${CYCLE}s;
-       animation-delay:${-(i * CYCLE / SHOPS.length)}s">${shop(cfg)}</div>`);
+       animation-delay:${-(i * CYCLE / SHOPS.length)}s">${shop(cfg)}${
+         (CUSTOMERS[cfg.sign] || []).map(c => customer(c)).join('')}</div>`);
   el.insertAdjacentHTML('beforeend', strip.join(''));
 }
 
@@ -2783,7 +2866,8 @@ const POS_DEFAULT = ['POS', '#1e3a6e', '#fff'];
       <circle cx="8.1" cy="28.8" r="3.3" fill="#6b4423"/>
       <path d="M4.8 28.4q3.3-4.6 6.6 0q-3.3-1.8-6.6 0z" fill="#241c15"/>
     </g>
-  </svg>`;
+  </svg>` + /* the customer, standing on the far side of the table, paying */
+    customer({ kind: 'pay', at: 1.0, skin: 3, tone: 2 }, .46);
   onKerb(el);
 })();
 
@@ -3940,6 +4024,24 @@ function buyWares(hw){
   go();
 }
 if (!calm()) setTimeout(hawkerCycle, HAWK_FIRST);
+
+/* Passers-by on the far pavement, behind the sellers: one every so often,
+   either way, never more than two out at once. */
+const PED_LEN = 34;
+function sendPed(){
+  if (sceneEl.querySelectorAll('.ped').length < 2){
+    const el = document.createElement('div');
+    el.className = 'ped' + (Math.random() < .5 ? ' left' : '');
+    el.style.animationDuration = (PED_LEN * TS * (.9 + Math.random() * .25)) + 's';
+    el.innerHTML = civilian(SKINS[Math.floor(Math.random() * SKINS.length)], .55, 1, 0,
+                            Math.floor(Math.random() * 5));
+    const v = sceneEl.querySelector('.vehicle');
+    if (v) v.before(el); else sceneEl.appendChild(el);
+    el.addEventListener('animationend', () => el.remove());
+  }
+  setTimeout(sendPed, (8 + Math.random() * 9) * 1000 * TS);
+}
+if (!calm()) setTimeout(sendPed, 2500);
 
 /* ---------- one queue for the two big events ----------
    The chase and the burning danfo each take 15s to cross and they refuse to
