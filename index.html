@@ -260,9 +260,12 @@
   /* On the phone: the hand stays up at the ear. */
   .cust.phone .corper .arm2{transform:rotate(-28deg)}
   .cust.phone .corper .arm2 .fore{animation:none;transform:rotate(-150deg)}
-  /* Paying at the POS: reaching across the table to the terminal. */
-  .cust.pay .corper .arm{transform:rotate(48deg)}
-  .cust.pay .corper .arm .fore{transform:rotate(-20deg)}
+  /* Paying: one arm reaching down and out to the table, swung from the
+     shoulder itself (the walk swings it from the chest, which reads as a wave
+     once the arm is held out); the other hand stays down. */
+  .cust.pay .corper .arm{transform:rotate(35deg);transform-origin:14px 30px}
+  .cust.pay .corper .arm .fore{transform:rotate(15deg)}
+  .cust.pay .corper .arm2 .fore{animation:none;transform:rotate(-12deg)}
   /* Going in: walks up to the door, fades into it, and comes round again a
      while later. Limbs on the ordinary walking clocks. */
   .cust.enter{animation:custIn var(--cycle,18s) linear infinite;animation-delay:var(--d,0s);opacity:0}
@@ -1434,7 +1437,7 @@
 <script type="module">
 import { newGame, doAction, canDo, unlocked, ACTIONS, phaseOf, nextUnlock, postingOdds, rivalOf,
          computePosting, CHOICES, GOAL, goalStatus,
-         shareText, MAX_DAY } from './game.js?v=20261101230741';
+         shareText, MAX_DAY } from './game.js?v=20261101231244';
 
 /* ---------- scene coordinates ----------
    The scene is scaled by a transform (see the stage), so a native
@@ -1465,11 +1468,11 @@ const TS = (document.getElementById('scene').offsetWidth || 375) / 375;
 const ALLAWEE_NOTE = 'Allawee ₦77,000 — e never enter.';
 import { initNet, joinCamp, syncPlayer, platoonBoard, recentChat, postChat,
          postSuggestion, reportMessage, awardBoard, myAwards, laughChat,
-         setPresence, campRoster, renameMe, setAvatar, online } from './net.js?v=20261101230741';
-import { startMusic, stopMusic, musicOn, audioState, audioSupported, setRain, whenSilenced, wakeAudio, audible, say, BEAT, BAR } from './audio.js?v=20261101230741';
+         setPresence, campRoster, renameMe, setAvatar, online } from './net.js?v=20261101231244';
+import { startMusic, stopMusic, musicOn, audioState, audioSupported, setRain, whenSilenced, wakeAudio, audible, say, BEAT, BAR } from './audio.js?v=20261101231244';
 import { playHoop, playPenalty, playQuiz, playRegister, playParade,
          playMami, playHustle, playManOWar, playSaed, playSocial,
-         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261101230741';
+         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261101231244';
 
 /* Every dance animation is expressed in beats, so the steps are on-tempo
    whether or not the sound is playing — and genuinely on the beat when it is. */
@@ -2110,9 +2113,7 @@ const CUSTOMERS = {
   'ROASTED CORN':    [{ kind: 'pay', at: .86, skin: 1, tone: 4 }],
   'PROVISION STORE': [{ kind: 'enter', from: -.12, to: .29, skin: 3, tone: 0, d: -10 }],
   'ELECTRONICS':     [{ kind: 'phone', at: .64, skin: 4, tone: 2 }],
-  'BAKERY':          [{ kind: 'idle', at: .68, skin: 1, tone: 3, flip: true }],
-  'BARBING SALON':   [{ kind: 'enter', from: 1.08, to: .29, skin: 2, tone: 1, d: -6 },
-                      { kind: 'idle', at: .74, skin: 0, tone: 4 }],
+  'BARBING SALON':   [{ kind: 'enter', from: 1.08, to: .29, skin: 2, tone: 1, d: -6 }],
 };
 function customer(c, scale = .42){
   const pos = c.kind === 'enter'
