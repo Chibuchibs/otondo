@@ -1453,7 +1453,7 @@
 <script type="module">
 import { newGame, doAction, canDo, unlocked, ACTIONS, phaseOf, nextUnlock, postingOdds, rivalOf,
          computePosting, CHOICES, GOAL, goalStatus,
-         shareText, MAX_DAY } from './game.js?v=20261102001454';
+         shareText, MAX_DAY } from './game.js?v=20261102002742';
 
 /* ---------- scene coordinates ----------
    The scene is scaled by a transform (see the stage), so a native
@@ -1484,11 +1484,11 @@ const TS = (document.getElementById('scene').offsetWidth || 375) / 375;
 const ALLAWEE_NOTE = 'Allawee ₦77,000 — e never enter.';
 import { initNet, joinCamp, syncPlayer, platoonBoard, recentChat, postChat,
          postSuggestion, reportMessage, awardBoard, myAwards, laughChat,
-         setPresence, campRoster, renameMe, setAvatar, online } from './net.js?v=20261102001454';
-import { startMusic, stopMusic, musicOn, audioState, audioSupported, setRain, whenSilenced, wakeAudio, audible, say, BEAT, BAR } from './audio.js?v=20261102001454';
+         setPresence, campRoster, renameMe, setAvatar, online } from './net.js?v=20261102002742';
+import { startMusic, stopMusic, musicOn, audioState, audioSupported, setRain, whenSilenced, wakeAudio, audible, say, BEAT, BAR } from './audio.js?v=20261102002742';
 import { playHoop, playPenalty, playQuiz, playRegister, playParade,
          playMami, playHustle, playManOWar, playSaed, playSocial,
-         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261102001454';
+         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261102002742';
 
 /* Every dance animation is expressed in beats, so the steps are on-tempo
    whether or not the sound is playing — and genuinely on the beat when it is. */
@@ -1777,8 +1777,51 @@ function okada(passenger){
 const CIV_TOPS   = ['#c14f3e', '#3d6ea8', '#6d4f8c', '#2f7a63', '#c98a2b'];
 const CIV_BOTTOM = ['#2f3a4a', '#3b3a36', '#45413a', '#28313d'];
 
-function civilian(skin, scale, speed, delay, tone = 0, rags = false, stick = false, raised = false){
-  const top    = rags ? '#8d7f63' : CIV_TOPS[tone % CIV_TOPS.length];
+/* ---- shirt prints ----
+   So the street is not five people in the same five plain tops. Each print is
+   an svg pattern tiled over the shirt and the sleeves; the id is fresh per
+   figure because the same print turns up on several people at once. `ink` is
+   the print's colour, `ground` the cloth under it. */
+let printSeq = 0;
+const PRINTS = {
+  stripes:  (ink, g = '#f4f0e4') => [4, 4, `<rect width="4" height="4" fill="${g}"/><rect width="4" height="2" fill="${ink}"/>`],
+  pinstripe:(ink, g = '#f4f0e4') => [3.4, 4, `<rect width="3.4" height="4" fill="${g}"/><rect width="1.3" height="4" fill="${ink}"/>`],
+  check:    (ink, g = '#f4f0e4') => [5, 5, `<rect width="5" height="5" fill="${g}"/>
+              <rect width="2.5" height="5" fill="${ink}" opacity=".5"/><rect width="5" height="2.5" fill="${ink}" opacity=".5"/>`],
+  dots:     (ink, g = '#f4f0e4') => [5, 5, `<rect width="5" height="5" fill="${g}"/><circle cx="2.5" cy="2.5" r="1.1" fill="${ink}"/>`],
+  /* Ankara: the wax print every second shirt in Lagos is cut from — bold
+     rings on a strong ground, a second colour at the centre. */
+  ankara:   (ink, g = '#f3a712') => [8, 8, `<rect width="8" height="8" fill="${g}"/>
+              <circle cx="4" cy="4" r="3" fill="${ink}"/><circle cx="4" cy="4" r="1.7" fill="#f4f0e4"/>
+              <circle cx="4" cy="4" r=".8" fill="#c1272d"/>
+              <circle cx="0" cy="0" r="1.2" fill="${ink}"/><circle cx="8" cy="0" r="1.2" fill="${ink}"/>
+              <circle cx="0" cy="8" r="1.2" fill="${ink}"/><circle cx="8" cy="8" r="1.2" fill="${ink}"/>`],
+  /* Adire: Abeokuta's indigo tie-dye — pale rings bled into deep blue. */
+  adire:    (ink = '#a9bde6', g = '#25386e') => [7, 7, `<rect width="7" height="7" fill="${g}"/>
+              <circle cx="3.5" cy="3.5" r="2.1" fill="none" stroke="${ink}" stroke-width=".8" opacity=".85"/>
+              <circle cx="3.5" cy="3.5" r=".6" fill="${ink}"/>
+              <path d="M0 0l1.4 1.4M7 0l-1.4 1.4M0 7l1.4-1.4M7 7l-1.4-1.4" stroke="${ink}" stroke-width=".6" opacity=".7"/>`],
+  chevron:  (ink, g = '#f4f0e4') => [6, 4, `<rect width="6" height="4" fill="${g}"/>
+              <path d="M0 3l3-2l3 2" fill="none" stroke="${ink}" stroke-width="1.3"/>`],
+};
+function shirtPrint(pr){
+  const id = 'pr' + (++printSeq);
+  if (pr.kind === 'jersey')                       // a solid colour; the extras do the work
+    return { defs: '', fill: pr.ink || '#0f8a4a', id };
+  const [w, h, tile] = PRINTS[pr.kind](pr.ink, pr.ground);
+  return { id, fill: `url(#${id})`,
+    defs: `<defs><pattern id="${id}" patternUnits="userSpaceOnUse" width="${w}" height="${h}">${tile}</pattern></defs>` };
+}
+/* The jersey: Super Eagles green, white V collar and a number on the chest. */
+const jerseyBits = pr => `<path d="M19 28l4 4.6l4-4.6" fill="none" stroke="#fff" stroke-width="1.6"/>
+  <text x="23" y="44.6" text-anchor="middle" font-size="8" font-weight="900"
+        font-family="system-ui,sans-serif" fill="#fff">${pr.num || 9}</text>`;
+
+/* `print`: { kind, ink, ground } from PRINTS (or kind 'jersey'), for a
+   patterned shirt instead of a plain one. */
+function civilian(skin, scale, speed, delay, tone = 0, rags = false, stick = false, raised = false, print = null){
+  const pr = print && !rags ? shirtPrint(print) : null;
+  const top    = pr ? pr.fill : rags ? '#8d7f63' : CIV_TOPS[tone % CIV_TOPS.length];
   const topDk  = rags ? '#7a6d53' : top;
   const trou   = rags ? '#6a5c46' : CIV_BOTTOM[tone % CIV_BOTTOM.length];
   const trouDk = rags ? '#5c5040' : trou;
@@ -1827,7 +1870,7 @@ function civilian(skin, scale, speed, delay, tone = 0, rags = false, stick = fal
 
   return `<svg class="corper civ" viewBox="0 0 46 86" aria-hidden="true" style="
       animation-duration:${speed}s;animation-delay:${delay}s;
-      width:${46*scale}px;height:${86*scale}px">
+      width:${46*scale}px;height:${86*scale}px">${pr ? pr.defs : ''}
     <ellipse cx="23" cy="81" rx="12" ry="2.6" fill="rgba(0,0,0,.16)"/>
     <g class="leg">${leg(16, trouDk, kneeHole)}</g>
     <g class="leg2">${leg(22.5, trou, '')}</g>
@@ -1836,6 +1879,7 @@ function civilian(skin, scale, speed, delay, tone = 0, rags = false, stick = fal
       <g class="arm2">${arm(29.5, top, stickHeld)}</g>
       <rect x="20.6" y="22" width="4.8" height="8" rx="2" fill="${skin}"/>
       <path d="M13.5 31q0-3 3-3h13q3 0 3 3v9.5l-1.3 11.5h-16.4L13.5 40.5z" fill="${top}"/>
+      ${pr && print.kind === 'jersey' ? jerseyBits(print) : ''}
       ${hem}${patches}
       <circle cx="13.9" cy="16.8" r="1.7" fill="${skin}"/>
       <circle cx="32.1" cy="16.8" r="1.7" fill="${skin}"/>
@@ -2124,19 +2168,19 @@ const SHOP_CYCLE = 50.4 * TS, SHOP_TRAVEL = 1.68;
    in. Keyed by sign like everything else here, so a brand taking a board
    takes its customers with it. */
 const CUSTOMERS = {
-  'FOOD JOINT':      [{ kind: 'idle', at: .7, skin: 2, tone: 1 },
-                      { kind: 'enter', from: 1.08, to: .29, skin: 0, tone: 3, d: -3 }],
-  'ROASTED CORN':    [{ kind: 'wait', at: .84, skin: 1, tone: 4 }],
-  'PROVISION STORE': [{ kind: 'enter', from: -.12, to: .29, skin: 3, tone: 0, d: -10 }],
-  'ELECTRONICS':     [{ kind: 'phone', at: .64, skin: 4, tone: 2 }],
-  'BARBING SALON':   [{ kind: 'enter', from: 1.08, to: .29, skin: 2, tone: 1, d: -6 }],
+  'FOOD JOINT':      [{ kind: 'idle', at: .7, skin: 2, tone: 1, print: { kind: 'stripes', ink: '#d6342c' } },
+                      { kind: 'enter', from: 1.08, to: .29, skin: 0, tone: 3, d: -3, print: { kind: 'dots', ink: '#1e3a6e' } }],
+  'ROASTED CORN':    [{ kind: 'wait', at: .84, skin: 1, tone: 4, print: { kind: 'chevron', ink: '#1f8a4c' } }],
+  'PROVISION STORE': [{ kind: 'enter', from: -.12, to: .29, skin: 3, tone: 0, d: -10, print: { kind: 'pinstripe', ink: '#3d6ea8' } }],
+  'ELECTRONICS':     [{ kind: 'phone', at: .64, skin: 4, tone: 2, print: { kind: 'adire' } }],
+  'BARBING SALON':   [{ kind: 'enter', from: 1.08, to: .29, skin: 2, tone: 1, d: -6, print: { kind: 'stripes', ink: '#1f8a4c' } }],
 };
 function customer(c, scale = .42){
   const pos = c.kind === 'enter'
     ? `--from:${c.from * 100}%;--to:${c.to * 100}%;--d:${c.d || 0}s`
     : `left:${c.at * 100}%;--idle:${(3.2 + c.skin * .35).toFixed(2)}s;--hand:${6 + c.tone}s;--d:${-c.skin * 1.3}s`;
   return `<div class="cust ${c.kind === 'phone' ? 'idle phone' : c.kind === 'pay' ? 'idle pay' : c.kind === 'wait' ? 'idle wait' : c.kind}${c.flip ? ' flip' : ''}"
-    style="${pos}">${civilian(SKINS[c.skin % SKINS.length], scale, 1, 0, c.tone)}</div>`;
+    style="${pos}">${civilian(SKINS[c.skin % SKINS.length], scale, 1, 0, c.tone, false, false, false, c.print)}</div>`;
 }
 
 function roadside(el){
@@ -2898,7 +2942,7 @@ const POS_DEFAULT = ['POS', '#1e3a6e', '#fff'];
       <path d="M4.8 28.4q3.3-4.6 6.6 0q-3.3-1.8-6.6 0z" fill="#241c15"/>
     </g>
   </svg>` + /* the customer, standing on the far side of the table, paying */
-    customer({ kind: 'pay', at: 1.0, skin: 3, tone: 2 }, .46);
+    customer({ kind: 'pay', at: 1.0, skin: 3, tone: 2, print: { kind: 'ankara', ink: '#0f8a4a', ground: '#6d3f8c' } }, .46);
   onKerb(el);
 })();
 
@@ -3842,9 +3886,9 @@ function agberoChase(){
        line of identical raised arms reads as a drill squad rather than a
        crowd. The man at the front has his hand up — he is the one closest to
        catching the thief — and the two behind him are still swinging. */
-    { skin: 0, scale: .96, tone: 1, trail: 58,  raised: true },
-    { skin: 3, scale: .99, tone: 2, trail: 116, stick: true },
-    { skin: 1, scale: .94, tone: 3, trail: 174, stick: true },
+    { skin: 0, scale: .96, tone: 1, trail: 58,  raised: true, print: { kind: 'jersey', ink: '#0f8a4a', num: 9 } },
+    { skin: 3, scale: .99, tone: 2, trail: 116, stick: true,  print: { kind: 'ankara', ink: '#1e3a6e' } },
+    { skin: 1, scale: .94, tone: 3, trail: 174, stick: true,  print: { kind: 'check', ink: '#d6342c' } },
   ];
   cast.forEach(c => {
     const wrap = document.createElement('div');
@@ -3856,7 +3900,7 @@ function agberoChase(){
     flip.className = 'flip';
     flip.style.animationDuration = (12 * TS) + 's';
     flip.innerHTML = civilian(SKINS[c.skin % SKINS.length], c.scale, 9, 0,
-                              c.tone, !!c.rags, !!c.stick, !!c.raised);
+                              c.tone, !!c.rags, !!c.stick, !!c.raised, c.print);
     wrap.appendChild(flip);
     /* the inner figure must not also be marching, or it drifts out of its own
        wrapper and the chase comes apart */
@@ -4061,13 +4105,31 @@ if (!calm()) setTimeout(hawkerCycle, HAWK_FIRST);
 /* Passers-by on the far pavement, behind the sellers: one every so often,
    either way, never more than two out at once. */
 const PED_LEN = 34;
+/* All thirteen prints the user approved, plus three plain tops (numbers are
+   CIV_TOPS tones). */
+const PED_SHIRTS = [
+  { kind: 'stripes', ink: '#d6342c' }, { kind: 'stripes', ink: '#1f8a4c' }, { kind: 'stripes', ink: '#1e3a6e' },
+  { kind: 'pinstripe', ink: '#3d6ea8' }, { kind: 'check', ink: '#d6342c' }, { kind: 'check', ink: '#2b6cb0' },
+  { kind: 'dots', ink: '#1e3a6e' }, { kind: 'dots', ink: '#f4f0e4', ground: '#c1272d' },
+  { kind: 'ankara', ink: '#1e3a6e' }, { kind: 'ankara', ink: '#0f8a4a', ground: '#6d3f8c' },
+  { kind: 'adire' }, { kind: 'chevron', ink: '#1f8a4c' }, { kind: 'jersey', ink: '#0f8a4a', num: 10 },
+  1, 2, 4,
+];
 function sendPed(){
   if (sceneEl.querySelectorAll('.ped').length < 2){
     const el = document.createElement('div');
     el.className = 'ped' + (Math.random() < .5 ? ' left' : '');
     el.style.animationDuration = (PED_LEN * TS * (.9 + Math.random() * .25)) + 's';
+    /* Any of the street's prints, or now and then a plain top — never the
+       same shirt as the other one already out. */
+    const worn = [...sceneEl.querySelectorAll('.ped')].map(p => p.dataset.shirt);
+    const free = PED_SHIRTS.map((_, i) => String(i)).filter(i => !worn.includes(i));
+    const pick = free[Math.floor(Math.random() * free.length)];
+    el.dataset.shirt = pick;
+    const shirt = PED_SHIRTS[+pick];
     el.innerHTML = civilian(SKINS[Math.floor(Math.random() * SKINS.length)], .55, 1, 0,
-                            Math.floor(Math.random() * 5));
+                            typeof shirt === 'number' ? shirt : 0, false, false, false,
+                            typeof shirt === 'number' ? null : shirt);
     const v = sceneEl.querySelector('.vehicle');
     if (v) v.before(el); else sceneEl.appendChild(el);
     el.addEventListener('animationend', () => el.remove());
