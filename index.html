@@ -1461,7 +1461,7 @@
 <script type="module">
 import { newGame, doAction, canDo, unlocked, ACTIONS, phaseOf, nextUnlock, postingOdds, rivalOf,
          computePosting, CHOICES, GOAL, goalStatus,
-         shareText, MAX_DAY } from './game.js?v=20261102005206';
+         shareText, MAX_DAY } from './game.js?v=20261102005412';
 
 /* ---------- scene coordinates ----------
    The scene is scaled by a transform (see the stage), so a native
@@ -1492,11 +1492,11 @@ const TS = (document.getElementById('scene').offsetWidth || 375) / 375;
 const ALLAWEE_NOTE = 'Allawee ₦77,000 — e never enter.';
 import { initNet, joinCamp, syncPlayer, platoonBoard, recentChat, postChat,
          postSuggestion, reportMessage, awardBoard, myAwards, laughChat,
-         setPresence, campRoster, renameMe, setAvatar, online } from './net.js?v=20261102005206';
-import { startMusic, stopMusic, musicOn, audioState, audioSupported, setRain, whenSilenced, wakeAudio, audible, say, BEAT, BAR } from './audio.js?v=20261102005206';
+         setPresence, campRoster, renameMe, setAvatar, online } from './net.js?v=20261102005412';
+import { startMusic, stopMusic, musicOn, audioState, audioSupported, setRain, whenSilenced, wakeAudio, audible, say, BEAT, BAR } from './audio.js?v=20261102005412';
 import { playHoop, playPenalty, playQuiz, playRegister, playParade,
          playMami, playHustle, playManOWar, playSaed, playSocial,
-         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261102005206';
+         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261102005412';
 
 /* Every dance animation is expressed in beats, so the steps are on-tempo
    whether or not the sound is playing — and genuinely on the beat when it is. */
@@ -3064,8 +3064,10 @@ function gistPair(){
       </g>
     </g>`;
   return a.defs + b.defs +
-    `<g transform="translate(12 74.5)">${sitter(a.fill, '#8d5524', '#2f3a4a', true)}</g>
-     <g transform="translate(58 74.5) scale(-1 1)">${sitter(b.fill, '#5c3317', '#3b3a36', false)}</g>`;
+    /* At .7: full size they were nearly as big as the people on the
+       pavement, and they are meant to be a street further back. */
+    `<g transform="translate(18 74.5) scale(.7)">${sitter(a.fill, '#8d5524', '#2f3a4a', true)}</g>
+     <g transform="translate(53 74.5) scale(-.7 .7)">${sitter(b.fill, '#5c3317', '#3b3a36', false)}</g>`;
 }
 function shadeTree(s, gist = false){
   const w = Math.round(70 * s), h = Math.round(78 * s);
