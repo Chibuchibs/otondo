@@ -266,6 +266,8 @@
   .cust.pay .corper .arm{transform:rotate(35deg);transform-origin:14px 30px}
   .cust.pay .corper .arm .fore{transform:rotate(15deg)}
   .cust.pay .corper .arm2 .fore{animation:none;transform:rotate(-12deg)}
+  /* Waiting for the corn to be done: both hands down, just the sway. */
+  .cust.wait .corper .arm2 .fore{animation:none}
   /* Going in: walks up to the door, fades into it, and comes round again a
      while later. Limbs on the ordinary walking clocks. */
   .cust.enter{animation:custIn var(--cycle,18s) linear infinite;animation-delay:var(--d,0s);opacity:0}
@@ -1437,7 +1439,7 @@
 <script type="module">
 import { newGame, doAction, canDo, unlocked, ACTIONS, phaseOf, nextUnlock, postingOdds, rivalOf,
          computePosting, CHOICES, GOAL, goalStatus,
-         shareText, MAX_DAY } from './game.js?v=20261101231244';
+         shareText, MAX_DAY } from './game.js?v=20261101231806';
 
 /* ---------- scene coordinates ----------
    The scene is scaled by a transform (see the stage), so a native
@@ -1468,11 +1470,11 @@ const TS = (document.getElementById('scene').offsetWidth || 375) / 375;
 const ALLAWEE_NOTE = 'Allawee ₦77,000 — e never enter.';
 import { initNet, joinCamp, syncPlayer, platoonBoard, recentChat, postChat,
          postSuggestion, reportMessage, awardBoard, myAwards, laughChat,
-         setPresence, campRoster, renameMe, setAvatar, online } from './net.js?v=20261101231244';
-import { startMusic, stopMusic, musicOn, audioState, audioSupported, setRain, whenSilenced, wakeAudio, audible, say, BEAT, BAR } from './audio.js?v=20261101231244';
+         setPresence, campRoster, renameMe, setAvatar, online } from './net.js?v=20261101231806';
+import { startMusic, stopMusic, musicOn, audioState, audioSupported, setRain, whenSilenced, wakeAudio, audible, say, BEAT, BAR } from './audio.js?v=20261101231806';
 import { playHoop, playPenalty, playQuiz, playRegister, playParade,
          playMami, playHustle, playManOWar, playSaed, playSocial,
-         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261101231244';
+         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261101231806';
 
 /* Every dance animation is expressed in beats, so the steps are on-tempo
    whether or not the sound is playing — and genuinely on the beat when it is. */
@@ -2110,7 +2112,7 @@ const SHOP_CYCLE = 50.4 * TS, SHOP_TRAVEL = 1.68;
 const CUSTOMERS = {
   'FOOD JOINT':      [{ kind: 'idle', at: .7, skin: 2, tone: 1 },
                       { kind: 'enter', from: 1.08, to: .29, skin: 0, tone: 3, d: -3 }],
-  'ROASTED CORN':    [{ kind: 'pay', at: .86, skin: 1, tone: 4 }],
+  'ROASTED CORN':    [{ kind: 'wait', at: .84, skin: 1, tone: 4 }],
   'PROVISION STORE': [{ kind: 'enter', from: -.12, to: .29, skin: 3, tone: 0, d: -10 }],
   'ELECTRONICS':     [{ kind: 'phone', at: .64, skin: 4, tone: 2 }],
   'BARBING SALON':   [{ kind: 'enter', from: 1.08, to: .29, skin: 2, tone: 1, d: -6 }],
@@ -2119,7 +2121,7 @@ function customer(c, scale = .42){
   const pos = c.kind === 'enter'
     ? `--from:${c.from * 100}%;--to:${c.to * 100}%;--d:${c.d || 0}s`
     : `left:${c.at * 100}%;--idle:${(3.2 + c.skin * .35).toFixed(2)}s;--hand:${6 + c.tone}s;--d:${-c.skin * 1.3}s`;
-  return `<div class="cust ${c.kind === 'phone' ? 'idle phone' : c.kind === 'pay' ? 'idle pay' : c.kind}${c.flip ? ' flip' : ''}"
+  return `<div class="cust ${c.kind === 'phone' ? 'idle phone' : c.kind === 'pay' ? 'idle pay' : c.kind === 'wait' ? 'idle wait' : c.kind}${c.flip ? ' flip' : ''}"
     style="${pos}">${civilian(SKINS[c.skin % SKINS.length], scale, 1, 0, c.tone)}</div>`;
 }
 
