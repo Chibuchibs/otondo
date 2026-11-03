@@ -279,7 +279,8 @@
      a little higher, and slower — strolling, not hawking. */
   .ped{bottom:57px;animation:pedR linear forwards}
   .ped.left{animation-name:pedL;transform:scaleX(-1)}
-  .ped .corper{--stride:.72s}
+  /* overflow: the walk bob lifts a big afro or a fila past the top of the box */
+  .ped .corper{--stride:.72s;overflow:visible}
   @keyframes pedR{from{left:-12%}to{left:112%}}
   @keyframes pedL{from{left:112%}to{left:-12%}}
 
@@ -1462,7 +1463,7 @@
 <script type="module">
 import { newGame, doAction, canDo, unlocked, ACTIONS, phaseOf, nextUnlock, postingOdds, rivalOf,
          computePosting, CHOICES, GOAL, goalStatus,
-         shareText, MAX_DAY } from './game.js?v=20261102160331';
+         shareText, MAX_DAY } from './game.js?v=20261102163656';
 
 /* ---------- scene coordinates ----------
    The scene is scaled by a transform (see the stage), so a native
@@ -1493,11 +1494,11 @@ const TS = (document.getElementById('scene').offsetWidth || 375) / 375;
 const ALLAWEE_NOTE = 'Allawee ₦77,000 — e never enter.';
 import { initNet, joinCamp, syncPlayer, platoonBoard, recentChat, postChat,
          postSuggestion, reportMessage, awardBoard, myAwards, laughChat,
-         setPresence, campRoster, renameMe, setAvatar, online } from './net.js?v=20261102160331';
-import { startMusic, stopMusic, musicOn, audioState, audioSupported, setRain, whenSilenced, wakeAudio, audible, say, BEAT, BAR } from './audio.js?v=20261102160331';
+         setPresence, campRoster, renameMe, setAvatar, online } from './net.js?v=20261102163656';
+import { startMusic, stopMusic, musicOn, audioState, audioSupported, setRain, whenSilenced, wakeAudio, audible, say, BEAT, BAR } from './audio.js?v=20261102163656';
 import { playHoop, playPenalty, playQuiz, playRegister, playParade,
          playMami, playHustle, playManOWar, playSaed, playSocial,
-         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261102160331';
+         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261102163656';
 
 /* Every dance animation is expressed in beats, so the steps are on-tempo
    whether or not the sound is playing — and genuinely on the beat when it is. */
@@ -1818,13 +1819,13 @@ const PRINTS = {
   chevron:  (ink, g = '#f4f0e4') => [6, 4, `<rect width="6" height="4" fill="${g}"/>
               <path d="M0 3l3-2l3 2" fill="none" stroke="${ink}" stroke-width="1.3"/>`],
 };
-function shirtPrint(pr){
+function shirtPrint(pr, k = 1){                  // k: the tile's scale, for small figures
   const id = 'pr' + (++printSeq);
   if (pr.kind === 'jersey')                       // a solid colour; the extras do the work
     return { defs: '', fill: pr.ink || '#0f8a4a', id };
   const [w, h, tile] = PRINTS[pr.kind](pr.ink, pr.ground, pr.line);
   return { id, fill: `url(#${id})`,
-    defs: `<defs><pattern id="${id}" patternUnits="userSpaceOnUse" width="${w}" height="${h}">${tile}</pattern></defs>` };
+    defs: `<defs><pattern id="${id}" patternUnits="userSpaceOnUse" width="${w}" height="${h}"${k !== 1 ? ` patternTransform="scale(${k})"` : ''}>${tile}</pattern></defs>` };
 }
 /* The jersey: Super Eagles green, white V collar and a number on the chest. */
 const jerseyBits = pr => `<path d="M19 28l4 4.6l4-4.6" fill="none" stroke="#fff" stroke-width="1.6"/>
@@ -1833,7 +1834,8 @@ const jerseyBits = pr => `<path d="M19 28l4 4.6l4-4.6" fill="none" stroke="#fff"
 
 /* `print`: { kind, ink, ground } from PRINTS (or kind 'jersey'), for a
    patterned shirt instead of a plain one. */
-function civilian(skin, scale, speed, delay, tone = 0, rags = false, stick = false, raised = false, print = null){
+/* `look`: 'afro' or 'dreads' for the hair, or { fila: colour } for the folded cap. */
+function civilian(skin, scale, speed, delay, tone = 0, rags = false, stick = false, raised = false, print = null, look = null){
   const pr = print && !rags ? shirtPrint(print) : null;
   const top    = pr ? pr.fill : rags ? '#8d7f63' : CIV_TOPS[tone % CIV_TOPS.length];
   const topDk  = rags ? '#7a6d53' : top;
@@ -1895,6 +1897,9 @@ function civilian(skin, scale, speed, delay, tone = 0, rags = false, stick = fal
       <path d="M13.5 31q0-3 3-3h13q3 0 3 3v9.5l-1.3 11.5h-16.4L13.5 40.5z" fill="${top}"/>
       ${pr && print.kind === 'jersey' ? jerseyBits(print) : ''}
       ${hem}${patches}
+      ${look === 'afro' ? `<circle cx="23" cy="13.6" r="12.6" fill="#241c15"/>` : ''}
+      ${look === 'dreads' ? `<path d="M13.4 12v12.5M16 9.4v15.8M30 9.4v15.8M32.6 12v12.5"
+            stroke="#241c15" stroke-width="2.4" stroke-linecap="round"/>` : ''}
       <circle cx="13.9" cy="16.8" r="1.7" fill="${skin}"/>
       <circle cx="32.1" cy="16.8" r="1.7" fill="${skin}"/>
       <circle cx="23" cy="16" r="9.6" fill="${skin}"/>
@@ -1909,6 +1914,9 @@ function civilian(skin, scale, speed, delay, tone = 0, rags = false, stick = fal
                  stroke-linecap="round"/>`
         : `<path d="M13.6 12.5 q4-6.5 9.4-6.5 t9.4 6.5 q-4.5-2.6-9.4-2.6 t-9.4 2.6z"
                  fill="#241c15"/>`}
+      ${look === 'dreads' ? `<path d="M19 8.4v3.4M23 7.8v3.6M27 8.4v3.4" stroke="#241c15" stroke-width="2" stroke-linecap="round"/>` : ''}
+      ${look && look.fila ? `<path d="M13.2 12.8Q13 4 22.8 3.6Q33.6 3.4 35.8 9.2Q36.6 12.4 34.6 15.4Q33.8 12.6 32.8 12.8z" fill="${look.fila}"/>
+            <path d="M13.2 12.4H32.8" stroke="rgba(0,0,0,.3)" stroke-width="1.4"/>` : ''}
     </g></svg>`;
 }
 
@@ -2067,19 +2075,72 @@ function door(cfg){
     <circle cx="37" cy="45" r="1.1" fill="#f2e6c2"/>`;
 }
 /* Who is at the window: head and shoulders behind the glass, on a slow clock
-   of their own so no two shops shift at once. */
+   of their own so no two shops shift at once. Each one is somebody — their own
+   shirt print (at half size: the glass is only 12 tall), and a haircut or a
+   hat that stays inside the glass. */
 const WIN_SKIN = ['#6b4423', '#8d5524', '#4a2e1c', '#a0673f'];
+const WIN_PEOPLE = {
+  'FOOD JOINT':      [{ hair: 'gele', hat: '#e2641f', skin: 0, print: { kind: 'ankara', ink: '#1e3a6e', ground: '#f3a712' } },
+                      { hair: 'lowcut', skin: 1, print: { kind: 'stripes', ink: '#f3c53d', ground: '#1f8a4c' } }],
+  'PROVISION STORE': [{ hair: 'cap', hat: '#d6342c', skin: 2, print: { kind: 'plaid', ink: '#3d6ea8' } }],
+  'ELECTRONICS':     [{ hair: 'afro', skin: 3, print: { kind: 'dots', ink: '#f4f0e4', ground: '#7b3fa0' } }],
+  'BAKERY':          [{ hair: 'toque', skin: 1, print: { kind: 'chevron', ink: '#d6342c', ground: '#f3c53d' } }],
+  'BARBING SALON':   [{ hair: 'dreads', skin: 3, print: { kind: 'pinstripe', ink: '#f4f0e4', ground: '#d6342c' } },
+                      { hair: 'fila', hat: '#2b6cb0', skin: 0, print: { kind: 'adire' } }],
+};
+const WIN_HAIR = '#241c15';
+/* back: drawn behind the face (an afro, locs); front: over it (a hat). */
+function winHair(p, cx, cy, r){
+  const low = `<path d="M${cx-r} ${cy-1.1} q${r}-${r*1.3} ${2*r} 0 q-${r}-${r*.5} -${2*r} 0z" fill="${WIN_HAIR}"/>`;
+  const hat = p.hat;
+  switch (p.hair) {
+    case 'afro':   return { back: `<circle cx="${cx}" cy="${cy-1}" r="${r+1.3}" fill="${WIN_HAIR}"/>`, front: '' };
+    /* locs: strands falling past the ears to the shoulders, a fringe of ends */
+    case 'dreads': return { back: `<path d="M${cx-r-.2} ${cy-2}v5.6M${cx-r+.9} ${cy-2.8}v6M${cx+r+.2} ${cy-2}v5.6M${cx+r-.9} ${cy-2.8}v6"
+                              stroke="${WIN_HAIR}" stroke-width="1.1" stroke-linecap="round"/>`,
+                            front: low + `<path d="M${cx-1.6} ${cy-r+.6}v1.5M${cx} ${cy-r+.4}v1.6M${cx+1.6} ${cy-r+.6}v1.5"
+                              stroke="${WIN_HAIR}" stroke-width="1" stroke-linecap="round"/>` };
+    /* the gele: tied high and fanned out past the head on both sides */
+    case 'gele':   return { back: '', front: `<path d="M${cx-r-1.3} ${cy-.4} Q${cx-r-1.6} ${cy-r-2.2} ${cx-.8} ${cy-r-1.6}
+                              Q${cx+1} ${cy-r-2.8} ${cx+r+1.6} ${cy-r-1}Q${cx+r+1.5} ${cy-.4} ${cx+r+.4} ${cy-.2}
+                              Q${cx} ${cy-2.2} ${cx-r-1.3} ${cy-.4}z" fill="${hat}"/>
+                            <path d="M${cx-r-.6} ${cy-r+.4}Q${cx} ${cy-r-1.4} ${cx+r+.8} ${cy-r+.2}" fill="none" stroke="#f3c53d" stroke-width=".5" opacity=".8"/>` };
+    /* a cap, peak to the side */
+    case 'cap':    return { back: '', front: `<path d="M${cx-r-.2} ${cy-.9}a${r+.2} ${r} 0 0 1 ${2*r+.4} 0z" fill="${hat}"/>
+                            <path d="M${cx+r-1.2} ${cy-1.5}h3.2a.6.6 0 0 1 0 1.2h-3.2z" fill="${hat}"/>
+                            <circle cx="${cx}" cy="${cy-r-.7}" r=".5" fill="${hat}"/>` };
+    /* the fila: a soft cap folded over to one side */
+    case 'fila':   return { back: '', front: `<path d="M${cx-r-.2} ${cy-.9}Q${cx-r} ${cy-r-1.6} ${cx+.6} ${cy-r-1.2}
+                              Q${cx+r+2.4} ${cy-r-.9} ${cx+r+1.3} ${cy-r+1.8}L${cx+r+.2} ${cy-.9}z" fill="${hat}"/>
+                            <path d="M${cx-r-.2} ${cy-1.1}H${cx+r+.2}" stroke="rgba(0,0,0,.3)" stroke-width=".7"/>` };
+    /* the baker's toque: a white band and a puffed crown */
+    case 'toque':  return { back: '', front: `<rect x="${cx-r}" y="${cy-r+.2}" width="${2*r}" height="2.2" rx=".4" fill="#f7f4ea"/>
+                            <circle cx="${cx-1.6}" cy="${cy-r-.3}" r="1.5" fill="#f7f4ea"/>
+                            <circle cx="${cx+1.6}" cy="${cy-r-.3}" r="1.5" fill="#f7f4ea"/>
+                            <circle cx="${cx}" cy="${cy-r-.8}" r="1.6" fill="#fffdf6"/>` };
+    default:       return { back: '', front: low };
+  }
+}
 function heads(cfg){
   const n = cfg.heads || 0;
   if (!n) return '';
   const seed = cfg.sign.length;
-  const one = (cx, r, i) =>
-    `<g class="peek" style="animation-delay:${-(seed * 1.7 + i * 3.1) % 9}s">
-       <path d="M${cx-6} 46 q6-5.5 12 0z" fill="${WIN_SKIN[(seed + i) % 4]}"/>
-       <path d="M${cx-6} 46 q6-4 12 0z" fill="${['#c14f3e','#3d6ea8','#f2d2a0','#2f7a63'][(seed + i) % 4]}"/>
-       <circle cx="${cx}" cy="${40.6}" r="${r}" fill="${WIN_SKIN[(seed + i) % 4]}"/>
-       <path d="M${cx-r} 39.5 q${r}-${r*1.3} ${2*r} 0 q-${r}-${r*.5} -${2*r} 0z" fill="#241c15"/>
+  const who = WIN_PEOPLE[cfg.sign] || [];
+  const one = (cx, r, i) => {
+    const p = who[i] || { hair: 'lowcut', skin: seed + i, print: null };
+    const skin = WIN_SKIN[p.skin % 4], cy = 40;
+    const pr = p.print ? shirtPrint(p.print, .5) : null;
+    const shirt = pr ? pr.fill : ['#c14f3e','#3d6ea8','#f2d2a0','#2f7a63'][(seed + i) % 4];
+    const hair = winHair(p, cx, cy, r);
+    return `<g class="peek" style="animation-delay:${-(seed * 1.7 + i * 3.1) % 9}s">
+       ${pr ? pr.defs : ''}
+       ${hair.back}
+       <path d="M${cx-6.5} 46 q6.5-7 13 0z" fill="${skin}"/>
+       <path d="M${cx-6.5} 46 q6.5-5.4 13 0z" fill="${shirt}"/>
+       <circle cx="${cx}" cy="${cy}" r="${r}" fill="${skin}"/>
+       ${hair.front}
      </g>`;
+  };
   return n === 1 ? one(60 + (seed % 3) * 5, 3.4, 0) : one(59, 3.4, 0) + one(73, 3, 1);
 }
 
@@ -2160,10 +2221,10 @@ function shop(cfg){
       <rect x="70" y="42" width="12" height="4"  rx="1" fill="#7d4b2c"/>` : ''}
     ${cfg.bakery ? `
       <rect x="53" y="41.4" width="28" height="1.6" fill="#8a6b3f"/>
-      <ellipse cx="58" cy="39.6" rx="4.2" ry="2.3" fill="#c98a43"/>
-      <ellipse cx="67" cy="39.6" rx="4.2" ry="2.3" fill="#b97a35"/>
-      <ellipse cx="76" cy="39.6" rx="4.2" ry="2.3" fill="#c98a43"/>
-      <path d="M56.2 38.6l1 1M58.4 38.4l1 1M65.2 38.6l1 1M67.4 38.4l1 1M74.2 38.6l1 1M76.4 38.4l1 1"
+      <!-- two loaves, right of the baker so his face shows over the shelf -->
+      <ellipse cx="69.4" cy="39.6" rx="4.2" ry="2.3" fill="#b97a35"/>
+      <ellipse cx="77.4" cy="39.6" rx="3.8" ry="2.3" fill="#c98a43"/>
+      <path d="M67.6 38.6l1 1M69.8 38.4l1 1M75.8 38.6l1 1M77.9 38.4l1 1"
             stroke="#8a5a2a" stroke-width=".6" stroke-linecap="round"/>` : ''}
     ${cfg.barber ? barberBoard(8, -8, 84) : board(cfg.sign, 10, 6, 80)}
   </svg>`;
@@ -4161,6 +4222,7 @@ const PED_SHIRTS = [
   { kind: 'adire' }, { kind: 'chevron', ink: '#1f8a4c' }, { kind: 'jersey', ink: '#0f8a4a', num: 10 },
   1, 2, 4,
 ];
+const PED_LOOKS = [{ fila: '#2b6cb0' }, 'afro', { fila: '#7b3fa0' }, 'dreads', { fila: '#c1272d' }];
 function sendPed(){
   if (sceneEl.querySelectorAll('.ped').length < 2){
     const el = document.createElement('div');
@@ -4173,9 +4235,16 @@ function sendPed(){
     const pick = free[Math.floor(Math.random() * free.length)];
     el.dataset.shirt = pick;
     const shirt = PED_SHIRTS[+pick];
+    /* and a head of their own: if the one already out wears a fila, this one
+       has a big afro or locs, and the other way round. */
+    const other = sceneEl.querySelector('.ped[data-look]');
+    const hatOut = other ? !!PED_LOOKS[+other.dataset.look].fila : Math.random() < .5;
+    const looks = PED_LOOKS.map((_, i) => String(i)).filter(i => !!PED_LOOKS[i].fila !== (other ? hatOut : !hatOut));
+    const lk = looks[Math.floor(Math.random() * looks.length)];
+    el.dataset.look = lk;
     el.innerHTML = civilian(SKINS[Math.floor(Math.random() * SKINS.length)], .55, 1, 0,
                             typeof shirt === 'number' ? shirt : 0, false, false, false,
-                            typeof shirt === 'number' ? null : shirt);
+                            typeof shirt === 'number' ? null : shirt, PED_LOOKS[+lk]);
     const v = sceneEl.querySelector('.vehicle');
     if (v) v.before(el); else sceneEl.appendChild(el);
     el.addEventListener('animationend', () => el.remove());
