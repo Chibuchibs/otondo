@@ -407,7 +407,7 @@ document.addEventListener('visibilitychange', () => {
 const VOICE = {
   oya:   './sfx/oya-letsgo.m4a',
   water: './sfx/seller-water.m4a',
-  akara: './sfx/seller-akara-200.m4a',         // Jolaolu, "Akara 200!" when your runner reaches her
+  akara: './sfx/seller-akara-200.m4a',         // Jolaolu, "Akara, 200 naira" (two takes joined) when your runner reaches her
   akaraWalk: './sfx/seller-akara-jolaolu.m4a',  // Jolaolu, "Oga, buy your akara here!" as she walks into view
   kunu:  './sfx/seller-kunu.m4a',
   shine:   './sfx/shine-your-eyes.m4a',
