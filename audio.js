@@ -306,7 +306,7 @@ export function startMusic(onBarCallback) {
     startedAt = c.currentTime;
     node.start();
     playing = true; lastBar = -1;
-    Object.keys(VOICE).forEach(loadVoice);          // decoded before anyone speaks
+    Object.values(VOICE).flat().forEach(loadVoice); // decoded before anyone speaks
     try { chan?.postMessage('playing'); } catch {}  // any other Otondo tab stops
     if (rainWanted) setRain(rainWanted);          // sound came on mid-shower
     cancelAnimationFrame(raf); watch();
@@ -407,7 +407,7 @@ document.addEventListener('visibilitychange', () => {
 const VOICE = {
   oya:   './sfx/oya-letsgo.m4a',
   water: './sfx/seller-water.m4a',
-  akara: './sfx/seller-akara.m4a',
+  akara: ['./sfx/seller-akara-jolaolu.m4a', './sfx/seller-akara.m4a'],   // Jolaolu and the wife, taking turns
   kunu:  './sfx/seller-kunu.m4a',
   shine:   './sfx/shine-your-eyes.m4a',
   enter:   './sfx/haha-e-enter.m4a',    // "Haha, e enter!" — pidgin for: that satisfies
@@ -419,13 +419,22 @@ const VOICE_LEVEL = 0.9, DUCK = 0.55;
 const VGRID = 0.058, VLEAD = 0.08; // the track's beats sit 58ms early; each clip has 80ms of lead-in
 let musicGain = null, voiceFree = 0, lastSaid = '', saidCount = 0;
 const voiceBufs = {};
-function loadVoice(name) {
-  if (!ctx || !VOICE[name]) return Promise.resolve(null);
-  if (!voiceBufs[name]) voiceBufs[name] = fetch(VOICE[name])
+/* A line can have several takes (a list): they take turns, one per call. */
+const voiceTurn = {};
+function voicePath(name) {
+  const v = VOICE[name];
+  if (!Array.isArray(v)) return v;
+  const i = voiceTurn[name] || 0;
+  voiceTurn[name] = (i + 1) % v.length;
+  return v[i];
+}
+function loadVoice(path) {
+  if (!ctx || !path) return Promise.resolve(null);
+  if (!voiceBufs[path]) voiceBufs[path] = fetch(path)
     .then(r => { if (!r.ok) throw new Error(r.status); return r.arrayBuffer(); })
     .then(b => new Promise((ok, no) => { const p = ctx.decodeAudioData(b, ok, no); if (p && p.then) p.then(ok, no); }))
-    .catch(e => { console.warn('[otondo] voice unavailable:', name, e.message); return null; });
-  return voiceBufs[name];
+    .catch(e => { console.warn('[otondo] voice unavailable:', path, e.message); return null; });
+  return voiceBufs[path];
 }
 /* `queue`: if someone is already talking, wait for them to finish rather
    than drop the line — up to two seconds. A seller answering "Oya, let's go!"
@@ -434,7 +443,8 @@ export function say(name, { queue = false } = {}) {
   if (!playing || !ctx || ctx.state !== 'running') return false;
   const wait = voiceFree - ctx.currentTime;
   if (wait > (queue ? 2 : 0)) return false;
-  loadVoice(name).then(buf => {
+  const path = voicePath(name);
+  loadVoice(path).then(buf => {
     if (!buf || !playing || ctx.state !== 'running') return;
     /* The next eighth-note of the groove: never more than a quarter-second
        away, so a line still answers the tap that caused it. */
@@ -443,7 +453,7 @@ export function say(name, { queue = false } = {}) {
     const at = startedAt + Math.ceil((pos + offset) / step) * step - offset - VLEAD;
     if (at < voiceFree - 0.001) return;
     voiceFree = at + buf.duration;
-    lastSaid = name; saidCount++;
+    lastSaid = Array.isArray(VOICE[name]) ? `${name}/${path.split('/').pop()}` : name; saidCount++;
     const src = ctx.createBufferSource(); src.buffer = buf;
     const g = ctx.createGain(); g.gain.value = VOICE_LEVEL;
     src.connect(g).connect(ctx.destination);
