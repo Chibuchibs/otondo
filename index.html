@@ -1463,7 +1463,7 @@
 <script type="module">
 import { newGame, doAction, canDo, unlocked, ACTIONS, phaseOf, nextUnlock, postingOdds, rivalOf,
          computePosting, CHOICES, GOAL, goalStatus,
-         shareText, MAX_DAY } from './game.js?v=20261103144325';
+         shareText, MAX_DAY } from './game.js?v=20261103150241';
 
 /* ---------- scene coordinates ----------
    The scene is scaled by a transform (see the stage), so a native
@@ -1494,11 +1494,11 @@ const TS = (document.getElementById('scene').offsetWidth || 375) / 375;
 const ALLAWEE_NOTE = 'Allawee ₦77,000 — e never enter.';
 import { initNet, joinCamp, syncPlayer, platoonBoard, recentChat, postChat,
          postSuggestion, reportMessage, awardBoard, myAwards, laughChat,
-         setPresence, campRoster, renameMe, setAvatar, online } from './net.js?v=20261103144325';
-import { startMusic, stopMusic, musicOn, audioState, audioSupported, setRain, whenSilenced, wakeAudio, audible, say, BEAT, BAR } from './audio.js?v=20261103144325';
+         setPresence, campRoster, renameMe, setAvatar, online } from './net.js?v=20261103150241';
+import { startMusic, stopMusic, musicOn, audioState, audioSupported, setRain, whenSilenced, wakeAudio, audible, say, BEAT, BAR } from './audio.js?v=20261103150241';
 import { playHoop, playPenalty, playQuiz, playRegister, playParade,
          playMami, playHustle, playManOWar, playSaed, playSocial,
-         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261103144325';
+         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261103150241';
 
 /* Every dance animation is expressed in beats, so the steps are on-tempo
    whether or not the sound is playing — and genuinely on the beat when it is. */
@@ -5529,6 +5529,11 @@ function freshCamp(){
   hooray('New camp don start! Day 1 again, fresh stats. Hit all four goals one more time.', false, false);
 }
 setInterval(() => { if (freshCampDue()) freshCamp(); }, 60 * 1000);
+/* A phone pauses a background tab's timers, so a page left open for days
+   would only catch up a minute after it is back on screen. Check on return. */
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'visible' && freshCampDue()) freshCamp();
+});
 
 /* The burst: a card over everything and a shower of paper in camp colours.
    `cheer` false is the same card without the voice and the paper. */
