@@ -1463,7 +1463,7 @@
 <script type="module">
 import { newGame, doAction, canDo, unlocked, ACTIONS, phaseOf, nextUnlock, postingOdds, rivalOf,
          computePosting, CHOICES, GOAL, goalStatus,
-         shareText, MAX_DAY } from './game.js?v=20261103144125';
+         shareText, MAX_DAY } from './game.js?v=20261103144325';
 
 /* ---------- scene coordinates ----------
    The scene is scaled by a transform (see the stage), so a native
@@ -1494,11 +1494,11 @@ const TS = (document.getElementById('scene').offsetWidth || 375) / 375;
 const ALLAWEE_NOTE = 'Allawee ₦77,000 — e never enter.';
 import { initNet, joinCamp, syncPlayer, platoonBoard, recentChat, postChat,
          postSuggestion, reportMessage, awardBoard, myAwards, laughChat,
-         setPresence, campRoster, renameMe, setAvatar, online } from './net.js?v=20261103144125';
-import { startMusic, stopMusic, musicOn, audioState, audioSupported, setRain, whenSilenced, wakeAudio, audible, say, BEAT, BAR } from './audio.js?v=20261103144125';
+         setPresence, campRoster, renameMe, setAvatar, online } from './net.js?v=20261103144325';
+import { startMusic, stopMusic, musicOn, audioState, audioSupported, setRain, whenSilenced, wakeAudio, audible, say, BEAT, BAR } from './audio.js?v=20261103144325';
 import { playHoop, playPenalty, playQuiz, playRegister, playParade,
          playMami, playHustle, playManOWar, playSaed, playSocial,
-         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261103144125';
+         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261103144325';
 
 /* Every dance animation is expressed in beats, so the steps are on-tempo
    whether or not the sound is playing — and genuinely on the beat when it is. */
@@ -5468,6 +5468,8 @@ function drawGoal(){
   line('gMoney',  g.money,  'Goal: no debt');
   line('gCred',   g.cred,   `Goal: ${GOAL.cred}`);
 
+  /* When all four were first true together starts the clock on freshCamp. */
+  if (g.all && !s.allMetAt){ s.allMetAt = Date.now(); save(); }
   /* Matched the first time all four are true together. */
   if (s.choice && !s.matched && g.all){
     s.matched = true; save();
@@ -5508,10 +5510,33 @@ $('goal').addEventListener('click', e => {
   save(); drawGoal();
 });
 
-/* The burst: a card over everything and a shower of paper in camp colours. */
-function hooray(msg, pick = false){
-  say('toomuch');                                  // "You are too much!"
-  celebrate();
+/* Once all four goals are met the run is won, and a won run is the same
+   score every time the player comes back. Eight hours after the goals were
+   first all met, camp starts again from day 1 with fresh stats. Who you are
+   stays: name, face and platoon. */
+const FRESH_AFTER = 8 * 3600 * 1000;
+function freshCampDue(){
+  return !!(s && s.phase === 'day' && s.allMetAt && Date.now() - s.allMetAt >= FRESH_AFTER);
+}
+function freshCamp(){
+  const keep = { name: s.name, platoon: s.platoon };
+  if (Number.isInteger(s.avatar)) keep.avatar = s.avatar;
+  s = Object.assign(newGame(keep.name), keep);
+  pickAsked = false;
+  mine = [];                       // last run's badges are not this run's
+  drawBadges();
+  save(); render();
+  hooray('New camp don start! Day 1 again, fresh stats. Hit all four goals one more time.', false, false);
+}
+setInterval(() => { if (freshCampDue()) freshCamp(); }, 60 * 1000);
+
+/* The burst: a card over everything and a shower of paper in camp colours.
+   `cheer` false is the same card without the voice and the paper. */
+function hooray(msg, pick = false, cheer = true){
+  if (cheer){
+    say('toomuch');                                // "You are too much!"
+    celebrate();
+  }
   const wrap = $('hooray');
   $('hoorayMsg').innerHTML = msg;
   const chips = $('hoorayChips');
@@ -5520,7 +5545,7 @@ function hooray(msg, pick = false){
     `<button type="button" data-choice="${i}">${esc(CHOICES[i])}</button>`).join('') : '';
   const conf = wrap.querySelector('.confetti');
   const COLS = ['#0a7a43', '#ffffff', '#f3c53d', '#d6342c', '#3b6fb6', '#f29a8a'];
-  conf.innerHTML = Array.from({ length: 70 }, (_, i) =>
+  conf.innerHTML = !cheer ? '' : Array.from({ length: 70 }, (_, i) =>
     `<i style="left:${Math.random() * 100}%;background:${COLS[i % COLS.length]};
        animation-duration:${2.2 + Math.random() * 2}s;animation-delay:${Math.random() * .8}s;
        transform:rotate(${Math.random() * 360}deg)"></i>`).join('');
@@ -6131,7 +6156,7 @@ initNet({
   pushPresence();          // a resumed save is already in camp
 });
 
-render();
+if (freshCampDue()) freshCamp(); else render();
 </script>
 </body>
 </html>
