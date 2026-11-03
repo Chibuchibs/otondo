@@ -1463,7 +1463,7 @@
 <script type="module">
 import { newGame, doAction, canDo, unlocked, ACTIONS, phaseOf, nextUnlock, postingOdds, rivalOf,
          computePosting, CHOICES, GOAL, goalStatus,
-         shareText, MAX_DAY } from './game.js?v=20261103104133';
+         shareText, MAX_DAY } from './game.js?v=20261103104712';
 
 /* ---------- scene coordinates ----------
    The scene is scaled by a transform (see the stage), so a native
@@ -1494,11 +1494,11 @@ const TS = (document.getElementById('scene').offsetWidth || 375) / 375;
 const ALLAWEE_NOTE = 'Allawee ₦77,000 — e never enter.';
 import { initNet, joinCamp, syncPlayer, platoonBoard, recentChat, postChat,
          postSuggestion, reportMessage, awardBoard, myAwards, laughChat,
-         setPresence, campRoster, renameMe, setAvatar, online } from './net.js?v=20261103104133';
-import { startMusic, stopMusic, musicOn, audioState, audioSupported, setRain, whenSilenced, wakeAudio, audible, say, BEAT, BAR } from './audio.js?v=20261103104133';
+         setPresence, campRoster, renameMe, setAvatar, online } from './net.js?v=20261103104712';
+import { startMusic, stopMusic, musicOn, audioState, audioSupported, setRain, whenSilenced, wakeAudio, audible, say, BEAT, BAR } from './audio.js?v=20261103104712';
 import { playHoop, playPenalty, playQuiz, playRegister, playParade,
          playMami, playHustle, playManOWar, playSaed, playSocial,
-         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261103104133';
+         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261103104712';
 
 /* Every dance animation is expressed in beats, so the steps are on-tempo
    whether or not the sound is playing — and genuinely on the beat when it is. */
@@ -4146,8 +4146,10 @@ const WARES = {
 const HAWK_FIRST = 20000, HAWK_LEN = 26, AKARA_AT = 20, KUNU_AT = 33, HAWK_REST = 30000;
 /* Who also calls as she steps into view. Every seller calls again, with her
    price, when your runner reaches her (snackRun) — pure water was silent on
-   a sale, and a bought drink with no voice read as the sound failing. */
-const CALLS_ON_WALK_IN = new Set(['water']);
+   a sale, and a bought drink with no voice read as the sound failing.
+   The value is the line she calls: akara walks in on Jolaolu's "Oga, buy
+   your akara here" — an invitation, so it is never the line on a sale. */
+const CALLS_ON_WALK_IN = new Map([['water', 'water'], ['akara', 'akaraWalk']]);
 function sendHawker(kind){
   if (calm() || sceneEl.querySelector('.hawker.' + kind)) return;
   const w = WARES[kind];
@@ -4168,7 +4170,7 @@ function sendHawker(kind){
   el.addEventListener('animationend', () => el.remove());
   setTimeout(() => el.remove(), HAWK_LEN * TS * 1000 + 3000);
   if (!CALLS_ON_WALK_IN.has(kind)) return;
-  setTimeout(() => { if (el.isConnected) say(kind); }, 3000 * TS);
+  setTimeout(() => { if (el.isConnected) say(CALLS_ON_WALK_IN.get(kind), { queue: true }); }, 3000 * TS);
 }
 function hawkerCycle(){
   if (calm()) return;

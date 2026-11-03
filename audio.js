@@ -407,7 +407,8 @@ document.addEventListener('visibilitychange', () => {
 const VOICE = {
   oya:   './sfx/oya-letsgo.m4a',
   water: './sfx/seller-water.m4a',
-  akara: ['./sfx/seller-akara-jolaolu.m4a', './sfx/seller-akara.m4a'],   // Jolaolu and the wife, taking turns
+  akara: './sfx/seller-akara.m4a',             // the wife, when your runner buys
+  akaraWalk: './sfx/seller-akara-jolaolu.m4a',  // Jolaolu, "Oga, buy your akara here!" as she walks into view
   kunu:  './sfx/seller-kunu.m4a',
   shine:   './sfx/shine-your-eyes.m4a',
   enter:   './sfx/haha-e-enter.m4a',    // "Haha, e enter!" — pidgin for: that satisfies
