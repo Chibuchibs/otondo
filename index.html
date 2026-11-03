@@ -1463,7 +1463,7 @@
 <script type="module">
 import { newGame, doAction, canDo, unlocked, ACTIONS, phaseOf, nextUnlock, postingOdds, rivalOf,
          computePosting, CHOICES, GOAL, goalStatus,
-         shareText, MAX_DAY } from './game.js?v=20261102163656';
+         shareText, MAX_DAY } from './game.js?v=20261103103036';
 
 /* ---------- scene coordinates ----------
    The scene is scaled by a transform (see the stage), so a native
@@ -1494,11 +1494,11 @@ const TS = (document.getElementById('scene').offsetWidth || 375) / 375;
 const ALLAWEE_NOTE = 'Allawee ₦77,000 — e never enter.';
 import { initNet, joinCamp, syncPlayer, platoonBoard, recentChat, postChat,
          postSuggestion, reportMessage, awardBoard, myAwards, laughChat,
-         setPresence, campRoster, renameMe, setAvatar, online } from './net.js?v=20261102163656';
-import { startMusic, stopMusic, musicOn, audioState, audioSupported, setRain, whenSilenced, wakeAudio, audible, say, BEAT, BAR } from './audio.js?v=20261102163656';
+         setPresence, campRoster, renameMe, setAvatar, online } from './net.js?v=20261103103036';
+import { startMusic, stopMusic, musicOn, audioState, audioSupported, setRain, whenSilenced, wakeAudio, audible, say, BEAT, BAR } from './audio.js?v=20261103103036';
 import { playHoop, playPenalty, playQuiz, playRegister, playParade,
          playMami, playHustle, playManOWar, playSaed, playSocial,
-         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261102163656';
+         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261103103036';
 
 /* Every dance animation is expressed in beats, so the steps are on-tempo
    whether or not the sound is playing — and genuinely on the beat when it is. */
@@ -3351,6 +3351,7 @@ function fallIn(p){
      Frozen, he sinks and climbs out exactly where he fell, then rejoinGrid
      hurries him back to his place. */
   p.style.animationPlayState = 'paused';
+  say('ewo');                                       // "Ewooo!"
   /* Into the hole, not down the screen. The first version slid him 32px down
      and faded him out, which read as a figure sliding off the bottom. Now he
      pitches forward and the ground takes him from the feet up — a clip that

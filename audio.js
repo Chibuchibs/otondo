@@ -413,6 +413,7 @@ const VOICE = {
   enter:   './sfx/haha-e-enter.m4a',    // "Haha, e enter!" — pidgin for: that satisfies
   toomuch: './sfx/you-too-much.m4a',
   welldone: './sfx/well-done.m4a',
+  ewo:     './sfx/ewooo.m4a',       // Jolaolu, when YOU goes into the pothole
 };
 const VOICE_LEVEL = 0.9, DUCK = 0.55;
 const VGRID = 0.058, VLEAD = 0.08; // the track's beats sit 58ms early; each clip has 80ms of lead-in
