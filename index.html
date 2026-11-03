@@ -1462,7 +1462,7 @@
 <script type="module">
 import { newGame, doAction, canDo, unlocked, ACTIONS, phaseOf, nextUnlock, postingOdds, rivalOf,
          computePosting, CHOICES, GOAL, goalStatus,
-         shareText, MAX_DAY } from './game.js?v=20261102010356';
+         shareText, MAX_DAY } from './game.js?v=20261102160331';
 
 /* ---------- scene coordinates ----------
    The scene is scaled by a transform (see the stage), so a native
@@ -1493,11 +1493,11 @@ const TS = (document.getElementById('scene').offsetWidth || 375) / 375;
 const ALLAWEE_NOTE = 'Allawee ₦77,000 — e never enter.';
 import { initNet, joinCamp, syncPlayer, platoonBoard, recentChat, postChat,
          postSuggestion, reportMessage, awardBoard, myAwards, laughChat,
-         setPresence, campRoster, renameMe, setAvatar, online } from './net.js?v=20261102010356';
-import { startMusic, stopMusic, musicOn, audioState, audioSupported, setRain, whenSilenced, wakeAudio, audible, say, BEAT, BAR } from './audio.js?v=20261102010356';
+         setPresence, campRoster, renameMe, setAvatar, online } from './net.js?v=20261102160331';
+import { startMusic, stopMusic, musicOn, audioState, audioSupported, setRain, whenSilenced, wakeAudio, audible, say, BEAT, BAR } from './audio.js?v=20261102160331';
 import { playHoop, playPenalty, playQuiz, playRegister, playParade,
          playMami, playHustle, playManOWar, playSaed, playSocial,
-         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261102010356';
+         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261102160331';
 
 /* Every dance animation is expressed in beats, so the steps are on-tempo
    whether or not the sound is playing — and genuinely on the beat when it is. */
@@ -3272,7 +3272,7 @@ function hopPothole(p, paid){
     { transform: 'translateY(0)' },
   ], { duration: 620, easing: 'cubic-bezier(.3,0,.4,1)', composite: 'add' });
   setTimeout(() => { p.classList.remove('jumping'); }, 640);
-  if (paid) say('wahala');                          // cleared it: "No wahala!"
+  if (paid) say('welldone');                        // cleared it: "Well done!"
   if (paid && s){
     s.energy = Math.max(0, s.energy - JUMP_COST);
     save(); render();
