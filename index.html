@@ -1463,7 +1463,7 @@
 <script type="module">
 import { newGame, doAction, canDo, unlocked, ACTIONS, phaseOf, nextUnlock, postingOdds, rivalOf,
          computePosting, CHOICES, GOAL, goalStatus,
-         shareText, MAX_DAY } from './game.js?v=20261103103328';
+         shareText, MAX_DAY } from './game.js?v=20261103104133';
 
 /* ---------- scene coordinates ----------
    The scene is scaled by a transform (see the stage), so a native
@@ -1494,11 +1494,11 @@ const TS = (document.getElementById('scene').offsetWidth || 375) / 375;
 const ALLAWEE_NOTE = 'Allawee ₦77,000 — e never enter.';
 import { initNet, joinCamp, syncPlayer, platoonBoard, recentChat, postChat,
          postSuggestion, reportMessage, awardBoard, myAwards, laughChat,
-         setPresence, campRoster, renameMe, setAvatar, online } from './net.js?v=20261103103328';
-import { startMusic, stopMusic, musicOn, audioState, audioSupported, setRain, whenSilenced, wakeAudio, audible, say, BEAT, BAR } from './audio.js?v=20261103103328';
+         setPresence, campRoster, renameMe, setAvatar, online } from './net.js?v=20261103104133';
+import { startMusic, stopMusic, musicOn, audioState, audioSupported, setRain, whenSilenced, wakeAudio, audible, say, BEAT, BAR } from './audio.js?v=20261103104133';
 import { playHoop, playPenalty, playQuiz, playRegister, playParade,
          playMami, playHustle, playManOWar, playSaed, playSocial,
-         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261103103328';
+         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261103104133';
 
 /* Every dance animation is expressed in beats, so the steps are on-tempo
    whether or not the sound is playing — and genuinely on the beat when it is. */
@@ -2820,11 +2820,14 @@ const hello = setInterval(() => {
    walkers shopping on its own, and YOU following those read as your corper
    wandering off untapped. */
 let paidRunner = null;
+/* Who the YOU marker is over right now (null while it is hidden); it keeps
+   its figure through aimPointer's half-second hold. */
+let youShown = null;
 function aimPointer(){
   /* Deliberately NOT tied to hintDone. The chip is a tutorial and goes away
      once you have tapped; this marks which figure is yours, which stays true
      for the whole session and is the only thing linking a tap to your wallet. */
-  if (calm()){ pointer.style.opacity = '0'; return; }
+  if (calm()){ pointer.style.opacity = '0'; youShown = null; return; }
   /* Aim at whoever is actually being offered. Pointing at the figure furthest
      along meant the arrow and the label could name two different people. */
   /* Prefer whoever is being offered. When nothing is on offer — during the
@@ -2857,7 +2860,7 @@ function aimPointer(){
     const box0 = sceneEl.sceneRect();
     best = [...sceneEl.querySelectorAll(':scope > .corper')]
       .filter(freeFig).find(p => inFrame(p, box0, 0.05)) || null;
-    if (!best){ pointer.style.opacity = '0'; return; }
+    if (!best){ pointer.style.opacity = '0'; youShown = null; return; }
   }
   const box = sceneEl.sceneRect();
   const r = best.sceneRect();
@@ -2865,8 +2868,9 @@ function aimPointer(){
   /* A figure that has left the frame keeps no marker. Without this the arrow
      followed a departing target straight off the scene — measured at left:393
      on a 375px board, which is the "YOU is pegged off" the player sees. */
-  if (centre < -4 || centre > box.width + 4){ pointer.style.opacity = '0'; return; }
+  if (centre < -4 || centre > box.width + 4){ pointer.style.opacity = '0'; youShown = null; return; }
   pointer.style.opacity = '1';
+  youShown = best;
   /* Clamped so the arrow itself can never hang over the bezel, however close
      to the edge its target gets. */
   const half = pointer.offsetWidth / 2 || 20;
@@ -3351,7 +3355,7 @@ function fallIn(p){
      Frozen, he sinks and climbs out exactly where he fell, then rejoinGrid
      hurries him back to his place. */
   p.style.animationPlayState = 'paused';
-  say('ewo');                                       // "Ewooo!"
+  if (p === youShown) say('ewo');                   // "Ewooo!" — only for YOU, never a bystander
   /* Into the hole, not down the screen. The first version slid him 32px down
      and faded him out, which read as a figure sliding off the bottom. Now he
      pitches forward and the ground takes him from the feet up — a clip that
