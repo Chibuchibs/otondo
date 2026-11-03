@@ -1463,7 +1463,7 @@
 <script type="module">
 import { newGame, doAction, canDo, unlocked, ACTIONS, phaseOf, nextUnlock, postingOdds, rivalOf,
          computePosting, CHOICES, GOAL, goalStatus,
-         shareText, MAX_DAY } from './game.js?v=20261103143218';
+         shareText, MAX_DAY } from './game.js?v=20261103144125';
 
 /* ---------- scene coordinates ----------
    The scene is scaled by a transform (see the stage), so a native
@@ -1494,11 +1494,11 @@ const TS = (document.getElementById('scene').offsetWidth || 375) / 375;
 const ALLAWEE_NOTE = 'Allawee ₦77,000 — e never enter.';
 import { initNet, joinCamp, syncPlayer, platoonBoard, recentChat, postChat,
          postSuggestion, reportMessage, awardBoard, myAwards, laughChat,
-         setPresence, campRoster, renameMe, setAvatar, online } from './net.js?v=20261103143218';
-import { startMusic, stopMusic, musicOn, audioState, audioSupported, setRain, whenSilenced, wakeAudio, audible, say, BEAT, BAR } from './audio.js?v=20261103143218';
+         setPresence, campRoster, renameMe, setAvatar, online } from './net.js?v=20261103144125';
+import { startMusic, stopMusic, musicOn, audioState, audioSupported, setRain, whenSilenced, wakeAudio, audible, say, BEAT, BAR } from './audio.js?v=20261103144125';
 import { playHoop, playPenalty, playQuiz, playRegister, playParade,
          playMami, playHustle, playManOWar, playSaed, playSocial,
-         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261103143218';
+         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261103144125';
 
 /* Every dance animation is expressed in beats, so the steps are on-tempo
    whether or not the sound is playing — and genuinely on the beat when it is. */
@@ -2663,12 +2663,20 @@ function pickFigure(box){
    Freeze him where he stands (reading the rect first, exactly as lineUp does
    — a paused CSS percentage is not a pixel), bring a keke to him, then send
    the pair off and walk a replacement in. */
+/* What a keke drop up the road costs. Every hailRide comes from a tap, so
+   every ride pays, below zero if that is where it lands, like buy(). */
+const KEKE_FARE = 200;
 function hailRide(p){
   if (p.dataset.busy) return;                 // one ride per figure
   p.dataset.busy = '1';
   const box = sceneEl.sceneRect();
   const r   = p.sceneRect();
   const x   = Math.round(r.left - box.left);
+  if (s){
+    s.money -= KEKE_FARE;
+    save(); render();
+    floatCost(p, `-₦${KEKE_FARE}`);
+  }
 
   p.style.animation = 'none';
   p.style.left = x + 'px';
@@ -3612,7 +3620,7 @@ function offerRide(force){
   if (!onKeke && !force){ clearRide(); return; }
   rideTarget.classList.add('wantsRide');
   markTappable(rideTarget);
-  rideTag.textContent = 'TAP TO RIDE KEKE';
+  rideTag.textContent = `TAP TO RIDE KEKE ₦${KEKE_FARE}`;
   rideTag.style.display = 'block';
   rideAnchor = onKeke ? kk : rideTarget;
   const r = rideAnchor.sceneRect();
