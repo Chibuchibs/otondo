@@ -417,6 +417,10 @@ const VOICE = {
   ewo:     './sfx/ewooo.m4a',       // Jolaolu, when YOU goes into the pothole
 };
 const VOICE_LEVEL = 0.9, DUCK = 0.55;
+/* Per-line level against VOICE_LEVEL. Jolaolu's lines measure as loud as the
+   rest, but her brighter voice carries further over the music, so they sit a
+   little lower (about -2.5dB). */
+const VOICE_GAIN = { akara: 0.75, akaraWalk: 0.75, ewo: 0.75 };
 const VGRID = 0.058, VLEAD = 0.08; // the track's beats sit 58ms early; each clip has 80ms of lead-in
 let musicGain = null, voiceFree = 0, lastSaid = '', saidCount = 0;
 const voiceBufs = {};
@@ -456,7 +460,7 @@ export function say(name, { queue = false } = {}) {
     voiceFree = at + buf.duration;
     lastSaid = Array.isArray(VOICE[name]) ? `${name}/${path.split('/').pop()}` : name; saidCount++;
     const src = ctx.createBufferSource(); src.buffer = buf;
-    const g = ctx.createGain(); g.gain.value = VOICE_LEVEL;
+    const g = ctx.createGain(); g.gain.value = VOICE_LEVEL * (VOICE_GAIN[name] || 1);
     src.connect(g).connect(ctx.destination);
     src.start(at);
     if (musicGain) {
