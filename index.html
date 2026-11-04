@@ -1467,7 +1467,7 @@
 <script type="module">
 import { newGame, doAction, canDo, unlocked, ACTIONS, phaseOf, nextUnlock, postingOdds, rivalOf,
          computePosting, CHOICES, GOAL, goalStatus,
-         shareText, MAX_DAY } from './game.js?v=20261103215525';
+         shareText, MAX_DAY } from './game.js?v=20261103215926';
 
 /* ---------- scene coordinates ----------
    The scene is scaled by a transform (see the stage), so a native
@@ -1498,11 +1498,11 @@ const TS = (document.getElementById('scene').offsetWidth || 375) / 375;
 const ALLAWEE_NOTE = 'Allawee ₦77,000 — e never enter.';
 import { initNet, joinCamp, syncPlayer, platoonBoard, recentChat, postChat,
          postSuggestion, reportMessage, awardBoard, myAwards, laughChat,
-         setPresence, campRoster, renameMe, setAvatar, online } from './net.js?v=20261103215525';
-import { startMusic, stopMusic, musicOn, audioState, audioSupported, setRain, whenSilenced, wakeAudio, audible, say, BEAT, BAR } from './audio.js?v=20261103215525';
+         setPresence, campRoster, renameMe, setAvatar, online } from './net.js?v=20261103215926';
+import { startMusic, stopMusic, musicOn, audioState, audioSupported, setRain, whenSilenced, wakeAudio, audible, say, BEAT, BAR } from './audio.js?v=20261103215926';
 import { playHoop, playPenalty, playQuiz, playRegister, playParade,
          playMami, playHustle, playManOWar, playSaed, playSocial,
-         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261103215525';
+         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261103215926';
 
 /* Every dance animation is expressed in beats, so the steps are on-tempo
    whether or not the sound is playing — and genuinely on the beat when it is. */
@@ -1770,22 +1770,48 @@ function keke(seed = Math.floor(Math.random() * 8)){
    with green berets standing in the bed under the roll cage. Front on the
    right, like everything else in this lane. */
 function policeHilux(){
-  const cop = (x, skin, gun) => `
-    <path d="M${x-4.2} 22 v-6.4 q0-2.6 2.6-2.6 h3.2 q2.6 0 2.6 2.6 v6.4z" fill="#1b1b1e"/>
-    <circle cx="${x}" cy="10.6" r="2.7" fill="${skin}"/>
-    <path d="M${x-3} 9.6 q.4-3 3.4-3 q2.8 0 3.2 2.2 q-3.4-.4-6.6.8z" fill="#1f6b3a"/>
-    ${gun ? `<path d="M${x+2.6} 18 l5.4-8.6" stroke="#2a2a2a" stroke-width="1.1" stroke-linecap="round"/>` : ''}`;
+  /* Waist up over the bed wall: shoulders and arms, a face looking forward,
+     the green beret pulled to one side with its badge, and the red NPF patch
+     on the shoulder. `arm`: 'rail' holds the cage, 'gun' carries a rifle
+     across the chest; `vest` adds the camo vest the mobile police wear. */
+  const BLK = '#16161a', SEAM = '#2c2c33';
+  const cop = (x, skin, arm, vest) => `
+    ${arm === 'rail' ? `<path d="M${x+3.6} 15 L${x+5.6} 8.2" stroke="${BLK}" stroke-width="2.1" stroke-linecap="round"/>
+      <circle cx="${x+5.7}" cy="7.4" r="1" fill="${skin}"/>` : ''}
+    <path d="M${x-4.6} 22 L${x-4.4} 15.8 Q${x-4.2} 13.6 ${x-2} 13.2 H${x+2} Q${x+4.2} 13.6 ${x+4.4} 15.8 L${x+4.6} 22z" fill="${BLK}"/>
+    ${vest ? `<path d="M${x-3.4} 22 V15.6 Q${x-3.2} 14.2 ${x-1.6} 14 H${x+1.6} Q${x+3.2} 14.2 ${x+3.4} 15.6 V22z" fill="#55603f"/>
+      <rect x="${x-2.8}" y="17" width="2.3" height="2" rx=".4" fill="#434c31"/>
+      <rect x="${x+.5}" y="17" width="2.3" height="2" rx=".4" fill="#434c31"/>
+      <circle cx="${x-1.4}" cy="15.6" r=".5" fill="#6b7650"/><circle cx="${x+1.9}" cy="20.4" r=".6" fill="#6b7650"/>`
+    : `<path d="M${x} 13.6 V22" stroke="${SEAM}" stroke-width=".5"/>
+      <rect x="${x-3}" y="16.2" width="2" height="1.6" rx=".3" fill="${SEAM}"/>`}
+    <rect x="${x+3}" y="14.6" width="1.5" height="1.8" rx=".3" fill="#d6342c"/>
+    <circle cx="${x+3.75}" cy="15.5" r=".4" fill="#f4f0e4"/>
+    ${arm === 'gun' ? `<path d="M${x-2.6} 21 L${x+6.2} 8.4" stroke="#2a2a2a" stroke-width="1.2" stroke-linecap="round"/>
+      <rect x="${x+1.2}" y="15.4" width="1.3" height="2.4" rx=".3" fill="#2a2a2a" transform="rotate(35 ${x+1.8} 16.6)"/>
+      <path d="M${x+4} 15 L${x+1.6} 17.4" stroke="${BLK}" stroke-width="2" stroke-linecap="round"/>
+      <circle cx="${x+1.4}" cy="17.6" r=".9" fill="${skin}"/>`
+    : `<path d="M${x-3.9} 15.4 L${x-4.3} 21.4" stroke="${SEAM}" stroke-width=".6"/>`}
+    <rect x="${x-1}" y="11.8" width="2" height="1.8" fill="${skin}"/>
+    <circle cx="${x}" cy="10.2" r="2.6" fill="${skin}"/>
+    <circle cx="${x-1.9}" cy="10.4" r=".7" fill="${skin}"/>
+    <circle cx="${x+1.3}" cy="10" r=".38" fill="#1a1a1a"/>
+    <path d="M${x+1} 11.6 h1" stroke="#1a1a1a" stroke-width=".3" stroke-linecap="round"/>
+    <path d="M${x-3} 9.8 Q${x-3.2} 6.4 ${x+.2} 6.4 Q${x+3.2} 6.5 ${x+2.8} 8.4 Q${x-.4} 8 ${x-3} 9.8z" fill="#1f6b3a"/>
+    <path d="M${x-2.9} 9.6 Q${x} 8 ${x+2.8} 8.4" stroke="#16502c" stroke-width=".5" fill="none"/>
+    <circle cx="${x+1.6}" cy="7.7" r=".55" fill="#f2c413"/>`;
   return `<svg viewBox="0 0 96 44" aria-hidden="true">
     <!-- roll cage over the bed -->
     <path d="M6 22V6.6h33V22" fill="none" stroke="#2a2a2e" stroke-width="1.3"/>
     <path d="M22.5 6.6V22" stroke="#2a2a2e" stroke-width="1"/>
-    ${cop(12, '#6b4423', false)}${cop(21.5, '#4a2e1c', true)}${cop(31, '#8d5524', false)}
+    ${cop(12, '#6b4423', 'rail')}${cop(21.5, '#4a2e1c', 'gun', true)}${cop(31, '#8d5524', 'rail')}
     <!-- bed, double cab and bonnet in one black body -->
     <path d="M4 34 V22 H40 V13 q0-4 4-4 H64 l8 10 H86 q6 .6 6 6 V34z" fill="#17171a"/>
     <rect x="4" y="22" width="36" height="1.6" fill="#2c2c31"/>
     <path d="M43 12.4 h10 v7 h-10z" fill="#33404e"/>
     <path d="M55 12.4 h8.4 l5.6 7 H55z" fill="#33404e"/>
     <circle cx="59.4" cy="15.8" r="2.2" fill="#5c3317"/>
+    <path d="M57.2 15.2 q.2-2.8 2.6-2.6 q2.2.2 1.8 1.8 q-2.4-.2-4.4.8z" fill="#1f6b3a"/>
     <path d="M57 19.4 q2.4-2.4 4.8 0z" fill="#1b1b1e"/>
     <rect x="54" y="13" width="1" height="20" fill="#0d0d0f"/>
     <!-- light bar -->
