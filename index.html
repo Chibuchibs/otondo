@@ -1492,7 +1492,7 @@
 <script type="module">
 import { newGame, doAction, canDo, unlocked, ACTIONS, phaseOf, nextUnlock, postingOdds, rivalOf,
          computePosting, CHOICES, GOAL, goalStatus,
-         shareText, MAX_DAY } from './game.js?v=20261104114114';
+         shareText, MAX_DAY } from './game.js?v=20261104115126';
 
 /* ---------- scene coordinates ----------
    The scene is scaled by a transform (see the stage), so a native
@@ -1523,11 +1523,11 @@ const TS = (document.getElementById('scene').offsetWidth || 375) / 375;
 const ALLAWEE_NOTE = 'Allawee ₦77,000 — e never enter.';
 import { initNet, joinCamp, syncPlayer, platoonBoard, recentChat, postChat,
          postSuggestion, reportMessage, awardBoard, myAwards, laughChat,
-         setPresence, campRoster, renameMe, setAvatar, online } from './net.js?v=20261104114114';
-import { startMusic, stopMusic, musicOn, audioState, audioSupported, setRain, whenSilenced, wakeAudio, audible, say, sfx, BEAT, BAR } from './audio.js?v=20261104114114';
+         setPresence, campRoster, renameMe, setAvatar, online } from './net.js?v=20261104115126';
+import { startMusic, stopMusic, musicOn, audioState, audioSupported, setRain, whenSilenced, wakeAudio, audible, say, sfx, BEAT, BAR } from './audio.js?v=20261104115126';
 import { playHoop, playPenalty, playQuiz, playRegister, playParade,
          playMami, playHustle, playManOWar, playSaed, playSocial,
-         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261104114114';
+         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261104115126';
 
 /* Every dance animation is expressed in beats, so the steps are on-tempo
    whether or not the sound is playing — and genuinely on the beat when it is. */
@@ -2166,13 +2166,14 @@ function hawker(skin, wares = 'water'){
    bright wall reads as a mistake. */
 const SHOPS = [
   /* door: each shop's own paint. heads: who is at the window (0–2). */
-  { sign: 'FOOD JOINT',      w: 104, body: '#b9683f', roof: '#6d6450', door: '#d6342c', heads: 2, buka: true,
+  { sign: 'FOOD JOINT',      w: 104, signInk: ['#7a1c14', '#ffd34d', '#ff9a3c'], body: '#b9683f', roof: '#6d6450', door: '#d6342c', heads: 2, buka: true,
     errand: 'TAP TO BUY JOLLOF RICE', price: 600, belle: 9, food: true },
-  { sign: 'ROASTED CORN',    w: 76,  body: '#8a6b3f', roof: '#5f5a38', stall: true,
+  { sign: 'ROASTED CORN',    w: 76, signInk: ['#1f4d2b', '#ffe066', '#ffcc33'],  body: '#8a6b3f', roof: '#5f5a38', stall: true,
     errand: 'TAP FOR ROASTED CORN', price: 200,  belle: 5, food: true },
-  { sign: 'PROVISION STORE', w: 112, body: '#0fa3a0', roof: '#0a7d79', door: '#f3c53d', heads: 1, provisions: true,
+  { sign: 'SUPERMARKET',     w: 112, body: '#0fa3a0', roof: '#0a7d79', door: '#f3c53d', heads: 1, provisions: true, headX: 60,
+    signInk: ['#0b3f3d', '#fff36b', '#ffe14d'],
     errand: 'TAP TO BUY PROVISIONS', price: 450 },
-  { sign: 'ELECTRONICS',     w: 110, body: '#f7b31c', roof: '#c9820d', door: '#2b6cb0', heads: 1, electronics: true,
+  { sign: 'ELECTRONICS',     w: 110, signInk: ['#10223f', '#7fe8ff', '#33ccff'], body: '#f7b31c', roof: '#c9820d', door: '#2b6cb0', heads: 1, electronics: true,
     errand: 'TAP TO BUY PHONE CHARGER', price: 500,
     /* A second errand on the same shop, picked at random each time it is
        offered. Recharge card is the thing anyone actually walks into an
@@ -2186,7 +2187,7 @@ const SHOPS = [
      negative, an uncapped paid credibility tap is an infinite one. The day it
      is used, it simply stops being offered. Not food: the corper goes in to
      learn, he does not stand there eating. */
-  { sign: 'BAKERY',          w: 104, body: '#d98f7e', roof: '#8a4b2a', bakery: true, door: '#1f7a46', heads: 1,
+  { sign: 'BAKERY',          w: 104, signInk: ['#4a2412', '#ffe9c2', '#ffb35c'], body: '#d98f7e', roof: '#8a4b2a', bakery: true, door: '#1f7a46', heads: 1,
     errand: 'TAP TO LEARN A TRADE', price: 1000, cred: 2, trade: true },
   { sign: 'BARBING SALON',   w: 116, body: '#ece4cf', roof: '#6d6450', barber: true, door: '#7b3fa0', heads: 2,
     errand: 'TAP FOR A HAIRCUT', price: 500, belle: 8 },
@@ -2200,13 +2201,25 @@ const SHOPS = [
 
 /* signboard: textLength forces any wording to fit, so a long brand name
    never overflows the board */
-const board = (txt, x, y, w) =>
-  `<rect x="${x}" y="${y}" width="${w}" height="12" rx="2" fill="#f7f4ea"/>
+const board = (txt, x, y, w, ink) => !ink
+  ? `<rect x="${x}" y="${y}" width="${w}" height="12" rx="2" fill="#f7f4ea"/>
    <rect x="${x}" y="${y}" width="${w}" height="12" rx="2" fill="none"
          stroke="#2e2a20" stroke-opacity=".35" stroke-width="1"/>
    <text x="${x + w/2}" y="${y + 9}" text-anchor="middle" font-size="8.6"
          font-weight="800" font-family="system-ui,sans-serif" fill="#241f14"
-         textLength="${w - 8}" lengthAdjust="spacingAndGlyphs">${txt}</text>`;
+         textLength="${w - 8}" lengthAdjust="spacingAndGlyphs">${txt}</text>`
+  /* `ink` [board, letters, glow]: each shop's board in its own colours,
+     lettered the way the lounge's is — a soft wide stroke under a bright
+     fill, which reads as a lit sign without an SVG filter. */
+  : `<rect x="${x}" y="${y}" width="${w}" height="12" rx="2" fill="${ink[0]}"/>
+   <rect x="${x + .8}" y="${y + .8}" width="${w - 1.6}" height="10.4" rx="1.5" fill="none"
+         stroke="${ink[2]}" stroke-opacity=".55" stroke-width=".6"/>
+   <text class="neon" x="${x + w/2}" y="${y + 9}" text-anchor="middle" font-size="8.6"
+         font-weight="900" font-family="system-ui,sans-serif" fill="none" stroke="${ink[2]}"
+         stroke-width="2.4" stroke-opacity=".35" textLength="${w - 10}" lengthAdjust="spacingAndGlyphs">${txt}</text>
+   <text x="${x + w/2}" y="${y + 9}" text-anchor="middle" font-size="8.6"
+         font-weight="900" font-family="system-ui,sans-serif" fill="${ink[1]}"
+         textLength="${w - 10}" lengthAdjust="spacingAndGlyphs">${txt}</text>`;
 
 /* A painted door with a glass pane in it. The pane keeps the `door` class so
    UP NEPA! lights the glass, not the paint. Half the shops stand ajar. */
@@ -2228,7 +2241,7 @@ const WIN_SKIN = ['#6b4423', '#8d5524', '#4a2e1c', '#a0673f'];
 const WIN_PEOPLE = {
   'FOOD JOINT':      [{ hair: 'gele', hat: '#e2641f', skin: 0, print: { kind: 'ankara', ink: '#1e3a6e', ground: '#f3a712' } },
                       { hair: 'lowcut', skin: 1, print: { kind: 'stripes', ink: '#f3c53d', ground: '#1f8a4c' } }],
-  'PROVISION STORE': [{ hair: 'cap', hat: '#d6342c', skin: 2, print: { kind: 'plaid', ink: '#3d6ea8' } }],
+  'SUPERMARKET':     [{ hair: 'cap', hat: '#d6342c', skin: 2, print: { kind: 'plaid', ink: '#3d6ea8' } }],
   'ELECTRONICS':     [{ hair: 'afro', skin: 3, print: { kind: 'dots', ink: '#f4f0e4', ground: '#7b3fa0' } }],
   'BAKERY':          [{ hair: 'toque', skin: 1, print: { kind: 'chevron', ink: '#d6342c', ground: '#f3c53d' } }],
   'BARBING SALON':   [{ hair: 'dreads', skin: 3, print: { kind: 'pinstripe', ink: '#f4f0e4', ground: '#d6342c' } },
@@ -2287,7 +2300,7 @@ function heads(cfg){
        ${hair.front}
      </g>`;
   };
-  return n === 1 ? one(60 + (seed % 3) * 5, 3.4, 0) : one(59, 3.4, 0) + one(73, 3, 1);
+  return n === 1 ? one(cfg.headX || 60 + (seed % 3) * 5, 3.4, 0) : one(59, 3.4, 0) + one(73, 3, 1);
 }
 
 /* Six heads, six cuts, painted on one board the way every salon's is: afro,
@@ -2314,8 +2327,13 @@ function barberBoard(x, y, w){
    <rect x="${x}" y="${y}" width="${w}" height="26" rx="2" fill="none"
          stroke="#2e2a20" stroke-opacity=".35" stroke-width="1"/>
    ${row}
+   <!-- light board, because the painted heads need it; the lettering in
+        barber-pole red with a blue glow, like the other lit boards -->
    <text x="${x + w/2}" y="${y + 23}" text-anchor="middle" font-size="7.6"
-         font-weight="800" font-family="system-ui,sans-serif" fill="#241f14"
+         font-weight="900" font-family="system-ui,sans-serif" fill="none" stroke="#2b6cb0"
+         stroke-width="2" stroke-opacity=".3" textLength="${w - 10}" lengthAdjust="spacingAndGlyphs">BARBING SALON</text>
+   <text x="${x + w/2}" y="${y + 23}" text-anchor="middle" font-size="7.6"
+         font-weight="900" font-family="system-ui,sans-serif" fill="#d6342c"
          textLength="${w - 10}" lengthAdjust="spacingAndGlyphs">BARBING SALON</text>`;
 }
 
@@ -2478,7 +2496,7 @@ function shop(cfg){
         <g class="fan"><circle cx="20.4" cy="43.8" r="1.3" fill="#8d5524"/>
           <path d="M20.4 43.6l2.6-5.2a3.4 3.4 0 0 1 4.2 2.6z" fill="#d9b86a" stroke="#a8874a" stroke-width=".4"/></g>
       </g>
-      ${board(cfg.sign, 10, 8, 56)}
+      ${board(cfg.sign, 10, 8, 56, cfg.signInk)}
     </svg>`;
   }
   if (cfg.lounge) return lounge(cfg);
@@ -2509,7 +2527,7 @@ function shop(cfg){
     ${winFrame()}
     ${shopFront(cfg)}
     ${shopLamp}
-    ${cfg.barber ? barberBoard(8, -8, 84) : board(cfg.sign, 10, 6, 80)}
+    ${cfg.barber ? barberBoard(8, -8, 84) : board(cfg.sign, 10, 6, 80, cfg.signInk)}
   </svg>`;
 }
 
@@ -2574,7 +2592,7 @@ const CUSTOMERS = {
   'FOOD JOINT':      [{ kind: 'idle', at: .7, skin: 2, tone: 1, print: { kind: 'stripes', ink: '#d6342c' } },
                       { kind: 'enter', from: 1.08, to: .29, skin: 0, tone: 3, d: -3, print: { kind: 'dots', ink: '#1e3a6e' } }],
   'ROASTED CORN':    [{ kind: 'wait', at: .84, skin: 1, tone: 4, print: { kind: 'chevron', ink: '#1f8a4c' } }],
-  'PROVISION STORE': [{ kind: 'enter', from: -.12, to: .29, skin: 3, tone: 0, d: -10, print: { kind: 'pinstripe', ink: '#3d6ea8' } }],
+  'SUPERMARKET':     [{ kind: 'enter', from: -.12, to: .29, skin: 3, tone: 0, d: -10, print: { kind: 'pinstripe', ink: '#3d6ea8' } }],
   'ELECTRONICS':     [{ kind: 'phone', at: .64, skin: 4, tone: 2, print: { kind: 'adire' } }],
   'BARBING SALON':   [{ kind: 'enter', from: 1.08, to: .29, skin: 2, tone: 1, d: -6, print: { kind: 'stripes', ink: '#1f8a4c' } }],
 };
