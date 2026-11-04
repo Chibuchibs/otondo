@@ -1467,7 +1467,7 @@
 <script type="module">
 import { newGame, doAction, canDo, unlocked, ACTIONS, phaseOf, nextUnlock, postingOdds, rivalOf,
          computePosting, CHOICES, GOAL, goalStatus,
-         shareText, MAX_DAY } from './game.js?v=20261103222745';
+         shareText, MAX_DAY } from './game.js?v=20261103223031';
 
 /* ---------- scene coordinates ----------
    The scene is scaled by a transform (see the stage), so a native
@@ -1498,11 +1498,11 @@ const TS = (document.getElementById('scene').offsetWidth || 375) / 375;
 const ALLAWEE_NOTE = 'Allawee ₦77,000 — e never enter.';
 import { initNet, joinCamp, syncPlayer, platoonBoard, recentChat, postChat,
          postSuggestion, reportMessage, awardBoard, myAwards, laughChat,
-         setPresence, campRoster, renameMe, setAvatar, online } from './net.js?v=20261103222745';
-import { startMusic, stopMusic, musicOn, audioState, audioSupported, setRain, whenSilenced, wakeAudio, audible, say, BEAT, BAR } from './audio.js?v=20261103222745';
+         setPresence, campRoster, renameMe, setAvatar, online } from './net.js?v=20261103223031';
+import { startMusic, stopMusic, musicOn, audioState, audioSupported, setRain, whenSilenced, wakeAudio, audible, say, BEAT, BAR } from './audio.js?v=20261103223031';
 import { playHoop, playPenalty, playQuiz, playRegister, playParade,
          playMami, playHustle, playManOWar, playSaed, playSocial,
-         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261103222745';
+         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261103223031';
 
 /* Every dance animation is expressed in beats, so the steps are on-tempo
    whether or not the sound is playing — and genuinely on the beat when it is. */
@@ -1685,8 +1685,43 @@ function rider(cx, cy, k, hat){
     ${hat === 1 ? `<path d="M${cx-2.7} ${cy-.6} a2.7 2.7 0 0 1 5.4 0z" fill="#1d2023"/>` : ''}
     ${hat === 2 ? `<path d="M${cx-3.2} ${cy-.4} q3.2-5 6.4 0z" fill="#b53a8f"/>` : ''}`;
 }
+/* The conductor, different on every bus: his own clothes, a rag over the
+   shoulder on some, a fan of naira notes in the flagging hand on some, and a
+   hat on only one bus in three, so a hat still stands out. `n` counts buses,
+   so two buses with the same seed still get different men. */
+const COND_PANTS = ['#2f3a4a', '#1d1d1b', '#3d5f8a', '#7a6a4c'];
+const COND_HATS = [['cap', '#d6342c'], ['bucket', '#2f6b4f'], ['beanie', '#1e3a6e']];
+function conductor(seed, n){
+  const skin = BUS_SKIN[(seed + 7 + n) % 4], top = BUS_WEAR[(seed + 2 + n) % 5];
+  const ink = top === '#fff' ? '#1e3a6e' : 'rgba(255,255,255,.7)';
+  const hat = n % 3 === 1 ? COND_HATS[Math.floor(n / 3) % COND_HATS.length] : null;
+  const hatSvg = !hat ? '' : hat[0] === 'cap'
+    ? `<path d="M-2.9 -20.5 a2.9 2.9 0 0 1 5.8 0z" fill="${hat[1]}"/>
+       <rect x="1.4" y="-21.3" width="3.2" height="1.1" rx=".5" fill="${hat[1]}"/>`
+    : hat[0] === 'bucket'
+    ? `<path d="M-3.9 -20.2 h7.8 l-1.3 -2.8 q-2.6-1.6-5.2 0z" fill="${hat[1]}"/>`
+    : `<path d="M-2.9 -20.3 a2.9 2.9 0 0 1 5.8 0z" fill="${hat[1]}"/>
+       <rect x="-3" y="-21" width="6" height="1.3" rx=".5" fill="#16294d"/>`;
+  return `
+        <path d="M-1.2 -15 L-3.5 -26.5" stroke="${skin}" stroke-width="2" stroke-linecap="round"/>
+        <rect x="-2.8" y="-17" width="5.6" height="9.5" rx="1.6" fill="${top}"/>
+        ${n % 4 === 2 ? `<rect x="-2.8" y="-14.6" width="5.6" height="1.1" fill="${ink}"/>
+          <rect x="-2.8" y="-11.8" width="5.6" height="1.1" fill="${ink}"/>` : ''}
+        ${n % 4 === 3 ? `<path d="M0 -17 v9.5" stroke="${ink}" stroke-width=".7"/>
+          <circle cx="1.2" cy="-14" r=".45" fill="${ink}"/><circle cx="1.2" cy="-11.5" r=".45" fill="${ink}"/>` : ''}
+        ${n % 2 === 0 ? `<path d="M-2.4 -17.4 h2.6 l-.4 5 h-2z" fill="${n % 4 === 0 ? '#f4f0e4' : '#e2641f'}"/>` : ''}
+        <rect x="-2.6" y="-8" width="2.4" height="8" rx="1" fill="${COND_PANTS[n % 4]}"/>
+        <rect x="0.4" y="-8" width="2.4" height="8" rx="1" fill="${COND_PANTS[n % 4]}"/>
+        <circle cx="0" cy="-20" r="2.9" fill="${skin}"/>
+        ${hatSvg}
+        <g class="wave">
+          <path d="M1.8 -15 L10.5 -12.5" stroke="${skin}" stroke-width="2" stroke-linecap="round"/>
+          ${n % 3 !== 2 ? `<rect x="9.4" y="-15.2" width="2.8" height="1.5" rx=".3" fill="#8fbf6a" transform="rotate(-24 10.8 -14.4)"/>
+            <rect x="9.8" y="-14.8" width="2.8" height="1.5" rx=".3" fill="#c98fb8" transform="rotate(4 11.2 -14)"/>` : ''}
+        </g>`;
+}
 function danfoBody(seed){
-  const id = 'bus' + (busN++), route = BUS_ROUTES[(seed + busN) % BUS_ROUTES.length];
+  const n = busN, id = 'bus' + (busN++), route = BUS_ROUTES[(seed + busN) % BUS_ROUTES.length];
   /* three side windows, the open door, then the front window and screen */
   const wins = [[7, 13], [23, 13], [39, 13]];
   return `<defs><clipPath id="${id}">${wins.map(([x, w]) =>
@@ -1717,13 +1752,7 @@ function danfoBody(seed){
       <rect x="3" y="18" width="2.4" height="4" rx="1" fill="#e0523a"/>
       <!-- the conductor: feet on the step, body out past the sill, one hand
            on the roof rail, the other flagging passengers -->
-      <g class="cond" transform="translate(61 30) rotate(-14)">
-        <path d="M-1.2 -15 L-3.5 -26.5" stroke="${BUS_SKIN[(seed + 7) % 4]}" stroke-width="2" stroke-linecap="round"/>
-        <rect x="-2.8" y="-17" width="5.6" height="9.5" rx="1.6" fill="${BUS_WEAR[(seed + 2) % 5]}"/>
-        <rect x="-2.6" y="-8" width="2.4" height="8" rx="1" fill="#2f3a4a"/>
-        <rect x="0.4" y="-8" width="2.4" height="8" rx="1" fill="#2f3a4a"/>
-        <circle cx="0" cy="-20" r="2.9" fill="${BUS_SKIN[(seed + 7) % 4]}"/>
-        <path class="wave" d="M1.8 -15 L10.5 -12.5" stroke="${BUS_SKIN[(seed + 7) % 4]}" stroke-width="2" stroke-linecap="round"/>
+      <g class="cond" transform="translate(61 30) rotate(-14)">${conductor(seed, n)}
       </g>
     </g>
     ${wheel(20,30,6.4)}${wheel(70,30,6.4)}`;
