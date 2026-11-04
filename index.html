@@ -162,7 +162,9 @@
   .scene.w-rain .rainMist,.scene.w-storm .rainMist{opacity:1}
   .road{transition:background-color 4s ease}
   .scene.w-rain .road,.scene.w-storm .road{background-color:#9b937f}
-  .corper.umbr{overflow:visible}
+  /* Visible, not the svg default: the forward swing carries the hand, and the
+     bag in it, past the right edge of the 46-wide box, where it was cut off. */
+  svg.corper{overflow:visible}
   .corper .umb{opacity:0;transition:opacity .6s ease}
   .scene.w-rain .corper .umb,.scene.w-storm .corper .umb{opacity:1}
   .scene.w-rain .corper.sunk .umb,.scene.w-storm .corper.sunk .umb{opacity:0}
@@ -1463,7 +1465,7 @@
 <script type="module">
 import { newGame, doAction, canDo, unlocked, ACTIONS, phaseOf, nextUnlock, postingOdds, rivalOf,
          computePosting, CHOICES, GOAL, goalStatus,
-         shareText, MAX_DAY } from './game.js?v=20261103150241';
+         shareText, MAX_DAY } from './game.js?v=20261103214254';
 
 /* ---------- scene coordinates ----------
    The scene is scaled by a transform (see the stage), so a native
@@ -1494,11 +1496,11 @@ const TS = (document.getElementById('scene').offsetWidth || 375) / 375;
 const ALLAWEE_NOTE = 'Allawee ₦77,000 — e never enter.';
 import { initNet, joinCamp, syncPlayer, platoonBoard, recentChat, postChat,
          postSuggestion, reportMessage, awardBoard, myAwards, laughChat,
-         setPresence, campRoster, renameMe, setAvatar, online } from './net.js?v=20261103150241';
-import { startMusic, stopMusic, musicOn, audioState, audioSupported, setRain, whenSilenced, wakeAudio, audible, say, BEAT, BAR } from './audio.js?v=20261103150241';
+         setPresence, campRoster, renameMe, setAvatar, online } from './net.js?v=20261103214254';
+import { startMusic, stopMusic, musicOn, audioState, audioSupported, setRain, whenSilenced, wakeAudio, audible, say, BEAT, BAR } from './audio.js?v=20261103214254';
 import { playHoop, playPenalty, playQuiz, playRegister, playParade,
          playMami, playHustle, playManOWar, playSaed, playSocial,
-         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261103150241';
+         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261103214254';
 
 /* Every dance animation is expressed in beats, so the steps are on-tempo
    whether or not the sound is playing — and genuinely on the beat when it is. */
@@ -3365,10 +3367,10 @@ function fallIn(p){
      rises from the bottom of the figure — while `.sunk` drops him behind the
      hole's rim, so his legs are already inside it as he goes. */
   const sink = p.animate([
-    { transform: 'translateY(0) rotate(0deg)',    clipPath: 'inset(0 0 0% 0)' },
-    { transform: 'translateY(8px) rotate(9deg)',  clipPath: 'inset(0 0 22% 0)', offset: .3 },
-    { transform: 'translateY(22px) rotate(14deg)', clipPath: 'inset(0 0 68% 0)', offset: .7 },
-    { transform: 'translateY(34px) rotate(16deg)', clipPath: 'inset(0 0 100% 0)' },
+    { transform: 'translateY(0) rotate(0deg)',    clipPath: 'inset(0 -40% 0% -40%)' },
+    { transform: 'translateY(8px) rotate(9deg)',  clipPath: 'inset(0 -40% 22% -40%)', offset: .3 },
+    { transform: 'translateY(22px) rotate(14deg)', clipPath: 'inset(0 -40% 68% -40%)', offset: .7 },
+    { transform: 'translateY(34px) rotate(16deg)', clipPath: 'inset(0 -40% 100% -40%)' },
   ], { duration: 750, easing: 'ease-in', fill: 'forwards', composite: 'add' });
   if (s){
     s.energy = Math.max(0, s.energy - FALL_COST);
@@ -3398,9 +3400,9 @@ function fallIn(p){
       if (!p.isConnected) return;
       p.classList.remove('gone');
       const climb = p.animate([
-        { transform: 'translateY(34px) rotate(-14deg)', clipPath: 'inset(0 0 100% 0)' },
-        { transform: 'translateY(16px) rotate(-8deg)',  clipPath: 'inset(0 0 40% 0)', offset: .55 },
-        { transform: 'translateY(0) rotate(0deg)',      clipPath: 'inset(0 0 0% 0)' },
+        { transform: 'translateY(34px) rotate(-14deg)', clipPath: 'inset(0 -40% 100% -40%)' },
+        { transform: 'translateY(16px) rotate(-8deg)',  clipPath: 'inset(0 -40% 40% -40%)', offset: .55 },
+        { transform: 'translateY(0) rotate(0deg)',      clipPath: 'inset(0 -40% 0% -40%)' },
       ], { duration: 620, easing: 'ease-out', composite: 'add' });
       climb.onfinish = () => {
         p.style.animationPlayState = '';          // walking again, from the hole
