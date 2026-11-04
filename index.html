@@ -303,6 +303,10 @@
      new button, nothing in the event queue: a few seconds of recognition
      every minute or so, which is the cheapest attention this scene can buy. */
   .shop .door,.shop .win{transition:fill .45s ease,opacity .45s ease}
+  .shop .bulb{animation:bulbs 1.2s steps(1) infinite}
+  @keyframes bulbs{0%,66%{opacity:1}67%,100%{opacity:.35}}
+  .shop .neon{transition:opacity 4s ease}
+  .scene.tod-night .shop .neon,.scene.tod-dusk .shop .neon{opacity:1;stroke-opacity:.7}
   /* People at the windows. Still nearly all the time, with a small shift every
      few seconds on different clocks — the difference between a customer and a
      painted head. */
@@ -471,7 +475,7 @@
      Each signboard is an ad slot — swap SHOPS[].sign for a brand. */
   .shop{position:absolute;z-index:0;animation:shopDrive linear infinite}
   .shop svg,.posStand svg,.streetPost svg,.genSet svg{display:block;width:100%}
-  @keyframes shopDrive{from{left:-50%}to{left:118%}}
+  @keyframes shopDrive{from{left:-78%}to{left:118%}}
   @keyframes drive{from{left:-22%}to{left:118%}}
   .wheel{animation:spin .5s linear infinite;transform-box:fill-box;
     transform-origin:center}
@@ -1478,7 +1482,7 @@
 <script type="module">
 import { newGame, doAction, canDo, unlocked, ACTIONS, phaseOf, nextUnlock, postingOdds, rivalOf,
          computePosting, CHOICES, GOAL, goalStatus,
-         shareText, MAX_DAY } from './game.js?v=20261103223320';
+         shareText, MAX_DAY } from './game.js?v=20261103224423';
 
 /* ---------- scene coordinates ----------
    The scene is scaled by a transform (see the stage), so a native
@@ -1509,11 +1513,11 @@ const TS = (document.getElementById('scene').offsetWidth || 375) / 375;
 const ALLAWEE_NOTE = 'Allawee ₦77,000 — e never enter.';
 import { initNet, joinCamp, syncPlayer, platoonBoard, recentChat, postChat,
          postSuggestion, reportMessage, awardBoard, myAwards, laughChat,
-         setPresence, campRoster, renameMe, setAvatar, online } from './net.js?v=20261103223320';
-import { startMusic, stopMusic, musicOn, audioState, audioSupported, setRain, whenSilenced, wakeAudio, audible, say, BEAT, BAR } from './audio.js?v=20261103223320';
+         setPresence, campRoster, renameMe, setAvatar, online } from './net.js?v=20261103224423';
+import { startMusic, stopMusic, musicOn, audioState, audioSupported, setRain, whenSilenced, wakeAudio, audible, say, BEAT, BAR } from './audio.js?v=20261103224423';
 import { playHoop, playPenalty, playQuiz, playRegister, playParade,
          playMami, playHustle, playManOWar, playSaed, playSocial,
-         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261103223320';
+         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261103224423';
 
 /* Every dance animation is expressed in beats, so the steps are on-tempo
    whether or not the sound is playing — and genuinely on the beat when it is. */
@@ -2176,6 +2180,12 @@ const SHOPS = [
     errand: 'TAP TO LEARN A TRADE', price: 1000, cred: 2, trade: true },
   { sign: 'BARBING SALON',   w: 116, body: '#ece4cf', roof: '#6d6450', barber: true, door: '#7b3fa0', heads: 2,
     errand: 'TAP FOR A HAIRCUT', price: 500, belle: 8 },
+  /* The lounge: dark front, neon board, bulbs along the roof, party light in
+     the window and a bouncer at the door. Last in the row, so the POS stand,
+     the tree and the generator keep the slots they had between the others.
+     Drinks and small chops: the dearest tap on the street, a little belle. */
+  { sign: 'VIBES LOUNGE',    w: 112, body: '#2b1d3a', roof: '#17111f', lounge: true, door: '#141016',
+    errand: 'TAP TO CHILL AT THE LOUNGE', price: 1500, belle: 6 },
 ];
 
 /* signboard: textLength forces any wording to fit, so a long brand name
@@ -2331,6 +2341,7 @@ function shop(cfg){
       ${board(cfg.sign, 10, 8, 56)}
     </svg>`;
   }
+  if (cfg.lounge) return lounge(cfg);
   /* The barber's board is taller than a sign and rides above the roof, so that
      one shop lets its drawing spill past the viewBox. */
   return `<svg viewBox="0 0 100 60" aria-hidden="true"${cfg.barber ? ' overflow="visible"' : ''}>
@@ -2356,13 +2367,58 @@ function shop(cfg){
   </svg>`;
 }
 
+/* Neon instead of a painted board: the same text twice, a wide soft stroke
+   under a bright fill, which reads as glow without an SVG filter. */
+const NEON_BULBS = ['#ff4fd8', '#ffd34d', '#4fd8ff', '#7dff6a'];
+function lounge(cfg){
+  const bulbs = Array.from({ length: 12 }, (_, i) =>
+    `<circle class="bulb" cx="${8 + i * 7.6}" cy="15.6" r="1.25" fill="${NEON_BULBS[i % 4]}"
+       style="animation-delay:${-(i % 3) * .4}s"/>`).join('');
+  return `<svg viewBox="0 0 100 60" aria-hidden="true">
+    <rect x="8" y="22" width="84" height="38" rx="2" fill="${cfg.body}"/>
+    <path d="M3 22h94l-6-8H9z" fill="${cfg.roof}"/>
+    <path d="M6 15.6 q3.8 1.6 7.6 0 t7.6 0 t7.6 0 t7.6 0 t7.6 0 t7.6 0 t7.6 0 t7.6 0 t7.6 0 t7.6 0 t7.6 0 t7.6 0"
+      stroke="#3a3040" stroke-width=".5" fill="none"/>
+    ${bulbs}
+    <!-- purple trim round the front, the way the place is lit at night -->
+    <rect class="neon" x="9.5" y="23.5" width="81" height="35" rx="1.6" fill="none" stroke="#b44cff" stroke-width=".9" opacity=".8"/>
+    ${door(cfg)}
+    <!-- party light in the window: pink to blue, a disco ball, two dancers -->
+    <defs><linearGradient id="loungeGlow" x1="0" x2="1">
+      <stop offset="0" stop-color="#ff4fd8"/><stop offset="1" stop-color="#4f7dff"/></linearGradient></defs>
+    <rect x="52" y="34" width="30" height="12" rx="1.5" fill="url(#loungeGlow)" opacity=".85"/>
+    <path d="M57 46 v-4.6 q0-2 2-2 h1.4 q2 0 2 2 V46z M70 46 v-4 q0-2 2-2 h1.4 q2 0 2 2 V46z" fill="#1d1426" opacity=".75"/>
+    <circle cx="59.7" cy="37.6" r="1.9" fill="#1d1426" opacity=".75"/><circle cx="72.7" cy="38.2" r="1.9" fill="#1d1426" opacity=".75"/>
+    <path d="M64.2 40.6 l-2.6 -3.4 M75.6 41.2 l2.4 -3.6" stroke="#1d1426" stroke-width="1.2" stroke-linecap="round" opacity=".75"/>
+    <path d="M67 34 v1.6" stroke="#cfcfd6" stroke-width=".4"/>
+    <circle class="disco" cx="67" cy="37" r="1.6" fill="#e6e6ee"/>
+    <!-- the bouncer: black tee, shades, arms folded, planted by the door -->
+    <g>
+      <rect x="44.6" y="52" width="2.6" height="8" rx="1" fill="#1b1b1e"/><rect x="47.6" y="52" width="2.6" height="8" rx="1" fill="#1b1b1e"/>
+      <path d="M43.4 52.6 V43.6 q0-2.8 2.8-2.8 h2.4 q2.8 0 2.8 2.8 V52.6z" fill="#101012"/>
+      <rect x="43.8" y="46" width="7.2" height="2.6" rx="1.2" fill="#4a2e1c"/>
+      <rect x="46.2" y="38.6" width="2.4" height="2.6" fill="#4a2e1c"/>
+      <circle cx="47.4" cy="36.6" r="2.7" fill="#4a2e1c"/>
+      <rect x="45.6" y="35.8" width="4.4" height="1.2" rx=".5" fill="#0b0b0c"/>
+    </g>
+    <rect x="10" y="4" width="80" height="13" rx="2" fill="#120c18"/>
+    <text x="50" y="13.8" text-anchor="middle" font-size="9" font-weight="900" font-family="system-ui,sans-serif"
+      textLength="70" lengthAdjust="spacingAndGlyphs" fill="none" stroke="#ff4fd8" stroke-width="2.6" stroke-opacity=".35"
+      class="neon">${cfg.sign}</text>
+    <text x="50" y="13.8" text-anchor="middle" font-size="9" font-weight="900" font-family="system-ui,sans-serif"
+      textLength="70" lengthAdjust="spacingAndGlyphs" fill="#ffd1f4">${cfg.sign}</text>
+  </svg>`;
+}
+
 /* Shared so the boli run can work out exactly how fast a stall is moving.
    @keyframes drive carries them from left:-22% to 118% — 140% of the scene
    width — over SHOP_CYCLE seconds. */
 /* Six shops on a 168% track, not five on 140%: spacing stays 28% of the
    scene each and speed stays 1.40/42 = 1.68/50.4 per second, so adding the
    bakery neither squeezes the row nor makes it drift faster. */
-const SHOP_CYCLE = 50.4 * TS, SHOP_TRAVEL = 1.68;
+/* Seven now, with the lounge: a 196% track (-78% to 118%) over 58.8s keeps
+   the same 28% spacing and the same 1.68/50.4 speed again. */
+const SHOP_CYCLE = 58.8 * TS, SHOP_TRAVEL = 1.96;
 
 /* Who is at each shop. `at` is a share of the shop's width (the door is at
    .29, the window .52–.82); an `enter` walks from `from` to the door and goes
@@ -3425,11 +3481,13 @@ function palmTree(s){
       <circle class="smoke" cx="2.5" cy="12" r="2.1" fill="#8a8378" style="animation-delay:-.8s"/>
     </g>
   </svg>`;
-  /* On the shops' track like the POS stand and the street sign, in the gap
-     after the provision store (slot 2.82). Pinned at 74% it hung in the air
-     while the buildings slid past it. */
+  /* On the shops' track like the POS stand and the street sign, tucked into
+     the corner where the provision store meets electronics (slot 3.06). At
+     2.82 it stood out on the pavement in front of the store's window, apart
+     from both walls. Pinned at 74% it hung in the air while the buildings
+     slid past it. */
   el.style.animationDuration = SHOP_CYCLE + 's';
-  el.style.animationDelay = -(2.82 * SHOP_CYCLE / SHOPS.length) + 's';
+  el.style.animationDelay = -(3.06 * SHOP_CYCLE / SHOPS.length) + 's';
   onKerb(el);
 })();
 
