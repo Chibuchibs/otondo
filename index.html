@@ -1467,7 +1467,7 @@
 <script type="module">
 import { newGame, doAction, canDo, unlocked, ACTIONS, phaseOf, nextUnlock, postingOdds, rivalOf,
          computePosting, CHOICES, GOAL, goalStatus,
-         shareText, MAX_DAY } from './game.js?v=20261103215926';
+         shareText, MAX_DAY } from './game.js?v=20261103220411';
 
 /* ---------- scene coordinates ----------
    The scene is scaled by a transform (see the stage), so a native
@@ -1498,11 +1498,11 @@ const TS = (document.getElementById('scene').offsetWidth || 375) / 375;
 const ALLAWEE_NOTE = 'Allawee ₦77,000 — e never enter.';
 import { initNet, joinCamp, syncPlayer, platoonBoard, recentChat, postChat,
          postSuggestion, reportMessage, awardBoard, myAwards, laughChat,
-         setPresence, campRoster, renameMe, setAvatar, online } from './net.js?v=20261103215926';
-import { startMusic, stopMusic, musicOn, audioState, audioSupported, setRain, whenSilenced, wakeAudio, audible, say, BEAT, BAR } from './audio.js?v=20261103215926';
+         setPresence, campRoster, renameMe, setAvatar, online } from './net.js?v=20261103220411';
+import { startMusic, stopMusic, musicOn, audioState, audioSupported, setRain, whenSilenced, wakeAudio, audible, say, BEAT, BAR } from './audio.js?v=20261103220411';
 import { playHoop, playPenalty, playQuiz, playRegister, playParade,
          playMami, playHustle, playManOWar, playSaed, playSocial,
-         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261103215926';
+         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261103220411';
 
 /* Every dance animation is expressed in beats, so the steps are on-tempo
    whether or not the sound is playing — and genuinely on the beat when it is. */
@@ -4461,9 +4461,11 @@ function suv(body = '#141414', flag = true, trim = '#0a0a0a'){
   </svg>`;
 }
 /* The escort pickup that runs ahead of a rich man's SUVs: dark blue, a
-   lightbar across the cab, two men standing in the bed. */
+   lightbar across the cab, two men standing in the bed. Drawn cab-left, so
+   the body is mirrored to put the cab in front: the convoy drives left to
+   right, and unmirrored it was reversing down the road. */
 function pickup(){
-  return `<svg viewBox="0 0 90 40" aria-hidden="true">
+  return `<svg viewBox="0 0 90 40" aria-hidden="true"><g transform="translate(90 0) scale(-1 1)">
     <path d="M4 31 h82 v-10 h-34 v-9 h-20 l-8 9 h-15 a5 5 0 0 0 -5 5z" fill="#1f3350"/>
     <path d="M27 21 l6 -8 h14 v8z" fill="#2e3b4a"/>
     <rect x="52" y="21" width="34" height="2" fill="#0f1c2e"/>
@@ -4472,8 +4474,11 @@ function pickup(){
     <circle class="lightB" cx="43" cy="9" r="2.4" fill="#3b7bff"/>
     <circle cx="60" cy="14" r="3.2" fill="#6b4423"/><rect x="56.5" y="17" width="7" height="5" rx="1" fill="#1d1d1b"/>
     <circle cx="74" cy="14" r="3.2" fill="#8d5524"/><rect x="70.5" y="17" width="7" height="5" rx="1" fill="#1d1d1b"/>
-    <rect x="84" y="26" width="3" height="2.4" rx=".8" fill="#ffd34d"/>
+    </g>
+    <!-- wheels outside the mirror, or they would spin backwards -->
     ${wheel(20,32,6)}${wheel(70,32,6)}
+    <rect x="84" y="26" width="3" height="2.4" rx=".8" fill="#ffd34d"/>
+    <rect x="3.6" y="22.4" width="2" height="3.6" rx=".6" fill="#d6342c"/>
   </svg>`;
 }
 function convoy(){
