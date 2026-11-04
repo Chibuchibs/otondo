@@ -820,8 +820,6 @@
   .stat .tip{display:none;margin-top:5px;font-size:10.5px;line-height:1.25;font-weight:700;
     color:var(--red)}
   .stat.low .tip,.stat.hint .tip{display:block}
-  /* before the red warning starts, the how-to is help, not an alarm */
-  .stat.hint:not(.low) .tip{color:#2f4f86}
   @keyframes statLow{0%,100%{background:var(--stat-bg);border-color:var(--stat-line)}
                      50%{background:#f6cfc6;border-color:#d9573f}}
   .stat.up  {animation:statUp .9s ease-out}
@@ -1494,7 +1492,7 @@
 <script type="module">
 import { newGame, doAction, canDo, unlocked, ACTIONS, phaseOf, nextUnlock, postingOdds, rivalOf,
          computePosting, CHOICES, GOAL, goalStatus,
-         shareText, MAX_DAY } from './game.js?v=20261104100511';
+         shareText, MAX_DAY } from './game.js?v=20261104101931';
 
 /* ---------- scene coordinates ----------
    The scene is scaled by a transform (see the stage), so a native
@@ -1525,11 +1523,11 @@ const TS = (document.getElementById('scene').offsetWidth || 375) / 375;
 const ALLAWEE_NOTE = 'Allawee ₦77,000 — e never enter.';
 import { initNet, joinCamp, syncPlayer, platoonBoard, recentChat, postChat,
          postSuggestion, reportMessage, awardBoard, myAwards, laughChat,
-         setPresence, campRoster, renameMe, setAvatar, online } from './net.js?v=20261104100511';
-import { startMusic, stopMusic, musicOn, audioState, audioSupported, setRain, whenSilenced, wakeAudio, audible, say, BEAT, BAR } from './audio.js?v=20261104100511';
+         setPresence, campRoster, renameMe, setAvatar, online } from './net.js?v=20261104101931';
+import { startMusic, stopMusic, musicOn, audioState, audioSupported, setRain, whenSilenced, wakeAudio, audible, say, BEAT, BAR } from './audio.js?v=20261104101931';
 import { playHoop, playPenalty, playQuiz, playRegister, playParade,
          playMami, playHustle, playManOWar, playSaed, playSocial,
-         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261104100511';
+         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261104101931';
 
 /* Every dance animation is expressed in beats, so the steps are on-tempo
    whether or not the sound is playing — and genuinely on the beat when it is. */
