@@ -474,6 +474,25 @@ export function say(name, { queue = false } = {}) {
   return true;
 }
 
+/* Street sounds that are not lines: the danfo horn. Over the music without
+   ducking it, and never queued behind (or holding up) a voice line. Only
+   while the music is audible, like say(). Shares the voices' buffer cache. */
+const SFX = { honk: './sfx/horn-danfo.m4a' };   // N2 from voice/horns.html: a short honk from a Lagos stream clip
+const SFX_LEVEL = { honk: 0.45 };
+let lastSfx = '', sfxCount = 0;
+export function sfx(name) {
+  if (!playing || !ctx || ctx.state !== 'running') return false;
+  loadVoice(SFX[name]).then(buf => {
+    if (!buf || !playing || ctx.state !== 'running') return;
+    const src = ctx.createBufferSource(); src.buffer = buf;
+    const g = ctx.createGain(); g.gain.value = SFX_LEVEL[name] || 0.4;
+    src.connect(g).connect(ctx.destination);
+    src.start();
+    lastSfx = name; sfxCount++;
+  });
+  return true;
+}
+
 export const musicOn = () => playing;
 
 export const audioState = () => ({
@@ -484,6 +503,7 @@ export const audioState = () => ({
   source: usingTrack ? 'track' : 'synth',
   rain: rainGain ? +rainGain.gain.value.toFixed(3) : 0,
   said: lastSaid + ' #' + saidCount,
+  sfx: lastSfx + ' #' + sfxCount,
   music: musicGain ? +musicGain.gain.value.toFixed(3) : 0,
   via: 'web audio' + (navigator.audioSession ? ' + playback category' : ''),
 });

@@ -1492,7 +1492,7 @@
 <script type="module">
 import { newGame, doAction, canDo, unlocked, ACTIONS, phaseOf, nextUnlock, postingOdds, rivalOf,
          computePosting, CHOICES, GOAL, goalStatus,
-         shareText, MAX_DAY } from './game.js?v=20261104101931';
+         shareText, MAX_DAY } from './game.js?v=20261104113347';
 
 /* ---------- scene coordinates ----------
    The scene is scaled by a transform (see the stage), so a native
@@ -1523,11 +1523,11 @@ const TS = (document.getElementById('scene').offsetWidth || 375) / 375;
 const ALLAWEE_NOTE = 'Allawee ₦77,000 — e never enter.';
 import { initNet, joinCamp, syncPlayer, platoonBoard, recentChat, postChat,
          postSuggestion, reportMessage, awardBoard, myAwards, laughChat,
-         setPresence, campRoster, renameMe, setAvatar, online } from './net.js?v=20261104101931';
-import { startMusic, stopMusic, musicOn, audioState, audioSupported, setRain, whenSilenced, wakeAudio, audible, say, BEAT, BAR } from './audio.js?v=20261104101931';
+         setPresence, campRoster, renameMe, setAvatar, online } from './net.js?v=20261104113347';
+import { startMusic, stopMusic, musicOn, audioState, audioSupported, setRain, whenSilenced, wakeAudio, audible, say, sfx, BEAT, BAR } from './audio.js?v=20261104113347';
 import { playHoop, playPenalty, playQuiz, playRegister, playParade,
          playMami, playHustle, playManOWar, playSaed, playSocial,
-         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261104101931';
+         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261104113347';
 
 /* Every dance animation is expressed in beats, so the steps are on-tempo
    whether or not the sound is playing — and genuinely on the beat when it is. */
@@ -4599,6 +4599,18 @@ function sendPasser(){
   setTimeout(sendPasser, PASS_EVERY);
 }
 if (!calm()) setTimeout(sendPasser, PASS_FIRST);
+
+/* The danfo horn, now and then rather than every pass, or it is noise. Only
+   while a danfo (the one with a conductor, not the burning one) is actually
+   on screen, so the sound has somewhere to come from. */
+function danfoHonk(){
+  const box = sceneEl.sceneRect();
+  const bus = [...sceneEl.querySelectorAll('.vehicle:not(.ablaze)')]
+    .find(v => v.querySelector('.cond') && inFrame(v, box, 0.1));
+  if (bus) sfx('honk');
+  setTimeout(danfoHonk, (22 + Math.random() * 18) * 1000);
+}
+if (!calm()) setTimeout(danfoHonk, 15000);
 
 /* Passers-by on the far pavement, behind the sellers: one every so often,
    either way, never more than two out at once. */
