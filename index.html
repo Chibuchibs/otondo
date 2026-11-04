@@ -819,7 +819,9 @@
   .stat.low{animation:statLow 1.5s ease-in-out infinite}
   .stat .tip{display:none;margin-top:5px;font-size:10.5px;line-height:1.25;font-weight:700;
     color:var(--red)}
-  .stat.low .tip{display:block}
+  .stat.low .tip,.stat.hint .tip{display:block}
+  /* before the red warning starts, the how-to is help, not an alarm */
+  .stat.hint:not(.low) .tip{color:#2f4f86}
   @keyframes statLow{0%,100%{background:var(--stat-bg);border-color:var(--stat-line)}
                      50%{background:#f6cfc6;border-color:#d9573f}}
   .stat.up  {animation:statUp .9s ease-out}
@@ -1384,7 +1386,7 @@
         <small class="tip">Broke. Tap Odogwu when he pass, or hustle for mami market.</small>
         <small class="goalLine" id="gMoney"></small></div>
       <div class="stat cred"><b>Credibility</b><span id="sCred"></span>
-        <small class="tip">Low. Put out fires, catch the thief, or fall in for parade and Man O War.</small>
+        <small class="tip">Earn it: put out fires, catch the thief, learn a trade at the bakery, or fall in for parade and Man O War.</small>
         <small class="goalLine" id="gCred"></small></div>
     </div>
     <div class="live" id="live" role="button" tabindex="0"
@@ -1492,7 +1494,7 @@
 <script type="module">
 import { newGame, doAction, canDo, unlocked, ACTIONS, phaseOf, nextUnlock, postingOdds, rivalOf,
          computePosting, CHOICES, GOAL, goalStatus,
-         shareText, MAX_DAY } from './game.js?v=20261103225314';
+         shareText, MAX_DAY } from './game.js?v=20261104100511';
 
 /* ---------- scene coordinates ----------
    The scene is scaled by a transform (see the stage), so a native
@@ -1523,11 +1525,11 @@ const TS = (document.getElementById('scene').offsetWidth || 375) / 375;
 const ALLAWEE_NOTE = 'Allawee ₦77,000 — e never enter.';
 import { initNet, joinCamp, syncPlayer, platoonBoard, recentChat, postChat,
          postSuggestion, reportMessage, awardBoard, myAwards, laughChat,
-         setPresence, campRoster, renameMe, setAvatar, online } from './net.js?v=20261103225314';
-import { startMusic, stopMusic, musicOn, audioState, audioSupported, setRain, whenSilenced, wakeAudio, audible, say, BEAT, BAR } from './audio.js?v=20261103225314';
+         setPresence, campRoster, renameMe, setAvatar, online } from './net.js?v=20261104100511';
+import { startMusic, stopMusic, musicOn, audioState, audioSupported, setRain, whenSilenced, wakeAudio, audible, say, BEAT, BAR } from './audio.js?v=20261104100511';
 import { playHoop, playPenalty, playQuiz, playRegister, playParade,
          playMami, playHustle, playManOWar, playSaed, playSocial,
-         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261103225314';
+         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261104100511';
 
 /* Every dance animation is expressed in beats, so the steps are on-tempo
    whether or not the sound is playing — and genuinely on the beat when it is. */
@@ -5756,12 +5758,15 @@ function render(){
   $('sMoney').classList.toggle('debt', s.money < 0);
   $('sCred').textContent = s.cred;
   flashStats();
-  /* Low marks. Credibility starts at zero for everybody, so that one only
-     nags once there has been a day to earn some; from then on it warns at 10. */
+  /* Low marks. Credibility starts at zero for everybody, so its red pulse
+     only nags once there has been a day to earn some. The how-to line under it
+     is a different thing: shown at 10 and below from the first minute, because
+     a new player is exactly who does not know fires and thieves pay. */
   $('sEnergy').closest('.stat').classList.toggle('low', s.energy < 25);
   $('sBelle').closest('.stat').classList.toggle('low', s.belle < 25);
   $('sMoney').closest('.stat').classList.toggle('low', s.money < 300);
   $('sCred').closest('.stat').classList.toggle('low', s.cred <= 10 && s.day > 1);
+  $('sCred').closest('.stat').classList.toggle('hint', s.cred <= 10);
   drawGoal();
   bar($('bEnergy'), s.energy); bar($('bBelle'), s.belle);
   drawWhoami();
