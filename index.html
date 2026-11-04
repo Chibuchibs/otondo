@@ -1492,7 +1492,7 @@
 <script type="module">
 import { newGame, doAction, canDo, unlocked, ACTIONS, phaseOf, nextUnlock, postingOdds, rivalOf,
          computePosting, CHOICES, GOAL, goalStatus,
-         shareText, MAX_DAY } from './game.js?v=20261104113347';
+         shareText, MAX_DAY } from './game.js?v=20261104114114';
 
 /* ---------- scene coordinates ----------
    The scene is scaled by a transform (see the stage), so a native
@@ -1523,11 +1523,11 @@ const TS = (document.getElementById('scene').offsetWidth || 375) / 375;
 const ALLAWEE_NOTE = 'Allawee ₦77,000 — e never enter.';
 import { initNet, joinCamp, syncPlayer, platoonBoard, recentChat, postChat,
          postSuggestion, reportMessage, awardBoard, myAwards, laughChat,
-         setPresence, campRoster, renameMe, setAvatar, online } from './net.js?v=20261104113347';
-import { startMusic, stopMusic, musicOn, audioState, audioSupported, setRain, whenSilenced, wakeAudio, audible, say, sfx, BEAT, BAR } from './audio.js?v=20261104113347';
+         setPresence, campRoster, renameMe, setAvatar, online } from './net.js?v=20261104114114';
+import { startMusic, stopMusic, musicOn, audioState, audioSupported, setRain, whenSilenced, wakeAudio, audible, say, sfx, BEAT, BAR } from './audio.js?v=20261104114114';
 import { playHoop, playPenalty, playQuiz, playRegister, playParade,
          playMami, playHustle, playManOWar, playSaed, playSocial,
-         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261104113347';
+         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261104114114';
 
 /* Every dance animation is expressed in beats, so the steps are on-tempo
    whether or not the sound is playing — and genuinely on the beat when it is. */
@@ -4600,14 +4600,16 @@ function sendPasser(){
 }
 if (!calm()) setTimeout(sendPasser, PASS_FIRST);
 
-/* The danfo horn, now and then rather than every pass, or it is noise. Only
-   while a danfo (the one with a conductor, not the burning one) is actually
-   on screen, so the sound has somewhere to come from. */
+/* The danfo horn: the big loaded danfo (the one with the bags and the
+   smoke, svg.fumes) honks as it comes past, never the burning one. Not every
+   pass, it loops every ~11s: once one has sounded, the next waits 22–40s and
+   then goes on the big danfo's next pass through the frame. */
 function danfoHonk(){
   const box = sceneEl.sceneRect();
   const bus = [...sceneEl.querySelectorAll('.vehicle:not(.ablaze)')]
-    .find(v => v.querySelector('.cond') && inFrame(v, box, 0.1));
-  if (bus) sfx('honk');
+    .find(v => v.querySelector('svg.fumes') && inFrame(v, box, 0.15));
+  if (!bus){ setTimeout(danfoHonk, 700); return; }
+  sfx('honk');
   setTimeout(danfoHonk, (22 + Math.random() * 18) * 1000);
 }
 if (!calm()) setTimeout(danfoHonk, 15000);
@@ -4776,6 +4778,9 @@ function convoy(){
     `<div class="car" style="width:86px;bottom:7px;animation-duration:${D};animation-delay:${dl(.9)}">${suv()}</div>`;
   sceneEl.appendChild(c);
   if (shoutSign) shoutSign(['OGA DEY PASS!', '#1d1d1b', '#ffd34d']);
+  /* Pim-pim: the escort clearing the road, as the siren riders come in. */
+  setTimeout(() => sfx('honk'), 700);
+  setTimeout(() => sfx('honk'), 1150);
   setTimeout(() => c.remove(), CONVOY_PASS);
 }
 /* The rich man's: a police pickup out front, then a white SUV and a black one,
@@ -4926,10 +4931,16 @@ function goatCrossing(){
         const vx = r.left - box.left + r.width;          // its nose
         const behind = vx < gx - 6 && vx > gx - 150;      // queued up behind her
         v.style.animationPlayState = behind ? 'paused' : '';
-        if (behind && !honked){ honked = true; floatCost(v, 'PEEM PEEM!'); }
+        if (behind && !honked){
+          honked = true; floatCost(v, 'PEEM PEEM!');
+          sfx('honk'); setTimeout(() => sfx('honk'), 450);   // the PEEM PEEM, out loud
+        }
       });
     }, 90);
   }, STAND_AT);
+  /* Nobody queued behind her this time: somebody off-screen still leans on
+     the horn, because nobody in Lagos waits quietly for a goat. */
+  setTimeout(() => { if (!honked){ honked = true; sfx('honk'); } }, STAND_AT + 1400);
   setTimeout(() => {
     clearInterval(hold);
     g.classList.remove('stand');
