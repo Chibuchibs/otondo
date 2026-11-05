@@ -405,7 +405,7 @@ document.addEventListener('visibilitychange', () => {
    groove so they sit in the song rather than on top of it. The music dips a
    little under each line so the words come through on a phone speaker. */
 const VOICE = {
-  oya:   './sfx/oya-letsgo.m4a',
+  oya:   './sfx/oya-letsgo-warm.m4a',   // +6dB low shelf at 200Hz, 2026-11-04 ("add more bass")
   water: './sfx/seller-water.m4a',
   akara: './sfx/seller-akara-200n.m4a',         // Jolaolu, "Akara, 200 naira" (joined from her take) when your runner reaches her
   akaraWalk: './sfx/seller-akara-jolaolu.m4a',  // Jolaolu, "Oga, buy your akara here!" as she walks into view
@@ -418,7 +418,7 @@ const VOICE_LEVEL = 0.9, DUCK = 0.55;
 /* Per-line level against VOICE_LEVEL. Jolaolu's lines measure as loud as the
    rest, but her brighter voice carries further over the music, so they sit a
    little lower (about -2.5dB). */
-const VOICE_GAIN = { akara: 0.75, akaraWalk: 0.75 };
+const VOICE_GAIN = { akara: 0.75, akaraWalk: 0.75, oya: 0.8 };   // oya: "slightly reduce", about -2dB
 const VGRID = 0.058, VLEAD = 0.08; // the track's beats sit 58ms early; each clip has 80ms of lead-in
 let musicGain = null, voiceFree = 0, lastSaid = '', saidCount = 0;
 const voiceBufs = {};
