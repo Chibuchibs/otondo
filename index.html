@@ -216,7 +216,11 @@
   /* while the ad is up the board is a link (pointer, the arrow in its words)
      and two lines: the name over what it does */
   .sign b.ad{cursor:pointer;flex-direction:column;gap:1px;line-height:1.15;padding:4px 9px}
-  .sign b.ad small{font-size:6.6px;letter-spacing:.07em;font-weight:700;opacity:.92}
+  .sign b.ad small,.sign b.vote small{font-size:6.6px;letter-spacing:.07em;font-weight:700;opacity:.92}
+  /* VOTE O! keeps its words and ballot boxes on one row; the PVC line wraps
+     under them at full width */
+  .sign b.vote{cursor:pointer;flex-wrap:wrap;row-gap:1px;padding:4px 9px;line-height:1.15}
+  .sign b.vote small{flex-basis:100%;text-align:center}
   /* The ballot boxes beside VOTE O!: cap height of the lettering, no taller,
      so the board grows sideways rather than upward. */
   .sign b svg{width:12px;height:14px;flex:none;margin-top:-1px}
@@ -1496,7 +1500,7 @@
 <script type="module">
 import { newGame, doAction, canDo, unlocked, ACTIONS, phaseOf, nextUnlock, postingOdds, rivalOf,
          computePosting, CHOICES, GOAL, goalStatus,
-         shareText, MAX_DAY } from './game.js?v=20261104214046';
+         shareText, MAX_DAY } from './game.js?v=20261104214909';
 
 /* ---------- scene coordinates ----------
    The scene is scaled by a transform (see the stage), so a native
@@ -1527,11 +1531,11 @@ const TS = (document.getElementById('scene').offsetWidth || 375) / 375;
 const ALLAWEE_NOTE = 'Allawee ₦77,000 — e never enter.';
 import { initNet, joinCamp, syncPlayer, platoonBoard, recentChat, postChat,
          postSuggestion, reportMessage, awardBoard, myAwards, laughChat,
-         setPresence, campRoster, renameMe, setAvatar, online } from './net.js?v=20261104214046';
-import { startMusic, stopMusic, musicOn, audioState, audioSupported, setRain, whenSilenced, wakeAudio, audible, say, sfx, BEAT, BAR } from './audio.js?v=20261104214046';
+         setPresence, campRoster, renameMe, setAvatar, online } from './net.js?v=20261104214909';
+import { startMusic, stopMusic, musicOn, audioState, audioSupported, setRain, whenSilenced, wakeAudio, audible, say, sfx, BEAT, BAR } from './audio.js?v=20261104214909';
 import { playHoop, playPenalty, playQuiz, playRegister, playParade,
          playMami, playHustle, playManOWar, playSaed, playSocial,
-         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261104214046';
+         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261104214909';
 
 /* Every dance animation is expressed in beats, so the steps are on-tempo
    whether or not the sound is playing — and genuinely on the beat when it is. */
@@ -2774,7 +2778,11 @@ const SIGN_LINES = [
 
    Cream board with green ink, which is the one combination no other line uses,
    so it reads as a poster pasted up rather than another bit of camp talk. */
-const VOTE_LINE  = ['VOTE O!', '#f7f4ea', '#0a7a43', ballotBoxes()];
+const VOTE_LINE  = ['VOTE O!', '#f7f4ea', '#0a7a43',
+  ballotBoxes() + '<small>GET YOUR PVC AT CVR.INECNIGERIA.ORG ↗</small>'];
+/* Tapping the board while VOTE O! is up opens INEC's own registration page:
+   where to get a PVC, which is still turnout and nobody's campaign. */
+const VOTE_LINK  = 'https://cvr.inecnigeria.org/Public/getStarted';
 /* 1 February 2027, local time: the election is in January, so this clears the
    morning after the month ends. If a precise polling date is wanted, this one
    constant is the only thing to change. */
@@ -2865,23 +2873,29 @@ let shoutSign = null;
   let i = Math.floor(Math.random() * SIGN_LINES.length);
   let sponsorTurn = false, timer = null, adN = 0;
   const sponsors = !SIGN_SPONSOR ? [] : Array.isArray(SIGN_SPONSOR[0]) ? SIGN_SPONSOR : [SIGN_SPONSOR];
-  paintSign(board, SIGN_LINES[i]);
-  /* The board is a link only while the ad is on it. Stopped here so the
-     street's own tap handler never also sends a corper somewhere. */
+  /* Paint a line and mark what the board is while it shows: the ad and
+     VOTE O! are links (and two-line boards); the pidgin lines are not. */
+  const show = entry => {
+    paintSign(board, entry);
+    board.classList.toggle('ad', sponsors.includes(entry));
+    board.classList.toggle('vote', entry === VOTE_LINE);
+  };
+  show(SIGN_LINES[i]);
+  /* A link only while one of those is on it. Stopped here so the street's
+     own tap handler never also sends a corper somewhere. */
   board.parentElement.addEventListener('click', e => {
-    if (!board.classList.contains('ad')) return;
+    const href = board.classList.contains('ad') ? adLink()
+               : board.classList.contains('vote') ? VOTE_LINK : null;
+    if (!href) return;
     e.stopPropagation();
-    window.open(adLink(), '_blank', 'noopener');
+    window.open(href, '_blank', 'noopener');
   });
   /* A changing sign is still motion. Under reduced-motion it keeps whichever
      line it opened on rather than flickering in the corner. */
   if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
   const swapTo = entry => {
     board.style.opacity = '0';
-    setTimeout(() => {
-      paintSign(board, entry); board.style.opacity = '1';
-      board.classList.toggle('ad', sponsors.includes(entry));
-    }, 400);
+    setTimeout(() => { show(entry); board.style.opacity = '1'; }, 400);
   };                                             // 400 matches the CSS transition
   const tick = () => {
     if (sponsors.length && !sponsorTurn) swapTo(sponsors[adN++ % sponsors.length]);
