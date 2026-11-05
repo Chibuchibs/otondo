@@ -410,7 +410,6 @@ const VOICE = {
   akara: './sfx/seller-akara-200n.m4a',         // Jolaolu, "Akara, 200 naira" (joined from her take) when your runner reaches her
   akaraWalk: './sfx/seller-akara-jolaolu.m4a',  // Jolaolu, "Oga, buy your akara here!" as she walks into view
   kunu:  './sfx/seller-kunu.m4a',
-  shine:   './sfx/shine-your-eyes.m4a',
   enter:   './sfx/haha-e-enter.m4a',    // "Haha, e enter!" — pidgin for: that satisfies
   toomuch: './sfx/you-too-much.m4a',
   welldone: './sfx/well-done.m4a',
