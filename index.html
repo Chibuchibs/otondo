@@ -213,9 +213,10 @@
     box-shadow:0 2px 5px rgba(0,0,0,.22);
     transition:opacity .4s ease, background .4s ease, color .4s ease}
   .sign i{display:block;width:4px;height:34px;background:#8c7f5e;margin:0 auto}
-  /* while the ad is up the board is a link: pointer, and a small arrow */
-  .sign b.ad{cursor:pointer}
-  .sign b.ad::after{content:"↗";font-size:9px;margin-left:1px;opacity:.85}
+  /* while the ad is up the board is a link (pointer, the arrow in its words)
+     and two lines: the name over what it does */
+  .sign b.ad{cursor:pointer;flex-direction:column;gap:1px;line-height:1.15;padding:4px 9px}
+  .sign b.ad small{font-size:6.6px;letter-spacing:.07em;font-weight:700;opacity:.92}
   /* The ballot boxes beside VOTE O!: cap height of the lettering, no taller,
      so the board grows sideways rather than upward. */
   .sign b svg{width:12px;height:14px;flex:none;margin-top:-1px}
@@ -1495,7 +1496,7 @@
 <script type="module">
 import { newGame, doAction, canDo, unlocked, ACTIONS, phaseOf, nextUnlock, postingOdds, rivalOf,
          computePosting, CHOICES, GOAL, goalStatus,
-         shareText, MAX_DAY } from './game.js?v=20261104213829';
+         shareText, MAX_DAY } from './game.js?v=20261104214046';
 
 /* ---------- scene coordinates ----------
    The scene is scaled by a transform (see the stage), so a native
@@ -1526,11 +1527,11 @@ const TS = (document.getElementById('scene').offsetWidth || 375) / 375;
 const ALLAWEE_NOTE = 'Allawee ₦77,000 — e never enter.';
 import { initNet, joinCamp, syncPlayer, platoonBoard, recentChat, postChat,
          postSuggestion, reportMessage, awardBoard, myAwards, laughChat,
-         setPresence, campRoster, renameMe, setAvatar, online } from './net.js?v=20261104213829';
-import { startMusic, stopMusic, musicOn, audioState, audioSupported, setRain, whenSilenced, wakeAudio, audible, say, sfx, BEAT, BAR } from './audio.js?v=20261104213829';
+         setPresence, campRoster, renameMe, setAvatar, online } from './net.js?v=20261104214046';
+import { startMusic, stopMusic, musicOn, audioState, audioSupported, setRain, whenSilenced, wakeAudio, audible, say, sfx, BEAT, BAR } from './audio.js?v=20261104214046';
 import { playHoop, playPenalty, playQuiz, playRegister, playParade,
          playMami, playHustle, playManOWar, playSaed, playSocial,
-         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261104213829';
+         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261104214046';
 
 /* Every dance animation is expressed in beats, so the steps are on-tempo
    whether or not the sound is playing — and genuinely on the beat when it is. */
@@ -2833,9 +2834,13 @@ function paintSign(board, entry){
    A list now, taking turns within the sponsor's turns, so the name and the
    promise alternate. Tapping the board while either is up goes to the store
    for the phone in hand (adLink). */
+/* entry[3] is the second line (paintSign draws it after the words): a name
+   alone told nobody what the app is for. The first one is the App Store
+   subtitle, so the board and the store page say the same thing. */
+const adSub = t => `<small>${t}</small>`;
 const SIGN_SPONSOR = [
-  ['HAGGLEBUDDY',      '#16a34a', '#fff'],     // HaggleBuddy's own green
-  ["DON'T OVERPAY O!", '#16a34a', '#fff'],
+  ['HAGGLEBUDDY ↗',      '#16a34a', '#fff', adSub('COMPARE PRICES BEFORE YOU BUY')],   // HaggleBuddy's own green
+  ["DON'T OVERPAY O! ↗", '#16a34a', '#fff', adSub('CHECK PRICES ON HAGGLEBUDDY')],
 ];
 /* Straight to the store: hagglebuddy.com has no analytics, so a visit there
    would be invisible. Play reads the referrer, so installs from here show up
