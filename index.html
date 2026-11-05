@@ -213,6 +213,9 @@
     box-shadow:0 2px 5px rgba(0,0,0,.22);
     transition:opacity .4s ease, background .4s ease, color .4s ease}
   .sign i{display:block;width:4px;height:34px;background:#8c7f5e;margin:0 auto}
+  /* while the ad is up the board is a link: pointer, and a small arrow */
+  .sign b.ad{cursor:pointer}
+  .sign b.ad::after{content:"↗";font-size:9px;margin-left:1px;opacity:.85}
   /* The ballot boxes beside VOTE O!: cap height of the lettering, no taller,
      so the board grows sideways rather than upward. */
   .sign b svg{width:12px;height:14px;flex:none;margin-top:-1px}
@@ -1492,7 +1495,7 @@
 <script type="module">
 import { newGame, doAction, canDo, unlocked, ACTIONS, phaseOf, nextUnlock, postingOdds, rivalOf,
          computePosting, CHOICES, GOAL, goalStatus,
-         shareText, MAX_DAY } from './game.js?v=20261104193635';
+         shareText, MAX_DAY } from './game.js?v=20261104213829';
 
 /* ---------- scene coordinates ----------
    The scene is scaled by a transform (see the stage), so a native
@@ -1523,11 +1526,11 @@ const TS = (document.getElementById('scene').offsetWidth || 375) / 375;
 const ALLAWEE_NOTE = 'Allawee ₦77,000 — e never enter.';
 import { initNet, joinCamp, syncPlayer, platoonBoard, recentChat, postChat,
          postSuggestion, reportMessage, awardBoard, myAwards, laughChat,
-         setPresence, campRoster, renameMe, setAvatar, online } from './net.js?v=20261104193635';
-import { startMusic, stopMusic, musicOn, audioState, audioSupported, setRain, whenSilenced, wakeAudio, audible, say, sfx, BEAT, BAR } from './audio.js?v=20261104193635';
+         setPresence, campRoster, renameMe, setAvatar, online } from './net.js?v=20261104213829';
+import { startMusic, stopMusic, musicOn, audioState, audioSupported, setRain, whenSilenced, wakeAudio, audible, say, sfx, BEAT, BAR } from './audio.js?v=20261104213829';
 import { playHoop, playPenalty, playQuiz, playRegister, playParade,
          playMami, playHustle, playManOWar, playSaed, playSocial,
-         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261104193635';
+         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261104213829';
 
 /* Every dance animation is expressed in beats, so the steps are on-tempo
    whether or not the sound is playing — and genuinely on the beat when it is. */
@@ -2826,7 +2829,27 @@ function paintSign(board, entry){
    colour rather than being repainted in ours. Leave it null and the sign is
    just the phrases. The shop boards (SHOPS[].sign) are the
    other slots. */
-const SIGN_SPONSOR = null;   // e.g. ['MTN · 2GB ₦500', '#ffcc00', '#111']
+/* The first one is our own: HaggleBuddy, house ad, no money changes hands.
+   A list now, taking turns within the sponsor's turns, so the name and the
+   promise alternate. Tapping the board while either is up goes to the store
+   for the phone in hand (adLink). */
+const SIGN_SPONSOR = [
+  ['HAGGLEBUDDY',      '#16a34a', '#fff'],     // HaggleBuddy's own green
+  ["DON'T OVERPAY O!", '#16a34a', '#fff'],
+];
+/* Straight to the store: hagglebuddy.com has no analytics, so a visit there
+   would be invisible. Play reads the referrer, so installs from here show up
+   as utm_source=otondo in Play Console. Apple needs a provider token (pt) for
+   a campaign link; until it is added the App Store link is plain. */
+function adLink(){
+  const ua = navigator.userAgent;
+  if (/android/i.test(ua))
+    return 'https://play.google.com/store/apps/details?id=com.hagglebuddy.app'
+         + '&referrer=utm_source%3Dotondo%26utm_medium%3Dbillboard%26utm_campaign%3Dcrosspromo';
+  if (/iPhone|iPad|iPod/.test(ua) || (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1))
+    return 'https://apps.apple.com/app/id6791811911';
+  return 'https://hagglebuddy.com/?ref=otondo';
+}
 
 /* Set by the rotation below; stays null under reduced motion, and the one
    caller (UP NEPA!) checks before using it. */
@@ -2835,19 +2858,30 @@ let shoutSign = null;
   const board = $('scene').querySelector('.sign b');
   if (!board) return;
   let i = Math.floor(Math.random() * SIGN_LINES.length);
-  let sponsorTurn = false, timer = null;
+  let sponsorTurn = false, timer = null, adN = 0;
+  const sponsors = !SIGN_SPONSOR ? [] : Array.isArray(SIGN_SPONSOR[0]) ? SIGN_SPONSOR : [SIGN_SPONSOR];
   paintSign(board, SIGN_LINES[i]);
+  /* The board is a link only while the ad is on it. Stopped here so the
+     street's own tap handler never also sends a corper somewhere. */
+  board.parentElement.addEventListener('click', e => {
+    if (!board.classList.contains('ad')) return;
+    e.stopPropagation();
+    window.open(adLink(), '_blank', 'noopener');
+  });
   /* A changing sign is still motion. Under reduced-motion it keeps whichever
      line it opened on rather than flickering in the corner. */
   if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
   const swapTo = entry => {
     board.style.opacity = '0';
-    setTimeout(() => { paintSign(board, entry); board.style.opacity = '1'; }, 400);
+    setTimeout(() => {
+      paintSign(board, entry); board.style.opacity = '1';
+      board.classList.toggle('ad', sponsors.includes(entry));
+    }, 400);
   };                                             // 400 matches the CSS transition
   const tick = () => {
-    if (SIGN_SPONSOR && !sponsorTurn) swapTo(SIGN_SPONSOR);
+    if (sponsors.length && !sponsorTurn) swapTo(sponsors[adN++ % sponsors.length]);
     else { i = (i + 1) % SIGN_LINES.length; swapTo(SIGN_LINES[i]); }
-    if (SIGN_SPONSOR) sponsorTurn = !sponsorTurn;
+    if (sponsors.length) sponsorTurn = !sponsorTurn;
   };
   const start = () => { clearInterval(timer); timer = setInterval(tick, 5200); };
   start();
