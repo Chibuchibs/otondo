@@ -405,7 +405,7 @@ document.addEventListener('visibilitychange', () => {
    groove so they sit in the song rather than on top of it. The music dips a
    little under each line so the words come through on a phone speaker. */
 const VOICE = {
-  oya:   './sfx/oya-letsgo-warm.m4a',   // +6dB low shelf at 200Hz, 2026-11-04 ("add more bass")
+  oya:   './sfx/oya-letsgo-warm9.m4a',  // +9dB low shelf at 200Hz, 2026-11-04 ("add more bass"; user picked the heavier one)
   water: './sfx/seller-water.m4a',
   akara: './sfx/seller-akara-200n.m4a',         // Jolaolu, "Akara, 200 naira" (joined from her take) when your runner reaches her
   akaraWalk: './sfx/seller-akara-jolaolu.m4a',  // Jolaolu, "Oga, buy your akara here!" as she walks into view
