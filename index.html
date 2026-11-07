@@ -1546,7 +1546,7 @@
 <script type="module">
 import { newGame, doAction, canDo, unlocked, ACTIONS, phaseOf, nextUnlock, postingOdds, rivalOf,
          computePosting, CHOICES, GOAL, goalStatus,
-         shareText, MAX_DAY } from './game.js?v=20261107140456';
+         shareText, MAX_DAY } from './game.js?v=20261107142743';
 
 /* ---------- scene coordinates ----------
    The scene is scaled by a transform (see the stage), so a native
@@ -1577,11 +1577,11 @@ const TS = (document.getElementById('scene').offsetWidth || 375) / 375;
 const ALLAWEE_NOTE = 'Allawee ₦77,000 — e never enter.';
 import { initNet, joinCamp, syncPlayer, platoonBoard, recentChat, postChat,
          postSuggestion, reportMessage, awardBoard, myAwards, laughChat,
-         setPresence, campRoster, renameMe, setAvatar, online } from './net.js?v=20261107140456';
-import { startMusic, stopMusic, musicOn, audioState, audioSupported, setRain, whenSilenced, wakeAudio, audible, say, sfx, BEAT, BAR } from './audio.js?v=20261107140456';
+         setPresence, campRoster, renameMe, setAvatar, online } from './net.js?v=20261107142743';
+import { startMusic, stopMusic, musicOn, audioState, audioSupported, setRain, whenSilenced, wakeAudio, audible, say, sfx, BEAT, BAR } from './audio.js?v=20261107142743';
 import { playHoop, playPenalty, playQuiz, playRegister, playParade,
          playMami, playHustle, playManOWar, playSaed, playSocial,
-         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261107140456';
+         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261107142743';
 
 /* Every dance animation is expressed in beats, so the steps are on-tempo
    whether or not the sound is playing — and genuinely on the beat when it is. */
@@ -3484,10 +3484,11 @@ function makePothole(id, name){
 }
 
 const pothole = makePothole('potArc', 'MR. POTHOLE');
-/* Each time the hole comes round it is Mr. Pothole or an open gutter — a
-   broken concrete drain with a slab tipped up out of it. Same box, same jump,
-   same fall; only the drawing and the words change, so every rule that
-   measures the hole still holds. */
+/* The open gutter — a broken concrete drain with a slab tipped up out of it —
+   took turns with Mr. Pothole for a day; the user wanted Mr. Pothole kept, so
+   he is the only one that comes round now. The gutter is kept for when it gets
+   its own place on the road beside him: same box, same jump, same fall, only
+   the drawing and the words differ (setObstacle). */
 const POTHOLE_SVG = pothole.innerHTML;
 const GUTTER_SVG = `<svg viewBox="0 0 80 48" aria-hidden="true" overflow="visible">
   <defs><path id="potArc" d="M6 40 A51 51 0 0 1 74 40" fill="none"/></defs>
@@ -3872,7 +3873,6 @@ if (!calm()){
       potPos -= d; mrsPos -= d;
       if (potPos < -60){                                              // round again after a gap: a new pass
         potPos = W + 60 + Math.random() * W * 0.6; potLap++;
-        setObstacle(Math.random() < 0.4 ? 'gutter' : 'pothole');
       }
       if (mrsPos < -40) mrsPos = W + 40 + Math.random() * W * 0.8;
       placePothole();
