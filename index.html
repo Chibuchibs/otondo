@@ -541,6 +541,22 @@
   @keyframes stoop     {0%{transform:rotate(0)}35%,70%{transform:rotate(38deg)}100%{transform:rotate(0)}}
   @keyframes stoopReach{0%{transform:rotate(0)}35%,70%{transform:rotate(-40deg)}100%{transform:rotate(0)}}
   @keyframes stoopKnee {0%{transform:rotate(0)}35%,70%{transform:rotate(16deg)}100%{transform:rotate(0)}}
+  /* ---------- the story strip ----------
+     After the "what if you never lost" reels: a running tally over the
+     street, and one line that lights up a word at a time when something
+     happens to you. Up in the sky between the sun (ends ~18%) and the corner
+     board, which reaches in to ~45% when VOTE O! or the HaggleBuddy ad is up —
+     so it is left-aligned and stops short of it, wrapping rather than reaching. */
+  .story{position:absolute;top:7px;left:19%;width:26%;z-index:5;pointer-events:none;
+    text-align:left;font-family:ui-monospace,Menlo,Consolas,monospace;font-weight:800;
+    text-shadow:0 0 2px rgba(0,0,0,.85),0 1px 2px rgba(0,0,0,.7)}
+  .story .tally{font-size:8.5px;letter-spacing:.04em;color:#ffe066;margin:0;white-space:nowrap}
+  .story .tally b{color:#fff;font-size:10px}
+  .story .line{font-size:7.8px;line-height:1.25;margin:2px 0 0;min-height:10px;
+    transition:opacity .5s ease}
+  .story .line span{color:rgba(255,255,255,.35);transition:color .15s ease}
+  .story .line span.lit{color:#fff}
+  .story .line.done{opacity:0}
   /* ---------- a coin on the road ---------- */
   .coin{position:absolute;bottom:6px;width:15px;height:15px;z-index:3;cursor:pointer;transform:translateX(-50%)}
   .coin svg{display:block;width:100%;height:100%;overflow:visible}
@@ -1524,7 +1540,7 @@
 <script type="module">
 import { newGame, doAction, canDo, unlocked, ACTIONS, phaseOf, nextUnlock, postingOdds, rivalOf,
          computePosting, CHOICES, GOAL, goalStatus,
-         shareText, MAX_DAY } from './game.js?v=20261107113926';
+         shareText, MAX_DAY } from './game.js?v=20261107122905';
 
 /* ---------- scene coordinates ----------
    The scene is scaled by a transform (see the stage), so a native
@@ -1555,11 +1571,11 @@ const TS = (document.getElementById('scene').offsetWidth || 375) / 375;
 const ALLAWEE_NOTE = 'Allawee ₦77,000 — e never enter.';
 import { initNet, joinCamp, syncPlayer, platoonBoard, recentChat, postChat,
          postSuggestion, reportMessage, awardBoard, myAwards, laughChat,
-         setPresence, campRoster, renameMe, setAvatar, online } from './net.js?v=20261107113926';
-import { startMusic, stopMusic, musicOn, audioState, audioSupported, setRain, whenSilenced, wakeAudio, audible, say, sfx, BEAT, BAR } from './audio.js?v=20261107113926';
+         setPresence, campRoster, renameMe, setAvatar, online } from './net.js?v=20261107122905';
+import { startMusic, stopMusic, musicOn, audioState, audioSupported, setRain, whenSilenced, wakeAudio, audible, say, sfx, BEAT, BAR } from './audio.js?v=20261107122905';
 import { playHoop, playPenalty, playQuiz, playRegister, playParade,
          playMami, playHustle, playManOWar, playSaed, playSocial,
-         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261107113926';
+         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261107122905';
 
 /* Every dance animation is expressed in beats, so the steps are on-tempo
    whether or not the sound is playing — and genuinely on the beat when it is. */
@@ -3793,6 +3809,8 @@ function hopPothole(p, paid){
   if (paid) say('welldone');                        // cleared it: "Well done!"
   if (paid && s){
     s.energy = Math.max(0, s.energy - JUMP_COST);
+    s.jumped = (s.jumped || 0) + 1;
+    tell('You jumped Mr. Pothole!');
     save(); render();
     floatCost(p, `-${JUMP_COST} energy`);
   }
@@ -3802,6 +3820,8 @@ function fallIn(p){
   if (p.dataset.hop) return;
   p.dataset.hop = '1';
   potReadyAt = performance.now() + POT_COOLDOWN;
+  if (s){ s.fell = (s.fell || 0) + 1; save(); drawTally(); }
+  tell('Mr. Pothole got you. Tap JUMP next time!');
   p.classList.add('sunk');
   /* Stop walking the moment he goes in. Left running, he covered 27px during
      the drop — the hole's whole half-width — and went under at the far rim.
@@ -4397,6 +4417,7 @@ function catchThief(run){
        street scuffle. */
     s.cred = (s.cred || 0) + 1;
     s.thieves = (s.thieves || 0) + 1;
+    tell('You caught the thief. The whole street saw it.');
     render();
     floatCost(fig, `+₦${back.toLocaleString()}  +1 CRED`);
     titleCheck();
@@ -4563,6 +4584,7 @@ function douse(v){
     titleCheck();
   }
   if (left > 0) return;
+  tell('You put out the fire. Hero of the junction.');
   celebrate();                                     // the last flame is out
   v.querySelectorAll('.flame').forEach(f => f.remove());
   v.querySelector('.tapTag')?.remove();
@@ -4708,13 +4730,43 @@ function danfoHonk(){
 }
 if (!calm()) setTimeout(danfoHonk, 15000);
 
+/* ---------- the story strip ----------
+   JUMPED / FELL is the reels' WINS / LOSSES: Mr. Pothole jumps you paid for,
+   and the times he got you. Kept on the save, so it is your whole camp's
+   record (a fresh camp starts it again). tell() lights a line a word at a
+   time, holds it, then fades it; a newer line replaces one still showing. */
+var story = document.createElement('div');   // var: render() may call drawTally before this line has run
+story.className = 'story';
+story.innerHTML = '<p class="tally"></p><p class="line done"></p>';
+sceneEl.appendChild(story);
+const storyLine = story.querySelector('.line');
+let storyTimers = [];
+function drawTally(){
+  if (!story) return;
+  const t = story.querySelector('.tally');
+  t.style.visibility = s ? '' : 'hidden';
+  if (s) t.innerHTML = `JUMPED <b>${(s.jumped || 0).toLocaleString()}</b> · FELL <b>${(s.fell || 0).toLocaleString()}</b>`;
+}
+function tell(text){
+  storyTimers.forEach(clearTimeout); storyTimers = [];
+  const words = text.split(' ');
+  storyLine.innerHTML = words.map(w => `<span>${w.replace(/[&<>]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]))}</span> `).join('');
+  storyLine.classList.remove('done');
+  const spans = [...storyLine.children];
+  const step = calm() ? 0 : 170;
+  spans.forEach((sp, i) => storyTimers.push(setTimeout(() => sp.classList.add('lit'), i * step)));
+  storyTimers.push(setTimeout(() => storyLine.classList.add('done'), words.length * step + 3600));
+}
+/* No drawTally() here: the save (`s`) is declared further down the script, and
+   reading it this early throws and stops everything after it. render() draws it. */
+
 /* ---------- a coin on the road ----------
    The opening beat of those "what if you never lost" reels: now and then a
-   ₦50 coin glints on the road just ahead of a walker. Tap it and whoever
+   ₦100 coin glints on the road just ahead of a walker. Tap it and whoever
    reaches it first stops and bends down for it. Never by a pothole (a figure
    stooping in the hole's path is the fall all over again), never mid-dance,
    one at a time, gone after 9s if nobody wants it. */
-const COIN_VALUE = 50, COIN_FIRST = 25000, COIN_GAP = [35000, 55000], COIN_LIFE = 9000;
+const COIN_VALUE = 100, COIN_FIRST = 25000, COIN_GAP = [35000, 55000], COIN_LIFE = 9000;
 const coinSvg = () => `<svg viewBox="0 0 20 20" aria-hidden="true">
     <ellipse cx="10" cy="17.4" rx="7" ry="1.6" fill="rgba(0,0,0,.25)"/>
     <circle cx="10" cy="10" r="7.6" fill="#d9a521"/>
@@ -4762,6 +4814,7 @@ function claimCoin(coin){
   const grab = () => {
     if (s){ s.money += COIN_VALUE; save(); render(); }
     floatCost(coin, `+₦${COIN_VALUE}`);
+    tell(`You stopped to pick up ₦${COIN_VALUE}.`);
     coin.classList.add('taken');
     setTimeout(() => coin.remove(), 250);
   };
@@ -5917,6 +5970,7 @@ function flashStats(){
 }
 function render(){
   const intro = !s, over = s && s.phase === 'ending';
+  drawTally();
   $('intro').classList.toggle('hidden', !intro);
   $('game').classList.toggle('hidden', intro || over);
   $('ending').classList.toggle('hidden', !over);
