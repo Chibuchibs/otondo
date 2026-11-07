@@ -531,6 +531,24 @@
   @keyframes elbow{0%,100%{transform:rotate(-26deg)}50%{transform:rotate(-44deg)}}
   .corper .shin{animation:knee var(--stride,.62s) ease-in-out infinite}
   .corper .leg2 .shin{animation-delay:calc(var(--stride,.62s) / -2)}
+  /* Bending down for a coin: feet planted, knees give, the body pitches
+     forward from the hip and the front arm reaches straight down (it turns
+     back against the torso's lean, or the hand would point behind him). */
+  .corper.stoop .leg,.corper.stoop .leg2,.corper.stoop .arm,.corper.stoop .fore{animation:none}
+  .corper.stoop .torso{animation:stoop 1.2s ease-in-out forwards;transform-origin:23px 51px}
+  .corper.stoop .arm2{animation:stoopReach 1.2s ease-in-out forwards}
+  .corper.stoop .shin{animation:stoopKnee 1.2s ease-in-out forwards}
+  @keyframes stoop     {0%{transform:rotate(0)}35%,70%{transform:rotate(38deg)}100%{transform:rotate(0)}}
+  @keyframes stoopReach{0%{transform:rotate(0)}35%,70%{transform:rotate(-40deg)}100%{transform:rotate(0)}}
+  @keyframes stoopKnee {0%{transform:rotate(0)}35%,70%{transform:rotate(16deg)}100%{transform:rotate(0)}}
+  /* ---------- a coin on the road ---------- */
+  .coin{position:absolute;bottom:6px;width:15px;height:15px;z-index:3;cursor:pointer;transform:translateX(-50%)}
+  .coin svg{display:block;width:100%;height:100%;overflow:visible}
+  .coin .glint{animation:glint 1.6s ease-in-out infinite;transform-box:fill-box;transform-origin:center}
+  @keyframes glint{0%,70%,100%{opacity:0;transform:scale(.4)}82%{opacity:1;transform:scale(1)}}
+  .coin .tapTag{background:#c9a227;color:#1d1a10;bottom:190%}
+  .coin.claimed .tapTag{display:none}
+  .coin.taken{opacity:0;transform:translateX(-50%) translateY(-6px);transition:opacity .2s ease,transform .2s ease}
   .corper .fore{animation:elbow var(--stride,.62s) ease-in-out infinite}
   .corper .arm2 .fore{animation-delay:calc(var(--stride,.62s) / -2)}
   @keyframes swingA{0%,100%{transform:rotate(calc(20deg * var(--sw,1)))}50%{transform:rotate(calc(-20deg * var(--sw,1)))}}
@@ -1506,7 +1524,7 @@
 <script type="module">
 import { newGame, doAction, canDo, unlocked, ACTIONS, phaseOf, nextUnlock, postingOdds, rivalOf,
          computePosting, CHOICES, GOAL, goalStatus,
-         shareText, MAX_DAY } from './game.js?v=20261104220106';
+         shareText, MAX_DAY } from './game.js?v=20261107113558';
 
 /* ---------- scene coordinates ----------
    The scene is scaled by a transform (see the stage), so a native
@@ -1537,11 +1555,11 @@ const TS = (document.getElementById('scene').offsetWidth || 375) / 375;
 const ALLAWEE_NOTE = 'Allawee ₦77,000 — e never enter.';
 import { initNet, joinCamp, syncPlayer, platoonBoard, recentChat, postChat,
          postSuggestion, reportMessage, awardBoard, myAwards, laughChat,
-         setPresence, campRoster, renameMe, setAvatar, online } from './net.js?v=20261104220106';
-import { startMusic, stopMusic, musicOn, audioState, audioSupported, setRain, whenSilenced, wakeAudio, audible, say, sfx, BEAT, BAR } from './audio.js?v=20261104220106';
+         setPresence, campRoster, renameMe, setAvatar, online } from './net.js?v=20261107113558';
+import { startMusic, stopMusic, musicOn, audioState, audioSupported, setRain, whenSilenced, wakeAudio, audible, say, sfx, BEAT, BAR } from './audio.js?v=20261107113558';
 import { playHoop, playPenalty, playQuiz, playRegister, playParade,
          playMami, playHustle, playManOWar, playSaed, playSocial,
-         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261104220106';
+         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261107113558';
 
 /* Every dance animation is expressed in beats, so the steps are on-tempo
    whether or not the sound is playing — and genuinely on the beat when it is. */
@@ -3068,7 +3086,7 @@ const EDGE = 0.16;
    offer has to skip them rather than suppress itself. */
 const freeFig = p => p && !p.matches(
   '.riding, .hailing, .running, .munching, .shopping, .inRide,'
-  + ' .jumping, .sunk, .gone');
+  + ' .jumping, .sunk, .gone, .stoop');
 
 /* Comfortably in frame if anyone is; nearer the edge rather than nothing at
    all. EDGE keeps the marked figure clear of the bezel in the normal case, but
@@ -4251,6 +4269,8 @@ sceneEl.addEventListener('click', e => {
   }
   /* Before the corper branch: her figure carries the corper class for the
      walk, and the corper branch would otherwise send someone else on a ride. */
+  const coin = at.closest('.coin');
+  if (coin){ hintUsed(); claimCoin(coin); return; }
   const hw = at.closest('.hawker');
   if (hw){ hintUsed(); buyWares(hw); return; }
   /* The place carries the instruction now, so the place takes the tap. */
@@ -4687,6 +4707,83 @@ function danfoHonk(){
   setTimeout(danfoHonk, (22 + Math.random() * 18) * 1000);
 }
 if (!calm()) setTimeout(danfoHonk, 15000);
+
+/* ---------- a coin on the road ----------
+   The opening beat of those "what if you never lost" reels: now and then a
+   ₦50 coin glints on the road just ahead of a walker. Tap it and whoever
+   reaches it first stops and bends down for it. Never by a pothole (a figure
+   stooping in the hole's path is the fall all over again), never mid-dance,
+   one at a time, gone after 9s if nobody wants it. */
+const COIN_VALUE = 50, COIN_FIRST = 25000, COIN_GAP = [35000, 55000], COIN_LIFE = 9000;
+const coinSvg = () => `<svg viewBox="0 0 20 20" aria-hidden="true">
+    <ellipse cx="10" cy="17.4" rx="7" ry="1.6" fill="rgba(0,0,0,.25)"/>
+    <circle cx="10" cy="10" r="7.6" fill="#d9a521"/>
+    <circle cx="10" cy="10" r="6" fill="#f3c53d" stroke="#b8860b" stroke-width=".8"/>
+    <text x="10" y="13.4" text-anchor="middle" font-size="9" font-weight="900"
+      font-family="system-ui,sans-serif" fill="#8a5a0b">₦</text>
+    <path class="glint" d="M15 2l.9 2.1 2.1.9-2.1.9-.9 2.1-.9-2.1-2.1-.9 2.1-.9z" fill="#fff"/></svg>`;
+/* When it is due but there is no safe spot (often, with two walkers and two
+   potholes on the road), it looks again in 2s instead of waiting a whole gap. */
+function dropCoin(){
+  const retry = () => setTimeout(dropCoin, 2000);
+  if (sceneEl.querySelector('.coin') || sceneEl.classList.contains('dancing')) return retry();
+  const box = sceneEl.sceneRect(), W = box.width, avoid = [potX(), W * MRS_AT];
+  const ahead = [...sceneEl.querySelectorAll(':scope > .corper')]
+    .filter(p => freeFig(p) && inFrame(p, box, 0.05))
+    .map(p => { const r = p.sceneRect(); return r.left - box.left + r.width / 2; })
+    .filter(c => c < W * 0.62)
+    .map(c => c + 70 + Math.random() * 40)                 // a few strides in front of him
+    .filter(x => x < W * 0.9 && avoid.every(a => Math.abs(a - x) > 44));
+  if (!ahead.length) return retry();
+  setTimeout(dropCoin, COIN_GAP[0] + Math.random() * (COIN_GAP[1] - COIN_GAP[0]));
+  const x = ahead[Math.floor(Math.random() * ahead.length)];
+  const el = document.createElement('div');
+  el.className = 'coin';
+  el.style.left = Math.round(x) + 'px';
+  el.dataset.x = String(x);
+  el.innerHTML = coinSvg() + `<i class="tapTag">PICK UP ₦${COIN_VALUE}</i>`;
+  el.setAttribute('role', 'button');
+  el.setAttribute('aria-label', `A ₦${COIN_VALUE} coin on the road. Tap to pick it up`);
+  sceneEl.appendChild(el);
+  el._gone = setTimeout(() => { if (!el.classList.contains('claimed')) el.remove(); }, COIN_LIFE);
+}
+if (!calm()) setTimeout(dropCoin, COIN_FIRST);
+
+/* The nearest walker still coming up behind the coin walks on to it, stops,
+   bends, and the coin is his at the bottom of the bend. Nobody behind it, or
+   he gets pulled into something else first: it pays anyway — a tap that does
+   nothing is the one thing this street never does. */
+function claimCoin(coin){
+  if (coin.classList.contains('claimed')) return;
+  coin.classList.add('claimed');
+  clearTimeout(coin._gone);
+  const box = sceneEl.sceneRect(), x = +coin.dataset.x;
+  const centre = p => { const r = p.sceneRect(); return r.left - box.left + r.width / 2; };
+  const grab = () => {
+    if (s){ s.money += COIN_VALUE; save(); render(); }
+    floatCost(coin, `+₦${COIN_VALUE}`);
+    coin.classList.add('taken');
+    setTimeout(() => coin.remove(), 250);
+  };
+  const who = [...sceneEl.querySelectorAll(':scope > .corper')]
+    .filter(p => freeFig(p) && centre(p) < x - 4 && centre(p) > x - 240)
+    .sort((a, b) => centre(b) - centre(a))[0];
+  if (!who){ grab(); return; }
+  const t0 = performance.now();
+  const watch = setInterval(() => {
+    if (!who.isConnected || !freeFig(who) || performance.now() - t0 > 6000){ clearInterval(watch); grab(); return; }
+    if (centre(who) < x - 6) return;
+    clearInterval(watch);
+    who.classList.add('stoop');
+    who.style.animationPlayState = 'paused';            // stop walking, as he does at the pothole
+    setTimeout(grab, 450);                              // the bottom of the bend
+    setTimeout(() => {
+      who.classList.remove('stoop');
+      who.style.animationPlayState = '';
+      rejoinGrid(who, 1200);
+    }, 1200);
+  }, 40);
+}
 
 /* Passers-by on the far pavement, behind the sellers: one every so often,
    either way, never more than two out at once. */
