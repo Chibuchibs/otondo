@@ -583,6 +583,7 @@
   /* Scoped to the trekkers only. The unscoped form caught the figures inside
      .runner too, so a man being chased stopped to do legwork. */
   .scene.dancing > .corper{animation-play-state:paused}
+  .scene.dancing .road::after{animation-play-state:paused}   /* the road stops for the dance too */
   .scene.dancing > .corper .leg  {animation:zankuA var(--beat,.42s) ease-in-out infinite}
   .scene.dancing > .corper .leg2 {animation:zankuB var(--beat,.42s) ease-in-out infinite}
   .scene.dancing > .corper .arm  {animation:pumpA  var(--beat,.42s) ease-in-out infinite}
@@ -1544,7 +1545,7 @@
 <script type="module">
 import { newGame, doAction, canDo, unlocked, ACTIONS, phaseOf, nextUnlock, postingOdds, rivalOf,
          computePosting, CHOICES, GOAL, goalStatus,
-         shareText, MAX_DAY } from './game.js?v=20261107130412';
+         shareText, MAX_DAY } from './game.js?v=20261107134652';
 
 /* ---------- scene coordinates ----------
    The scene is scaled by a transform (see the stage), so a native
@@ -1575,11 +1576,11 @@ const TS = (document.getElementById('scene').offsetWidth || 375) / 375;
 const ALLAWEE_NOTE = 'Allawee ₦77,000 — e never enter.';
 import { initNet, joinCamp, syncPlayer, platoonBoard, recentChat, postChat,
          postSuggestion, reportMessage, awardBoard, myAwards, laughChat,
-         setPresence, campRoster, renameMe, setAvatar, online } from './net.js?v=20261107130412';
-import { startMusic, stopMusic, musicOn, audioState, audioSupported, setRain, whenSilenced, wakeAudio, audible, say, sfx, BEAT, BAR } from './audio.js?v=20261107130412';
+         setPresence, campRoster, renameMe, setAvatar, online } from './net.js?v=20261107134652';
+import { startMusic, stopMusic, musicOn, audioState, audioSupported, setRain, whenSilenced, wakeAudio, audible, say, sfx, BEAT, BAR } from './audio.js?v=20261107134652';
 import { playHoop, playPenalty, playQuiz, playRegister, playParade,
          playMami, playHustle, playManOWar, playSaed, playSocial,
-         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261107130412';
+         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261107134652';
 
 /* Every dance animation is expressed in beats, so the steps are on-tempo
    whether or not the sound is playing — and genuinely on the beat when it is. */
@@ -3369,7 +3370,10 @@ const POT_AT    = 0.58;    // across the scene; fixed so it can be learned
    of under three. The user watched figures go in and felt they had not been
    given a fair chance; the jump is the one task with a deadline, so it gets
    the longest run-up. */
-const POT_WARN  = 150;     // px of approach you get to react in
+const POT_WARN  = 280;     // px of approach you get to react in
+/* 280 since the hole moves (2026-11-07): it comes at the walker at road speed
+   while he walks at it, so the gap closes at ~85px/s instead of ~45, and 150px
+   would have left under two seconds. 280 keeps the ~3.3s the user asked for. */
 /* Halved: at 4 and 12 against +5 for a sachet, one fall cost two and a half
    waters and the meter lived at zero. A tapped jump stays cheaper than a fall. */
 const JUMP_COST = 2;
@@ -3752,14 +3756,48 @@ function palmTree(s){
   onKerb(el);
 })();
 
-const potX = () => sceneEl.sceneRect().width * POT_AT;
+/* The road moves now (2026-11-07): Mr. Pothole, Mrs. Pothole and the coin
+   ride it at the speed of the lane dashes (44px per 1.1s), coming in on the
+   right and leaving on the left; each hole comes round again after a random
+   gap. Reduced motion keeps the old fixed spots. The road stands still during
+   a dance, so nobody is carried into a hole mid-step. */
+const ROAD_SPEED = 44 / 1.1;               // scene px per second, = .road::after
+let potPos = null, mrsPos = null;
+/* Which pass of the hole this is. A walker's dataset.hop records the pass he
+   dealt with, so a new pass is always fresh — even for someone whose flag
+   could not be cleared while the hole waited off the right edge. */
+let potLap = 0;
+const hopped = p => p.dataset.hop === String(potLap);
+const potX = () => potPos ?? sceneEl.sceneRect().width * POT_AT;
 function placePothole(){
   pothole.style.left = Math.round(potX() - 40) + 'px';   // box is 80 wide now
   const w = sceneEl.sceneRect().width;
-  potholeMrs.style.left = Math.round(w * MRS_AT - MRS_W / 2) + 'px';
+  potholeMrs.style.left = Math.round((mrsPos ?? w * MRS_AT) - MRS_W / 2) + 'px';
 }
 placePothole();
 addEventListener('resize', placePothole);
+if (!calm()){
+  potPos = sceneEl.sceneRect().width * POT_AT;
+  mrsPos = sceneEl.sceneRect().width * MRS_AT;
+  let last = performance.now();
+  const roadTick = now => {
+    const dt = Math.min(0.1, (now - last) / 1000); last = now;   // a hidden tab comes back without a jump
+    if (!sceneEl.classList.contains('dancing')){
+      const W = sceneEl.sceneRect().width, d = ROAD_SPEED * dt;
+      potPos -= d; mrsPos -= d;
+      if (potPos < -60){ potPos = W + 60 + Math.random() * W * 0.6; potLap++; }   // round again after a gap: a new pass
+      if (mrsPos < -40) mrsPos = W + 40 + Math.random() * W * 0.8;
+      placePothole();
+      sceneEl.querySelectorAll('.coin').forEach(c => {
+        const x = +c.dataset.x - d;
+        c.dataset.x = String(x); c.style.left = Math.round(x) + 'px';
+        if (x < -20 && !c.classList.contains('claimed')) c.remove();
+      });
+    }
+    requestAnimationFrame(roadTick);
+  };
+  requestAnimationFrame(roadTick);
+}
 
 /* Centre of a figure, in scene pixels. */
 const figX = (p, box) => {
@@ -3797,8 +3835,8 @@ function rejoinGrid(p, stoodStillMs, glide = true){
 }
 
 function hopPothole(p, paid){
-  if (p.dataset.hop) return;
-  p.dataset.hop = '1';
+  if (hopped(p)) return;
+  p.dataset.hop = String(potLap);
   if (paid) potReadyAt = performance.now() + POT_COOLDOWN;
   p.classList.add('jumping');
   /* composite:'add' stacks the lift on whatever transform the figure already
@@ -3821,8 +3859,8 @@ function hopPothole(p, paid){
 }
 
 function fallIn(p){
-  if (p.dataset.hop) return;
-  p.dataset.hop = '1';
+  if (hopped(p)) return;
+  p.dataset.hop = String(potLap);
   potReadyAt = performance.now() + POT_COOLDOWN;
   if (s){ s.fell = (s.fell || 0) + 1; save(); drawTally(); }
   tell('Mr. Pothole got you. Tap JUMP next time!');
@@ -3837,6 +3875,11 @@ function fallIn(p){
      pitches forward and the ground takes him from the feet up — a clip that
      rises from the bottom of the figure — while `.sunk` drops him behind the
      hole's rim, so his legs are already inside it as he goes. */
+  /* The hole keeps moving with the road, so he goes with it while he is in
+     it, or he would climb out of bare tar 90px behind it. */
+  const drift = calm() ? null : p.animate([{ transform: 'translateX(0)' },
+    { transform: `translateX(${-ROAD_SPEED * 2.28}px)` }],
+    { duration: 2280, fill: 'forwards', composite: 'add' });
   const sink = p.animate([
     { transform: 'translateY(0) rotate(0deg)',    clipPath: 'inset(0 -40% 0% -40%)' },
     { transform: 'translateY(8px) rotate(9deg)',  clipPath: 'inset(0 -40% 22% -40%)', offset: .3 },
@@ -3876,8 +3919,14 @@ function fallIn(p){
         { transform: 'translateY(0) rotate(0deg)',      clipPath: 'inset(0 -40% 0% -40%)' },
       ], { duration: 620, easing: 'ease-out', composite: 'add' });
       climb.onfinish = () => {
+        drift?.cancel();
         p.style.animationPlayState = '';          // walking again, from the hole
         rejoinGrid(p, 760 + 900 + 620);
+        /* Back in his slot he can be just short of the hole again (it moves
+           now). Clear the flag so he hops it like anyone else, but give him a
+           few seconds as a passer-by so it never counts as a second fall. */
+        delete p.dataset.hop;
+        p.dataset.grace = String(performance.now() + 3500);
       };
       /* `dataset.hop` stays set: he is still past the hole when he surfaces,
          and clearing it here let watchPothole treat him as a fresh arrival —
@@ -3896,22 +3945,27 @@ function watchPothole(){
   const box = sceneEl.sceneRect();
   const x = potX();
   jumpTarget = null;
+  if (x > box.width + 10) return;          // still coming, off the right edge: nobody is asked yet
   sceneEl.querySelectorAll(':scope > .corper').forEach(p => {
     if (p.matches('.riding, .hailing, .running, .munching, .shopping, .inRide, .gone, .sunk')) return;
     const fx = figX(p, box);
-    if (fx < x - POT_WARN - 40) { delete p.dataset.hop; return; }   // new lap
+    /* The hole has gone past him: he is clear, and the next time one comes he
+       counts afresh. (With a fixed hole this reset happened far round to its
+       left; a moving hole respawns on the right, and that rule would have let
+       half the street walk straight through it.) */
+    if (fx > x + 60) { delete p.dataset.hop; return; }
     if (fx < x - POT_WARN) return;                                   // not yet
     /* Already dealt with this lap. This check has to come BEFORE the offer is
        made: a bystander hops the hole on its own, and if it later became the
        marked figure the screen went on to offer a jump it had already taken —
        the tap then cost nothing and played no animation, because hopPothole
        refuses to run twice. The player saw the instruction do nothing. */
-    if (p.dataset.hop) return;
+    if (hopped(p)) return;
     /* `jumpShown` has to be in here. Offering the jump clears the corn and
        ride targets, so without it the figure stopped counting as yours the
        instant it was asked — and then auto-hopped like a bystander. Nobody
        could ever fall in, which is half the mechanic. */
-    const mine = (performance.now() >= potReadyAt)
+    const mine = (performance.now() >= potReadyAt) && !(+p.dataset.grace > performance.now())
               && (p === cornTarget || p === rideTarget || p === jumpShown);
     if (mine){
       if (fx < x - 4) jumpTarget = p;  // yours: you get asked
@@ -4770,7 +4824,7 @@ function tell(text){
    reaches it first stops and bends down for it. Never by a pothole (a figure
    stooping in the hole's path is the fall all over again), never mid-dance,
    one at a time, gone after 9s if nobody wants it. */
-const COIN_VALUE = 100, COIN_FIRST = 25000, COIN_GAP = [35000, 55000], COIN_LIFE = 9000;
+const COIN_VALUE = 100, COIN_FIRST = 25000, COIN_GAP = [35000, 55000], COIN_LIFE = 16000;
 const coinSvg = () => `<svg viewBox="0 0 20 20" aria-hidden="true">
     <ellipse cx="10" cy="17.4" rx="7" ry="1.6" fill="rgba(0,0,0,.25)"/>
     <circle cx="10" cy="10" r="7.6" fill="#d9a521"/>
@@ -4783,16 +4837,15 @@ const coinSvg = () => `<svg viewBox="0 0 20 20" aria-hidden="true">
 function dropCoin(){
   const retry = () => setTimeout(dropCoin, 2000);
   if (sceneEl.querySelector('.coin') || sceneEl.classList.contains('dancing')) return retry();
-  const box = sceneEl.sceneRect(), W = box.width, avoid = [potX(), W * MRS_AT];
-  const ahead = [...sceneEl.querySelectorAll(':scope > .corper')]
-    .filter(p => freeFig(p) && inFrame(p, box, 0.05))
-    .map(p => { const r = p.sceneRect(); return r.left - box.left + r.width / 2; })
-    .filter(c => c < W * 0.62)
-    .map(c => c + 70 + Math.random() * 40)                 // a few strides in front of him
-    .filter(x => x < W * 0.9 && avoid.every(a => Math.abs(a - x) > 44));
-  if (!ahead.length) return retry();
+  /* It rides the road now, so it comes in near the right edge, ahead of
+     everyone walking towards it, and never on top of Mr. Pothole — both move
+     at road speed, so whatever gap they start with is the gap they keep. */
+  const box = sceneEl.sceneRect(), W = box.width;
+  const x = W * (0.88 + Math.random() * 0.06);
+  const walking = [...sceneEl.querySelectorAll(':scope > .corper')]
+    .some(p => freeFig(p) && inFrame(p, box, 0.05) && figX(p, box) < x - 60);
+  if (!walking || Math.abs(potX() - x) < 70) return retry();
   setTimeout(dropCoin, COIN_GAP[0] + Math.random() * (COIN_GAP[1] - COIN_GAP[0]));
-  const x = ahead[Math.floor(Math.random() * ahead.length)];
   const el = document.createElement('div');
   el.className = 'coin';
   el.style.left = Math.round(x) + 'px';
@@ -4813,7 +4866,7 @@ function claimCoin(coin){
   if (coin.classList.contains('claimed')) return;
   coin.classList.add('claimed');
   clearTimeout(coin._gone);
-  const box = sceneEl.sceneRect(), x = +coin.dataset.x;
+  const box = sceneEl.sceneRect(), at = () => +coin.dataset.x;     // it moves with the road
   const centre = p => { const r = p.sceneRect(); return r.left - box.left + r.width / 2; };
   const grab = () => {
     if (s){ s.money += COIN_VALUE; save(); render(); }
@@ -4823,13 +4876,13 @@ function claimCoin(coin){
     setTimeout(() => coin.remove(), 250);
   };
   const who = [...sceneEl.querySelectorAll(':scope > .corper')]
-    .filter(p => freeFig(p) && centre(p) < x - 4 && centre(p) > x - 240)
+    .filter(p => freeFig(p) && centre(p) < at() - 4)
     .sort((a, b) => centre(b) - centre(a))[0];
   if (!who){ grab(); return; }
   const t0 = performance.now();
   const watch = setInterval(() => {
-    if (!who.isConnected || !freeFig(who) || performance.now() - t0 > 6000){ clearInterval(watch); grab(); return; }
-    if (centre(who) < x - 6) return;
+    if (!who.isConnected || !freeFig(who) || performance.now() - t0 > 9000){ clearInterval(watch); grab(); return; }
+    if (centre(who) < at() - 6) return;
     clearInterval(watch);
     who.classList.add('stoop');
     who.style.animationPlayState = 'paused';            // stop walking, as he does at the pothole
