@@ -317,6 +317,7 @@
      new button, nothing in the event queue: a few seconds of recognition
      every minute or so, which is the cheapest attention this scene can buy. */
   .shop .door,.shop .win{transition:fill .45s ease,opacity .45s ease}
+  .shop[data-ad]{cursor:pointer}
   .shop .bulb{animation:bulbs 1.2s steps(1) infinite}
   .shop .lampGlow{transition:opacity 4s ease}
   .scene.tod-night .shop .lampGlow,.scene.tod-dusk .shop .lampGlow{opacity:.45}
@@ -499,7 +500,7 @@
      Each signboard is an ad slot — swap SHOPS[].sign for a brand. */
   .shop{position:absolute;z-index:0;animation:shopDrive linear infinite}
   .shop svg,.posStand svg,.streetPost svg,.genSet svg{display:block;width:100%}
-  @keyframes shopDrive{from{left:-78%}to{left:118%}}
+  @keyframes shopDrive{from{left:-134%}to{left:118%}}
   @keyframes drive{from{left:-22%}to{left:118%}}
   .wheel{animation:spin .5s linear infinite;transform-box:fill-box;
     transform-origin:center}
@@ -1545,7 +1546,7 @@
 <script type="module">
 import { newGame, doAction, canDo, unlocked, ACTIONS, phaseOf, nextUnlock, postingOdds, rivalOf,
          computePosting, CHOICES, GOAL, goalStatus,
-         shareText, MAX_DAY } from './game.js?v=20261107135221';
+         shareText, MAX_DAY } from './game.js?v=20261107140456';
 
 /* ---------- scene coordinates ----------
    The scene is scaled by a transform (see the stage), so a native
@@ -1576,11 +1577,11 @@ const TS = (document.getElementById('scene').offsetWidth || 375) / 375;
 const ALLAWEE_NOTE = 'Allawee ₦77,000 — e never enter.';
 import { initNet, joinCamp, syncPlayer, platoonBoard, recentChat, postChat,
          postSuggestion, reportMessage, awardBoard, myAwards, laughChat,
-         setPresence, campRoster, renameMe, setAvatar, online } from './net.js?v=20261107135221';
-import { startMusic, stopMusic, musicOn, audioState, audioSupported, setRain, whenSilenced, wakeAudio, audible, say, sfx, BEAT, BAR } from './audio.js?v=20261107135221';
+         setPresence, campRoster, renameMe, setAvatar, online } from './net.js?v=20261107140456';
+import { startMusic, stopMusic, musicOn, audioState, audioSupported, setRain, whenSilenced, wakeAudio, audible, say, sfx, BEAT, BAR } from './audio.js?v=20261107140456';
 import { playHoop, playPenalty, playQuiz, playRegister, playParade,
          playMami, playHustle, playManOWar, playSaed, playSocial,
-         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261107135221';
+         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261107140456';
 
 /* Every dance animation is expressed in beats, so the steps are on-tempo
    whether or not the sound is playing — and genuinely on the beat when it is. */
@@ -2250,6 +2251,13 @@ const SHOPS = [
      Drinks and small chops: the dearest tap on the street, a little belle. */
   { sign: 'VIBES LOUNGE',    w: 112, body: '#2b1d3a', roof: '#17111f', lounge: true, door: '#141016',
     errand: 'TAP TO CHILL AT THE LOUNGE', price: 1500, belle: 6 },
+  /* The longer road (2026-11-07): two pieces of street that are ad space, not
+     errands. A roadside billboard carrying our own HaggleBuddy ad (tap: the
+     store for the phone in hand), and a bus stop whose lit panel asks
+     advertisers to get in touch (tap: an email to us). Last, so every other
+     slot keeps its neighbours. */
+  { sign: 'HAGGLEBUDDY BOARD', w: 112, billboard: true, ad: 'hagglebuddy' },
+  { sign: 'BUS STOP',          w: 104, busstop: true,   ad: 'advertise' },
 ];
 
 /* signboard: textLength forces any wording to fit, so a long brand name
@@ -2553,6 +2561,8 @@ function shop(cfg){
     </svg>`;
   }
   if (cfg.lounge) return lounge(cfg);
+  if (cfg.billboard) return adBillboard(cfg);
+  if (cfg.busstop) return busStop(cfg);
   /* The barber's board is taller than a sign and rides above the roof, so that
      one shop lets its drawing spill past the viewBox. */
   return `<svg viewBox="0 0 100 60" aria-hidden="true"${cfg.barber ? ' overflow="visible"' : ''}>
@@ -2584,6 +2594,47 @@ function shop(cfg){
   </svg>`;
 }
 
+/* A roadside billboard on two posts with spotlights, carrying the HaggleBuddy
+   house ad in its own green and gold. The whole board is the tap target. */
+function adBillboard(cfg){
+  return `<svg viewBox="0 0 100 60" aria-hidden="true" overflow="visible">
+    <rect x="29" y="30" width="3.4" height="30" fill="#5a5650"/><rect x="67" y="30" width="3.4" height="30" fill="#5a5650"/>
+    <path d="M26 60h9 M64 60h9" stroke="#3f3c37" stroke-width="2"/>
+    <rect x="16" y="31" width="68" height="1.6" fill="#4a4741"/>
+    <rect x="5" y="1" width="90" height="31" rx="1.5" fill="#2b2b2b"/>
+    <rect x="7" y="3" width="86" height="21" fill="#16a34a"/>
+    <text x="50" y="12" text-anchor="middle" font-size="7.4" font-weight="900" font-family="system-ui,sans-serif"
+      fill="#fff" textLength="62" lengthAdjust="spacingAndGlyphs">CHECK PRICE</text>
+    <text x="50" y="21" text-anchor="middle" font-size="7.4" font-weight="900" font-family="system-ui,sans-serif"
+      fill="#fcd34d" textLength="74" lengthAdjust="spacingAndGlyphs">BEFORE YOU BUY</text>
+    <rect x="7" y="24" width="86" height="6.4" fill="#facc15"/>
+    <text x="50" y="29" text-anchor="middle" font-size="4.6" font-weight="900" font-family="system-ui,sans-serif"
+      fill="#14532d" textLength="80" lengthAdjust="spacingAndGlyphs">HaggleBuddy · free on Play Store &amp; App Store ↗</text>
+    <path d="M20 -1.5l3 2.5 M80 -1.5l-3 2.5" stroke="#3f3c37" stroke-width="1.2"/>
+    <circle class="lampGlow" cx="22" cy="2" r="6" fill="#fff6c8" opacity="0"/><circle class="lampGlow" cx="78" cy="2" r="6" fill="#fff6c8" opacity="0"/>
+  </svg>`;
+}
+/* A Lagos bus stop: a shelter with a bench and people waiting, a yellow
+   BUS STOP plate, and a lit ad panel that asks advertisers to get in touch. */
+function busStop(cfg){
+  return `<svg viewBox="0 0 100 60" aria-hidden="true" overflow="visible">
+    <rect x="11" y="22" width="2.4" height="38" fill="#4b5563"/><rect x="55" y="22" width="2.4" height="38" fill="#4b5563"/>
+    <path d="M6 22h58l-4-5H10z" fill="#1f6b3a"/><rect x="6" y="22" width="58" height="1.6" fill="#14532d"/>
+    <rect x="16" y="45" width="36" height="2.2" rx="1" fill="#8a6b3f"/>
+    <path d="M19 47.2v6 M49 47.2v6" stroke="#5a4630" stroke-width="1.4"/>
+    <rect x="27" y="9" width="16" height="6" rx="1" fill="#facc15"/>
+    <rect x="34.4" y="15" width="1.2" height="2" fill="#4b5563"/>
+    <text x="35" y="13.6" text-anchor="middle" font-size="3.9" font-weight="900" font-family="system-ui,sans-serif" fill="#1d1d1b" textLength="13.6" lengthAdjust="spacingAndGlyphs">BUS STOP</text>
+    <rect x="63" y="15" width="31" height="42" rx="1.4" fill="#2b2b2b"/>
+    <rect class="neon" x="65" y="17" width="27" height="34" fill="#fff8e1" opacity=".95"/>
+    <text x="78.5" y="26" text-anchor="middle" font-size="4.6" font-weight="900" font-family="system-ui,sans-serif" fill="#d6342c">YOUR AD</text>
+    <text x="78.5" y="32" text-anchor="middle" font-size="4.6" font-weight="900" font-family="system-ui,sans-serif" fill="#d6342c">HERE</text>
+    <text x="78.5" y="39" text-anchor="middle" font-size="2.9" font-weight="800" font-family="system-ui,sans-serif" fill="#1d1d1b">Talk to us:</text>
+    <text x="78.5" y="44" text-anchor="middle" font-size="2.9" font-weight="800" font-family="system-ui,sans-serif"
+      fill="#1d1d1b" textLength="24" lengthAdjust="spacingAndGlyphs">hello@otondo.ng ↗</text>
+    <rect x="76.5" y="51" width="4" height="9" fill="#4b5563"/>
+  </svg>`;
+}
 /* Neon instead of a painted board: the same text twice, a wide soft stroke
    under a bright fill, which reads as glow without an SVG filter. */
 const NEON_BULBS = ['#ff4fd8', '#ffd34d', '#4fd8ff', '#7dff6a'];
@@ -2633,9 +2684,10 @@ function lounge(cfg){
 /* Six shops on a 168% track, not five on 140%: spacing stays 28% of the
    scene each and speed stays 1.40/42 = 1.68/50.4 per second, so adding the
    bakery neither squeezes the row nor makes it drift faster. */
-/* Seven now, with the lounge: a 196% track (-78% to 118%) over 58.8s keeps
-   the same 28% spacing and the same 1.68/50.4 speed again. */
-const SHOP_CYCLE = 58.8 * TS, SHOP_TRAVEL = 1.96;
+/* Nine now, with the billboard and the bus stop: a 252% track (-134% to
+   118%) over 75.6s, the same 28% spacing and 1.68/50.4 speed again. Each
+   building comes round every ~76s instead of ~59s: the longer road. */
+const SHOP_CYCLE = 75.6 * TS, SHOP_TRAVEL = 2.52;
 
 /* Who is at each shop. `at` is a share of the shop's width (the door is at
    .29, the window .52–.82); an `enter` walks from `from` to the door and goes
@@ -2648,6 +2700,8 @@ const CUSTOMERS = {
   'SUPERMARKET':     [{ kind: 'enter', from: -.12, to: .29, skin: 3, tone: 0, d: -10, print: { kind: 'pinstripe', ink: '#3d6ea8' } }],
   'ELECTRONICS':     [{ kind: 'phone', at: .64, skin: 4, tone: 2, print: { kind: 'adire' } }],
   'BARBING SALON':   [{ kind: 'enter', from: 1.08, to: .29, skin: 2, tone: 1, d: -6, print: { kind: 'stripes', ink: '#1f8a4c' } }],
+  'BUS STOP':        [{ kind: 'idle',  at: .22, skin: 1, tone: 2, print: { kind: 'stripes', ink: '#1e3a6e' } },
+                      { kind: 'phone', at: .40, skin: 3, tone: 0, print: { kind: 'dots', ink: '#d6342c' } }],
 };
 function customer(c, scale = .42){
   const pos = c.kind === 'enter'
@@ -2664,7 +2718,7 @@ function roadside(el){
   const strip = SHOPS.map((cfg, i) =>
     /* tagged by sign, not by index, so swapping a board for a paying advert
        does not silently send the runner to a furniture shop for lunch */
-    `<div class="shop"${cfg.food ? ' data-food="1"' : ''} data-errand="${cfg.errand}"
+    `<div class="shop"${cfg.food ? ' data-food="1"' : ''}${cfg.errand ? ` data-errand="${cfg.errand}"` : ''}${cfg.ad ? ` data-ad="${cfg.ad}"` : ''}
        data-price="${cfg.price || 0}" data-belle="${cfg.belle || 0}"
        ${cfg.cred ? `data-cred="${cfg.cred}"` : ''} ${cfg.trade ? 'data-trade="1"' : ''}
        ${cfg.errand2 ? `data-errand2="${cfg.errand2}" data-price2="${cfg.price2 || 0}"` : ''}
@@ -3430,6 +3484,37 @@ function makePothole(id, name){
 }
 
 const pothole = makePothole('potArc', 'MR. POTHOLE');
+/* Each time the hole comes round it is Mr. Pothole or an open gutter — a
+   broken concrete drain with a slab tipped up out of it. Same box, same jump,
+   same fall; only the drawing and the words change, so every rule that
+   measures the hole still holds. */
+const POTHOLE_SVG = pothole.innerHTML;
+const GUTTER_SVG = `<svg viewBox="0 0 80 48" aria-hidden="true" overflow="visible">
+  <defs><path id="potArc" d="M6 40 A51 51 0 0 1 74 40" fill="none"/></defs>
+  <path d="M10 37l-6-1 M70 37l6-1.4 M12 44l-5 2.6 M68 44l6 2" stroke="#4d4b46" stroke-width="1" fill="none" stroke-linecap="round"/>
+  <rect x="9" y="31" width="62" height="14" rx="1.5" fill="#a7a196"/>
+  <rect x="13" y="33.4" width="54" height="9.2" rx="1" fill="#24221f"/>
+  <rect x="13" y="39.4" width="54" height="3.2" fill="#3e4636" opacity=".85"/>
+  <path d="M15 40.6h10 M33 41.2h8 M50 40.4h12" stroke="#6b7a5a" stroke-width=".6"/>
+  <path d="M40 33l6-4.6h12l-3 4.6z" fill="#bdb7ab"/>
+  <path d="M46 28.4h9" stroke="#8f8a7f" stroke-width=".6"/>
+  <path d="M18 33.4l3-2.4 M60 42.6l2 2.4" stroke="#6f6a60" stroke-width=".8"/>
+  <text class="potName" font-size="8" font-weight="900" letter-spacing="0.55"
+        font-family="system-ui,sans-serif" text-anchor="middle">
+    <textPath href="#potArc" startOffset="50%">OPEN GUTTER</textPath>
+  </text>
+</svg>`;
+const OBSTACLE = {
+  pothole: { svg: POTHOLE_SVG, tag: 'TAP TO JUMP MR. POTHOLE',
+             jumped: 'You jumped Mr. Pothole!', fell: 'Mr. Pothole got you. Tap JUMP next time!' },
+  gutter:  { svg: GUTTER_SVG,  tag: 'TAP TO JUMP THE GUTTER',
+             jumped: 'You jumped the open gutter!', fell: 'Straight into the gutter! Tap JUMP next time.' },
+};
+let potKind = 'pothole';
+function setObstacle(kind){
+  potKind = kind;
+  pothole.innerHTML = OBSTACLE[kind].svg;
+}
 
 /* Up in the far lane and over to the left. Smaller, because everything in that
    lane is drawn smaller to sit back from the camera. No gameplay: the corpers
@@ -3785,7 +3870,10 @@ if (!calm()){
     if (!sceneEl.classList.contains('dancing')){
       const W = sceneEl.sceneRect().width, d = ROAD_SPEED * dt;
       potPos -= d; mrsPos -= d;
-      if (potPos < -60){ potPos = W + 60 + Math.random() * W * 0.6; potLap++; }   // round again after a gap: a new pass
+      if (potPos < -60){                                              // round again after a gap: a new pass
+        potPos = W + 60 + Math.random() * W * 0.6; potLap++;
+        setObstacle(Math.random() < 0.4 ? 'gutter' : 'pothole');
+      }
       if (mrsPos < -40) mrsPos = W + 40 + Math.random() * W * 0.8;
       placePothole();
       sceneEl.querySelectorAll('.coin').forEach(c => {
@@ -3852,7 +3940,7 @@ function hopPothole(p, paid){
   if (paid && s){
     s.energy = Math.max(0, s.energy - JUMP_COST);
     s.jumped = (s.jumped || 0) + 1;
-    tell('You jumped Mr. Pothole!');
+    tell(OBSTACLE[potKind].jumped);
     save(); render();
     floatCost(p, `-${JUMP_COST} energy`);
   }
@@ -3863,7 +3951,7 @@ function fallIn(p){
   p.dataset.hop = String(potLap);
   potReadyAt = performance.now() + POT_COOLDOWN;
   if (s){ s.fell = (s.fell || 0) + 1; save(); drawTally(); }
-  tell('Mr. Pothole got you. Tap JUMP next time!');
+  tell(OBSTACLE[potKind].fell);
   p.classList.add('sunk');
   /* Stop walking the moment he goes in. Left running, he covered 27px during
      the drop — the hole's whole half-width — and went under at the far rim.
@@ -4192,7 +4280,7 @@ function offerTick(){
       jumpShown = jumpTarget;
       jumpShown.classList.add('wantsJump');
       markTappable(jumpShown);
-      jumpTag.textContent = 'TAP TO JUMP MR. POTHOLE';
+      jumpTag.textContent = OBSTACLE[potKind].tag;
       jumpTag.style.display = 'block';
     }
     /* On Mr. Pothole himself, not over the walker. */
@@ -4349,6 +4437,14 @@ sceneEl.addEventListener('click', e => {
      walk, and the corper branch would otherwise send someone else on a ride. */
   const coin = at.closest('.coin');
   if (coin){ hintUsed(); claimCoin(coin); return; }
+  /* Roadside ad space: the HaggleBuddy board goes to the store; the bus stop's
+     "your ad here" panel opens an email to us. */
+  const adSpot = at.closest('.shop[data-ad]');
+  if (adSpot){
+    if (adSpot.dataset.ad === 'hagglebuddy') window.open(adLink(), '_blank', 'noopener');
+    else location.href = 'mailto:hello@otondo.ng?subject=' + encodeURIComponent('Advertising on Otondo');
+    return;
+  }
   const hw = at.closest('.hawker');
   if (hw){ hintUsed(); buyWares(hw); return; }
   /* The place carries the instruction now, so the place takes the tap. */
