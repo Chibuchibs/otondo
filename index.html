@@ -1545,7 +1545,7 @@
 <script type="module">
 import { newGame, doAction, canDo, unlocked, ACTIONS, phaseOf, nextUnlock, postingOdds, rivalOf,
          computePosting, CHOICES, GOAL, goalStatus,
-         shareText, MAX_DAY } from './game.js?v=20261107134652';
+         shareText, MAX_DAY } from './game.js?v=20261107135221';
 
 /* ---------- scene coordinates ----------
    The scene is scaled by a transform (see the stage), so a native
@@ -1576,11 +1576,11 @@ const TS = (document.getElementById('scene').offsetWidth || 375) / 375;
 const ALLAWEE_NOTE = 'Allawee ₦77,000 — e never enter.';
 import { initNet, joinCamp, syncPlayer, platoonBoard, recentChat, postChat,
          postSuggestion, reportMessage, awardBoard, myAwards, laughChat,
-         setPresence, campRoster, renameMe, setAvatar, online } from './net.js?v=20261107134652';
-import { startMusic, stopMusic, musicOn, audioState, audioSupported, setRain, whenSilenced, wakeAudio, audible, say, sfx, BEAT, BAR } from './audio.js?v=20261107134652';
+         setPresence, campRoster, renameMe, setAvatar, online } from './net.js?v=20261107135221';
+import { startMusic, stopMusic, musicOn, audioState, audioSupported, setRain, whenSilenced, wakeAudio, audible, say, sfx, BEAT, BAR } from './audio.js?v=20261107135221';
 import { playHoop, playPenalty, playQuiz, playRegister, playParade,
          playMami, playHustle, playManOWar, playSaed, playSocial,
-         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261107134652';
+         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261107135221';
 
 /* Every dance animation is expressed in beats, so the steps are on-tempo
    whether or not the sound is playing — and genuinely on the beat when it is. */
@@ -4468,6 +4468,7 @@ function catchThief(run){
   if (s && fig){
     const back = 150 + Math.floor(Math.random() * 250);
     s.money += back;
+    sfx('kaching');                                   // money in: the till rings
     /* Credibility as well as cash. Running a thief down in front of the whole
        camp is exactly what camp talks about, and credibility is the number the
        ending is scored on. One point: the chase comes round every ~32s, and
@@ -4871,6 +4872,7 @@ function claimCoin(coin){
   const grab = () => {
     if (s){ s.money += COIN_VALUE; save(); render(); }
     floatCost(coin, `+₦${COIN_VALUE}`);
+    sfx('kaching');                                     // the coin is in his hand
     tell(`You stopped to pick up ₦${COIN_VALUE}.`);
     coin.classList.add('taken');
     setTimeout(() => coin.remove(), 250);
@@ -4881,8 +4883,11 @@ function claimCoin(coin){
   if (!who){ grab(); return; }
   const t0 = performance.now();
   const watch = setInterval(() => {
-    if (!who.isConnected || !freeFig(who) || performance.now() - t0 > 9000){ clearInterval(watch); grab(); return; }
-    if (centre(who) < at() - 6) return;
+    /* A hop over Mr. Pothole on the way is half a second: wait it out. Only a
+       real errand (or the hole itself) takes him off the coin. */
+    if (!who.isConnected || who.matches('.riding, .hailing, .running, .munching, .shopping, .inRide, .gone, .sunk')
+        || performance.now() - t0 > 9000){ clearInterval(watch); grab(); return; }
+    if (who.matches('.jumping') || centre(who) < at() - 6) return;
     clearInterval(watch);
     who.classList.add('stoop');
     who.style.animationPlayState = 'paused';            // stop walking, as he does at the pothole
@@ -5135,6 +5140,7 @@ function dashMoney(c, x, y){
     s.money += got;
     render();
     floatCost(car, `+₦${got.toLocaleString()}`);
+    sfx('kaching');                                   // money in: the till rings
   }
   /* the spray: a few notes out of the window, each on its own arc */
   const box = sceneEl.sceneRect();

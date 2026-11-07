@@ -477,17 +477,43 @@ export function say(name, { queue = false } = {}) {
    ducking it, and never queued behind (or holding up) a voice line. Only
    while the music is audible, like say(). Shares the voices' buffer cache. */
 const SFX = { honk: './sfx/horn-danfo.m4a' };   // N2 from voice/horns.html: a short honk from a Lagos stream clip
-const SFX_LEVEL = { honk: 0.45 };
+const SFX_LEVEL = { honk: 0.45, kaching: 0.5 };
 let lastSfx = '', sfxCount = 0;
+const sfxCounts = {};                          // per sound, for audioState()
+/* Ka-ching, for the coin: built here rather than recorded, so there is no
+   file to fetch or license. "Ka" is two quick band-passed clicks (the drawer),
+   "ching" is a bell — three partials at 2–3kHz, where a phone speaker is
+   strongest, each falling away exponentially the way struck metal does. */
+function bell(c, out, at, hz, dur, peak) {
+  const o = c.createOscillator(), g = c.createGain();
+  o.type = 'sine'; o.frequency.setValueAtTime(hz, at);
+  g.gain.setValueAtTime(0.0001, at);
+  g.gain.linearRampToValueAtTime(peak, at + 0.004);
+  g.gain.exponentialRampToValueAtTime(0.0001, at + dur);
+  o.connect(g).connect(out); o.start(at); o.stop(at + dur + 0.05);
+}
+function kaching(at) {
+  const out = ctx.createGain(); out.gain.value = SFX_LEVEL.kaching;
+  out.connect(ctx.destination);
+  noise(ctx, out, at, 0.035, 3500, 2, 0.6);                 // ka-
+  tone(ctx, out, at, 1800, 0.02, 0.25, 'triangle');
+  noise(ctx, out, at + 0.06, 0.03, 2500, 2.5, 0.45);        // the drawer
+  const t = at + 0.11;                                      // -ching
+  bell(ctx, out, t, 2093, 0.9, 0.34);
+  bell(ctx, out, t, 2637, 0.8, 0.24);
+  bell(ctx, out, t + 0.01, 3136, 0.6, 0.16);
+  bell(ctx, out, t, 5274, 0.25, 0.05);                      // a little metal on top
+}
 export function sfx(name) {
   if (!playing || !ctx || ctx.state !== 'running') return false;
+  if (name === 'kaching'){ kaching(ctx.currentTime); lastSfx = name; sfxCount++; sfxCounts[name] = (sfxCounts[name] || 0) + 1; return true; }
   loadVoice(SFX[name]).then(buf => {
     if (!buf || !playing || ctx.state !== 'running') return;
     const src = ctx.createBufferSource(); src.buffer = buf;
     const g = ctx.createGain(); g.gain.value = SFX_LEVEL[name] || 0.4;
     src.connect(g).connect(ctx.destination);
     src.start();
-    lastSfx = name; sfxCount++;
+    lastSfx = name; sfxCount++; sfxCounts[name] = (sfxCounts[name] || 0) + 1;
   });
   return true;
 }
@@ -503,6 +529,7 @@ export const audioState = () => ({
   rain: rainGain ? +rainGain.gain.value.toFixed(3) : 0,
   said: lastSaid + ' #' + saidCount,
   sfx: lastSfx + ' #' + sfxCount,
+  sfxCounts: { ...sfxCounts },
   music: musicGain ? +musicGain.gain.value.toFixed(3) : 0,
   via: 'web audio' + (navigator.audioSession ? ' + playback category' : ''),
 });
