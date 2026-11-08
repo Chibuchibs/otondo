@@ -500,7 +500,7 @@
      Each signboard is an ad slot — swap SHOPS[].sign for a brand. */
   .shop{position:absolute;z-index:0;animation:shopDrive linear infinite}
   .shop svg,.posStand svg,.streetPost svg,.genSet svg{display:block;width:100%}
-  @keyframes shopDrive{from{left:-134%}to{left:118%}}
+  @keyframes shopDrive{from{left:var(--shopFrom,-134%)}to{left:118%}}
   @keyframes drive{from{left:-22%}to{left:118%}}
   .wheel{animation:spin .5s linear infinite;transform-box:fill-box;
     transform-origin:center}
@@ -1552,7 +1552,7 @@
 <script type="module">
 import { newGame, doAction, canDo, unlocked, ACTIONS, phaseOf, nextUnlock, postingOdds, rivalOf,
          computePosting, CHOICES, GOAL, goalStatus,
-         shareText, MAX_DAY } from './game.js?v=20261107235041';
+         shareText, MAX_DAY } from './game.js?v=20261108095812';
 
 /* ---------- scene coordinates ----------
    The scene is scaled by a transform (see the stage), so a native
@@ -1583,11 +1583,11 @@ const TS = (document.getElementById('scene').offsetWidth || 375) / 375;
 const ALLAWEE_NOTE = 'Allawee ₦77,000 — e never enter.';
 import { initNet, joinCamp, syncPlayer, platoonBoard, recentChat, postChat,
          postSuggestion, reportMessage, awardBoard, myAwards, laughChat,
-         setPresence, campRoster, renameMe, setAvatar, online } from './net.js?v=20261107235041';
-import { startMusic, stopMusic, musicOn, audioState, audioSupported, setRain, whenSilenced, wakeAudio, audible, say, sfx, BEAT, BAR } from './audio.js?v=20261107235041';
+         setPresence, campRoster, renameMe, setAvatar, online } from './net.js?v=20261108095812';
+import { startMusic, stopMusic, musicOn, audioState, audioSupported, setRain, whenSilenced, wakeAudio, audible, say, sfx, BEAT, BAR } from './audio.js?v=20261108095812';
 import { playHoop, playPenalty, playQuiz, playRegister, playParade,
          playMami, playHustle, playManOWar, playSaed, playSocial,
-         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261107235041';
+         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261108095812';
 
 /* Every dance animation is expressed in beats, so the steps are on-tempo
    whether or not the sound is playing — and genuinely on the beat when it is. */
@@ -2224,7 +2224,36 @@ function hawker(skin, wares = 'water'){
    competes with the one signal that has to cut through.
    The roofs take a darker shade of the same hue — a grey-brown roof on a
    bright wall reads as a mistake. */
+/* The commercial stretch (2026-11-08): Victoria Island / Ikeja, where chains
+   and banks stand beside the buka. EMPTY THIS LIST and the street goes back to
+   exactly what it was: the track, timing and every slot are worked out from
+   it. They come first so everything below keeps the place it had on load, and
+   the row reaches them after FOOD JOINT, then wraps to the bus stop.
+   Invented names on purpose: real chains' names and colours are theirs, and
+   these boards are what we would sell to them. */
+const BOULEVARD = [
+  { sign: 'NAIRA TRUST BANK', w: 112, modern: 'bank', body: '#e7e2d6', roof: '#6b1d2e', door: '#7a8791',
+    signInk: ['#4a1220', '#ffe6a3', '#ffc94d'],
+    errand: 'TAP TO QUEUE AT THE ATM', price: 100, belle: 1 },
+  { sign: 'OGA BURGER', w: 108, modern: 'burger', body: '#f6f1e4', roof: '#1e3a8a', door: '#1e3a8a', food: true,
+    signInk: ['#14296b', '#ffe066', '#ffcc33'],
+    errand: 'TAP TO BUY A BURGER', price: 1200, belle: 11 },
+  { sign: 'CITY MALL', w: 116, modern: 'mall', body: '#9fc4d6', roof: '#39505f', door: '#5f7f91',
+    signInk: ['#22323c', '#ffffff', '#9fe3ff'],
+    errand: 'TAP TO COOL OFF IN THE AC', price: 300, belle: 4 },
+  { sign: 'PIZZA RUN', w: 108, modern: 'pizza', body: '#f6f1e4', roof: '#15803d', door: '#15803d', food: true,
+    signInk: ['#0f5e2d', '#fff4d6', '#ffd98a'],
+    errand: 'TAP FOR A SLICE OF PIZZA', price: 1100, belle: 10 },
+  { sign: 'ALERT BANK', w: 112, modern: 'bank', body: '#dfe5e2', roof: '#0f4c4a', door: '#7a8791',
+    signInk: ['#0a3735', '#c8ff5a', '#a4f02e'],
+    errand: 'TAP TO CHECK YOUR ALERT', price: 100, belle: 2 },
+  { sign: 'CHICKEN NATION', w: 108, modern: 'chicken', body: '#fbf7ef', roof: '#e8590c', door: '#e8590c', food: true,
+    signInk: ['#b8430a', '#fff3c4', '#ffd166'],
+    errand: 'TAP FOR CHICKEN AND CHIPS', price: 1400, belle: 12 },
+];
+
 const SHOPS = [
+  ...BOULEVARD,
   /* door: each shop's own paint. heads: who is at the window (0–2). */
   { sign: 'FOOD JOINT',      w: 104, signInk: ['#7a1c14', '#ffd34d', '#ff9a3c'], body: '#b9683f', roof: '#6d6450', door: '#d6342c', heads: 2, buka: true,
     errand: 'TAP TO BUY JOLLOF RICE', price: 600, belle: 9, food: true },
@@ -2567,6 +2596,7 @@ function shop(cfg){
     </svg>`;
   }
   if (cfg.lounge) return lounge(cfg);
+  if (cfg.modern) return modernShop(cfg);
   if (cfg.billboard) return adBillboard(cfg);
   if (cfg.busstop) return busStop(cfg);
   /* The barber's board is taller than a sign and rides above the roof, so that
@@ -2641,6 +2671,78 @@ function busStop(cfg){
     <rect x="76.5" y="51" width="4" height="9" fill="#4b5563"/>
   </svg>`;
 }
+/* The chains and the banks: a clean rendered front, a full-width fascia and
+   plate glass, against the painted fronts of the rest of the road. */
+const MODERN_ICON = {
+  chicken: `<path d="M8.6 13.4 q3-2 4.6.4 q1.2 2.2-1.2 3.6 q-1.6.8-3-.2 l-2 2 q-1 .4-1.3-.7 q-1-.1-.7-1.2 l2-1.9 q-.5-1 1.6-2z" fill="#fff3c4"/>`,
+  pizza:   `<path d="M5.5 12.6 h8.6 l-4.3 8z" fill="#f7c948"/><path d="M5.5 12.6 h8.6" stroke="#b45309" stroke-width="1.3"/><circle cx="8.3" cy="14.8" r=".8" fill="#c1272d"/><circle cx="11" cy="15" r=".8" fill="#c1272d"/><circle cx="9.7" cy="17.3" r=".7" fill="#c1272d"/>`,
+  burger:  `<path d="M5.6 15.4 q0-3.4 4.2-3.4 q4.2 0 4.2 3.4z" fill="#f2b45a"/><rect x="5.4" y="15.8" width="8.8" height="1" fill="#57a639"/><rect x="5.4" y="16.8" width="8.8" height="1.5" rx=".5" fill="#6b3a1e"/><rect x="5.8" y="18.5" width="8" height="1.5" rx=".7" fill="#f2b45a"/>`,
+};
+function modernShop(cfg){
+  const k = cfg.modern, fascia = cfg.roof;
+  /* double glass doors at the same spot as every other shop's door (29%),
+     because that is where a runner walks in */
+  const doors = `<rect x="15" y="33" width="28" height="27" fill="#2e2a20" opacity=".6"/>
+    <rect class="door" x="16.4" y="34.4" width="12" height="25.6" fill="#b9dbe8"/>
+    <rect class="door" x="29.6" y="34.4" width="12" height="25.6" fill="#a8cfdf"/>
+    <path d="M26.6 44v6 M31.4 44v6" stroke="${cfg.door}" stroke-width="1.1" stroke-linecap="round"/>
+    <path d="M18 57 L25 37 M31 57 L38 37" stroke="#fff" stroke-width=".7" opacity=".5"/>`;
+  if (k === 'mall'){
+    const panes = [];
+    for (let r = 0; r < 2; r++) for (let c = 0; c < 8; c++)
+      if (!(r === 1 && c < 4))
+        panes.push(`<rect class="door" x="${9 + c * 10.4}" y="${19 + r * 14.6}" width="9.6" height="13.4" fill="${(c + r) % 3 ? '#b7d8e6' : '#cfe6ef'}"/>`);
+    return `<svg viewBox="0 0 100 60" aria-hidden="true">
+      <rect x="6" y="16" width="88" height="44" fill="${cfg.body}"/>
+      ${panes.join('')}
+      <rect x="6" y="32.6" width="88" height="1.6" fill="${fascia}"/>
+      <!-- the escalator and a mannequin, seen through the ground-floor glass -->
+      <path d="M52 58 L74 36.6" stroke="#47606f" stroke-width="2.4" stroke-linecap="round"/>
+      <path d="M52 54 L74 32.8" stroke="#2f4552" stroke-width=".7"/>
+      <circle cx="85" cy="42" r="1.7" fill="#3f3a34"/><path d="M82.4 58 v-11 q0-3 2.6-3 q2.6 0 2.6 3 v11z" fill="#c1272d"/>
+      ${doors}
+      <rect x="4" y="4" width="92" height="13" rx="1.5" fill="${fascia}"/>
+      ${board(cfg.sign, 22, 4.6, 56, cfg.signInk)}
+    </svg>`;
+  }
+  if (k === 'bank'){
+    const pil = [47, 58, 69].map(x => `<rect class="door" x="${x + 1.4}" y="26" width="7.4" height="20" fill="#b7cfd9"/>`).join('');
+    return `<svg viewBox="0 0 100 60" aria-hidden="true">
+      <rect x="6" y="14" width="88" height="46" fill="${cfg.body}"/>
+      <path d="M6 24h88 M6 47.4h88" stroke="rgba(0,0,0,.14)" stroke-width=".6"/>
+      ${pil}
+      ${[12, 45, 56, 67, 78].map(x => `<rect x="${x}" y="24" width="2.2" height="36" fill="#f5f1e6" opacity=".8"/>`).join('')}
+      ${doors}
+      <!-- the ATM in the wall: the queue outside it is the real sign of a bank -->
+      <rect x="80.4" y="30" width="12" height="30" rx=".8" fill="#37414a"/>
+      <rect class="neon" x="82.2" y="33" width="8.4" height="6.4" fill="#7fe8ff"/>
+      <rect x="82.2" y="41" width="8.4" height="3.6" fill="#1f262c"/>
+      <rect x="83.4" y="46.6" width="6" height="1.3" fill="#0d1114"/>
+      <rect x="4" y="5" width="92" height="12.4" rx="1.2" fill="${fascia}"/>
+      ${board(cfg.sign, 12, 5.2, 76, cfg.signInk)}
+    </svg>`;
+  }
+  /* the three quick-service fronts: same bones, their own colour and icon */
+  const cap = fascia;
+  return `<svg viewBox="0 0 100 60" aria-hidden="true">
+    <rect x="6" y="20" width="88" height="40" fill="${cfg.body}"/>
+    <rect x="47" y="27" width="44" height="23" fill="#2e2a20" opacity=".6"/>
+    <rect class="door" x="48" y="28" width="42" height="21" fill="#fff4d9"/>
+    <!-- lit menu boards over the counter, and someone serving -->
+    ${[0, 1, 2].map(i => `<rect class="neon" x="${51 + i * 13}" y="29.4" width="11.6" height="5.6" rx=".4" fill="${cap}"/>
+      <path d="M${52.4 + i * 13} 31h8.6 M${52.4 + i * 13} 33h6" stroke="#fff" stroke-width=".6"/>`).join('')}
+    <circle cx="69" cy="38.8" r="2.5" fill="#6b4226"/>
+    <rect x="66.2" y="35.7" width="5.6" height="1.6" rx=".6" fill="${cap}"/>
+    <path d="M65 45 v-2 q0-2.2 2.2-2.2 h3.6 q2.2 0 2.2 2.2 v2z" fill="${cap}"/>
+    <rect x="48" y="44.4" width="42" height="4.6" fill="#d9d2c0"/>
+    <rect x="47" y="50" width="44" height="10" fill="${cap}" opacity=".9"/>
+    ${doors}
+    <rect x="4" y="8" width="92" height="14.4" rx="1.5" fill="${fascia}"/>
+    ${MODERN_ICON[k]}
+    ${board(cfg.sign, 18, 9.2, 74, cfg.signInk)}
+  </svg>`;
+}
+
 /* Neon instead of a painted board: the same text twice, a wide soft stroke
    under a bright fill, which reads as glow without an SVG filter. */
 const NEON_BULBS = ['#ff4fd8', '#ffd34d', '#4fd8ff', '#7dff6a'];
@@ -2690,10 +2792,11 @@ function lounge(cfg){
 /* Six shops on a 168% track, not five on 140%: spacing stays 28% of the
    scene each and speed stays 1.40/42 = 1.68/50.4 per second, so adding the
    bakery neither squeezes the row nor makes it drift faster. */
-/* Nine now, with the billboard and the bus stop: a 252% track (-134% to
-   118%) over 75.6s, the same 28% spacing and 1.68/50.4 speed again. Each
-   building comes round every ~76s instead of ~59s: the longer road. */
-const SHOP_CYCLE = 75.6 * TS, SHOP_TRAVEL = 2.52;
+/* Every slot is 28% of the scene and 8.4s, whatever the number of shops, so
+   the row can grow without squeezing it or making it drift faster: the same
+   1.68/50.4 speed as ever, and a building simply takes longer to come round.
+   Nine shops: 252% over 75.6s. Fifteen with the boulevard: 420% over 126s. */
+const SHOP_CYCLE = SHOPS.length * 8.4 * TS, SHOP_TRAVEL = SHOPS.length * .28;
 
 /* Who is at each shop. `at` is a share of the shop's width (the door is at
    .29, the window .52–.82); an `enter` walks from `from` to the door and goes
@@ -2706,6 +2809,11 @@ const CUSTOMERS = {
   'SUPERMARKET':     [{ kind: 'enter', from: -.12, to: .29, skin: 3, tone: 0, d: -10, print: { kind: 'pinstripe', ink: '#3d6ea8' } }],
   'ELECTRONICS':     [{ kind: 'phone', at: .64, skin: 4, tone: 2, print: { kind: 'adire' } }],
   'BARBING SALON':   [{ kind: 'enter', from: 1.08, to: .29, skin: 2, tone: 1, d: -6, print: { kind: 'stripes', ink: '#1f8a4c' } }],
+  'CHICKEN NATION':  [{ kind: 'enter', from: 1.08, to: .29, skin: 1, tone: 3, d: -4, print: { kind: 'dots', ink: '#e8590c' } }],
+  'ALERT BANK':      [{ kind: 'phone', at: .64, skin: 0, tone: 2, print: { kind: 'stripes', ink: '#0f4c4a' } },
+                      { kind: 'wait',  at: .74, skin: 3, tone: 1, print: { kind: 'pinstripe', ink: '#3d6ea8' } }],
+  'CITY MALL':       [{ kind: 'enter', from: -.12, to: .29, skin: 2, tone: 4, d: -8, print: { kind: 'chevron', ink: '#c1272d' } }],
+  'NAIRA TRUST BANK':[{ kind: 'wait',  at: .74, skin: 4, tone: 0, print: { kind: 'adire' } }],
   'BUS STOP':        [{ kind: 'idle',  at: .22, skin: 1, tone: 2, print: { kind: 'stripes', ink: '#1e3a6e' } },
                       { kind: 'phone', at: .40, skin: 3, tone: 0, print: { kind: 'dots', ink: '#d6342c' } }],
 };
@@ -2721,6 +2829,7 @@ function roadside(el){
   /* one shared duration keeps them evenly spaced forever; different
      durations make them drift together and clump */
   const CYCLE = SHOP_CYCLE;
+  el.style.setProperty('--shopFrom', (118 - SHOP_TRAVEL * 100) + '%');
   const strip = SHOPS.map((cfg, i) =>
     /* tagged by sign, not by index, so swapping a board for a paying advert
        does not silently send the runner to a furniture shop for lunch */
@@ -3560,7 +3669,7 @@ const POS_DEFAULT = ['POS', '#1e3a6e', '#fff'];
      one spot it stood still while the buildings and the street sign drifted
      through it. */
   el.style.animationDuration = SHOP_CYCLE + 's';
-  el.style.animationDelay = -(4.82 * SHOP_CYCLE / SHOPS.length) + 's';
+  el.style.animationDelay = -((BOULEVARD.length + 4.82) * SHOP_CYCLE / SHOPS.length) + 's';
   el.innerHTML = `<svg viewBox="0 0 60 64" aria-hidden="true">
     <path d="M2 24 Q30 2 58 24 Z" fill="${top}"/>
     <path d="M2 24 Q30 14 58 24 L58 27 Q30 19 2 27 Z" fill="#fff" opacity=".85"/>
@@ -3617,7 +3726,7 @@ const STREETS = ['BROAD STREET', 'MARINA', 'ALLEN AVENUE', 'AWOLOWO ROAD',
   };
   paint();
   el.style.animationDuration = SHOP_CYCLE + 's';
-  el.style.animationDelay = -(1 * SHOP_CYCLE / SHOPS.length) + 's';   // the corn stall's slot
+  el.style.animationDelay = -((BOULEVARD.length + 1) * SHOP_CYCLE / SHOPS.length) + 's';   // the corn stall's slot
   el.style.marginLeft = '-22px';
   /* A new street each time the post comes round from the left. */
   el.addEventListener('animationiteration', () => { i = (i + 1) % STREETS.length; paint(); });
@@ -3846,7 +3955,7 @@ function palmTree(s){
      from both walls. Pinned at 74% it hung in the air while the buildings
      slid past it. */
   el.style.animationDuration = SHOP_CYCLE + 's';
-  el.style.animationDelay = -(3.06 * SHOP_CYCLE / SHOPS.length) + 's';
+  el.style.animationDelay = -((BOULEVARD.length + 3.06) * SHOP_CYCLE / SHOPS.length) + 's';
   onKerb(el);
 })();
 
