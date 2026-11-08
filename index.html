@@ -1552,7 +1552,7 @@
 <script type="module">
 import { newGame, doAction, canDo, unlocked, ACTIONS, phaseOf, nextUnlock, postingOdds, rivalOf,
          computePosting, CHOICES, GOAL, goalStatus,
-         shareText, MAX_DAY } from './game.js?v=20261107183423';
+         shareText, MAX_DAY } from './game.js?v=20261107220602';
 
 /* ---------- scene coordinates ----------
    The scene is scaled by a transform (see the stage), so a native
@@ -1583,11 +1583,11 @@ const TS = (document.getElementById('scene').offsetWidth || 375) / 375;
 const ALLAWEE_NOTE = 'Allawee ₦77,000 — e never enter.';
 import { initNet, joinCamp, syncPlayer, platoonBoard, recentChat, postChat,
          postSuggestion, reportMessage, awardBoard, myAwards, laughChat,
-         setPresence, campRoster, renameMe, setAvatar, online } from './net.js?v=20261107183423';
-import { startMusic, stopMusic, musicOn, audioState, audioSupported, setRain, whenSilenced, wakeAudio, audible, say, sfx, BEAT, BAR } from './audio.js?v=20261107183423';
+         setPresence, campRoster, renameMe, setAvatar, online } from './net.js?v=20261107220602';
+import { startMusic, stopMusic, musicOn, audioState, audioSupported, setRain, whenSilenced, wakeAudio, audible, say, sfx, BEAT, BAR } from './audio.js?v=20261107220602';
 import { playHoop, playPenalty, playQuiz, playRegister, playParade,
          playMami, playHustle, playManOWar, playSaed, playSocial,
-         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261107183423';
+         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261107220602';
 
 /* Every dance animation is expressed in beats, so the steps are on-tempo
    whether or not the sound is playing — and genuinely on the beat when it is. */
@@ -5410,6 +5410,32 @@ $('snd').onclick = toggleSound;
 window.otondoAudio = audioState;      // for checking a silent phone
 
 /* Shown once per device the first time the music is started. */
+/* An upright phone gets the street at the size its width allows; turned
+   sideways it fills nearly the whole screen (88% of the height). Say so once
+   on a touch phone held upright, after the sound tip has had its turn, and
+   never again on this device. Gone after 7s, on a tap, or the moment the
+   phone is turned. If storage is blocked it is skipped rather than shown on
+   every visit. */
+(() => {
+  const KEY = 'otondo:rotatetip';
+  try { if (localStorage.getItem(KEY)) return; } catch { return; }
+  const uprightPhone = () => matchMedia('(pointer: coarse)').matches && innerWidth < 600 && innerHeight > innerWidth;
+  if (!uprightPhone()) return;
+  setTimeout(() => {
+    if (!uprightPhone()) return;                         // turned already
+    const tip = document.createElement('div');
+    tip.className = 'sndtip';
+    tip.textContent = '↻ Turn your phone sideways for a bigger street';
+    document.body.appendChild(tip);
+    try { localStorage.setItem(KEY, '1'); } catch {}
+    const done = () => { tip.remove(); removeEventListener('resize', onTurn); };
+    const onTurn = () => { if (innerWidth > innerHeight) done(); };
+    addEventListener('resize', onTurn);
+    tip.addEventListener('click', done);
+    setTimeout(done, 7000);
+  }, 9000);
+})();
+
 function soundHint(){
   /* Shown on the first few plays rather than once: a single appearance is far
      too easy to miss, and then the silence looks like a plain bug again. */
