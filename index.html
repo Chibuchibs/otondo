@@ -1392,20 +1392,26 @@
      first paint, so there is no jump. The module reads the width it set
      (scene.offsetWidth) to stretch its % timings to match. */
   (function(){
-    var MIN_W = 375, MAX_W = 640, H = 218, MAX_FRAC = .62;
+    var MIN_W = 375, MAX_W = 640, H = 218;
     var stage = document.getElementById('stage'), scene = document.getElementById('scene');
     var vw = document.documentElement.clientWidth, vh = window.innerHeight;
-    /* Scale is capped so the scene never takes more than 62% of the window's
-       height. Within that, the scene is drawn as wide as it needs to be to
-       reach the window's edges (375 on a phone, up to 640 on a monitor). The
-       width is chosen once: the module reads it to scale its timings. */
-    var kH = vh * MAX_FRAC / H;
+    /* How much of the window's height the street may take. 72% on a laptop or
+       monitor (it was 62%: the street can be bigger and the stat cards still
+       start on the first screen). On a phone on its side (wide and short) the
+       street IS the game, so it takes 88%. An upright phone is limited by its
+       width, not this — the street already runs edge to edge there, and any
+       bigger means cutting off its sides. */
+    var maxFrac = function(){ return vw > vh && vh < 520 ? .88 : .72; };
+    /* Within that cap the scene is drawn as wide as it needs to be to reach
+       the window's edges (375 on a phone, up to 640 on a monitor). The width
+       is chosen once: the module reads it to scale its timings. */
+    var kH = vh * maxFrac() / H;
     var k = Math.min(vw / MIN_W, kH);
     var W = Math.round(Math.min(MAX_W, Math.max(MIN_W, vw / k)));
     scene.style.width = W + 'px';
     function fit(){
       vw = document.documentElement.clientWidth; vh = window.innerHeight;
-      var kk = Math.min(vw / W, vh * MAX_FRAC / H);
+      var kk = Math.min(vw / W, vh * maxFrac() / H);
       stage.style.setProperty('--vw', vw + 'px');
       stage.style.setProperty('--k', kk.toFixed(4));
     }
@@ -1546,7 +1552,7 @@
 <script type="module">
 import { newGame, doAction, canDo, unlocked, ACTIONS, phaseOf, nextUnlock, postingOdds, rivalOf,
          computePosting, CHOICES, GOAL, goalStatus,
-         shareText, MAX_DAY } from './game.js?v=20261107142743';
+         shareText, MAX_DAY } from './game.js?v=20261107183423';
 
 /* ---------- scene coordinates ----------
    The scene is scaled by a transform (see the stage), so a native
@@ -1577,11 +1583,11 @@ const TS = (document.getElementById('scene').offsetWidth || 375) / 375;
 const ALLAWEE_NOTE = 'Allawee ₦77,000 — e never enter.';
 import { initNet, joinCamp, syncPlayer, platoonBoard, recentChat, postChat,
          postSuggestion, reportMessage, awardBoard, myAwards, laughChat,
-         setPresence, campRoster, renameMe, setAvatar, online } from './net.js?v=20261107142743';
-import { startMusic, stopMusic, musicOn, audioState, audioSupported, setRain, whenSilenced, wakeAudio, audible, say, sfx, BEAT, BAR } from './audio.js?v=20261107142743';
+         setPresence, campRoster, renameMe, setAvatar, online } from './net.js?v=20261107183423';
+import { startMusic, stopMusic, musicOn, audioState, audioSupported, setRain, whenSilenced, wakeAudio, audible, say, sfx, BEAT, BAR } from './audio.js?v=20261107183423';
 import { playHoop, playPenalty, playQuiz, playRegister, playParade,
          playMami, playHustle, playManOWar, playSaed, playSocial,
-         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261107142743';
+         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261107183423';
 
 /* Every dance animation is expressed in beats, so the steps are on-tempo
    whether or not the sound is playing — and genuinely on the beat when it is. */
