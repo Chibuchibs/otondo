@@ -413,13 +413,16 @@ const VOICE = {
   enter:   './sfx/haha-e-enter.m4a',    // "Haha, e enter!" — pidgin for: that satisfies
   toomuch: './sfx/you-too-much.m4a',
   welldone: './sfx/well-done.m4a',
-  thief: './sfx/thief-shout.m4a',       // a Lagos street voice (screen recording, 2026-11-07) as the thief runs back across
+  thief: './sfx/thief-shout-far.m4a',   // a Lagos street voice (screen recording, 2026-11-07) as the thief runs back across; band-limited 260Hz-2.6kHz + a little echo so it sits down the street ("blend it in")
 };
 const VOICE_LEVEL = 0.9, DUCK = 0.55;
+/* Lines that are part of the street rather than said to you: the music does
+   not dip for them, so they sit inside the noise instead of on top of it. */
+const NO_DUCK = { thief: true };
 /* Per-line level against VOICE_LEVEL. Jolaolu's lines measure as loud as the
    rest, but her brighter voice carries further over the music, so they sit a
    little lower (about -2.5dB). */
-const VOICE_GAIN = { akara: 0.75, akaraWalk: 0.75, oya: 0.8 };   // oya: "slightly reduce", about -2dB
+const VOICE_GAIN = { akara: 0.75, akaraWalk: 0.75, oya: 0.8, thief: 0.55 };   // oya: "slightly reduce", about -2dB; thief: "lower the voice", about -5dB, a voice from down the street
 const VGRID = 0.058, VLEAD = 0.08; // the track's beats sit 58ms early; each clip has 80ms of lead-in
 let musicGain = null, voiceFree = 0, lastSaid = '', saidCount = 0;
 const voiceBufs = {};
@@ -462,7 +465,7 @@ export function say(name, { queue = false } = {}) {
     const g = ctx.createGain(); g.gain.value = VOICE_LEVEL * (VOICE_GAIN[name] || 1);
     src.connect(g).connect(ctx.destination);
     src.start(at);
-    if (musicGain) {
+    if (musicGain && !NO_DUCK[name]) {
       /* Back to the music's own level, not to whatever the gain read at the
          moment: a line queued behind another was called mid-dip, and
          "restoring" to that left the music a little quieter every time. */
