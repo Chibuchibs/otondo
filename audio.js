@@ -406,10 +406,10 @@ document.addEventListener('visibilitychange', () => {
    little under each line so the words come through on a phone speaker. */
 const VOICE = {
   oya:   './sfx/oya-letsgo-warm9.m4a',  // +9dB low shelf at 200Hz, 2026-11-04 ("add more bass"; user picked the heavier one)
-  water: './sfx/seller-water.m4a',
-  akara: './sfx/seller-akara-200n.m4a',         // Jolaolu, "Akara, 200 naira" (joined from her take) when your runner reaches her
-  akaraWalk: './sfx/seller-akara-jolaolu.m4a',  // Jolaolu, "Oga, buy your akara here!" as she walks into view
-  kunu:  './sfx/seller-kunu.m4a',
+  water: './sfx/seller-water-far.m4a',
+  akara: './sfx/seller-akara-200n-far.m4a',         // Jolaolu, "Akara, 200 naira" (joined from her take) when your runner reaches her
+  akaraWalk: './sfx/seller-akara-jolaolu-far.m4a',  // Jolaolu, "Oga, buy your akara here!" as she walks into view
+  kunu:  './sfx/seller-kunu-far.m4a',
   enter:   './sfx/haha-e-enter.m4a',    // "Haha, e enter!" — pidgin for: that satisfies
   toomuch: './sfx/you-too-much.m4a',
   welldone: './sfx/well-done.m4a',
@@ -417,8 +417,10 @@ const VOICE = {
 };
 const VOICE_LEVEL = 0.9, DUCK = 0.55;
 /* Lines that are part of the street rather than said to you: the music does
-   not dip for them, so they sit inside the noise instead of on top of it. */
-const NO_DUCK = { thief: true };
+   not dip for them, so they sit inside the noise instead of on top of it.
+   Their files (*-far.m4a) are also band-limited with a little echo, the same
+   "down the street" recipe for the thief and the sellers (2026-11-07). */
+const NO_DUCK = { thief: true, water: true, akara: true, akaraWalk: true, kunu: true };
 /* Per-line level against VOICE_LEVEL. Jolaolu's lines measure as loud as the
    rest, but her brighter voice carries further over the music, so they sit a
    little lower (about -2.5dB). */
