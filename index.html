@@ -1552,7 +1552,7 @@
 <script type="module">
 import { newGame, doAction, canDo, unlocked, ACTIONS, phaseOf, nextUnlock, postingOdds, rivalOf,
          computePosting, CHOICES, GOAL, goalStatus,
-         shareText, MAX_DAY } from './game.js?v=20261107234624';
+         shareText, MAX_DAY } from './game.js?v=20261107235041';
 
 /* ---------- scene coordinates ----------
    The scene is scaled by a transform (see the stage), so a native
@@ -1583,11 +1583,11 @@ const TS = (document.getElementById('scene').offsetWidth || 375) / 375;
 const ALLAWEE_NOTE = 'Allawee ₦77,000 — e never enter.';
 import { initNet, joinCamp, syncPlayer, platoonBoard, recentChat, postChat,
          postSuggestion, reportMessage, awardBoard, myAwards, laughChat,
-         setPresence, campRoster, renameMe, setAvatar, online } from './net.js?v=20261107234624';
-import { startMusic, stopMusic, musicOn, audioState, audioSupported, setRain, whenSilenced, wakeAudio, audible, say, sfx, BEAT, BAR } from './audio.js?v=20261107234624';
+         setPresence, campRoster, renameMe, setAvatar, online } from './net.js?v=20261107235041';
+import { startMusic, stopMusic, musicOn, audioState, audioSupported, setRain, whenSilenced, wakeAudio, audible, say, sfx, BEAT, BAR } from './audio.js?v=20261107235041';
 import { playHoop, playPenalty, playQuiz, playRegister, playParade,
          playMami, playHustle, playManOWar, playSaed, playSocial,
-         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261107234624';
+         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261107235041';
 
 /* Every dance animation is expressed in beats, so the steps are on-tempo
    whether or not the sound is playing — and genuinely on the beat when it is. */
@@ -2809,10 +2809,12 @@ function fillScene(el, n, big){
      rather than from speed. */
   const CYCLE = 13.5 * TS;
   /* One in sunglasses who walks briskly with tight arms; one with the
-     checked scarf who struts — longer stride, big swing. Different kit,
-     different carry, different skin, different gait: two people, not a pair. */
+     checked scarf who struts with a big swing. Different kit, carry, skin and
+     swing: two people, not a pair. Both step on the groove's beat (BEAT,
+     0.5608s): the sunglasses one was at .56 by luck and players noticed he
+     walks to the music, so the scarf one (was .70) now does too. */
   const EXTRA = ['shades', 'scarf'];
-  const GAIT  = [{ stride: .56, swing: .85 }, { stride: .70, swing: 1.35 }];
+  const GAIT  = [{ stride: BEAT, swing: .85 }, { stride: BEAT, swing: 1.35 }];
   const figs = Array.from({length:n}, (_,i) =>
     corper(SKINS[i % SKINS.length],
            /* 0.94 / 1.00 / 1.08. The old spread went to 1.39 — a 120px figure
