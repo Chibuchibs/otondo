@@ -1552,7 +1552,7 @@
 <script type="module">
 import { newGame, doAction, canDo, unlocked, ACTIONS, phaseOf, nextUnlock, postingOdds, rivalOf,
          computePosting, CHOICES, GOAL, goalStatus,
-         shareText, MAX_DAY } from './game.js?v=20261107220602';
+         shareText, MAX_DAY } from './game.js?v=20261107233341';
 
 /* ---------- scene coordinates ----------
    The scene is scaled by a transform (see the stage), so a native
@@ -1583,11 +1583,11 @@ const TS = (document.getElementById('scene').offsetWidth || 375) / 375;
 const ALLAWEE_NOTE = 'Allawee ₦77,000 — e never enter.';
 import { initNet, joinCamp, syncPlayer, platoonBoard, recentChat, postChat,
          postSuggestion, reportMessage, awardBoard, myAwards, laughChat,
-         setPresence, campRoster, renameMe, setAvatar, online } from './net.js?v=20261107220602';
-import { startMusic, stopMusic, musicOn, audioState, audioSupported, setRain, whenSilenced, wakeAudio, audible, say, sfx, BEAT, BAR } from './audio.js?v=20261107220602';
+         setPresence, campRoster, renameMe, setAvatar, online } from './net.js?v=20261107233341';
+import { startMusic, stopMusic, musicOn, audioState, audioSupported, setRain, whenSilenced, wakeAudio, audible, say, sfx, BEAT, BAR } from './audio.js?v=20261107233341';
 import { playHoop, playPenalty, playQuiz, playRegister, playParade,
          playMami, playHustle, playManOWar, playSaed, playSocial,
-         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261107220602';
+         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261107233341';
 
 /* Every dance animation is expressed in beats, so the steps are on-tempo
    whether or not the sound is playing — and genuinely on the beat when it is. */
@@ -4634,6 +4634,13 @@ function agberoChase(){
     { skin: 3, scale: .99, tone: 2, trail: 116, stick: true,  print: { kind: 'ankara', ink: '#1e3a6e' } },
     { skin: 1, scale: .94, tone: 3, trail: 174, stick: true,  print: { kind: 'plaid', ink: '#b3281c' } },
   ];
+  /* The street shouting after him, as he comes back into view for the run
+     back (60% of the cycle in chaseGo). Not if he was caught on the way out:
+     both catches clear the runners, so a missing thief means no return leg. */
+  setTimeout(() => {
+    const t = sceneEl.querySelector('.runner.thief');
+    if (t && !t.dataset.caught) say('thief');
+  }, 0.6 * 12 * TS * 1000);
   cast.forEach(c => {
     const wrap = document.createElement('div');
     wrap.className = 'runner' + (c.rags ? ' thief' : '') + (c.raised ? ' raised' : '');

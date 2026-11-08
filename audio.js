@@ -413,6 +413,7 @@ const VOICE = {
   enter:   './sfx/haha-e-enter.m4a',    // "Haha, e enter!" — pidgin for: that satisfies
   toomuch: './sfx/you-too-much.m4a',
   welldone: './sfx/well-done.m4a',
+  thief: './sfx/thief-shout.m4a',       // a Lagos street voice (screen recording, 2026-11-07) as the thief runs back across
 };
 const VOICE_LEVEL = 0.9, DUCK = 0.55;
 /* Per-line level against VOICE_LEVEL. Jolaolu's lines measure as loud as the
