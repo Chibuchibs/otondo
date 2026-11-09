@@ -1552,7 +1552,7 @@
 <script type="module">
 import { newGame, doAction, canDo, unlocked, ACTIONS, phaseOf, nextUnlock, postingOdds, rivalOf,
          computePosting, CHOICES, GOAL, goalStatus,
-         shareText, MAX_DAY } from './game.js?v=20261108095812';
+         shareText, MAX_DAY } from './game.js?v=20261109005125';
 
 /* ---------- scene coordinates ----------
    The scene is scaled by a transform (see the stage), so a native
@@ -1583,11 +1583,11 @@ const TS = (document.getElementById('scene').offsetWidth || 375) / 375;
 const ALLAWEE_NOTE = 'Allawee ₦77,000 — e never enter.';
 import { initNet, joinCamp, syncPlayer, platoonBoard, recentChat, postChat,
          postSuggestion, reportMessage, awardBoard, myAwards, laughChat,
-         setPresence, campRoster, renameMe, setAvatar, online } from './net.js?v=20261108095812';
-import { startMusic, stopMusic, musicOn, audioState, audioSupported, setRain, whenSilenced, wakeAudio, audible, say, sfx, BEAT, BAR } from './audio.js?v=20261108095812';
+         setPresence, campRoster, renameMe, setAvatar, online } from './net.js?v=20261109005125';
+import { startMusic, stopMusic, musicOn, audioState, audioSupported, setRain, whenSilenced, wakeAudio, audible, say, sfx, BEAT, BAR } from './audio.js?v=20261109005125';
 import { playHoop, playPenalty, playQuiz, playRegister, playParade,
          playMami, playHustle, playManOWar, playSaed, playSocial,
-         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261108095812';
+         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261109005125';
 
 /* Every dance animation is expressed in beats, so the steps are on-tempo
    whether or not the sound is playing — and genuinely on the beat when it is. */
@@ -2889,11 +2889,11 @@ function traffic(el){
   /* far lane: smaller and higher up the road than the walkers, so the
      traffic reads as behind them rather than beside them */
   const fleet = [
-    { svg: danfo(),       w: 88, bottom: 34, speed: 8.0,  delay: -0.5 },
+    { svg: danfo(),       w: 88, bottom: 34, speed: 8.0,  delay: -0.5, cls: 'plainDanfo' },
     { svg: okada(true),   w: 60, bottom: 37, speed: 5.6,  delay: -3.6 },
     { svg: keke(),        w: 62, bottom: 33, speed: 12.5, delay: -6.6, cls: 'keke' },
     { svg: okada(false),  w: 54, bottom: 41, speed: 6.4,  delay: -9.4 },
-    { svg: danfoLoaded(), w: 94, bottom: 34, speed: 11.0, delay: -13.5 },
+    { svg: danfoLoaded(), w: 94, bottom: 34, speed: 11.0, delay: -13.5, cls: 'loadedDanfo' },
   ];
   el.insertAdjacentHTML('beforeend', fleet.map(v =>
     `<div class="vehicle${v.cls ? ' ' + v.cls : ''}" style="width:${v.w}px;bottom:${v.bottom}px;
@@ -3452,11 +3452,15 @@ pointer.innerHTML = `<svg viewBox="0 0 40 46" aria-hidden="true">
 sceneEl.appendChild(pointer);
 
 let lastAimed = 0;
-/* "Oya, let's go!" once at the start, the moment the music can actually be heard. */
+/* The conductors' call once at the start, the moment the music can actually be
+   heard (was say('oya')). An sfx, not a say(): it runs 13.5s, and a line that
+   long would hold back every seller behind it. Aja 1000 counts from here so
+   it can never land on top of this one, however long the start screen sat. */
 const hello = setInterval(() => {
   if (!audible()) return;
   clearInterval(hello);
-  setTimeout(() => say('oya'), 800);
+  setTimeout(() => sfx('callOjuelegba'), 800);
+  if (!calm()) setTimeout(danfoCall, 45000);
 }, 250);
 /* The figure on a run you paid for. Only paid runs: the street also sends
    walkers shopping on its own, and YOU following those read as your corper
@@ -5009,6 +5013,22 @@ function danfoHonk(){
   setTimeout(danfoHonk, (22 + Math.random() * 18) * 1000);
 }
 if (!calm()) setTimeout(danfoHonk, 15000);
+
+/* Each danfo has its own conductor: "Aja 1000" off the plain one, "Ojuelegba"
+   over and over off the loaded one, only while that bus is in frame. Taking
+   turns keeps two calls from landing together: 30–50s between calls, so each
+   bus is heard every 60–100s. */
+const DANFO_CALLS = [{ sound: 'callAja', bus: '.vehicle.plainDanfo' },
+                     { sound: 'callOjuelegbaMany', bus: '.vehicle.loadedDanfo' }];
+let danfoCallTurn = 0;
+function danfoCall(){
+  const box = sceneEl.sceneRect(), call = DANFO_CALLS[danfoCallTurn];
+  const bus = sceneEl.querySelector(call.bus);
+  if (!bus || !inFrame(bus, box, 0.15)){ setTimeout(danfoCall, 700); return; }
+  sfx(call.sound);
+  danfoCallTurn = (danfoCallTurn + 1) % DANFO_CALLS.length;
+  setTimeout(danfoCall, (30 + Math.random() * 20) * 1000);
+}
 
 /* ---------- the story strip ----------
    JUMPED / FELL is the reels' WINS / LOSSES: Mr. Pothole jumps you paid for,

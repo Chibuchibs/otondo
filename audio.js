@@ -482,8 +482,13 @@ export function say(name, { queue = false } = {}) {
 /* Street sounds that are not lines: the danfo horn. Over the music without
    ducking it, and never queued behind (or holding up) a voice line. Only
    while the music is audible, like say(). Shares the voices' buffer cache. */
-const SFX = { honk: './sfx/horn-danfo.m4a' };   // N2 from voice/horns.html: a short honk from a Lagos stream clip
-const SFX_LEVEL = { honk: 0.45, kaching: 0.5 };
+const SFX = {
+  honk: './sfx/horn-danfo.m4a',                     // N2 from voice/horns.html: a short honk from a Lagos stream clip
+  callOjuelegba: './sfx/conductor-ojuelegba-far.m4a',   // conductors calling "Ojuelegba! Costain!", the whole screen recording (2026-11-09), sellers' recipe ("B"); opens the game
+  callAja: './sfx/conductor-aja-far.m4a',           // "Aja 1000" off a passing danfo, down-the-street recipe like the sellers
+  callOjuelegbaMany: './sfx/conductor-ojuelegba-many.m4a',   // one conductor repeating "Ojuelegba" off the loaded danfo, as recorded
+};
+const SFX_LEVEL = { honk: 0.45, kaching: 0.5, callOjuelegba: 0.9, callAja: 0.8, callOjuelegbaMany: 0.9 };
 let lastSfx = '', sfxCount = 0;
 const sfxCounts = {};                          // per sound, for audioState()
 /* Ka-ching, for the coin: built here rather than recorded, so there is no
