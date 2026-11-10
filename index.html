@@ -275,6 +275,13 @@
   .cornSeller .fan{animation:fanCoals .32s ease-in-out infinite alternate;
     transform-box:fill-box;transform-origin:10% 90%}
   @keyframes fanCoals{from{transform:rotate(-22deg)}to{transform:rotate(18deg)}}
+  /* The suya man stands and cuts, he doesn't sit and fan: the knife works
+     up and down over the sticks, and the coals under the mesh breathe. */
+  .suyaMan .knife{animation:suyaCut .42s ease-in-out infinite alternate;
+    transform-box:fill-box;transform-origin:0% 50%}
+  @keyframes suyaCut{from{transform:rotate(-14deg)}to{transform:rotate(16deg)}}
+  .suyaCoals{animation:coalGlow 1.3s ease-in-out infinite alternate}
+  @keyframes coalGlow{from{opacity:.65}to{opacity:1}}
   .cust.flip{transform:translateX(-50%) scaleX(-1)}
   .cust .corper,.ped .corper{position:static;display:block;animation:none;cursor:default}
   /* Standing about: feet still, a slow shift of weight, and now and then a
@@ -1552,7 +1559,7 @@
 <script type="module">
 import { newGame, doAction, canDo, unlocked, ACTIONS, phaseOf, nextUnlock, postingOdds, rivalOf,
          computePosting, CHOICES, GOAL, goalStatus,
-         shareText, MAX_DAY } from './game.js?v=20261109005125';
+         shareText, MAX_DAY } from './game.js?v=20261110114018';
 
 /* ---------- scene coordinates ----------
    The scene is scaled by a transform (see the stage), so a native
@@ -1583,11 +1590,11 @@ const TS = (document.getElementById('scene').offsetWidth || 375) / 375;
 const ALLAWEE_NOTE = 'Allawee ₦77,000 — e never enter.';
 import { initNet, joinCamp, syncPlayer, platoonBoard, recentChat, postChat,
          postSuggestion, reportMessage, awardBoard, myAwards, laughChat,
-         setPresence, campRoster, renameMe, setAvatar, online } from './net.js?v=20261109005125';
-import { startMusic, stopMusic, musicOn, audioState, audioSupported, setRain, whenSilenced, wakeAudio, audible, say, sfx, BEAT, BAR } from './audio.js?v=20261109005125';
+         setPresence, campRoster, renameMe, setAvatar, online } from './net.js?v=20261110114018';
+import { startMusic, stopMusic, musicOn, audioState, audioSupported, setRain, whenSilenced, wakeAudio, audible, say, sfx, BEAT, BAR } from './audio.js?v=20261110114018';
 import { playHoop, playPenalty, playQuiz, playRegister, playParade,
          playMami, playHustle, playManOWar, playSaed, playSocial,
-         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261109005125';
+         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261110114018';
 
 /* Every dance animation is expressed in beats, so the steps are on-tempo
    whether or not the sound is playing — and genuinely on the beat when it is. */
@@ -2241,6 +2248,14 @@ const BOULEVARD = [
   { sign: 'CITY MALL', w: 116, modern: 'mall', body: '#9fc4d6', roof: '#39505f', door: '#5f7f91',
     signInk: ['#22323c', '#ffffff', '#9fe3ff'],
     errand: 'TAP TO COOL OFF IN THE AC', price: 300, belle: 4 },
+  /* The suya spot (2026-11-10): street food holding its corner outside the
+     mall, the way it does on any boulevard after dark. Well down the road from
+     the corn stall on purpose, and built nothing like it: a blue tarp on
+     poles, a glass case of meat, a long grill on legs and the mallam standing
+     over it in white. `call`: his voice when the spot comes into frame. */
+  { sign: 'SUYA SPOT', w: 80, suya: true, call: 'suya', body: '#3a332c', roof: '#2f5d8a', food: true,
+    signInk: ['#5a1a0e', '#fff4d6', '#ff9a3c'],
+    errand: 'TAP FOR SUYA', price: 1000, belle: 9 },
   { sign: 'PIZZA RUN', w: 108, modern: 'pizza', body: '#f6f1e4', roof: '#15803d', door: '#15803d', food: true,
     signInk: ['#0f5e2d', '#fff4d6', '#ffd98a'],
     errand: 'TAP FOR A SLICE OF PIZZA', price: 1100, belle: 10 },
@@ -2563,6 +2578,59 @@ const bakeryChimney = `<rect x="90.4" y="8.6" width="4.4" height="8" fill="#6d3a
     <circle class="smoke" cx="92.6" cy="6" r="2" fill="#d8d2c6"/>
     <circle class="smoke" cx="92.6" cy="6" r="1.6" fill="#d8d2c6" style="animation-delay:-.6s"/>`;
 
+/* The suya spot. Its own shapes, so it never reads as a second corn stall:
+   a flat blue tarp on two poles (the corn has an umbrella), a glass case of
+   raw meat on the left, a long charcoal grill on legs with sticks across the
+   mesh, the bulb every spot hangs, and the mallam STANDING behind the grill
+   in a white kaftan and cap, cutting. Wrapped portions sit on the case. */
+function suyaSpot(cfg){
+  const sticks = [26, 31, 36, 41, 46, 51].map((x, i) =>
+    `<path d="M${x - 1} 41.4h6.6" stroke="#d9c49a" stroke-width=".5"/>
+     <rect x="${x}" y="40.4" width="4.4" height="2" rx=".8" fill="${i % 2 ? '#93401a' : '#7a2f12'}"/>
+     <circle cx="${x + 1.2}" cy="40.9" r=".35" fill="#e0523a"/><circle cx="${x + 3.1}" cy="41.6" r=".35" fill="#e0523a"/>`).join('');
+  return `<svg viewBox="0 0 76 60" aria-hidden="true">
+    <rect x="4" y="25" width="1.8" height="35" fill="#7a8791"/>
+    <rect x="70.2" y="25" width="1.8" height="35" fill="#7a8791"/>
+    <path d="M2 25.6h72v2.4q-18 2.6-36 0t-36 0z" fill="${cfg.roof}"/>
+    <path d="M2 25.6h72" stroke="#22476b" stroke-width="1"/>
+    <!-- the bulb, glowing at dusk and after dark -->
+    <rect x="57.7" y="27" width=".6" height="3.4" fill="#2b2b2b"/>
+    <circle class="lampGlow" cx="58" cy="32" r="5" fill="#ffe9a8" opacity=".2"/>
+    <circle cx="58" cy="31.8" r="1.5" fill="#fff6c9"/>
+    <!-- glass case of raw meat on a stand, wrapped portions on top -->
+    <rect x="8" y="49" width="1.4" height="11" fill="#5c5249"/><rect x="19.6" y="49" width="1.4" height="11" fill="#5c5249"/>
+    <rect x="7" y="39" width="15" height="10" rx=".8" fill="#cfe8f0" opacity=".6" stroke="#7a8791" stroke-width=".8"/>
+    <rect x="8.6" y="44.6" width="5" height="3.2" rx="1.2" fill="#a8452a"/>
+    <rect x="14.2" y="45" width="6" height="2.8" rx="1.2" fill="#c0563a"/>
+    <rect x="10" y="41.6" width="7" height="2.6" rx="1.2" fill="#b24d31"/>
+    <rect x="8.4" y="36.4" width="5.6" height="2.6" rx=".5" fill="#e9e4d6"/>
+    <rect x="14.6" y="36.8" width="5.4" height="2.2" rx=".5" fill="#dcd5c2"/>
+    <path d="M9.2 37.4h3.6M15.4 37.8h3.4" stroke="#9a9384" stroke-width=".4"/>
+    <!-- the mallam, standing behind the grill -->
+    <g class="suyaMan">
+      <path d="M31 43v-6.6q0-2.8 2.8-2.8h6.4q2.8 0 2.8 2.8V43z" fill="#f3f0e6"/>
+      <path d="M37 33.6v9.4" stroke="#d9d3c2" stroke-width=".5"/>
+      <rect x="35.3" y="30.6" width="3.4" height="3.6" rx="1.4" fill="#5a3a22"/>
+      <circle cx="37" cy="28.2" r="3.3" fill="#5a3a22"/>
+      <circle cx="38.4" cy="28.5" r=".5" fill="#1d1812"/>
+      <path d="M33.6 27v-3q3.4-1.5 6.8 0v3z" fill="#f3f0e6"/>
+      <path d="M33.8 25.6h6.4M34 26.6h6" stroke="#2f7a63" stroke-width=".5"/>
+      <rect x="41.4" y="37" width="5" height="2.2" rx="1.1" fill="#f3f0e6"/>
+      <g class="knife"><circle cx="46.6" cy="38.1" r="1.1" fill="#5a3a22"/>
+        <path d="M47.4 37.6h4.8l-.8 1.1h-4z" fill="#c9ced3"/></g>
+    </g>
+    <!-- the grill on legs: coals under the mesh, sticks of suya across it -->
+    <rect x="25.4" y="48" width="1.6" height="12" fill="#2b2622"/><rect x="55" y="48" width="1.6" height="12" fill="#2b2622"/>
+    <rect x="23.6" y="42.6" width="34.8" height="6" rx="1" fill="${cfg.body}"/>
+    <rect class="suyaCoals" x="25" y="42.4" width="32" height="1.8" rx=".8" fill="#ff7a1a"/>
+    <path d="M23.6 42.3h34.8" stroke="#9aa0a6" stroke-width=".6"/>
+    ${sticks}
+    <circle class="smoke" cx="33" cy="38" r="1.8" fill="#d8d2c6"/>
+    <circle class="smoke" cx="47" cy="38" r="1.5" fill="#d8d2c6" style="animation-delay:-.8s"/>
+    ${board(cfg.sign, 10, 8, 56, cfg.signInk)}
+  </svg>`;
+}
+
 function shop(cfg){
   /* a corn seller is a brazier under an umbrella, not a building */
   if (cfg.stall){
@@ -2595,6 +2663,7 @@ function shop(cfg){
       ${board(cfg.sign, 10, 8, 56, cfg.signInk)}
     </svg>`;
   }
+  if (cfg.suya) return suyaSpot(cfg);
   if (cfg.lounge) return lounge(cfg);
   if (cfg.modern) return modernShop(cfg);
   if (cfg.billboard) return adBillboard(cfg);
@@ -2806,6 +2875,7 @@ const CUSTOMERS = {
   'FOOD JOINT':      [{ kind: 'idle', at: .7, skin: 2, tone: 1, print: { kind: 'stripes', ink: '#d6342c' } },
                       { kind: 'enter', from: 1.08, to: .29, skin: 0, tone: 3, d: -3, print: { kind: 'dots', ink: '#1e3a6e' } }],
   'ROASTED CORN':    [{ kind: 'wait', at: .84, skin: 1, tone: 4, print: { kind: 'chevron', ink: '#1f8a4c' } }],
+  'SUYA SPOT':       [{ kind: 'wait', at: .86, skin: 3, tone: 2, print: { kind: 'dots', ink: '#5a1a0e' } }],
   'SUPERMARKET':     [{ kind: 'enter', from: -.12, to: .29, skin: 3, tone: 0, d: -10, print: { kind: 'pinstripe', ink: '#3d6ea8' } }],
   'ELECTRONICS':     [{ kind: 'phone', at: .64, skin: 4, tone: 2, print: { kind: 'adire' } }],
   'BARBING SALON':   [{ kind: 'enter', from: 1.08, to: .29, skin: 2, tone: 1, d: -6, print: { kind: 'stripes', ink: '#1f8a4c' } }],
@@ -2833,7 +2903,7 @@ function roadside(el){
   const strip = SHOPS.map((cfg, i) =>
     /* tagged by sign, not by index, so swapping a board for a paying advert
        does not silently send the runner to a furniture shop for lunch */
-    `<div class="shop"${cfg.food ? ' data-food="1"' : ''}${cfg.errand ? ` data-errand="${cfg.errand}"` : ''}${cfg.ad ? ` data-ad="${cfg.ad}"` : ''}
+    `<div class="shop"${cfg.food ? ' data-food="1"' : ''}${cfg.errand ? ` data-errand="${cfg.errand}"` : ''}${cfg.ad ? ` data-ad="${cfg.ad}"` : ''}${cfg.call ? ` data-call="${cfg.call}"` : ''}
        data-price="${cfg.price || 0}" data-belle="${cfg.belle || 0}"
        ${cfg.cred ? `data-cred="${cfg.cred}"` : ''} ${cfg.trade ? 'data-trade="1"' : ''}
        ${cfg.errand2 ? `data-errand2="${cfg.errand2}" data-price2="${cfg.price2 || 0}"` : ''}
@@ -5013,6 +5083,20 @@ function danfoHonk(){
   setTimeout(danfoHonk, (22 + Math.random() * 18) * 1000);
 }
 if (!calm()) setTimeout(danfoHonk, 15000);
+
+/* A shop with a voice (the suya spot, `call` in SHOPS): its call once each
+   time it comes into frame, and not again until it has gone off and come
+   round. If a line is already playing it tries again next look. */
+function shopCalls(){
+  const box = sceneEl.sceneRect();
+  sceneEl.querySelectorAll('.shop[data-call]').forEach(el => {
+    if (inFrame(el, box, 0.2)){
+      if (!el.dataset.called && say(el.dataset.call, { queue: true })) el.dataset.called = '1';
+    } else if (!inFrame(el, box, -0.15)) delete el.dataset.called;
+  });
+  setTimeout(shopCalls, 700);
+}
+if (!calm()) setTimeout(shopCalls, 3000);
 
 /* Each danfo has its own conductor: "Aja 1000" off the plain one, "Ojuelegba"
    over and over off the loaded one, only while that bus is in frame. Taking

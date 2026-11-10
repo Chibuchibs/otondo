@@ -410,6 +410,7 @@ const VOICE = {
   akara: './sfx/seller-akara-200n-far.m4a',         // Jolaolu, "Akara, 200 naira" (joined from her take) when your runner reaches her
   akaraWalk: './sfx/seller-akara-jolaolu-far.m4a',  // Jolaolu, "Oga, buy your akara here!" as she walks into view
   kunu:  './sfx/seller-kunu-far.m4a',
+  suya:  './sfx/seller-suya-far.m4a',   // "Suya! Beef 200, beef 300, 1000", a suya man from a Lagos night vlog (screen recording, 2026-11-10), sellers' recipe
   enter:   './sfx/haha-e-enter.m4a',    // "Haha, e enter!" — pidgin for: that satisfies
   toomuch: './sfx/you-too-much.m4a',
   welldone: './sfx/well-done.m4a',
@@ -420,7 +421,7 @@ const VOICE_LEVEL = 0.9, DUCK = 0.55;
    not dip for them, so they sit inside the noise instead of on top of it.
    Their files (*-far.m4a) are also band-limited with a little echo, the same
    "down the street" recipe for the thief and the sellers (2026-11-07). */
-const NO_DUCK = { thief: true, water: true, akara: true, akaraWalk: true, kunu: true };
+const NO_DUCK = { thief: true, water: true, akara: true, akaraWalk: true, kunu: true, suya: true };
 /* Per-line level against VOICE_LEVEL. Jolaolu's lines measure as loud as the
    rest, but her brighter voice carries further over the music, so they sit a
    little lower (about -2.5dB). */
