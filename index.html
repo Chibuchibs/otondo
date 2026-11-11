@@ -1568,7 +1568,7 @@
 <script type="module">
 import { newGame, doAction, canDo, unlocked, ACTIONS, phaseOf, nextUnlock, postingOdds, rivalOf,
          computePosting, CHOICES, GOAL, goalStatus,
-         shareText, MAX_DAY } from './game.js?v=20261110220607';
+         shareText, MAX_DAY } from './game.js?v=20261110221502';
 
 /* ---------- scene coordinates ----------
    The scene is scaled by a transform (see the stage), so a native
@@ -1599,11 +1599,11 @@ const TS = (document.getElementById('scene').offsetWidth || 375) / 375;
 const ALLAWEE_NOTE = 'Allawee ₦77,000 — e never enter.';
 import { initNet, joinCamp, syncPlayer, platoonBoard, recentChat, postChat,
          postSuggestion, reportMessage, awardBoard, myAwards, laughChat,
-         setPresence, campRoster, renameMe, setAvatar, online } from './net.js?v=20261110220607';
-import { startMusic, stopMusic, musicOn, audioState, audioSupported, setRain, whenSilenced, wakeAudio, audible, say, sfx, BEAT, BAR } from './audio.js?v=20261110220607';
+         setPresence, campRoster, renameMe, setAvatar, online } from './net.js?v=20261110221502';
+import { startMusic, stopMusic, musicOn, audioState, audioSupported, setRain, whenSilenced, wakeAudio, audible, say, sfx, BEAT, BAR } from './audio.js?v=20261110221502';
 import { playHoop, playPenalty, playQuiz, playRegister, playParade,
          playMami, playHustle, playManOWar, playSaed, playSocial,
-         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261110220607';
+         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261110221502';
 
 /* Every dance animation is expressed in beats, so the steps are on-tempo
    whether or not the sound is playing — and genuinely on the beat when it is. */
@@ -3737,13 +3737,15 @@ const PUDDLE_SVG = `<svg viewBox="0 0 80 48" aria-hidden="true" overflow="visibl
   </text>
 </svg>`;
 /* cost: a tapped crossing; miss: the slip when you are asked and do not tap.
+   warn: how far ahead the ask starts, if not POT_WARN (the hill asks early:
+   user, "start a little early before reaching the hill").
    start: how far short of the middle a walker begins crossing (half the
    width he has to cover); edge: past this point an unanswered ask is a miss.
    A tapped jump stays the cheapest crossing; walking up a hill costs more. */
 const OBSTACLE = {
   pothole: { svg: POTHOLE_SVG, tag: 'TAP TO JUMP MR. POTHOLE',
              jumped: 'You jumped Mr. Pothole!', fell: 'Mr. Pothole got you. Tap JUMP next time!' },
-  hill:    { svg: HILL_SVG, tag: 'TAP TO WALK UP THE HILL', cost: 3, miss: 6, start: 32, edge: 30,
+  hill:    { svg: HILL_SVG, tag: 'TAP TO WALK UP THE HILL', cost: 3, miss: 6, start: 32, edge: 30, warn: 380,
              jumped: 'You walked up the hill!', fell: 'You slid down the hill! Tap next time.' },
   puddle:  { svg: PUDDLE_SVG, tag: 'TAP TO WALK THROUGH', cost: 2, miss: 5, start: 30, edge: 28,
              jumped: 'You waded through the puddle!', fell: 'Splash! You slipped in the puddle. Tap next time.' },
@@ -4091,6 +4093,9 @@ function palmTree(s){
    gap. Reduced motion keeps the old fixed spots. The road stands still during
    a dance, so nobody is carried into a hole mid-step. */
 const ROAD_SPEED = 44 / 1.1;               // scene px per second, = .road::after
+/* The hill and Mrs. Pothole never share a stretch of road: they move at the
+   same speed, so the gap is set once, whichever of them comes round last. */
+const HILL_CLEAR = 200;
 let potPos = null, mrsPos = null;
 /* Which pass of the hole this is. A walker's dataset.hop records the pass he
    dealt with, so a new pass is always fresh — even for someone whose flag
@@ -4117,8 +4122,16 @@ if (!calm()){
       if (potPos < -60){                                              // round again after a gap: a new pass
         potPos = W + 60 + Math.random() * W * 0.6; potLap++;
         setObstacle(OBSTACLE_TURNS[potLap % OBSTACLE_TURNS.length]);   // swapped off-screen
+        if (potKind === 'hill' && Math.abs(potPos - mrsPos) < HILL_CLEAR) potPos = mrsPos + HILL_CLEAR;
+        /* The hill and the puddle come straight after a pothole pass, still
+           inside its cooldown, so their ask came late or not at all. They
+           start fresh: asked as soon as they are on screen. */
+        if (potKind !== 'pothole') potReadyAt = 0;
       }
-      if (mrsPos < -40) mrsPos = W + 40 + Math.random() * W * 0.8;
+      if (mrsPos < -40){
+        mrsPos = W + 40 + Math.random() * W * 0.8;
+        if (potKind === 'hill' && Math.abs(mrsPos - potPos) < HILL_CLEAR) mrsPos = potPos + HILL_CLEAR;
+      }
       placePothole();
       sceneEl.querySelectorAll('.coin').forEach(c => {
         const x = +c.dataset.x - d;
@@ -4367,7 +4380,7 @@ let jumpTarget = null;
 function watchPothole(){
   if (calm()) return;
   const box = sceneEl.sceneRect();
-  const x = potX();
+  const x = potX(), ob = OBSTACLE[potKind];
   jumpTarget = null;
   if (x > box.width + 10) return;          // still coming, off the right edge: nobody is asked yet
   sceneEl.querySelectorAll(':scope > .corper').forEach(p => {
@@ -4378,7 +4391,7 @@ function watchPothole(){
        left; a moving hole respawns on the right, and that rule would have let
        half the street walk straight through it.) */
     if (fx > x + 60) { delete p.dataset.hop; return; }
-    if (fx < x - POT_WARN) return;                                   // not yet
+    if (fx < x - (ob.warn ?? POT_WARN)) return;                      // not yet
     /* Already dealt with this lap. This check has to come BEFORE the offer is
        made: a bystander hops the hole on its own, and if it later became the
        marked figure the screen went on to offer a jump it had already taken —
@@ -4391,7 +4404,6 @@ function watchPothole(){
        could ever fall in, which is half the mechanic. */
     const mine = (performance.now() >= potReadyAt) && !(+p.dataset.grace > performance.now())
               && (p === cornTarget || p === rideTarget || p === jumpShown);
-    const ob = OBSTACLE[potKind];
     if (mine){
       if (fx < x - (ob.edge ?? 4)) jumpTarget = p;  // yours: you get asked
       else fallIn(p);                  // asked, and not answered — he is on the hole
