@@ -498,6 +498,13 @@
      `.jumping` and `.sunk` are markers only now. */
   /* Behind the pothole's rim (z1) while he goes under; the clip does the rest. */
   .corper.sunk{z-index:0;transform-origin:50% 100%}
+  /* Leaning into the hill and going over in a slip both pivot on the feet. */
+  .corper.jumping{transform-origin:50% 100%}
+  /* the puddle's surface catching the light, and the water a foot kicks up */
+  .pothole .ripple{animation:ripple 2.2s ease-in-out infinite alternate}
+  @keyframes ripple{from{opacity:.25}to{opacity:.8}}
+  .splash{position:absolute;bottom:3px;width:40px;height:24px;margin-left:-20px;z-index:3;pointer-events:none}
+  .splash svg{display:block;width:100%;height:100%}
   .corper.gone{opacity:0;pointer-events:none}
 
   .corper{position:absolute;bottom:4px;width:46px;height:86px;z-index:2;
@@ -1561,7 +1568,7 @@
 <script type="module">
 import { newGame, doAction, canDo, unlocked, ACTIONS, phaseOf, nextUnlock, postingOdds, rivalOf,
          computePosting, CHOICES, GOAL, goalStatus,
-         shareText, MAX_DAY } from './game.js?v=20261110215329';
+         shareText, MAX_DAY } from './game.js?v=20261110220607';
 
 /* ---------- scene coordinates ----------
    The scene is scaled by a transform (see the stage), so a native
@@ -1592,11 +1599,11 @@ const TS = (document.getElementById('scene').offsetWidth || 375) / 375;
 const ALLAWEE_NOTE = 'Allawee ₦77,000 — e never enter.';
 import { initNet, joinCamp, syncPlayer, platoonBoard, recentChat, postChat,
          postSuggestion, reportMessage, awardBoard, myAwards, laughChat,
-         setPresence, campRoster, renameMe, setAvatar, online } from './net.js?v=20261110215329';
-import { startMusic, stopMusic, musicOn, audioState, audioSupported, setRain, whenSilenced, wakeAudio, audible, say, sfx, BEAT, BAR } from './audio.js?v=20261110215329';
+         setPresence, campRoster, renameMe, setAvatar, online } from './net.js?v=20261110220607';
+import { startMusic, stopMusic, musicOn, audioState, audioSupported, setRain, whenSilenced, wakeAudio, audible, say, sfx, BEAT, BAR } from './audio.js?v=20261110220607';
 import { playHoop, playPenalty, playQuiz, playRegister, playParade,
          playMami, playHustle, playManOWar, playSaed, playSocial,
-         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261110215329';
+         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261110220607';
 
 /* Every dance animation is expressed in beats, so the steps are on-tempo
    whether or not the sound is playing — and genuinely on the beat when it is. */
@@ -3698,13 +3705,56 @@ const GUTTER_SVG = `<svg viewBox="0 0 80 48" aria-hidden="true" overflow="visibl
     <textPath href="#potArc" startOffset="50%">OPEN GUTTER</textPath>
   </text>
 </svg>`;
+/* Two more for the road (2026-11-10), each in the same 80x48 box and the same
+   moving spot as Mr. Pothole, taking turns with him (OBSTACLE_TURNS):
+   a hump of red laterite to walk up and over, and a stagnant puddle — murky
+   green, a pure water sachet floating in it — to wade through. The ground
+   line in the box is y≈45; the hill's top is 16 above it. */
+const HILL_SVG = `<svg viewBox="0 0 80 48" aria-hidden="true" overflow="visible">
+  <defs><path id="potArc" d="M6 30 A51 51 0 0 1 74 30" fill="none"/></defs>
+  <ellipse cx="40" cy="45.6" rx="37" ry="1.8" fill="#2b2824" opacity=".3"/>
+  <path d="M3 45.6C18 45.6 26 29 40 29S62 45.6 77 45.6z" fill="#a4512b"/>
+  <path d="M11 44C22 42 28 30.6 40 30.4C46 30.4 50 33 53 36.4" stroke="#cf7a45" stroke-width="1.4" fill="none" stroke-linecap="round"/>
+  <path d="M21 41.6q8-2.2 13-8.4M47 33.6q5 4.4 11 8" stroke="#86401f" stroke-width=".8" fill="none" stroke-dasharray="1.6 1.4"/>
+  <circle cx="30" cy="40" r="1.1" fill="#6e3218"/><circle cx="44.6" cy="35.4" r=".9" fill="#6e3218"/>
+  <circle cx="55" cy="42" r="1.3" fill="#7a3a1e"/><circle cx="16" cy="44.2" r=".8" fill="#7a3a1e"/>
+  <text class="potName" font-size="8" font-weight="900" letter-spacing="0.55"
+        font-family="system-ui,sans-serif" text-anchor="middle">
+    <textPath href="#potArc" startOffset="50%">SMALL HILL</textPath>
+  </text>
+</svg>`;
+const PUDDLE_SVG = `<svg viewBox="0 0 80 48" aria-hidden="true" overflow="visible">
+  <defs><path id="potArc" d="M6 38 A51 51 0 0 1 74 38" fill="none"/></defs>
+  <path d="M7 41.6q2-6 17-6.6q10-2.2 21-.6q15 .4 27 3.8q6 2.6-.4 5.2q-12 3.2-30 3q-24 .2-31-2.6q-4.6-1.2-3.6-2.2z" fill="#6b5a3e"/>
+  <path d="M11.6 41.6q3-4.6 14-4.8q9.4-1.8 19-.4q12.4.4 22 3.2q4 1.8-.6 3.6q-10.4 2.6-26.4 2.4q-20.6.2-25.6-2z" fill="#4c5838"/>
+  <path class="ripple" d="M21 40.4h9M38 42h8M52 39.8h7" stroke="#9db084" stroke-width=".8" stroke-linecap="round"/>
+  <circle cx="33" cy="39.4" r=".7" fill="#7f8f63"/><circle cx="35" cy="40.8" r=".5" fill="#7f8f63"/>
+  <g transform="rotate(-14 54.5 41.4)"><rect x="51" y="39.8" width="7" height="3.4" rx="1" fill="#eef3f5"/>
+    <path d="M52.2 41.5h4.6" stroke="#3a7bd5" stroke-width=".7"/></g>
+  <text class="potName" font-size="8" font-weight="900" letter-spacing="0.55"
+        font-family="system-ui,sans-serif" text-anchor="middle">
+    <textPath href="#potArc" startOffset="50%">LAGOS LAGOON</textPath>
+  </text>
+</svg>`;
+/* cost: a tapped crossing; miss: the slip when you are asked and do not tap.
+   start: how far short of the middle a walker begins crossing (half the
+   width he has to cover); edge: past this point an unanswered ask is a miss.
+   A tapped jump stays the cheapest crossing; walking up a hill costs more. */
 const OBSTACLE = {
   pothole: { svg: POTHOLE_SVG, tag: 'TAP TO JUMP MR. POTHOLE',
              jumped: 'You jumped Mr. Pothole!', fell: 'Mr. Pothole got you. Tap JUMP next time!' },
+  hill:    { svg: HILL_SVG, tag: 'TAP TO WALK UP THE HILL', cost: 3, miss: 6, start: 32, edge: 30,
+             jumped: 'You walked up the hill!', fell: 'You slid down the hill! Tap next time.' },
+  puddle:  { svg: PUDDLE_SVG, tag: 'TAP TO WALK THROUGH', cost: 2, miss: 5, start: 30, edge: 28,
+             jumped: 'You waded through the puddle!', fell: 'Splash! You slipped in the puddle. Tap next time.' },
   gutter:  { svg: GUTTER_SVG,  tag: 'TAP TO JUMP THE GUTTER',
              jumped: 'You jumped the open gutter!', fell: 'Straight into the gutter! Tap JUMP next time.' },
 };
 let potKind = 'pothole';
+/* Which obstacle each new pass brings. Mr. Pothole every other pass, so he
+   comes round as often as he did; the hill and the puddle share the rest.
+   ['pothole'] alone puts the road back to exactly what it was. */
+const OBSTACLE_TURNS = ['pothole', 'hill', 'pothole', 'puddle'];
 function setObstacle(kind){
   potKind = kind;
   pothole.innerHTML = OBSTACLE[kind].svg;
@@ -4066,6 +4116,7 @@ if (!calm()){
       potPos -= d; mrsPos -= d;
       if (potPos < -60){                                              // round again after a gap: a new pass
         potPos = W + 60 + Math.random() * W * 0.6; potLap++;
+        setObstacle(OBSTACLE_TURNS[potLap % OBSTACLE_TURNS.length]);   // swapped off-screen
       }
       if (mrsPos < -40) mrsPos = W + 40 + Math.random() * W * 0.8;
       placePothole();
@@ -4115,32 +4166,124 @@ function rejoinGrid(p, stoodStillMs, glide = true){
   p.style.transform = '';
 }
 
-function hopPothole(p, paid){
-  if (hopped(p)) return;
-  p.dataset.hop = String(potLap);
-  if (paid) potReadyAt = performance.now() + POT_COOLDOWN;
-  p.classList.add('jumping');
-  /* composite:'add' stacks the lift on whatever transform the figure already
-     has — the dance's translateX, for one — instead of replacing it. */
+/* Getting over whatever is on the road this pass. Each returns how long it
+   takes. composite:'add' stacks the movement on whatever transform the figure
+   already has — the dance's translateX, for one — instead of replacing it.
+   The hill and the puddle last as long as it takes to cover their width at
+   walking pace plus road speed (~75px/s). */
+function hop(p){
   p.animate([
     { transform: 'translateY(0)' },
     { transform: 'translateY(-30px)', offset: .38 },
     { transform: 'translateY(-30px)', offset: .58 },
     { transform: 'translateY(0)' },
   ], { duration: 620, easing: 'cubic-bezier(.3,0,.4,1)', composite: 'add' });
-  setTimeout(() => { p.classList.remove('jumping'); }, 640);
+  return 620;
+}
+function climbHill(p){                // up the slope leaning in, over the top, down leaning back
+  p.animate([
+    { transform: 'translateY(0) rotate(0deg)' },
+    { transform: 'translateY(-7px) rotate(6deg)', offset: .3 },
+    { transform: 'translateY(-14px) rotate(0deg)', offset: .5 },
+    { transform: 'translateY(-7px) rotate(-5deg)', offset: .7 },
+    { transform: 'translateY(0) rotate(0deg)' },
+  ], { duration: 850, composite: 'add' });
+  return 850;
+}
+function wadePuddle(p){               // feet under the water, a dip each step, a splash in and halfway
+  p.animate([
+    { transform: 'translateY(0)' }, { transform: 'translateY(2px)', offset: .25 },
+    { transform: 'translateY(0)', offset: .5 }, { transform: 'translateY(2px)', offset: .75 },
+    { transform: 'translateY(0)' },
+  ], { duration: 850, composite: 'add' });
+  p.animate([
+    { clipPath: 'inset(0 -40% 0% -40%)' }, { clipPath: 'inset(0 -40% 7% -40%)', offset: .15 },
+    { clipPath: 'inset(0 -40% 7% -40%)', offset: .85 }, { clipPath: 'inset(0 -40% 0% -40%)' },
+  ], { duration: 850 });
+  splash(p);
+  setTimeout(() => { if (p.isConnected) splash(p, .8); }, 420);
+  return 850;
+}
+function splash(p, big = 1){
+  const x = figX(p, sceneEl.sceneRect());
+  const el = document.createElement('div');
+  el.className = 'splash';
+  el.style.left = Math.round(x) + 'px';
+  el.innerHTML = `<svg viewBox="-20 -20 40 24" overflow="visible" aria-hidden="true">${
+    '<circle r="1.4" fill="#7d8c66"/>'.repeat(6)}</svg>`;
+  sceneEl.appendChild(el);
+  el.querySelectorAll('circle').forEach((c, i) => {
+    const a = (-160 + i * 28) * Math.PI / 180, d = (8 + Math.random() * 6) * big;
+    c.animate([
+      { transform: 'translate(0px,0px)', opacity: 1 },
+      { transform: `translate(${Math.cos(a) * d}px,${Math.sin(a) * d}px)`, opacity: .9, offset: .55 },
+      { transform: `translate(${Math.cos(a) * d * 1.3}px,${Math.sin(a) * d * .3 + 4}px)`, opacity: 0 },
+    ], { duration: 520, easing: 'ease-out', fill: 'forwards' });
+  });
+  setTimeout(() => el.remove(), 600);
+}
+
+function hopPothole(p, paid){
+  if (hopped(p)) return;
+  p.dataset.hop = String(potLap);
+  delete p.dataset.paid;
+  if (paid) potReadyAt = performance.now() + POT_COOLDOWN;
+  p.classList.add('jumping');
+  const kind = potKind, ob = OBSTACLE[kind];
+  const took = kind === 'hill' ? climbHill(p) : kind === 'puddle' ? wadePuddle(p) : hop(p);
+  setTimeout(() => { p.classList.remove('jumping'); }, took + 20);
   if (paid) say('welldone');                        // cleared it: "Well done!"
   if (paid && s){
-    s.energy = Math.max(0, s.energy - JUMP_COST);
-    s.jumped = (s.jumped || 0) + 1;
-    tell(OBSTACLE[potKind].jumped);
+    const cost = ob.cost ?? JUMP_COST;
+    s.energy = Math.max(0, s.energy - cost);
+    if (kind === 'pothole') s.jumped = (s.jumped || 0) + 1;   // the tally is Mr. Pothole's
+    tell(ob.jumped);
     save(); render();
-    floatCost(p, `-${JUMP_COST} energy`);
+    floatCost(p, `-${cost} energy`);
   }
+}
+
+/* Asked, and not answered, on the hill or in the puddle: he goes over —
+   backwards down the hill, face first into the water — lies there a moment
+   riding the road with the obstacle, gets up and hurries back to his place. */
+function slipOn(p){
+  const kind = potKind, ob = OBSTACLE[kind], DUR = 1500;
+  p.dataset.hop = String(potLap);
+  potReadyAt = performance.now() + POT_COOLDOWN;
+  tell(ob.fell);
+  p.classList.add('jumping');
+  p.style.animationPlayState = 'paused';
+  const drift = calm() ? null : p.animate([{ transform: 'translateX(0)' },
+    { transform: `translateX(${-ROAD_SPEED * DUR / 1000}px)` }],
+    { duration: DUR, fill: 'forwards', composite: 'add' });
+  const down = kind === 'hill' ? 'translate(-10px,4px) rotate(-82deg)' : 'translate(6px,3px) rotate(82deg)';
+  p.animate([
+    { transform: 'translate(0px,0px) rotate(0deg)' },
+    { transform: kind === 'hill' ? 'translate(0px,-8px) rotate(-8deg)' : 'translate(2px,1px) rotate(14deg)', offset: .2 },
+    { transform: down, offset: .42 }, { transform: down, offset: .78 },
+    { transform: 'translate(0px,0px) rotate(0deg)' },
+  ], { duration: DUR, easing: 'ease-in-out', composite: 'add' });
+  if (kind === 'puddle'){ setTimeout(() => { if (p.isConnected) splash(p, 1.7); }, DUR * .4); }
+  if (s){
+    s.energy = Math.max(0, s.energy - ob.miss);
+    save(); render();
+    floatCost(p, `-${ob.miss} energy`);
+  }
+  setTimeout(() => {
+    drift?.cancel();
+    p.classList.remove('jumping');
+    p.style.animationPlayState = '';
+    rejoinGrid(p, DUR);
+    /* as after the hole: a few seconds as a passer-by, so landing back short
+       of it never counts as a second miss */
+    delete p.dataset.hop;
+    p.dataset.grace = String(performance.now() + 3500);
+  }, DUR);
 }
 
 function fallIn(p){
   if (hopped(p)) return;
+  if (potKind !== 'pothole') return slipOn(p);
   p.dataset.hop = String(potLap);
   potReadyAt = performance.now() + POT_COOLDOWN;
   if (s){ s.fell = (s.fell || 0) + 1; save(); drawTally(); }
@@ -4248,14 +4391,17 @@ function watchPothole(){
        could ever fall in, which is half the mechanic. */
     const mine = (performance.now() >= potReadyAt) && !(+p.dataset.grace > performance.now())
               && (p === cornTarget || p === rideTarget || p === jumpShown);
+    const ob = OBSTACLE[potKind];
     if (mine){
-      if (fx < x - 4) jumpTarget = p;  // yours: you get asked
+      if (fx < x - (ob.edge ?? 4)) jumpTarget = p;  // yours: you get asked
       else fallIn(p);                  // asked, and not answered — he is on the hole
       return;
     }
     /* A bystander takes off just short of the hole rather than the moment it
-       enters the warning zone, which is a figure's width too early. */
-    if (fx >= x - 26) hopPothole(p, false);
+       enters the warning zone, which is a figure's width too early. One whose
+       hill or puddle you already tapped for crosses here too, and that is when
+       it costs (dataset.paid, see takeOffer). */
+    if (fx >= x - (ob.start ?? 26)) hopPothole(p, p.dataset.paid === String(potLap));
   });
 }
 
@@ -4550,7 +4696,11 @@ function takeOffer(p){
     const who = p;
     clearJump();
     backToTrekking();
-    hopPothole(who, true);         // the tap is what makes it cost energy
+    /* The hole is jumped the moment you tap. The hill and the puddle are
+       walked, so he carries on to the edge and crosses there: walking up a
+       hill 200px short of it would be walking up the air. */
+    if (potKind === 'pothole') hopPothole(who, true);   // the tap is what makes it cost energy
+    else { who.dataset.paid = String(potLap); potReadyAt = performance.now() + POT_COOLDOWN; }
     return true;
   }
   if (rideTag.style.display !== 'none'
