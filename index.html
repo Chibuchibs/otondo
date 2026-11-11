@@ -541,14 +541,16 @@
   .corper .leg2 .shin{animation-delay:calc(var(--stride,.62s) / -2)}
   /* Bending down for a coin: feet planted, knees give, the body pitches
      forward from the hip and the front arm reaches straight down (it turns
-     back against the torso's lean, or the hand would point behind him). */
+     back against the torso's lean, or the hand would point behind him).
+     64deg, not 38: at 38 the hand stopped about 12px above the coin (measured
+     2026-11-10); at 64 it reaches the road. */
   .corper.stoop .leg,.corper.stoop .leg2,.corper.stoop .arm,.corper.stoop .fore{animation:none}
   .corper.stoop .torso{animation:stoop 1.2s ease-in-out forwards;transform-origin:23px 51px}
   .corper.stoop .arm2{animation:stoopReach 1.2s ease-in-out forwards}
   .corper.stoop .shin{animation:stoopKnee 1.2s ease-in-out forwards}
-  @keyframes stoop     {0%{transform:rotate(0)}35%,70%{transform:rotate(38deg)}100%{transform:rotate(0)}}
-  @keyframes stoopReach{0%{transform:rotate(0)}35%,70%{transform:rotate(-40deg)}100%{transform:rotate(0)}}
-  @keyframes stoopKnee {0%{transform:rotate(0)}35%,70%{transform:rotate(16deg)}100%{transform:rotate(0)}}
+  @keyframes stoop     {0%{transform:rotate(0)}35%,70%{transform:rotate(64deg)}100%{transform:rotate(0)}}
+  @keyframes stoopReach{0%{transform:rotate(0)}35%,70%{transform:rotate(-66deg)}100%{transform:rotate(0)}}
+  @keyframes stoopKnee {0%{transform:rotate(0)}35%,70%{transform:rotate(22deg)}100%{transform:rotate(0)}}
   /* ---------- the story strip ----------
      After the "what if you never lost" reels: a running tally over the
      street, and one line that lights up a word at a time when something
@@ -1559,7 +1561,7 @@
 <script type="module">
 import { newGame, doAction, canDo, unlocked, ACTIONS, phaseOf, nextUnlock, postingOdds, rivalOf,
          computePosting, CHOICES, GOAL, goalStatus,
-         shareText, MAX_DAY } from './game.js?v=20261110114018';
+         shareText, MAX_DAY } from './game.js?v=20261110215329';
 
 /* ---------- scene coordinates ----------
    The scene is scaled by a transform (see the stage), so a native
@@ -1590,11 +1592,11 @@ const TS = (document.getElementById('scene').offsetWidth || 375) / 375;
 const ALLAWEE_NOTE = 'Allawee ₦77,000 — e never enter.';
 import { initNet, joinCamp, syncPlayer, platoonBoard, recentChat, postChat,
          postSuggestion, reportMessage, awardBoard, myAwards, laughChat,
-         setPresence, campRoster, renameMe, setAvatar, online } from './net.js?v=20261110114018';
-import { startMusic, stopMusic, musicOn, audioState, audioSupported, setRain, whenSilenced, wakeAudio, audible, say, sfx, BEAT, BAR } from './audio.js?v=20261110114018';
+         setPresence, campRoster, renameMe, setAvatar, online } from './net.js?v=20261110215329';
+import { startMusic, stopMusic, musicOn, audioState, audioSupported, setRain, whenSilenced, wakeAudio, audible, say, sfx, BEAT, BAR } from './audio.js?v=20261110215329';
 import { playHoop, playPenalty, playQuiz, playRegister, playParade,
          playMami, playHustle, playManOWar, playSaed, playSocial,
-         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261110114018';
+         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261110215329';
 
 /* Every dance animation is expressed in beats, so the steps are on-tempo
    whether or not the sound is playing — and genuinely on the beat when it is. */
@@ -5194,6 +5196,13 @@ function claimCoin(coin){
   clearTimeout(coin._gone);
   const box = sceneEl.sceneRect(), at = () => +coin.dataset.x;     // it moves with the road
   const centre = p => { const r = p.sceneRect(); return r.left - box.left + r.width / 2; };
+  /* Where his hand will be at the bottom of the bend: out in front of him
+     (about 0.36 of his height, measured), and the coin keeps sliding toward
+     him with the road while he goes down. He used to stop with the coin under
+     his middle, so the hand landed well past it — "overshooting". `room` is
+     how far he still has to walk; he bends when it runs out. */
+  const DRIFT = ROAD_SPEED * 1.2 * 0.35;                // the bend reaches bottom at 35% of 1.2s
+  const room = p => at() - centre(p) - p.sceneRect().height * 0.36 - DRIFT;
   const grab = () => {
     if (s){ s.money += COIN_VALUE; save(); render(); }
     floatCost(coin, `+₦${COIN_VALUE}`);
@@ -5202,9 +5211,11 @@ function claimCoin(coin){
     coin.classList.add('taken');
     setTimeout(() => coin.remove(), 250);
   };
-  const who = [...sceneEl.querySelectorAll(':scope > .corper')]
+  /* the nearest one with room to walk up to it; failing that, anyone behind it */
+  const behind = [...sceneEl.querySelectorAll(':scope > .corper')]
     .filter(p => freeFig(p) && centre(p) < at() - 4)
-    .sort((a, b) => centre(b) - centre(a))[0];
+    .sort((a, b) => centre(b) - centre(a));
+  const who = behind.find(p => room(p) > 0) || behind[0];
   if (!who){ grab(); return; }
   const t0 = performance.now();
   const watch = setInterval(() => {
@@ -5212,7 +5223,7 @@ function claimCoin(coin){
        real errand (or the hole itself) takes him off the coin. */
     if (!who.isConnected || who.matches('.riding, .hailing, .running, .munching, .shopping, .inRide, .gone, .sunk')
         || performance.now() - t0 > 9000){ clearInterval(watch); grab(); return; }
-    if (who.matches('.jumping') || centre(who) < at() - 6) return;
+    if (who.matches('.jumping') || room(who) > 0) return;
     clearInterval(watch);
     who.classList.add('stoop');
     who.style.animationPlayState = 'paused';            // stop walking, as he does at the pothole
