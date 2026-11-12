@@ -1202,6 +1202,21 @@
   .streakWeek i.today{color:#c2410c}
   .streakWeek i.today::before{outline:2.5px solid #e8590c;outline-offset:2px}
   .cardPop .hoorayCard{max-width:380px;padding:14px 14px 14px}
+  /* ---------- lite mode (2026-11-12) ----------
+     On a device that cannot keep up, the decoration stops and the game does
+     not: smoke, steam, the sun's rays, fans, wheels, swaying trees, idle
+     customers and the like stand still. Traffic, shops, walkers, obstacles
+     and anything you tap keep moving. */
+  .scene.lite :is(.sunRays,.sunGlow,.cornSeller .fan,.suyaMan .knife,.suyaCoals,
+    .cust.idle .corper .torso,.cust.idle .corper .arm2 .fore,.shop .bulb,.shop .steam,.shop .boom,
+    .shop .note,.shop .smoke,.shop .poleStripes,.shop .peek,.genSet .smoke,.genSet .engine,
+    .treeline .tree,.treeline .gHand,.treeline .gNod,.treeline .gTalk,.nepaPole .bird,
+    .pothole .ripple,.wheel,.vehicle .cab,.vehicle .cond .wave,.coin .glint){animation:none!important}
+  .liteNote{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:-4px 2px 12px;padding:9px 12px;
+    background:#eef4ef;border:1.5px solid #cfe3d5;border-radius:12px;font-size:13.5px;font-weight:700;color:var(--green-dk)}
+  .liteNote.hidden{display:none}
+  .liteNote button{margin-left:auto;background:none;border:0;padding:0;font:inherit;font-weight:800;
+    color:var(--green-dk);-webkit-text-fill-color:var(--green-dk);text-decoration:underline;text-underline-offset:3px;cursor:pointer}
   /* a double tap on a popup selected its words in blue (user, 2026-11-11) */
   .hoorayCard{-webkit-user-select:none;user-select:none}
   .cardPop img{display:block;width:100%;border-radius:12px;margin:0 0 12px;
@@ -1504,6 +1519,8 @@
       <button class="streakChip" id="streakChip" type="button" aria-label="Your daily streak">🔥 <b id="streakN">1</b><span id="streakWord">day streak</span></button>
       <button class="shareCard" id="shareCard" type="button">📸 Share my card</button>
     </div>
+    <p class="liteNote hidden" id="liteNote">🪶 Lite mode is on: fewer effects, so the game runs smoother on this device.
+      <button type="button" id="liteOff">Turn off</button></p>
     <div class="live" id="live" role="button" tabindex="0"
          aria-expanded="false" aria-controls="whoList"><i></i><span>Single player</span></div>
     <div class="who hidden" id="whoList"></div>
@@ -1621,13 +1638,15 @@
     <a href="mailto:hello@otondo.ng?subject=Advertising%20on%20Otondo">hello@otondo.ng</a>
     <span class="sep">·</span>
     <a href="mailto:hello@otondo.ng?subject=Otondo%20feedback">Send feedback</a>
+    <span class="sep">·</span>
+    <a href="#" id="liteToggle">Lite mode: off</a>
   </footer>
 </div>
 
 <script type="module">
 import { newGame, doAction, canDo, unlocked, ACTIONS, phaseOf, nextUnlock, postingOdds, rivalOf,
          computePosting, CHOICES, GOAL, goalStatus,
-         shareText, MAX_DAY } from './game.js?v=20261111222302';
+         shareText, MAX_DAY } from './game.js?v=20261112001601';
 
 /* ---------- scene coordinates ----------
    The scene is scaled by a transform (see the stage), so a native
@@ -1658,11 +1677,11 @@ const TS = (document.getElementById('scene').offsetWidth || 375) / 375;
 const ALLAWEE_NOTE = 'Allawee ₦77,000 — e never enter.';
 import { initNet, joinCamp, syncPlayer, platoonBoard, recentChat, postChat,
          postSuggestion, reportMessage, awardBoard, myAwards, laughChat,
-         setPresence, campRoster, renameMe, setAvatar, online } from './net.js?v=20261111222302';
-import { startMusic, stopMusic, musicOn, audioState, audioSupported, setRain, whenSilenced, wakeAudio, audible, say, sfx, BEAT, BAR } from './audio.js?v=20261111222302';
+         setPresence, campRoster, renameMe, setAvatar, online } from './net.js?v=20261112001601';
+import { startMusic, stopMusic, musicOn, audioState, audioSupported, setRain, whenSilenced, wakeAudio, audible, say, sfx, BEAT, BAR } from './audio.js?v=20261112001601';
 import { playHoop, playPenalty, playQuiz, playRegister, playParade,
          playMami, playHustle, playManOWar, playSaed, playSocial,
-         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261111222302';
+         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261112001601';
 
 /* Every dance animation is expressed in beats, so the steps are on-tempo
    whether or not the sound is playing — and genuinely on the beat when it is. */
@@ -5473,7 +5492,7 @@ const PED_SHIRTS = [
 ];
 const PED_LOOKS = [{ fila: '#2b6cb0' }, 'afro', { fila: '#7b3fa0' }, 'dreads', { fila: '#c1272d' }];
 function sendPed(){
-  if (sceneEl.querySelectorAll('.ped').length < 2){
+  if (sceneEl.querySelectorAll('.ped').length < (isLite() ? 1 : 2)){     // lite: one at a time
     const el = document.createElement('div');
     el.className = 'ped' + (Math.random() < .5 ? ' left' : '');
     el.style.animationDuration = (PED_LEN * TS * (.9 + Math.random() * .25)) + 's';
@@ -6232,7 +6251,7 @@ const rain = (() => {
        and the game dropped from ~56 to ~20fps in rain (measured 2026-11-11);
        at 1000 it holds ~47. Rain is soft streaks, so the extra pixels
        bought nothing you could see. Phones never reach the cap. */
-    scale = Math.min(Math.min(2, window.devicePixelRatio || 1) * k, 1000 / W);
+    scale = Math.min(Math.min(2, window.devicePixelRatio || 1) * k, (isLite() ? 600 : 1000) / W);
     for (const [c, h, top] of [[sky, H, 0], [gnd, GH, GTOP]]){
       c.style.width = W + 'px'; c.style.height = h + 'px'; c.style.top = top + 'px';
       c.width = Math.round(W * scale); c.height = Math.round(h * scale);
@@ -6287,7 +6306,7 @@ const rain = (() => {
     wet = on ? Math.min(1, wet + real / 7) : Math.max(0, wet - real / 12);
     /* the wind gusts; the rain leans with it */
     const slope = .1 + .07 * Math.sin(t * .45) + .03 * Math.sin(t * 1.7);
-    const want = RM ? 0 : Math.round(level * 400 * W / 375);
+    const want = RM ? 0 : Math.round(level * (isLite() ? 160 : 400) * W / 375);   // lite: 40% of the drops
     while (drops.length < want) spawn(true);
 
     sx.setTransform(scale, 0, 0, scale, 0, 0); sx.clearRect(0, 0, W, H);
@@ -6582,6 +6601,48 @@ $('share').onclick = async () => {
   }
   btn.disabled = false;
 };
+
+/* ---------- lite mode (2026-11-12) ----------
+   Watches the frame rate in 5-second windows. Two slow windows in a row
+   (under 38 frames a second; a phone or laptop that keeps up runs at 60) and
+   the scene goes lite, with a note saying so and a way to turn it off. The
+   footer link turns it on or off by hand, and a hand choice is remembered;
+   an automatic switch is not, so a device that was only busy that day gets
+   the full street next time. */
+const LITE_KEY = 'otondo:lite';
+let litePref = 'auto';                                          // 'auto' | 'on' | 'off'
+try { litePref = localStorage.getItem(LITE_KEY) || 'auto'; } catch {}
+function isLite(){ return sceneEl.classList.contains('lite'); }
+function setLite(on, auto = false){
+  sceneEl.classList.toggle('lite', on);
+  dispatchEvent(new Event('resize'));                           // the rain canvas resizes to suit
+  $('liteToggle').textContent = `Lite mode: ${on ? 'on' : 'off'}`;
+  $('liteNote').classList.toggle('hidden', !(on && auto));
+}
+function rememberLite(pref){ litePref = pref; try { localStorage.setItem(LITE_KEY, pref); } catch {} }
+$('liteOff').onclick = () => { rememberLite('off'); setLite(false); };
+$('liteToggle').onclick = e => { e.preventDefault(); const on = !isLite(); rememberLite(on ? 'on' : 'off'); setLite(on); };
+if (litePref === 'on') setLite(true);
+(() => {
+  if (calm()) return;
+  const started = performance.now();
+  let frames = 0, from = started, slow = 0;
+  const count = now => {
+    frames++;
+    if (now - from >= 5000){
+      const fps = frames * 1000 / (now - from);
+      frames = 0; from = now;
+      if (litePref === 'auto' && !isLite() && now - started > 8000){
+        slow = fps < 38 ? slow + 1 : 0;
+        if (slow >= 2) setLite(true, true);
+      }
+    }
+    requestAnimationFrame(count);
+  };
+  requestAnimationFrame(count);
+  /* a tab coming back from the background starts a fresh window */
+  document.addEventListener('visibilitychange', () => { frames = 0; from = performance.now(); slow = 0; });
+})();
 
 /* ---------- the daily streak (2026-11-11) ----------
    Come back on a new calendar day (your own clock) and the streak grows;
