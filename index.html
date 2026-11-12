@@ -1066,6 +1066,16 @@
   .live i{width:8px;height:8px;border-radius:50%;background:#bbb;flex:none}
   .live.on i{background:#22c55e;box-shadow:0 0 0 3px rgba(34,197,94,.2)}
   .live.on{cursor:pointer;user-select:none}
+  /* New chat while you are not reading it: a pulsing count on the Chat tab
+     and a "💬 1 new" button on the live pill that opens the chat. */
+  .unread{display:inline-block;min-width:18px;height:18px;margin-left:6px;padding:0 5px;border-radius:9px;
+    background:#e8590c;color:#fff;-webkit-text-fill-color:#fff;font-size:11px;font-weight:900;line-height:18px;
+    letter-spacing:0;vertical-align:1px;animation:unreadPulse 1.1s ease-in-out infinite}
+  .live .newMsg{margin-left:auto;background:#e8590c;color:#fff;-webkit-text-fill-color:#fff;border:0;border-radius:99px;
+    padding:3px 10px;font-size:12px;font-weight:900;cursor:pointer;animation:unreadPulse 1.1s ease-in-out infinite}
+  @keyframes unreadPulse{0%,100%{transform:scale(1);box-shadow:0 0 0 0 rgba(232,89,12,.55)}
+    50%{transform:scale(1.08);box-shadow:0 0 0 6px rgba(232,89,12,0)}}
+  @media (prefers-reduced-motion:reduce){.unread,.live .newMsg{animation:none}}
   .live.on span{text-decoration:underline dotted;text-underline-offset:3px}
   .live.on::after{content:"▾";font-size:10px;opacity:.6;transition:transform .2s}
   /* A round play button, drawn as SVG rather than an emoji — the muted-speaker
@@ -1646,7 +1656,7 @@
 <script type="module">
 import { newGame, doAction, canDo, unlocked, ACTIONS, phaseOf, nextUnlock, postingOdds, rivalOf,
          computePosting, CHOICES, GOAL, goalStatus,
-         shareText, MAX_DAY } from './game.js?v=20261112001601';
+         shareText, MAX_DAY } from './game.js?v=20261112083517';
 
 /* ---------- scene coordinates ----------
    The scene is scaled by a transform (see the stage), so a native
@@ -1677,11 +1687,11 @@ const TS = (document.getElementById('scene').offsetWidth || 375) / 375;
 const ALLAWEE_NOTE = 'Allawee ₦77,000 — e never enter.';
 import { initNet, joinCamp, syncPlayer, platoonBoard, recentChat, postChat,
          postSuggestion, reportMessage, awardBoard, myAwards, laughChat,
-         setPresence, campRoster, renameMe, setAvatar, online } from './net.js?v=20261112001601';
-import { startMusic, stopMusic, musicOn, audioState, audioSupported, setRain, whenSilenced, wakeAudio, audible, say, sfx, BEAT, BAR } from './audio.js?v=20261112001601';
+         setPresence, campRoster, renameMe, setAvatar, online } from './net.js?v=20261112083517';
+import { startMusic, stopMusic, musicOn, audioState, audioSupported, setRain, whenSilenced, wakeAudio, audible, say, sfx, BEAT, BAR } from './audio.js?v=20261112083517';
 import { playHoop, playPenalty, playQuiz, playRegister, playParade,
          playMami, playHustle, playManOWar, playSaed, playSocial,
-         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261112001601';
+         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261112083517';
 
 /* Every dance animation is expressed in beats, so the steps are on-tempo
    whether or not the sound is playing — and genuinely on the beat when it is. */
@@ -7283,10 +7293,18 @@ function startRename(host){
 
 /* Chat is the one place an assigned name is not good enough — it is public and
    permanent, and "Otondo 4821" says nothing to anybody. */
+/* The server takes chat from day 3 of camp (post_chat: a drive-by spammer
+   will not play three days to post once). Said up front, with the count,
+   instead of after someone has typed a message and watched it go nowhere. */
+const CHAT_DAY = 3;
+const chatDayNote = () => {
+  const left = CHAT_DAY - ((s && s.day) || 1);
+  return `Camp chat opens on day ${CHAT_DAY}. You're on day ${(s && s.day) || 1}: ${left} more day${left === 1 ? '' : 's'}. You can read it already.`;
+};
 function gateChat(){
-  const auto = s && isAutoName(s.name);
-  $('chatIn').disabled = $('chatSend').disabled = auto || !online();
-  note(auto ? 'Pick a name first — camp chat shows it to everybody.' : '');
+  const auto = s && isAutoName(s.name), early = s && s.day < CHAT_DAY;
+  $('chatIn').disabled = $('chatSend').disabled = auto || early || !online();
+  note(auto ? 'Pick a name first — camp chat shows it to everybody.' : early ? chatDayNote() : '');
   /* And give them the way to do it, right here. Telling someone what they must
      do while the control for doing it lives on a tab they are not looking at
      is the same as not telling them. */
@@ -7503,6 +7521,7 @@ function tab(which){
   if (which === 'awards') drawAwards();
   if (which === 'board')  drawBoard();
   if (which === 'chat')   loadChat();
+  if (which === 'chat')   seenChat();
 }
 $('tabCamp').onclick   = () => tab('camp');
 $('tabAwards').onclick = () => tab('awards');
@@ -7663,13 +7682,42 @@ async function loadChat(force){
   $('chatBox').scrollTop = $('chatBox').scrollHeight;
 }
 
+/* ---------- new chat while you are not looking (2026-11-12) ----------
+   A message from someone else, while the Chat tab is closed or the browser
+   tab is in the background, puts a pulsing count on the Chat tab, a
+   "💬 1 new" button on the live pill, and the count in the page title.
+   Opening Chat clears all three. */
+let unread = 0;
+const BASE_TITLE = document.title;
+function drawUnread(){
+  let badge = $('tabChat').querySelector('.unread'), chip = $('live').querySelector('.newMsg');
+  if (!unread){ badge?.remove(); chip?.remove(); document.title = BASE_TITLE; return; }
+  if (!badge){ badge = document.createElement('span'); badge.className = 'unread'; $('tabChat').appendChild(badge); }
+  badge.textContent = unread > 9 ? '9+' : unread;
+  if (!chip){
+    chip = document.createElement('button'); chip.type = 'button'; chip.className = 'newMsg';
+    chip.onclick = e => { e.stopPropagation(); tab('chat'); };   // not the who's-in-camp list
+    $('live').appendChild(chip);
+  }
+  chip.textContent = `💬 ${unread} new`;
+  document.title = `(${unread}) ${BASE_TITLE}`;
+}
+const readingChat = () => !$('panelChat').classList.contains('hidden') && !document.hidden;
+function heardChat(m){
+  if (s && m.nickname === s.name && Number(m.platoon) === Number(s.platoon)) return;   // your own, echoed back
+  if (readingChat()) return;
+  unread++; drawUnread();
+}
+function seenChat(){ if (unread && readingChat()){ unread = 0; drawUnread(); } }
+document.addEventListener('visibilitychange', seenChat);
+
 const SAY = {
   ok:        'Everybody in camp can see this. Be nice.',
   cooldown:  'Easy — wait a few seconds before talking again.',
   too_new:   'Give it one more day in camp.',
   banned:    'You have been removed from camp chat.',
   link:      'No links in camp chat.',
-  digits:    'No phone or account numbers in camp chat.',
+  digits:    'No phone or account numbers in camp chat (7 or more digits). It keeps scammers out.',
   word:      'That word is not allowed in camp.',
   empty:     'Say something first.',
   no_player: 'Enter camp before you talk.',
@@ -7693,7 +7741,7 @@ async function send(){
   const r = await postChat(v);
   $('chatSend').disabled = false;
   if (r === 'ok') $('chatIn').value = '';
-  note(SAY[r] || 'Could not send that.');
+  note(r === 'too_new' ? chatDayNote() : SAY[r] || 'Could not send that.');
 }
 $('chatSend').onclick = send;
 $('chatIn').addEventListener('keydown', e => { if (e.key === 'Enter') send(); });
@@ -7710,7 +7758,7 @@ $('sugSend').onclick = async () => {
 
 initNet({
   onPlayerCount: setLive,
-  onChatMessage: m => { if (chatLoaded) addMsg(m); },
+  onChatMessage: m => { if (chatLoaded) addMsg(m); heardChat(m); },
 }).then(async ok => {
   if (!ok){ setLive(0); console.info('[otondo] single-player mode'); return; }
   /* Show any badge you are already wearing without making you open the tab —
