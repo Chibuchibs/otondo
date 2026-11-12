@@ -1425,9 +1425,16 @@
     var k = Math.min(vw / MIN_W, kH);
     var W = Math.round(Math.min(MAX_W, Math.max(MIN_W, vw / k)));
     scene.style.width = W + 'px';
+    /* After that, the window can change under it: a browser bar slides in and
+       the window is 60px shorter, or it opens small and is then maximised.
+       Held to the same cap, the street shrank away from the edges until a
+       refresh chose a new width (user, 2026-11-11). So once the width is set,
+       staying edge to edge wins, up to 90% of the height. Not on an ultrawide,
+       where W is at MAX_W and the side bands are meant. */
+    var fillFrac = function(){ return W >= MAX_W ? maxFrac() : Math.max(maxFrac(), .9); };
     function fit(){
       vw = document.documentElement.clientWidth; vh = window.innerHeight;
-      var kk = Math.min(vw / W, vh * maxFrac() / H);
+      var kk = Math.min(vw / W, vh * fillFrac() / H);
       stage.style.setProperty('--vw', vw + 'px');
       stage.style.setProperty('--k', kk.toFixed(4));
     }
@@ -1568,7 +1575,7 @@
 <script type="module">
 import { newGame, doAction, canDo, unlocked, ACTIONS, phaseOf, nextUnlock, postingOdds, rivalOf,
          computePosting, CHOICES, GOAL, goalStatus,
-         shareText, MAX_DAY } from './game.js?v=20261111213023';
+         shareText, MAX_DAY } from './game.js?v=20261111220131';
 
 /* ---------- scene coordinates ----------
    The scene is scaled by a transform (see the stage), so a native
@@ -1599,11 +1606,11 @@ const TS = (document.getElementById('scene').offsetWidth || 375) / 375;
 const ALLAWEE_NOTE = 'Allawee ₦77,000 — e never enter.';
 import { initNet, joinCamp, syncPlayer, platoonBoard, recentChat, postChat,
          postSuggestion, reportMessage, awardBoard, myAwards, laughChat,
-         setPresence, campRoster, renameMe, setAvatar, online } from './net.js?v=20261111213023';
-import { startMusic, stopMusic, musicOn, audioState, audioSupported, setRain, whenSilenced, wakeAudio, audible, say, sfx, BEAT, BAR } from './audio.js?v=20261111213023';
+         setPresence, campRoster, renameMe, setAvatar, online } from './net.js?v=20261111220131';
+import { startMusic, stopMusic, musicOn, audioState, audioSupported, setRain, whenSilenced, wakeAudio, audible, say, sfx, BEAT, BAR } from './audio.js?v=20261111220131';
 import { playHoop, playPenalty, playQuiz, playRegister, playParade,
          playMami, playHustle, playManOWar, playSaed, playSocial,
-         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261111213023';
+         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261111220131';
 
 /* Every dance animation is expressed in beats, so the steps are on-tempo
    whether or not the sound is playing — and genuinely on the beat when it is. */
