@@ -1568,7 +1568,7 @@
 <script type="module">
 import { newGame, doAction, canDo, unlocked, ACTIONS, phaseOf, nextUnlock, postingOdds, rivalOf,
          computePosting, CHOICES, GOAL, goalStatus,
-         shareText, MAX_DAY } from './game.js?v=20261110221502';
+         shareText, MAX_DAY } from './game.js?v=20261111213023';
 
 /* ---------- scene coordinates ----------
    The scene is scaled by a transform (see the stage), so a native
@@ -1599,11 +1599,11 @@ const TS = (document.getElementById('scene').offsetWidth || 375) / 375;
 const ALLAWEE_NOTE = 'Allawee ₦77,000 — e never enter.';
 import { initNet, joinCamp, syncPlayer, platoonBoard, recentChat, postChat,
          postSuggestion, reportMessage, awardBoard, myAwards, laughChat,
-         setPresence, campRoster, renameMe, setAvatar, online } from './net.js?v=20261110221502';
-import { startMusic, stopMusic, musicOn, audioState, audioSupported, setRain, whenSilenced, wakeAudio, audible, say, sfx, BEAT, BAR } from './audio.js?v=20261110221502';
+         setPresence, campRoster, renameMe, setAvatar, online } from './net.js?v=20261111213023';
+import { startMusic, stopMusic, musicOn, audioState, audioSupported, setRain, whenSilenced, wakeAudio, audible, say, sfx, BEAT, BAR } from './audio.js?v=20261111213023';
 import { playHoop, playPenalty, playQuiz, playRegister, playParade,
          playMami, playHustle, playManOWar, playSaed, playSocial,
-         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261110221502';
+         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261111213023';
 
 /* Every dance animation is expressed in beats, so the steps are on-tempo
    whether or not the sound is playing — and genuinely on the beat when it is. */
@@ -6168,7 +6168,12 @@ const rain = (() => {
   function size(){
     W = sceneEl.offsetWidth || 375;
     const k = parseFloat(getComputedStyle($('stage')).getPropertyValue('--k')) || 1;
-    scale = Math.min(2, window.devicePixelRatio || 1) * k;
+    /* Never more than 1000 canvas pixels across. Uncapped, a Retina laptop
+       window drew the rain on a ~2,880px canvas every frame (a phone: ~780)
+       and the game dropped from ~56 to ~20fps in rain (measured 2026-11-11);
+       at 1000 it holds ~47. Rain is soft streaks, so the extra pixels
+       bought nothing you could see. Phones never reach the cap. */
+    scale = Math.min(Math.min(2, window.devicePixelRatio || 1) * k, 1000 / W);
     for (const [c, h, top] of [[sky, H, 0], [gnd, GH, GTOP]]){
       c.style.width = W + 'px'; c.style.height = h + 'px'; c.style.top = top + 'px';
       c.width = Math.round(W * scale); c.height = Math.round(h * scale);

@@ -2,7 +2,7 @@
    Every function is failure-tolerant on purpose: if Supabase is unset, slow,
    or down, the game must still be playable. Nothing here throws upward. */
 
-import { SUPABASE_URL, SUPABASE_ANON_KEY } from './config.js?v=20261110221502';
+import { SUPABASE_URL, SUPABASE_ANON_KEY } from './config.js?v=20261111213023';
 
 const TOKEN_KEY = 'otondo:token';
 let sb = null, token = null, channel = null;
