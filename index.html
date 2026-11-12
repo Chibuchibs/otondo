@@ -1202,6 +1202,8 @@
   .streakWeek i.today{color:#c2410c}
   .streakWeek i.today::before{outline:2.5px solid #e8590c;outline-offset:2px}
   .cardPop .hoorayCard{max-width:380px;padding:14px 14px 14px}
+  /* a double tap on a popup selected its words in blue (user, 2026-11-11) */
+  .hoorayCard{-webkit-user-select:none;user-select:none}
   .cardPop img{display:block;width:100%;border-radius:12px;margin:0 0 12px;
     box-shadow:0 4px 16px rgba(0,0,0,.18);background:var(--cream);aspect-ratio:4/5}
   .cardPop .note{margin:8px 0 0;font-size:13px}
@@ -1625,7 +1627,7 @@
 <script type="module">
 import { newGame, doAction, canDo, unlocked, ACTIONS, phaseOf, nextUnlock, postingOdds, rivalOf,
          computePosting, CHOICES, GOAL, goalStatus,
-         shareText, MAX_DAY } from './game.js?v=20261111221455';
+         shareText, MAX_DAY } from './game.js?v=20261111222302';
 
 /* ---------- scene coordinates ----------
    The scene is scaled by a transform (see the stage), so a native
@@ -1656,11 +1658,11 @@ const TS = (document.getElementById('scene').offsetWidth || 375) / 375;
 const ALLAWEE_NOTE = 'Allawee ₦77,000 — e never enter.';
 import { initNet, joinCamp, syncPlayer, platoonBoard, recentChat, postChat,
          postSuggestion, reportMessage, awardBoard, myAwards, laughChat,
-         setPresence, campRoster, renameMe, setAvatar, online } from './net.js?v=20261111221455';
-import { startMusic, stopMusic, musicOn, audioState, audioSupported, setRain, whenSilenced, wakeAudio, audible, say, sfx, BEAT, BAR } from './audio.js?v=20261111221455';
+         setPresence, campRoster, renameMe, setAvatar, online } from './net.js?v=20261111222302';
+import { startMusic, stopMusic, musicOn, audioState, audioSupported, setRain, whenSilenced, wakeAudio, audible, say, sfx, BEAT, BAR } from './audio.js?v=20261111222302';
 import { playHoop, playPenalty, playQuiz, playRegister, playParade,
          playMami, playHustle, playManOWar, playSaed, playSocial,
-         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261111221455';
+         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261111222302';
 
 /* Every dance animation is expressed in beats, so the steps are on-tempo
    whether or not the sound is playing — and genuinely on the beat when it is. */
