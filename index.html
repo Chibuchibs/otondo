@@ -1177,6 +1177,34 @@
     animation:confFall linear forwards}
   @keyframes confFall{to{transform:translateY(110vh) rotate(720deg)}}
   @media (prefers-reduced-motion:reduce){.hoorayCard,.confetti i{animation:none}.confetti{display:none}}
+  /* ---------- streak + camp card (2026-11-11) ----------
+     Under the stat cards: the streak you are on, and a button that makes a
+     picture of how you are doing to send to people. */
+  .cardbar{display:flex;gap:8px;margin:-2px 0 12px}
+  .cardbar.hidden{display:none}
+  .streakChip{display:flex;align-items:center;gap:5px;background:#fff1db;border:1.5px solid #f7c58a;
+    color:#8a3d06;-webkit-text-fill-color:#8a3d06;border-radius:99px;padding:8px 14px 8px 11px;
+    font-size:14px;font-weight:800;white-space:nowrap;cursor:pointer}
+  .streakChip b{font-size:17px;font-weight:900}
+  .shareCard{flex:1;background:var(--green);color:#fff;-webkit-text-fill-color:#fff;border:0;border-radius:99px;
+    padding:9px 14px;font-size:15px;font-weight:800;letter-spacing:.02em;cursor:pointer}
+  .streakBall{width:96px;height:96px;margin:0 auto 12px;border-radius:50%;display:flex;flex-direction:column;
+    align-items:center;justify-content:center;color:#fff;line-height:1;
+    background:radial-gradient(circle at 50% 35%,#ffd34d 0,#ff9a2e 48%,#e8590c 100%);
+    box-shadow:0 8px 22px rgba(232,89,12,.38),inset 0 -6px 0 rgba(0,0,0,.12)}
+  .streakBall b{font-size:42px;font-weight:900;text-shadow:0 2px 0 rgba(0,0,0,.18)}
+  .streakBall small{font-size:11px;font-weight:900;letter-spacing:.12em;margin-top:2px}
+  .streakWeek{display:flex;justify-content:center;gap:7px;margin:12px 0 4px}
+  .streakWeek i{display:flex;flex-direction:column;align-items:center;gap:4px;font-style:normal;
+    font-size:11px;font-weight:800;color:var(--muted)}
+  .streakWeek i::before{content:'';width:24px;height:24px;border-radius:50%;background:var(--line)}
+  .streakWeek i.on::before{background:#ff9a2e;box-shadow:inset 0 -3px 0 rgba(0,0,0,.14)}
+  .streakWeek i.today{color:#c2410c}
+  .streakWeek i.today::before{outline:2.5px solid #e8590c;outline-offset:2px}
+  .cardPop .hoorayCard{max-width:380px;padding:14px 14px 14px}
+  .cardPop img{display:block;width:100%;border-radius:12px;margin:0 0 12px;
+    box-shadow:0 4px 16px rgba(0,0,0,.18);background:var(--cream);aspect-ratio:4/5}
+  .cardPop .note{margin:8px 0 0;font-size:13px}
   .odds{display:block;width:100%;text-align:left;margin:0 2px 11px;padding:11px 13px 10px;
     background:var(--white);border:2px solid var(--line);border-radius:14px;
     font-family:inherit;color:var(--ink);-webkit-text-fill-color:var(--ink)}
@@ -1470,6 +1498,10 @@
         <small class="tip">Earn it: put out fires, catch the thief, learn a trade at the bakery, or fall in for parade and Man O War.</small>
         <small class="goalLine" id="gCred"></small></div>
     </div>
+    <div class="cardbar" id="cardbar">
+      <button class="streakChip" id="streakChip" type="button" aria-label="Your daily streak">🔥 <b id="streakN">1</b><span id="streakWord">day streak</span></button>
+      <button class="shareCard" id="shareCard" type="button">📸 Share my card</button>
+    </div>
     <div class="live" id="live" role="button" tabindex="0"
          aria-expanded="false" aria-controls="whoList"><i></i><span>Single player</span></div>
     <div class="who hidden" id="whoList"></div>
@@ -1563,6 +1595,24 @@
       <button class="primary" type="button" id="hoorayOk">Oya, continue</button>
     </div>
   </div>
+  <div class="hooray hidden" id="streakPop" role="dialog" aria-modal="true" aria-labelledby="streakH">
+    <div class="hoorayCard">
+      <div class="streakBall"><b id="streakBig">1</b><small>DAY</small></div>
+      <div class="hoorayBig" id="streakH">Streak started!</div>
+      <div class="streakWeek" id="streakWeek"></div>
+      <p id="streakMsg"></p>
+      <button class="primary" type="button" id="streakOk">Oya, continue</button>
+      <button class="primary ghost" type="button" id="streakShare" style="margin-top:8px">📸 Share my card</button>
+    </div>
+  </div>
+  <div class="hooray cardPop hidden" id="cardPop" role="dialog" aria-modal="true" aria-label="Your camp card">
+    <div class="hoorayCard">
+      <img id="cardImg" alt="Your Otondo camp card">
+      <button class="primary" type="button" id="cardGo">Share</button>
+      <button class="primary ghost" type="button" id="cardClose" style="margin-top:8px">Close</button>
+      <p class="note" id="cardNote"></p>
+    </div>
+  </div>
   <footer>
     Advertise on Otondo — put your brand on the danfo, a Mami stall or the
     camp notice board.<br>
@@ -1575,7 +1625,7 @@
 <script type="module">
 import { newGame, doAction, canDo, unlocked, ACTIONS, phaseOf, nextUnlock, postingOdds, rivalOf,
          computePosting, CHOICES, GOAL, goalStatus,
-         shareText, MAX_DAY } from './game.js?v=20261111220131';
+         shareText, MAX_DAY } from './game.js?v=20261111221455';
 
 /* ---------- scene coordinates ----------
    The scene is scaled by a transform (see the stage), so a native
@@ -1606,11 +1656,11 @@ const TS = (document.getElementById('scene').offsetWidth || 375) / 375;
 const ALLAWEE_NOTE = 'Allawee ₦77,000 — e never enter.';
 import { initNet, joinCamp, syncPlayer, platoonBoard, recentChat, postChat,
          postSuggestion, reportMessage, awardBoard, myAwards, laughChat,
-         setPresence, campRoster, renameMe, setAvatar, online } from './net.js?v=20261111220131';
-import { startMusic, stopMusic, musicOn, audioState, audioSupported, setRain, whenSilenced, wakeAudio, audible, say, sfx, BEAT, BAR } from './audio.js?v=20261111220131';
+         setPresence, campRoster, renameMe, setAvatar, online } from './net.js?v=20261111221455';
+import { startMusic, stopMusic, musicOn, audioState, audioSupported, setRain, whenSilenced, wakeAudio, audible, say, sfx, BEAT, BAR } from './audio.js?v=20261111221455';
 import { playHoop, playPenalty, playQuiz, playRegister, playParade,
          playMami, playHustle, playManOWar, playSaed, playSocial,
-         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261111220131';
+         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261111221455';
 
 /* Every dance animation is expressed in beats, so the steps are on-tempo
    whether or not the sound is playing — and genuinely on the beat when it is. */
@@ -6400,6 +6450,7 @@ async function ensureJoined(){
 
 function enterCamp(){
   s = newGame(autoName()); save(); render();
+  checkStreak();
   mine = [];                       // last run's badges are not this run's
   drawBadges();
 }
@@ -6415,10 +6466,10 @@ $('again').onclick = () => {
 /* ---------- the posting card as a real image ----------
    WhatsApp is where this spreads, and WhatsApp forwards pictures, not text.
    Draw the card to a canvas and hand the file to the native share sheet. */
-function drawCorper(x, cx, baseY, sc, skin){
+function drawCorper(x, cx, baseY, sc, skin, shadow = true){     // shadow off when he is in the air
   const u = v => v * sc, K = '#9a8f5f', KD = '#8e8356', TEE = '#fbf9f2', G = '#0a7a43';
   x.fillStyle = 'rgba(0,0,0,.18)';
-  x.beginPath(); x.ellipse(cx, baseY + u(3), u(14), u(3.5), 0, 0, 7); x.fill();
+  if (shadow){ x.beginPath(); x.ellipse(cx, baseY + u(3), u(14), u(3.5), 0, 0, 7); x.fill(); }
   const r = (fx, a, b, w, h, rad) => { x.fillStyle = fx; x.beginPath();
     x.roundRect(cx + u(a), baseY + u(b), u(w), u(h), u(rad)); x.fill(); };
   r('#7b9856', -9, -30, 7.5, 26, 3.4); r('#8aa863', 2, -30, 7.5, 26, 3.4);  // green trousers
@@ -6528,6 +6579,213 @@ $('share').onclick = async () => {
     }
   }
   btn.disabled = false;
+};
+
+/* ---------- the daily streak (2026-11-11) ----------
+   Come back on a new calendar day (your own clock) and the streak grows;
+   miss one and it starts again at 1. Kept apart from the camp save, so a
+   fresh camp or "Serve again" never costs you your streak. Each day's first
+   visit pays a daily allawee that grows with the streak: ₦200 a day, up to
+   ₦1,400 from day 7. The joke is the game's own: the real allawee never
+   enter, this one does. */
+const STREAK_KEY = 'otondo:streak', ALLAWEE_STEP = 200, ALLAWEE_DAYS = 7;
+const ymd = d => d.toLocaleDateString('en-CA');                 // 2026-11-11, in the player's own day
+let streak = { days: 0, last: '', best: 0 };
+try { streak = { ...streak, ...JSON.parse(localStorage.getItem(STREAK_KEY) || '{}') }; } catch {}
+const allaweeFor = n => ALLAWEE_STEP * Math.min(Math.max(n, 1), ALLAWEE_DAYS);
+const dayWord = n => n === 1 ? 'day' : 'days';
+function drawStreak(){
+  $('cardbar').classList.toggle('hidden', !s);
+  $('streakN').textContent = streak.days || 1;
+  $('streakWord').textContent = `${dayWord(streak.days || 1)} streak`;
+}
+function checkStreak(){
+  if (!s || s.phase === 'ending'){ drawStreak(); return; }
+  const today = ymd(new Date());
+  if (streak.last === today){ drawStreak(); return; }
+  const y = new Date(); y.setDate(y.getDate() - 1);
+  const kept = streak.last === ymd(y), lost = !kept && streak.days > 1 ? streak.days : 0;
+  streak.days = kept ? streak.days + 1 : 1;
+  streak.last = today;
+  streak.best = Math.max(streak.best || 0, streak.days);
+  try { localStorage.setItem(STREAK_KEY, JSON.stringify(streak)); } catch {}
+  const pay = allaweeFor(streak.days);
+  s.money += pay; save(); render();
+  drawStreak();
+  setTimeout(() => showStreak(pay, lost), 1100);
+}
+function showStreak(pay, lost){
+  /* never on top of the passing-out burst or a mini-game */
+  if (!$('hooray').classList.contains('hidden') || !$('mgwrap').classList.contains('hidden')){
+    setTimeout(() => showStreak(pay, lost), 1500); return;
+  }
+  const n = streak.days, next = allaweeFor(n + 1);
+  $('streakBig').textContent = n;
+  $('streakBig').nextElementSibling.textContent = n === 1 ? 'DAY' : 'DAYS';
+  $('streakH').textContent = n === 1 ? (lost ? 'New streak!' : 'Streak started!') : `${n}-day streak!`;
+  /* the last seven days, today on the right; lit for each day of the streak */
+  const L = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
+  $('streakWeek').innerHTML = Array.from({ length: 7 }, (_, i) => {
+    const d = new Date(); d.setDate(d.getDate() - (6 - i));
+    return `<i class="${6 - i < n ? 'on' : ''}${i === 6 ? ' today' : ''}">${L[d.getDay()]}</i>`;
+  }).join('');
+  $('streakMsg').innerHTML = (lost ? `You missed a day, so your ${lost}-day streak don reset.<br>` : '')
+    + `Daily allawee: <b>+${naira(pay)}</b> don enter!<br>`
+    + (n < ALLAWEE_DAYS ? `Come back tomorrow for <b>+${naira(next)}</b>.` : `Come back tomorrow to keep it going.`);
+  $('streakPop').classList.remove('hidden');
+  $('streakOk').focus();
+}
+$('streakOk').onclick = () => $('streakPop').classList.add('hidden');
+$('streakShare').onclick = () => { $('streakPop').classList.add('hidden'); openCard(); };
+$('streakChip').onclick = () => showStreak(allaweeFor(streak.days), 0);
+/* A tab left open overnight still counts the new day when you come back to it. */
+document.addEventListener('visibilitychange', () => { if (!document.hidden) checkStreak(); });
+setInterval(checkStreak, 10 * 60 * 1000);
+
+/* ---------- the camp card (2026-11-11) ----------
+   The posting card only exists on day 21, which most players never see. This
+   one is there from the first minute: your name, a title earned from how you
+   play, Mr. Pothole jumps and falls, streak and money, and the address. A
+   picture, because WhatsApp forwards pictures. Shared links carry ?r=card,
+   so players who arrive from one are counted (cameFrom). */
+function cardTitle(){
+  const j = s.jumped || 0, f = s.fell || 0;
+  if (j + f === 0) return 'FRESH ON THE STREET';
+  if (f >= Math.max(5, j * 3)) return "MR. POTHOLE'S BEST CUSTOMER";
+  if (j >= 10 && j >= f * 2) return 'POTHOLE OLYMPIAN';
+  if (streak.days >= 7) return 'NO DAY OFF';
+  if (s.money >= 30000) return 'ODOGWU OF THE STREET';
+  return 'LAGOS STREET SURVIVOR';
+}
+const cardText = () => `${s.name} don jump Mr. Pothole ${s.jumped || 0} times and fall inside ${s.fell || 0} times 😂`
+  + ` ${streak.days || 1}-${dayWord(streak.days || 1)} streak on Otondo. Can you beat me? https://otondo.ng/?r=card`;
+
+async function buildCampCard(){
+  const W = 1080, H = 1350, M = 70;
+  const c = document.createElement('canvas'); c.width = W; c.height = H;
+  const x = c.getContext('2d');
+  const F = (sz, w = 800) => `${w} ${sz}px system-ui,-apple-system,"Segoe UI",Roboto,sans-serif`;
+  let maxW = W - 2 * M;                            // fit() shrinks text until it is narrower than this
+  const fit = (txt, max, w, min = 30) => { let z = max; do { x.font = F(z, w); z -= 2; } while (x.measureText(txt).width > maxW && z > min); };
+
+  x.fillStyle = '#f5f1e4'; x.fillRect(0, 0, W, H);
+
+  /* header: the wordmark on green, like the billboard */
+  const hg = x.createLinearGradient(0, 0, W, 0);
+  hg.addColorStop(0, '#065c32'); hg.addColorStop(1, '#0a7a43');
+  x.fillStyle = hg; x.fillRect(0, 0, W, 200);
+  x.fillStyle = '#f3c53d'; x.fillRect(0, 200, W, 8);
+  x.font = F(78, 900); x.textBaseline = 'alphabetic';
+  const word = 'OTONDO', gap = 14, ws = [...word].map(ch => x.measureText(ch).width);
+  let px = M; x.textAlign = 'left';
+  [...word].forEach((ch, i) => { x.fillStyle = i >= 4 ? '#f3c53d' : '#fff'; x.fillText(ch, px, 128); px += ws[i] + gap; });
+  x.font = F(30, 900); const pill = 'CAMP CARD', pw = x.measureText(pill).width + 56;
+  x.fillStyle = '#f3c53d'; x.beginPath(); x.roundRect(W - M - pw, 74, pw, 64, 32); x.fill();
+  x.fillStyle = '#221d12'; x.textAlign = 'center'; x.fillText(pill, W - M - pw / 2, 117);
+
+  /* who */
+  x.fillStyle = '#221d12'; maxW = W - 2 * M; fit(s.name, 92, 900, 48); x.textAlign = 'center';
+  x.fillText(s.name, W / 2, 318);
+  x.fillStyle = '#7a7257'; x.font = F(36, 700);
+  x.fillText(`Platoon ${s.platoon}  ·  Day ${s.day} of ${MAX_DAY}`, W / 2, 372);
+
+  /* the title, on a pink ribbon */
+  const title = cardTitle(); maxW = W - 2 * M - 80; fit(title, 44, 900, 26);
+  const tw = Math.min(W - 2 * M, x.measureText(title).width + 90);
+  x.fillStyle = '#ff4d9d'; x.beginPath(); x.roundRect(W / 2 - tw / 2, 404, tw, 78, 39); x.fill();
+  x.fillStyle = '#fff'; x.fillText(title, W / 2, 458);
+
+  /* four numbers */
+  const tiles = [
+    ['JUMPED', String(s.jumped || 0), 'Mr. Pothole', '#e3f1e6', '#0a7a43'],
+    ['FELL IN', String(s.fell || 0), 'Mr. Pothole', '#ffe3ee', '#d6336c'],
+    ['STREAK', `${streak.days || 1}`, dayWord(streak.days || 1) + ' in a row', '#fff1db', '#e8590c'],
+    ['MONEY', naira(s.money), 'in pocket', '#fbf3d0', '#8a6a00'],
+  ];
+  const TW = (W - 2 * M - 30) / 2, TH = 180;
+  tiles.forEach(([lab, val, sub, bg, ink], i) => {
+    const tx = M + (i % 2) * (TW + 30), ty = 518 + Math.floor(i / 2) * (TH + 24);
+    x.fillStyle = bg; x.beginPath(); x.roundRect(tx, ty, TW, TH, 30); x.fill();
+    x.textAlign = 'left'; x.fillStyle = ink; x.font = F(28, 900); x.fillText(lab, tx + 34, ty + 54);
+    maxW = TW - 68; fit(val, 88, 900, 40); x.fillText(val, tx + 34, ty + 134);
+    x.fillStyle = '#7a7257'; x.font = F(26, 700); x.fillText(sub, tx + 34, ty + 166);
+  });
+
+  /* the street: a corper in the air over Mr. Pothole */
+  const sx = M, sy = 928, sw = W - 2 * M, sh = 292;
+  x.save(); x.beginPath(); x.roundRect(sx, sy, sw, sh, 30); x.clip();
+  const sky = x.createLinearGradient(0, sy, 0, sy + sh);
+  sky.addColorStop(0, '#f7edd6'); sky.addColorStop(.6, '#f2e4c6'); sky.addColorStop(.6, '#55524c'); sky.addColorStop(1, '#3f3d39');
+  x.fillStyle = sky; x.fillRect(sx, sy, sw, sh);
+  x.fillStyle = '#f7c948'; x.beginPath(); x.arc(sx + 110, sy + 62, 38, 0, 7); x.fill();
+  x.fillStyle = 'rgba(255,255,255,.75)';
+  for (let i = sx + 20; i < sx + sw; i += 150) x.fillRect(i, sy + sh - 30, 84, 9);
+  const hx = sx + sw * .6, hy = sy + 228;
+  x.fillStyle = '#8f8a7f'; x.beginPath(); x.ellipse(hx, hy, 118, 26, 0, 0, 7); x.fill();
+  x.fillStyle = '#2b2824'; x.beginPath(); x.ellipse(hx, hy + 1, 100, 19, 0, 0, 7); x.fill();
+  x.fillStyle = '#1b1816'; x.beginPath(); x.ellipse(hx, hy + 3, 70, 12, 0, 0, 7); x.fill();
+  /* the name arching over the hole, as in the game */
+  x.font = F(34, 900); x.lineJoin = 'round';
+  const name = 'MR. POTHOLE', R = 190, cy = hy + 150, cw = [...name].map(ch => x.measureText(ch).width + 3);
+  let a = -Math.PI / 2 - cw.reduce((p, q) => p + q, 0) / R / 2;
+  [...name].forEach((ch, i) => {
+    a += cw[i] / 2 / R;
+    x.save(); x.translate(hx + R * Math.cos(a), cy + R * Math.sin(a)); x.rotate(a + Math.PI / 2);
+    x.textAlign = 'center'; x.strokeStyle = 'rgba(30,22,18,.8)'; x.lineWidth = 7; x.strokeText(ch, 0, 0);
+    x.fillStyle = '#ff4d9d'; x.fillText(ch, 0, 0); x.restore();
+    a += cw[i] / 2 / R;
+  });
+  /* in the air, high over the hole, with speed lines behind him */
+  const fx = hx - 20, feet = hy - 100;
+  drawCorper(x, fx, feet, 1.45, '#8d5524', false);
+  x.strokeStyle = 'rgba(255,255,255,.9)'; x.lineWidth = 5; x.lineCap = 'round';
+  [[-58, -92], [-66, -62], [-58, -32]].forEach(([dx, dy]) => { x.beginPath(); x.moveTo(fx + dx, feet + dy); x.lineTo(fx + dx - 54, feet + dy + 10); x.stroke(); });
+  x.restore();
+
+  /* the ask, and the address */
+  x.textAlign = 'center'; x.fillStyle = '#221d12'; x.font = F(40, 800);
+  x.fillText('Can you beat me?', W / 2, 1274);
+  x.fillStyle = '#0a7a43'; x.font = F(58, 900);
+  x.fillText('otondo.ng', W / 2, 1330);
+
+  return new Promise(res => c.toBlob(res, 'image/png'));
+}
+
+let cardBlob = null, cardUrl = '';
+async function openCard(){
+  if (!s) return;
+  const go = $('shareCard'); go.disabled = true;
+  $('cardNote').textContent = '';
+  try {
+    cardBlob = await buildCampCard();
+    if (cardUrl) URL.revokeObjectURL(cardUrl);
+    cardUrl = URL.createObjectURL(cardBlob);
+    $('cardImg').src = cardUrl;
+    const file = new File([cardBlob], 'otondo-card.png', { type: 'image/png' });
+    $('cardGo').textContent = navigator.canShare && navigator.canShare({ files: [file] }) ? 'Share' : 'Save picture';
+    $('cardPop').classList.remove('hidden');
+  } finally { go.disabled = false; }
+}
+$('shareCard').onclick = () => { hintUsed(); openCard(); };
+$('cardClose').onclick = () => $('cardPop').classList.add('hidden');
+$('cardGo').onclick = async () => {
+  if (!cardBlob) return;
+  const text = cardText(), file = new File([cardBlob], 'otondo-card.png', { type: 'image/png' });
+  try {
+    if (navigator.canShare && navigator.canShare({ files: [file] })){
+      await navigator.share({ files: [file], text });
+      $('cardPop').classList.add('hidden');
+      return;
+    }
+    const a = document.createElement('a');
+    a.href = cardUrl; a.download = 'otondo-card.png'; a.click();
+    let copied = false; try { await navigator.clipboard.writeText(text); copied = true; } catch {}
+    $('cardNote').textContent = copied ? 'Saved. The words are copied too: paste them with the picture.' : 'Saved to your downloads.';
+  } catch (e) {
+    if (e && e.name === 'AbortError') return;          // they closed the share sheet
+    try { await navigator.clipboard.writeText(text); $('cardNote').textContent = 'Could not share the picture, so the words are copied.'; }
+    catch { $('cardNote').textContent = 'Could not share from this browser. Long-press the picture to save it.'; }
+  }
 };
 
 function bar(el, v){
@@ -7400,6 +7658,7 @@ initNet({
 });
 
 if (freshCampDue()) freshCamp(); else render();
+checkStreak();
 </script>
 </body>
 </html>
