@@ -1656,7 +1656,7 @@
 <script type="module">
 import { newGame, doAction, canDo, unlocked, ACTIONS, phaseOf, nextUnlock, postingOdds, rivalOf,
          computePosting, CHOICES, GOAL, goalStatus,
-         shareText, MAX_DAY } from './game.js?v=20261112083517';
+         shareText, MAX_DAY } from './game.js?v=20261112181034';
 
 /* ---------- scene coordinates ----------
    The scene is scaled by a transform (see the stage), so a native
@@ -1687,11 +1687,11 @@ const TS = (document.getElementById('scene').offsetWidth || 375) / 375;
 const ALLAWEE_NOTE = 'Allawee ₦77,000 — e never enter.';
 import { initNet, joinCamp, syncPlayer, platoonBoard, recentChat, postChat,
          postSuggestion, reportMessage, awardBoard, myAwards, laughChat,
-         setPresence, campRoster, renameMe, setAvatar, online } from './net.js?v=20261112083517';
-import { startMusic, stopMusic, musicOn, audioState, audioSupported, setRain, whenSilenced, wakeAudio, audible, say, sfx, BEAT, BAR } from './audio.js?v=20261112083517';
+         setPresence, campRoster, renameMe, setAvatar, online } from './net.js?v=20261112181034';
+import { startMusic, stopMusic, musicOn, audioState, audioSupported, setRain, whenSilenced, wakeAudio, audible, say, sfx, BEAT, BAR } from './audio.js?v=20261112181034';
 import { playHoop, playPenalty, playQuiz, playRegister, playParade,
          playMami, playHustle, playManOWar, playSaed, playSocial,
-         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261112083517';
+         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261112181034';
 
 /* Every dance animation is expressed in beats, so the steps are on-tempo
    whether or not the sound is playing — and genuinely on the beat when it is. */
@@ -2405,6 +2405,9 @@ const SHOPS = [
      slot keeps its neighbours. */
   { sign: 'HAGGLEBUDDY BOARD', w: 112, billboard: true, ad: 'hagglebuddy' },
   { sign: 'BUS STOP',          w: 104, busstop: true,   ad: 'advertise' },
+  /* (2026-11-12) A second house ad: solofounderskills.com, the AI skill pack.
+     Last, after the bus stop, so every other slot keeps its neighbours. */
+  { sign: 'SKILLS BOARD',      w: 112, billboard: true, ad: 'skills' },
 ];
 
 /* signboard: textLength forces any wording to fit, so a long brand name
@@ -2763,7 +2766,7 @@ function shop(cfg){
   if (cfg.suya) return suyaSpot(cfg);
   if (cfg.lounge) return lounge(cfg);
   if (cfg.modern) return modernShop(cfg);
-  if (cfg.billboard) return adBillboard(cfg);
+  if (cfg.billboard) return cfg.ad === 'skills' ? skillsBillboard(cfg) : adBillboard(cfg);
   if (cfg.busstop) return busStop(cfg);
   /* The barber's board is taller than a sign and rides above the roof, so that
      one shop lets its drawing spill past the viewBox. */
@@ -2812,6 +2815,35 @@ function adBillboard(cfg){
     <rect x="7" y="24" width="86" height="6.4" fill="#facc15"/>
     <text x="50" y="29" text-anchor="middle" font-size="4.6" font-weight="900" font-family="system-ui,sans-serif"
       fill="#14532d" textLength="80" lengthAdjust="spacingAndGlyphs">HaggleBuddy · free on Play Store &amp; App Store ↗</text>
+    <path d="M20 -1.5l3 2.5 M80 -1.5l-3 2.5" stroke="#3f3c37" stroke-width="1.2"/>
+    <circle class="lampGlow" cx="22" cy="2" r="6" fill="#fff6c8" opacity="0"/><circle class="lampGlow" cx="78" cy="2" r="6" fill="#fff6c8" opacity="0"/>
+  </svg>`;
+}
+/* The solofounderskills.com board: the site's own colours (cream, its orange,
+   the peach edge of its "On-demand AI skills" pill) so the board and the page
+   it opens look like the same thing. The price is shown in naira as well,
+   because a dollar figure alone means little to most people walking past;
+   it is rounded and marked "about", since checkout charges $49 and the bank
+   sets the final naira amount. Change NGN_PER_USD when the rate moves a lot. */
+const SKILLS_USD = 49, NGN_PER_USD = 1390;                       // rate checked 2026-11-12
+const SKILLS_NGN = Math.round(SKILLS_USD * NGN_PER_USD / 1000) * 1000;
+const SKILLS_LINK = 'https://solofounderskills.com/?ref=otondo';
+function skillsBillboard(cfg){
+  const naira = SKILLS_NGN.toLocaleString('en-NG');
+  return `<svg viewBox="0 0 100 60" aria-hidden="true" overflow="visible">
+    <rect x="29" y="30" width="3.4" height="30" fill="#5a5650"/><rect x="67" y="30" width="3.4" height="30" fill="#5a5650"/>
+    <path d="M26 60h9 M64 60h9" stroke="#3f3c37" stroke-width="2"/>
+    <rect x="16" y="31" width="68" height="1.6" fill="#4a4741"/>
+    <rect x="5" y="1" width="90" height="31" rx="1.5" fill="#2b2b2b"/>
+    <rect x="7" y="3" width="86" height="21" fill="#fff1e6"/>
+    <rect x="8" y="4" width="84" height="19" rx="2" fill="none" stroke="#ffd4b8" stroke-width=".8"/>
+    <text x="50" y="12" text-anchor="middle" font-size="7.4" font-weight="900" font-family="system-ui,sans-serif"
+      fill="#e8521c" textLength="58" lengthAdjust="spacingAndGlyphs">ON-DEMAND</text>
+    <text x="50" y="21" text-anchor="middle" font-size="7.4" font-weight="900" font-family="system-ui,sans-serif"
+      fill="#241f2e" textLength="64" lengthAdjust="spacingAndGlyphs">AI SKILLS</text>
+    <rect x="7" y="24" width="86" height="6.4" fill="#ff6b35"/>
+    <text x="50" y="29" text-anchor="middle" font-size="4.6" font-weight="900" font-family="system-ui,sans-serif"
+      fill="#fff" textLength="80" lengthAdjust="spacingAndGlyphs">solofounderskills.com · $${SKILLS_USD} (about ₦${naira}) ↗</text>
     <path d="M20 -1.5l3 2.5 M80 -1.5l-3 2.5" stroke="#3f3c37" stroke-width="1.2"/>
     <circle class="lampGlow" cx="22" cy="2" r="6" fill="#fff6c8" opacity="0"/><circle class="lampGlow" cx="78" cy="2" r="6" fill="#fff6c8" opacity="0"/>
   </svg>`;
@@ -4885,6 +4917,7 @@ sceneEl.addEventListener('click', e => {
   const adSpot = at.closest('.shop[data-ad]');
   if (adSpot){
     if (adSpot.dataset.ad === 'hagglebuddy') window.open(adLink(), '_blank', 'noopener');
+    else if (adSpot.dataset.ad === 'skills') window.open(SKILLS_LINK, '_blank', 'noopener');
     else location.href = 'mailto:hello@otondo.ng?subject=' + encodeURIComponent('Advertising on Otondo');
     return;
   }
