@@ -686,6 +686,8 @@
      Level with the stalls (0) and later in the DOM, so he stands in front of
      the shop but behind anything driving past. */
   .corper.running,.corper.munching,.corper.shopping{z-index:0}
+  /* scaled from his feet on an errand, so shrinking to a seller's size keeps him on the ground */
+  .corper.running,.corper.munching,.corper.shopping{transform-origin:50% 100%}
 
   /* browsing a stall: stood still, looking. No munching — nobody eats a mattress. */
   .corper.shopping .leg,.corper.shopping .leg2{animation:none}
@@ -1700,7 +1702,7 @@
 <script type="module">
 import { newGame, doAction, canDo, unlocked, ACTIONS, phaseOf, nextUnlock, postingOdds, rivalOf,
          computePosting, CHOICES, GOAL, goalStatus,
-         shareText, MAX_DAY } from './game.js?v=20261117121016';
+         shareText, MAX_DAY } from './game.js?v=20261117121707';
 
 /* ---------- scene coordinates ----------
    The scene is scaled by a transform (see the stage), so a native
@@ -1731,11 +1733,11 @@ const TS = (document.getElementById('scene').offsetWidth || 375) / 375;
 const ALLAWEE_NOTE = 'Allawee ₦77,000 — e never enter.';
 import { initNet, joinCamp, syncPlayer, platoonBoard, recentChat, postChat,
          postSuggestion, reportMessage, awardBoard, myAwards, laughChat,
-         setPresence, campRoster, renameMe, setAvatar, online } from './net.js?v=20261117121016';
-import { startMusic, stopMusic, musicOn, audioState, audioSupported, setRain, whenSilenced, wakeAudio, audible, say, sfx, BEAT, BAR } from './audio.js?v=20261117121016';
+         setPresence, campRoster, renameMe, setAvatar, online } from './net.js?v=20261117121707';
+import { startMusic, stopMusic, musicOn, audioState, audioSupported, setRain, whenSilenced, wakeAudio, audible, say, sfx, BEAT, BAR } from './audio.js?v=20261117121707';
 import { playHoop, playPenalty, playQuiz, playRegister, playParade,
          playMami, playHustle, playManOWar, playSaed, playSocial,
-         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261117121016';
+         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261117121707';
 
 /* Every dance animation is expressed in beats, so the steps are on-tempo
    whether or not the sound is playing — and genuinely on the beat when it is. */
@@ -6558,8 +6560,13 @@ function snackRun(preferred, target, paid){
     /* the door sits 29% in from the left of every building drawing */
     return r.left - box.left + (indoor ? r.width * 0.29 : r.width / 2) + (hawk ? side * BESIDE : 0);
   };
+  /* Up the screen to the seller's line and down to the seller's size: the
+     people already standing there say how big a person is at that depth —
+     shop customers are .32 of this skeleton, a hawker .43. Feet on their line
+     (shops stand at 62px, hawkers at 54; he walks at 4). */
   const park = x => {
-    who.style.transform = `translate(${Math.round(x - home)}px,-38px) scale(.8)`;
+    const ty = hawk ? -50 : -58, k = hawk ? .43 : .34;
+    who.style.transform = `translate(${Math.round(x - home)}px,${ty}px) scale(${k})`;
   };
 
   /* Dash to where the stall WILL be when they arrive. Its speed is exact —
@@ -6575,7 +6582,7 @@ function snackRun(preferred, target, paid){
   /* Beside a hawker, on the side he ran from, not on her spot. On her spot
      he stood exactly behind her — she is drawn in front — so the frames
      showed YOU over a seller with no corper anywhere: he had vanished. */
-  const BESIDE = 26;
+  const BESIDE = 16;                              // he is a third of the size there now
   const side = home < stall.c ? -1 : 1;
   const speed = hawk
     ? (box.width * 1.30) / (HAWK_LEN * TS * 1000) * (stall.el.classList.contains('akara') ? 1 : -1)
