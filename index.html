@@ -1696,7 +1696,7 @@
 <script type="module">
 import { newGame, doAction, canDo, unlocked, ACTIONS, phaseOf, nextUnlock, postingOdds, rivalOf,
          computePosting, CHOICES, GOAL, goalStatus,
-         shareText, MAX_DAY } from './game.js?v=20261116203702';
+         shareText, MAX_DAY } from './game.js?v=20261117115145';
 
 /* ---------- scene coordinates ----------
    The scene is scaled by a transform (see the stage), so a native
@@ -1727,11 +1727,11 @@ const TS = (document.getElementById('scene').offsetWidth || 375) / 375;
 const ALLAWEE_NOTE = 'Allawee ₦77,000 — e never enter.';
 import { initNet, joinCamp, syncPlayer, platoonBoard, recentChat, postChat,
          postSuggestion, reportMessage, awardBoard, myAwards, laughChat,
-         setPresence, campRoster, renameMe, setAvatar, online } from './net.js?v=20261116203702';
-import { startMusic, stopMusic, musicOn, audioState, audioSupported, setRain, whenSilenced, wakeAudio, audible, say, sfx, BEAT, BAR } from './audio.js?v=20261116203702';
+         setPresence, campRoster, renameMe, setAvatar, online } from './net.js?v=20261117115145';
+import { startMusic, stopMusic, musicOn, audioState, audioSupported, setRain, whenSilenced, wakeAudio, audible, say, sfx, BEAT, BAR } from './audio.js?v=20261117115145';
 import { playHoop, playPenalty, playQuiz, playRegister, playParade,
          playMami, playHustle, playManOWar, playSaed, playSocial,
-         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261116203702';
+         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261117115145';
 
 /* Every dance animation is expressed in beats, so the steps are on-tempo
    whether or not the sound is playing — and genuinely on the beat when it is. */
@@ -4078,6 +4078,13 @@ const TOUT_SVG = `<svg viewBox="0 0 80 48" aria-hidden="true" overflow="visible"
   </g>
   </g>
 </svg>`;
+/* The same car in deep red: only the paint changes. Silver's colours, each
+   swapped for its red counterpart (body, lit tops, shaded back and pillar,
+   the sill line, the door seams, the handles). */
+const CAR_RED = [['#c3c8ce', '#a8302c'], ['#e6e9ec', '#d0625b'], ['#7f848b', '#6b1d1b'], ['#9aa0a7', '#8a2624'],
+                 ['#a9afb6', '#8c2724'], ['#9aa1a9', '#7e2321'], ['#7d838b', '#561614']]
+  .reduce((svg, [from, to]) => svg.split(from).join(to), CAR_SVG);
+let carN = 0;
 /* cost: a tapped crossing; miss: the slip when you are asked and do not tap.
    warn: how far ahead the ask starts, if not POT_WARN (the hill asks early:
    user, "start a little early before reaching the hill").
@@ -4104,7 +4111,9 @@ let potKind = 'pothole';
    comes round as often as he did; the hill, the gutter, the puddle and the
    car share the rest (2026-11-16). ['pothole'] alone puts the road back to
    exactly what it was. */
-const OBSTACLE_TURNS = ['pothole', 'hill', 'pothole', 'gutter', 'pothole', 'puddle', 'pothole', 'car'];
+/* the car twice a round (user, 2026-11-17: "needs to appear slightly more often"):
+   once in five passes instead of once in eight */
+const OBSTACLE_TURNS = ['pothole', 'hill', 'pothole', 'car', 'pothole', 'gutter', 'pothole', 'puddle', 'pothole', 'car'];
 /* The agbero is not on the rota; he comes on a clock (user, 2026-11-16:
    "periodically, maybe twice after 1 minute"): first a minute into play,
    then every 30s at most, and never two passes running, so the road's own
@@ -4132,7 +4141,8 @@ function toutLeaves(){
 const wideObstacle = k => k === 'hill' || k === 'car' || k === 'tout';
 function setObstacle(kind){
   potKind = kind;
-  pothole.innerHTML = OBSTACLE[kind].svg;
+  /* the car alternates silver and red, so its two turns a round look like two cars */
+  pothole.innerHTML = kind === 'car' && (carN++ % 2) ? CAR_RED : OBSTACLE[kind].svg;
   pothole.classList.remove('leaving', 'waved');               // a fresh pass: whoever walked off is gone
   pothole.getAnimations().forEach(a => a.cancel());
   /* The car stands up off the road, so it is drawn in front of everyone on
