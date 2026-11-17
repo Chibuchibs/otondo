@@ -498,6 +498,9 @@
      `.jumping` and `.sunk` are markers only now. */
   /* Behind the pothole's rim (z1) while he goes under; the clip does the rest. */
   .corper.sunk{z-index:0;transform-origin:50% 100%}
+  .corper.detour{z-index:0}      /* round the parked car, on the road side of it */
+  .pothole.car{z-index:4}
+  .corper.bumped{z-index:5}
   /* Leaning into the hill and going over in a slip both pivot on the feet. */
   .corper.jumping{transform-origin:50% 100%}
   /* the puddle's surface catching the light, and the water a foot kicks up */
@@ -1656,7 +1659,7 @@
 <script type="module">
 import { newGame, doAction, canDo, unlocked, ACTIONS, phaseOf, nextUnlock, postingOdds, rivalOf,
          computePosting, CHOICES, GOAL, goalStatus,
-         shareText, MAX_DAY } from './game.js?v=20261116160531';
+         shareText, MAX_DAY } from './game.js?v=20261116163948';
 
 /* ---------- scene coordinates ----------
    The scene is scaled by a transform (see the stage), so a native
@@ -1687,11 +1690,11 @@ const TS = (document.getElementById('scene').offsetWidth || 375) / 375;
 const ALLAWEE_NOTE = 'Allawee ₦77,000 — e never enter.';
 import { initNet, joinCamp, syncPlayer, platoonBoard, recentChat, postChat,
          postSuggestion, reportMessage, awardBoard, myAwards, laughChat,
-         setPresence, campRoster, renameMe, setAvatar, online } from './net.js?v=20261116160531';
-import { startMusic, stopMusic, musicOn, audioState, audioSupported, setRain, whenSilenced, wakeAudio, audible, say, sfx, BEAT, BAR } from './audio.js?v=20261116160531';
+         setPresence, campRoster, renameMe, setAvatar, online } from './net.js?v=20261116163948';
+import { startMusic, stopMusic, musicOn, audioState, audioSupported, setRain, whenSilenced, wakeAudio, audible, say, sfx, BEAT, BAR } from './audio.js?v=20261116163948';
 import { playHoop, playPenalty, playQuiz, playRegister, playParade,
          playMami, playHustle, playManOWar, playSaed, playSocial,
-         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261116160531';
+         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261116163948';
 
 /* Every dance animation is expressed in beats, so the steps are on-tempo
    whether or not the sound is playing — and genuinely on the beat when it is. */
@@ -3834,25 +3837,81 @@ function makePothole(id, name){
 }
 
 const pothole = makePothole('potArc', 'MR. POTHOLE');
-/* The open gutter — a broken concrete drain with a slab tipped up out of it —
-   took turns with Mr. Pothole for a day; the user wanted Mr. Pothole kept, so
-   he is the only one that comes round now. The gutter is kept for when it gets
-   its own place on the road beside him: same box, same jump, same fall, only
-   the drawing and the words differ (setObstacle). */
+/* The open gutter (2026-11-16, from the user's photo of a Lagos drain): two
+   concrete kerbs with lit tops, the channel between them, its far wall in
+   light, black water with a sachet and a bottle on it, weeds at the lip. In
+   the street's depth: camera up and to the right. Wider than Mr. Pothole, so
+   the jump is longer (hop 760ms). Falling in is Mr. Pothole's fall. */
 const POTHOLE_SVG = pothole.innerHTML;
 const GUTTER_SVG = `<svg viewBox="0 0 80 48" aria-hidden="true" overflow="visible">
-  <defs><path id="potArc" d="M6 40 A51 51 0 0 1 74 40" fill="none"/></defs>
-  <path d="M10 37l-6-1 M70 37l6-1.4 M12 44l-5 2.6 M68 44l6 2" stroke="#4d4b46" stroke-width="1" fill="none" stroke-linecap="round"/>
-  <rect x="9" y="31" width="62" height="14" rx="1.5" fill="#a7a196"/>
-  <rect x="13" y="33.4" width="54" height="9.2" rx="1" fill="#24221f"/>
-  <rect x="13" y="39.4" width="54" height="3.2" fill="#3e4636" opacity=".85"/>
-  <path d="M15 40.6h10 M33 41.2h8 M50 40.4h12" stroke="#6b7a5a" stroke-width=".6"/>
-  <path d="M40 33l6-4.6h12l-3 4.6z" fill="#bdb7ab"/>
-  <path d="M46 28.4h9" stroke="#8f8a7f" stroke-width=".6"/>
-  <path d="M18 33.4l3-2.4 M60 42.6l2 2.4" stroke="#6f6a60" stroke-width=".8"/>
+  <defs><path id="potArc" d="M4 30 A54 54 0 0 1 76 30" fill="none"/></defs>
+  <ellipse cx="40" cy="46.4" rx="37" ry="1.6" fill="#2b2824" opacity=".25"/>
+  <!-- the channel: its void, the far wall catching the light, the water -->
+  <rect x="16" y="38" width="46" height="8.4" fill="#1f1d1a"/>
+  <path d="M16 38l4-2.4h46l-4 2.4z" fill="#3a3832"/>
+  <path d="M16 38l4-2.4V43.6l-4 2.8z" fill="#8f897d"/>
+  <path d="M16 42.4l4-2.4h46l-4 2.4z" fill="#46504f"/>
+  <rect x="16" y="42.4" width="46" height="4" fill="#2c3434"/>
+  <path class="ripple" d="M24 41.2h7M40 40.6h6M52 41.4h5" stroke="#7d8a86" stroke-width=".6" stroke-linecap="round"/>
+  <g transform="rotate(-10 30 41)"><rect x="27" y="40" width="6" height="2.6" rx=".8" fill="#eef3f5"/>
+    <path d="M28 41.3h4" stroke="#3a7bd5" stroke-width=".6"/></g>
+  <g transform="rotate(8 49 41)"><rect x="45" y="40.2" width="7.4" height="2" rx="1" fill="#9cc7b3" opacity=".9"/>
+    <rect x="52.2" y="40.6" width="1.6" height="1.2" fill="#2f6b4f"/></g>
+  <circle cx="38" cy="41.4" r=".6" fill="#d8d2c4"/><circle cx="57" cy="40.8" r=".5" fill="#d8d2c4"/>
+  <!-- the two kerbs: front face, lit top, shaded right side -->
+  <rect x="6" y="38" width="10" height="8.4" fill="#aaa498"/>
+  <path d="M6 38l4-2.4h10l-4 2.4z" fill="#d9d4c9"/>
+  <rect x="62" y="38" width="10" height="8.4" fill="#aaa498"/>
+  <path d="M62 38l4-2.4h10l-4 2.4z" fill="#d9d4c9"/>
+  <path d="M72 38l4-2.4V44l-4 2.4z" fill="#827c71"/>
+  <path d="M8 41.6l2 1.2M66 43l1.6-1.4" stroke="#7b766c" stroke-width=".6"/>
+  <!-- weeds on the near lip -->
+  <path d="M8.4 35.8q-1.4-2-1.8-4.6M9.6 35.8q-.2-2.6.4-5.4M10.8 35.8q.8-2.2 2.4-3.8M12 35.8q.2-1.6 1.6-2.6" stroke="#5f8a3e" stroke-width=".8" fill="none" stroke-linecap="round"/>
+  <path d="M9.2 35.8q-1-1.6-2.6-2.4M11.4 35.8q-.6-2-.2-3.6" stroke="#7aa651" stroke-width=".6" fill="none" stroke-linecap="round"/>
   <text class="potName" font-size="8" font-weight="900" letter-spacing="0.55"
         font-family="system-ui,sans-serif" text-anchor="middle">
     <textPath href="#potArc" startOffset="50%">OPEN GUTTER</textPath>
+  </text>
+</svg>`;
+/* A car parked on the kerb, front wheel down a gutter (2026-11-16, from the
+   user's photo): a silver tokunbo saloon tipped nose-down about its back
+   wheel, roof, bonnet and boot lit, back end in shade. It fills the walk, so
+   the way past is out into the road behind it (goAround). Wider than the
+   80px box on both sides; the name rides over the roof. */
+const CAR_SVG = `<svg viewBox="0 0 80 48" aria-hidden="true" overflow="visible">
+  <defs><path id="potArc" d="M-8 15 A120 120 0 0 1 88 15" fill="none"/></defs>
+  <ellipse cx="40" cy="46.4" rx="58" ry="2" fill="#2b2824" opacity=".3"/>
+  <!-- the gutter the front wheel went down -->
+  <rect x="-16" y="41.6" width="22" height="6.4" fill="#1f1d1a"/>
+  <path d="M-16 41.6l4-2.4h22l-4 2.4z" fill="#3a3832"/>
+  <rect x="-22" y="41.6" width="6" height="6.4" fill="#aaa498"/><path d="M-22 41.6l4-2.4h6l-4 2.4z" fill="#d9d4c9"/>
+  <rect x="6" y="41.6" width="6" height="6.4" fill="#aaa498"/><path d="M6 41.6l4-2.4h6l-4 2.4z" fill="#d9d4c9"/>
+  <g transform="rotate(-5 82 40)">
+    <!-- depth: the back end in shade, then the lit tops of bonnet, roof, boot -->
+    <path d="M98 24l4-2.4V37.6l-4 2.4z" fill="#7f848b"/>
+    <rect x="98.8" y="28.6" width="2.4" height="4.4" fill="#f4f1e6" transform="skewY(-31)" transform-origin="99 30"/>
+    <path d="M-18 24l4-2.4h32l-4 2.4z" fill="#e6e9ec"/>
+    <path d="M22 12l4-2.4h40l-4 2.4z" fill="#e6e9ec"/>
+    <path d="M72 24l4-2.4h26l-4 2.4z" fill="#e6e9ec"/>
+    <path d="M62 12l4-2.4 10 12-4 2.4z" fill="#9aa0a7"/>
+    <!-- the body -->
+    <path d="M-18 24H14L22 12H62L72 24H98V37.6Q98 40 95.6 40H-15.6Q-18 40-18 37.6Z" fill="#c3c8ce"/>
+    <path d="M-18 31H98" stroke="#a9afb6" stroke-width=".7"/>
+    <path d="M18 23L24.4 14H40V23Z" fill="#5d7482"/><path d="M43 14H60.6L67.6 23H43Z" fill="#5d7482"/>
+    <path d="M25 22l6-7M45 22l5-7" stroke="#fff" stroke-width=".7" opacity=".35"/>
+    <path d="M41.5 13v26M70 24v15" stroke="#9aa1a9" stroke-width=".6"/>
+    <rect x="34" y="26" width="4" height="1.2" rx=".5" fill="#7d838b"/><rect x="62" y="26" width="4" height="1.2" rx=".5" fill="#7d838b"/>
+    <rect x="-18" y="26.4" width="5" height="3" rx="1" fill="#fff3c2"/>
+    <rect x="94.6" y="26" width="3.4" height="4" rx=".8" fill="#c1272d"/>
+    <rect x="-18" y="35.4" width="116" height="2.4" fill="#5b6067"/>
+    <!-- wheel arches and wheels -->
+    <path d="M-12 40a8 8 0 0 1 16 0z M74 40a8 8 0 0 1 16 0z" fill="#2c2f33"/>
+    <circle cx="-4" cy="40" r="6.4" fill="#1d1f22"/><circle cx="-4" cy="40" r="2.8" fill="#9aa0a6"/>
+    <circle cx="82" cy="40" r="6.4" fill="#1d1f22"/><circle cx="82" cy="40" r="2.8" fill="#9aa0a6"/>
+  </g>
+  <text class="potName" font-size="8" font-weight="900" letter-spacing="0.55"
+        font-family="system-ui,sans-serif" text-anchor="middle">
+    <textPath href="#potArc" startOffset="50%">WHO PARK HERE?</textPath>
   </text>
 </svg>`;
 /* Two more for the road (2026-11-10), each in the same 80x48 box and the same
@@ -3899,17 +3958,26 @@ const OBSTACLE = {
              jumped: 'You walked up the hill!', fell: 'You slid down the hill! Tap next time.' },
   puddle:  { svg: PUDDLE_SVG, tag: 'TAP TO WALK THROUGH', cost: 2, miss: 5, start: 30, edge: 28,
              jumped: 'You waded through the puddle!', fell: 'Splash! You slipped in the puddle. Tap next time.' },
-  gutter:  { svg: GUTTER_SVG,  tag: 'TAP TO JUMP THE GUTTER',
+  gutter:  { svg: GUTTER_SVG, tag: 'TAP TO JUMP THE GUTTER', cost: 3, miss: 7, start: 32, edge: 30,
              jumped: 'You jumped the open gutter!', fell: 'Straight into the gutter! Tap JUMP next time.' },
+  car:     { svg: CAR_SVG, tag: 'TAP TO GO ROUND THE CAR', cost: 2, miss: 5, start: 62, edge: 58, warn: 420,
+             jumped: 'You went round the car!', fell: 'You walked into the car! Tap to go round.' },
 };
 let potKind = 'pothole';
 /* Which obstacle each new pass brings. Mr. Pothole every other pass, so he
-   comes round as often as he did; the hill and the puddle share the rest.
-   ['pothole'] alone puts the road back to exactly what it was. */
-const OBSTACLE_TURNS = ['pothole', 'hill', 'pothole', 'puddle'];
+   comes round as often as he did; the hill, the gutter, the puddle and the
+   car share the rest (2026-11-16). ['pothole'] alone puts the road back to
+   exactly what it was. */
+const OBSTACLE_TURNS = ['pothole', 'hill', 'pothole', 'gutter', 'pothole', 'puddle', 'pothole', 'car'];
+/* The wide ones keep their distance from Mrs. Pothole (HILL_CLEAR). */
+const wideObstacle = k => k === 'hill' || k === 'car';
 function setObstacle(kind){
   potKind = kind;
   pothole.innerHTML = OBSTACLE[kind].svg;
+  /* The car stands up off the road, so it is drawn in front of everyone on
+     the walk: anybody passing it goes behind it, on the road side — which is
+     what going round it looks like. A hole stays under their feet. */
+  pothole.classList.toggle('car', kind === 'car');
 }
 
 /* Up in the far lane and over to the left. Smaller, because everything in that
@@ -4279,9 +4347,11 @@ if (!calm()){
       const W = sceneEl.sceneRect().width, d = ROAD_SPEED * dt;
       potPos -= d; mrsPos -= d;
       if (potPos < -60){                                              // round again after a gap: a new pass
-        potPos = W + 60 + Math.random() * W * 0.6; potLap++;
+        /* a longer walk between passes (user, 2026-11-16: more on the road
+           without it looking congested) */
+        potPos = W + 60 + W * 0.3 + Math.random() * W * 0.6; potLap++;
         setObstacle(OBSTACLE_TURNS[potLap % OBSTACLE_TURNS.length]);   // swapped off-screen
-        if (potKind === 'hill' && Math.abs(potPos - mrsPos) < HILL_CLEAR) potPos = mrsPos + HILL_CLEAR;
+        if (wideObstacle(potKind) && Math.abs(potPos - mrsPos) < HILL_CLEAR) potPos = mrsPos + HILL_CLEAR;
         /* The hill and the puddle come straight after a pothole pass, still
            inside its cooldown, so their ask came late or not at all. They
            start fresh: asked as soon as they are on screen. */
@@ -4289,7 +4359,7 @@ if (!calm()){
       }
       if (mrsPos < -40){
         mrsPos = W + 40 + Math.random() * W * 0.8;
-        if (potKind === 'hill' && Math.abs(mrsPos - potPos) < HILL_CLEAR) mrsPos = potPos + HILL_CLEAR;
+        if (wideObstacle(potKind) && Math.abs(mrsPos - potPos) < HILL_CLEAR) mrsPos = potPos + HILL_CLEAR;
       }
       placePothole();
       sceneEl.querySelectorAll('.coin').forEach(c => {
@@ -4343,14 +4413,29 @@ function rejoinGrid(p, stoodStillMs, glide = true){
    already has — the dance's translateX, for one — instead of replacing it.
    The hill and the puddle last as long as it takes to cover their width at
    walking pace plus road speed (~75px/s). */
-function hop(p){
+function hop(p, dur = 620, h = 30){
   p.animate([
     { transform: 'translateY(0)' },
-    { transform: 'translateY(-30px)', offset: .38 },
-    { transform: 'translateY(-30px)', offset: .58 },
+    { transform: `translateY(${-h}px)`, offset: .38 },
+    { transform: `translateY(${-h}px)`, offset: .58 },
     { transform: 'translateY(0)' },
-  ], { duration: 620, easing: 'cubic-bezier(.3,0,.4,1)', composite: 'add' });
-  return 620;
+  ], { duration: dur, easing: 'cubic-bezier(.3,0,.4,1)', composite: 'add' });
+  return dur;
+}
+/* Round the parked car: out into the road behind it — up the screen, a touch
+   smaller, and behind the car (.detour) — then back onto the walk past its
+   boot. Long enough to clear its whole length at ~75px/s. */
+function goAround(p){
+  const DUR = 1700;
+  p.classList.add('detour');
+  p.animate([
+    { transform: 'translateY(0) scale(1)' },
+    { transform: 'translateY(-12px) scale(.93)', offset: .24 },
+    { transform: 'translateY(-12px) scale(.93)', offset: .78 },
+    { transform: 'translateY(0) scale(1)' },
+  ], { duration: DUR, easing: 'ease-in-out', composite: 'add' });
+  setTimeout(() => p.classList.remove('detour'), DUR);
+  return DUR;
 }
 function climbHill(p){                // up the slope leaning in, over the top, down leaning back
   p.animate([
@@ -4402,7 +4487,8 @@ function hopPothole(p, paid){
   if (paid) potReadyAt = performance.now() + POT_COOLDOWN;
   p.classList.add('jumping');
   const kind = potKind, ob = OBSTACLE[kind];
-  const took = kind === 'hill' ? climbHill(p) : kind === 'puddle' ? wadePuddle(p) : hop(p);
+  const took = kind === 'hill' ? climbHill(p) : kind === 'puddle' ? wadePuddle(p)
+             : kind === 'car' ? goAround(p) : kind === 'gutter' ? hop(p, 760, 34) : hop(p);
   setTimeout(() => { p.classList.remove('jumping'); }, took + 20);
   if (paid) say('welldone');                        // cleared it: "Well done!"
   if (paid && s){
@@ -4424,14 +4510,17 @@ function slipOn(p){
   potReadyAt = performance.now() + POT_COOLDOWN;
   tell(ob.fell);
   p.classList.add('jumping');
+  if (kind === 'car') p.classList.add('bumped');     // knocked down in front of the car, where you can see him
   p.style.animationPlayState = 'paused';
   const drift = calm() ? null : p.animate([{ transform: 'translateX(0)' },
     { transform: `translateX(${-ROAD_SPEED * DUR / 1000}px)` }],
     { duration: DUR, fill: 'forwards', composite: 'add' });
-  const down = kind === 'hill' ? 'translate(-10px,4px) rotate(-82deg)' : 'translate(6px,3px) rotate(82deg)';
+  const back = kind === 'hill' || kind === 'car';
+  const down = back ? 'translate(-10px,4px) rotate(-82deg)' : 'translate(6px,3px) rotate(82deg)';
   p.animate([
     { transform: 'translate(0px,0px) rotate(0deg)' },
-    { transform: kind === 'hill' ? 'translate(0px,-8px) rotate(-8deg)' : 'translate(2px,1px) rotate(14deg)', offset: .2 },
+    { transform: kind === 'hill' ? 'translate(0px,-8px) rotate(-8deg)'
+               : kind === 'car' ? 'translate(-6px,-3px) rotate(-12deg)' : 'translate(2px,1px) rotate(14deg)', offset: .2 },
     { transform: down, offset: .42 }, { transform: down, offset: .78 },
     { transform: 'translate(0px,0px) rotate(0deg)' },
   ], { duration: DUR, easing: 'ease-in-out', composite: 'add' });
@@ -4443,7 +4532,7 @@ function slipOn(p){
   }
   setTimeout(() => {
     drift?.cancel();
-    p.classList.remove('jumping');
+    p.classList.remove('jumping', 'bumped');
     p.style.animationPlayState = '';
     rejoinGrid(p, DUR);
     /* as after the hole: a few seconds as a passer-by, so landing back short
@@ -4455,10 +4544,11 @@ function slipOn(p){
 
 function fallIn(p){
   if (hopped(p)) return;
-  if (potKind !== 'pothole') return slipOn(p);
+  if (potKind !== 'pothole' && potKind !== 'gutter') return slipOn(p);
   p.dataset.hop = String(potLap);
   potReadyAt = performance.now() + POT_COOLDOWN;
-  if (s){ s.fell = (s.fell || 0) + 1; save(); drawTally(); }
+  if (s && potKind === 'pothole'){ s.fell = (s.fell || 0) + 1; save(); drawTally(); }   // the tally is Mr. Pothole's
+  const fallCost = OBSTACLE[potKind].miss ?? FALL_COST;
   tell(OBSTACLE[potKind].fell);
   p.classList.add('sunk');
   /* Stop walking the moment he goes in. Left running, he covered 27px during
@@ -4483,9 +4573,9 @@ function fallIn(p){
     { transform: 'translateY(34px) rotate(16deg)', clipPath: 'inset(0 -40% 100% -40%)' },
   ], { duration: 750, easing: 'ease-in', fill: 'forwards', composite: 'add' });
   if (s){
-    s.energy = Math.max(0, s.energy - FALL_COST);
+    s.energy = Math.max(0, s.energy - fallCost);
     save(); render();
-    floatCost(p, `-${FALL_COST} energy`);
+    floatCost(p, `-${fallCost} energy`);
   }
   setTimeout(() => {
     sink.cancel();                 // forwards-fill would hold him invisible
