@@ -1702,7 +1702,7 @@
 <script type="module">
 import { newGame, doAction, canDo, unlocked, ACTIONS, phaseOf, nextUnlock, postingOdds, rivalOf,
          computePosting, CHOICES, GOAL, goalStatus,
-         shareText, MAX_DAY } from './game.js?v=20261117121707';
+         shareText, MAX_DAY } from './game.js?v=20261117133048';
 
 /* ---------- scene coordinates ----------
    The scene is scaled by a transform (see the stage), so a native
@@ -1733,11 +1733,11 @@ const TS = (document.getElementById('scene').offsetWidth || 375) / 375;
 const ALLAWEE_NOTE = 'Allawee ₦77,000 — e never enter.';
 import { initNet, joinCamp, syncPlayer, platoonBoard, recentChat, postChat,
          postSuggestion, reportMessage, awardBoard, myAwards, laughChat,
-         setPresence, campRoster, renameMe, setAvatar, online } from './net.js?v=20261117121707';
-import { startMusic, stopMusic, musicOn, audioState, audioSupported, setRain, whenSilenced, wakeAudio, audible, say, sfx, BEAT, BAR } from './audio.js?v=20261117121707';
+         setPresence, campRoster, renameMe, setAvatar, online } from './net.js?v=20261117133048';
+import { startMusic, stopMusic, musicOn, audioState, audioSupported, setRain, whenSilenced, wakeAudio, audible, say, sfx, BEAT, BAR } from './audio.js?v=20261117133048';
 import { playHoop, playPenalty, playQuiz, playRegister, playParade,
          playMami, playHustle, playManOWar, playSaed, playSocial,
-         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261117121707';
+         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261117133048';
 
 /* Every dance animation is expressed in beats, so the steps are on-tempo
    whether or not the sound is playing — and genuinely on the beat when it is. */
@@ -4099,7 +4099,9 @@ const BIN_BAG = (x, w, h, fill = '#1e1f22', shine = '#4c5056', g = 46.4) => `
     l${w * .06} ${h * .1} l${w * .07} ${-h * .1}C${x + w * .64} ${g - .4 - h * .9} ${x + w * .72} ${g - .4 - h * .82} ${x + w * .82} ${g - .4 - h * .7}C${x + w + 3} ${g - .4 - h * .5} ${x + w + 2} ${g} ${x + w - 2} ${g}Z" fill="${fill}"/>
   <path d="M${x + w * .2} ${g - .4 - h * .5}q${w * .2} ${-h * .12} ${w * .34} ${-h * .04}M${x + w * .5} ${g - .4 - h * .3}q${w * .2} ${-h * .06} ${w * .3} ${h * .06}" stroke="${shine}" stroke-width=".9" fill="none" stroke-linecap="round"/>`;
 const BIN_SVG = `<svg viewBox="0 0 80 48" aria-hidden="true" overflow="visible">
-  <defs><path id="potArc" d="M-4 2 A90 90 0 0 1 84 2" fill="none"/></defs>
+  <defs><path id="potArc" d="M-4 9 A90 90 0 0 1 84 9" fill="none"/></defs>
+  <!-- on the kerb line at the road's near edge (the box sits a few px above it) -->
+  <g transform="translate(0 7.6)">
   <ellipse cx="40" cy="46.6" rx="46" ry="2.4" fill="#2b2824" opacity=".3"/>
   ${BIN_BAG(-6, 26, 18)}${BIN_BAG(3, 18, 12, '#2a2b2f')}
   <!-- the bin: old ribbed metal, olive green, rust coming through -->
@@ -4114,13 +4116,16 @@ const BIN_SVG = `<svg viewBox="0 0 80 48" aria-hidden="true" overflow="visible">
   <rect x="24" y="5.4" width="32" height="2.2" rx="1" fill="#6a7754"/>
   <path d="M35 2.6q5-4 10 0" stroke="#4e573f" stroke-width="1.2" fill="none"/>
   ${BIN_BAG(56, 22, 16)}${BIN_BAG(70, 16, 11, '#2a2b2f')}
+  </g>
   <text class="potName" font-size="8" font-weight="900" letter-spacing="0.55"
         font-family="system-ui,sans-serif" text-anchor="middle">
     <textPath href="#potArc" startOffset="50%">DUSTBIN</textPath>
   </text>
 </svg>`;
 const BIN_FULL_SVG = `<svg viewBox="0 0 80 48" aria-hidden="true" overflow="visible">
-  <defs><path id="potArc" d="M-4 -12 A90 90 0 0 1 84 -12" fill="none"/></defs>
+  <defs><path id="potArc" d="M-4 -5 A90 90 0 0 1 84 -5" fill="none"/></defs>
+  <!-- on the kerb line at the road's near edge (the box sits a few px above it) -->
+  <g transform="translate(0 7.6)">
   <ellipse cx="40" cy="46.6" rx="50" ry="2.6" fill="#2b2824" opacity=".3"/>
   <!-- litter on the road round it: sachets, a can, a paper bag, a bottle -->
   <g transform="rotate(-12 -6 45)"><rect x="-9" y="43.6" width="6" height="2.4" rx=".7" fill="#eef3f5"/><path d="M-8 44.8h4" stroke="#3a7bd5" stroke-width=".6"/></g>
@@ -4146,6 +4151,7 @@ const BIN_FULL_SVG = `<svg viewBox="0 0 80 48" aria-hidden="true" overflow="visi
   <path d="M55.6 7.4L66.6 -12.6L69.4 -11.2L58.6 8.6Z" fill="#7a5636"/>
   <path d="M66.6 -12.6L69.4 -11.2" stroke="#94704c" stroke-width="1.2"/>
   ${BIN_BAG(58, 22, 15)}${BIN_BAG(74, 14, 9, '#e9eef0', '#bfc8ce')}
+  </g>
   <text class="potName" font-size="8" font-weight="900" letter-spacing="0.55"
         font-family="system-ui,sans-serif" text-anchor="middle">
     <textPath href="#potArc" startOffset="50%">DUSTBIN</textPath>
@@ -4183,8 +4189,11 @@ let potKind = 'pothole';
 /* the car twice a round (user, 2026-11-17: "needs to appear slightly more often"):
    once in five passes instead of once in eight */
 /* …and the dustbin twice a round as well, tidy then overflowing (2026-11-17) */
-const OBSTACLE_TURNS = ['pothole', 'hill', 'pothole', 'car', 'pothole', 'bin', 'pothole', 'gutter',
-                        'pothole', 'puddle', 'pothole', 'car', 'pothole', 'bin'];
+/* (2026-11-17, user: "waiting quite long to see the parked cars and the trash
+   bins") three turns each for the car and the dustbin in thirteen, Mr. Pothole
+   on a third of the passes rather than half */
+const OBSTACLE_TURNS = ['pothole', 'car', 'bin', 'pothole', 'hill', 'car', 'pothole', 'bin',
+                        'gutter', 'pothole', 'car', 'puddle', 'bin'];
 /* The agbero is not on the rota; he comes on a clock (user, 2026-11-16:
    "periodically, maybe twice after 1 minute"): first a minute into play,
    then every 30s at most, and never two passes running, so the road's own
