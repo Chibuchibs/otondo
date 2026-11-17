@@ -500,8 +500,11 @@
   .corper.sunk{z-index:0;transform-origin:50% 100%}
   .corper.detour{z-index:0}      /* round the parked car, on the road side of it */
   .pothole.upright{z-index:4}
-  .pothole .toutHand{animation:toutBeckon 1.5s ease-in-out infinite}
-  @keyframes toutBeckon{0%,100%{transform:rotate(0)}45%{transform:rotate(-7deg)}60%{transform:rotate(2deg)}}
+  /* "come": the forearm swings up and back, plain enough to read at a glance */
+  .pothole .toutHand{animation:toutBeckon 1.1s ease-in-out infinite;transition:transform .3s ease}
+  @keyframes toutBeckon{0%,100%{transform:rotate(0)}40%{transform:rotate(18deg)}62%{transform:rotate(-4deg)}}
+  /* paid: the arm drops out of the way, waving him on */
+  .pothole.waved .toutHand{animation:none;transform:rotate(-62deg)}
   .corper.bumped{z-index:5}
   /* Leaning into the hill and going over in a slip both pivot on the feet. */
   .corper.jumping{transform-origin:50% 100%}
@@ -1226,7 +1229,7 @@
     .cust.idle .corper .torso,.cust.idle .corper .arm2 .fore,.shop .bulb,.shop .steam,.shop .boom,
     .shop .note,.shop .smoke,.shop .poleStripes,.shop .peek,.genSet .smoke,.genSet .engine,
     .treeline .tree,.treeline .gHand,.treeline .gNod,.treeline .gTalk,.nepaPole .bird,
-    .pothole .ripple,.pothole .toutHand,.wheel,.vehicle .cab,.vehicle .cond .wave,.coin .glint){animation:none!important}
+    .pothole .ripple,.wheel,.vehicle .cab,.vehicle .cond .wave,.coin .glint){animation:none!important}
   .liteNote{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:-4px 2px 12px;padding:9px 12px;
     background:#eef4ef;border:1.5px solid #cfe3d5;border-radius:12px;font-size:13.5px;font-weight:700;color:var(--green-dk)}
   .liteNote.hidden{display:none}
@@ -1661,7 +1664,7 @@
 <script type="module">
 import { newGame, doAction, canDo, unlocked, ACTIONS, phaseOf, nextUnlock, postingOdds, rivalOf,
          computePosting, CHOICES, GOAL, goalStatus,
-         shareText, MAX_DAY } from './game.js?v=20261116170809';
+         shareText, MAX_DAY } from './game.js?v=20261116171622';
 
 /* ---------- scene coordinates ----------
    The scene is scaled by a transform (see the stage), so a native
@@ -1692,11 +1695,11 @@ const TS = (document.getElementById('scene').offsetWidth || 375) / 375;
 const ALLAWEE_NOTE = 'Allawee ₦77,000 — e never enter.';
 import { initNet, joinCamp, syncPlayer, platoonBoard, recentChat, postChat,
          postSuggestion, reportMessage, awardBoard, myAwards, laughChat,
-         setPresence, campRoster, renameMe, setAvatar, online } from './net.js?v=20261116170809';
-import { startMusic, stopMusic, musicOn, audioState, audioSupported, setRain, whenSilenced, wakeAudio, audible, say, sfx, BEAT, BAR } from './audio.js?v=20261116170809';
+         setPresence, campRoster, renameMe, setAvatar, online } from './net.js?v=20261116171622';
+import { startMusic, stopMusic, musicOn, audioState, audioSupported, setRain, whenSilenced, wakeAudio, audible, say, sfx, BEAT, BAR } from './audio.js?v=20261116171622';
 import { playHoop, playPenalty, playQuiz, playRegister, playParade,
          playMami, playHustle, playManOWar, playSaed, playSocial,
-         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261116170809';
+         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261116171622';
 
 /* Every dance animation is expressed in beats, so the steps are on-tempo
    whether or not the sound is playing — and genuinely on the beat when it is. */
@@ -4035,7 +4038,7 @@ const OBSTACLE = {
   car:     { svg: CAR_SVG, tag: 'TAP TO GO ROUND THE CAR', cost: 2, miss: 5, start: 62, edge: 58, warn: 420,
              jumped: 'You went round the car!', fell: 'You walked into the car! Tap to go round.' },
   /* paid in naira, not energy: fee on a tap, fine (double) when he has to stop you */
-  tout:    { svg: TOUT_SVG, tag: 'TAP: PAY ₦200 TO PASS', fee: 200, fine: 400, start: 34, edge: 30, warn: 380, tagBottom: 100,
+  tout:    { svg: TOUT_SVG, tag: 'TAP: PAY ₦200 TO PASS', fee: 200, fine: 400, start: 58, edge: 52, warn: 420, tagBottom: 100,   /* stops a step short of his hand (user) */
              jumped: 'You settle the agbero ₦200. You fit pass!', fell: 'Agbero hold you! E collect ₦400. Tap to pay next time.' },
 };
 let potKind = 'pothole';
@@ -4503,6 +4506,24 @@ function hop(p, dur = 620, h = 30){
 /* Round the parked car: out into the road behind it — up the screen, a touch
    smaller, and behind the car (.detour) — then back onto the walk past its
    boot. Long enough to clear its whole length at ~75px/s. */
+/* At the agbero: stopped at his hand, riding the road with him while the
+   money changes hands, his arm drops to wave you on, then round behind him. */
+function payAndPass(p){
+  const STOP = 1100, PASS = 1600;      // from a step back, round him and clear
+  p.style.animationPlayState = 'paused';
+  const drift = calm() ? null : p.animate([{ transform: 'translateX(0)' },
+    { transform: `translateX(${-ROAD_SPEED * STOP / 1000}px)` }],
+    { duration: STOP, fill: 'forwards', composite: 'add' });
+  setTimeout(() => pothole.classList.add('waved'), STOP * .6);
+  setTimeout(() => {
+    drift?.cancel();
+    p.style.animationPlayState = '';
+    rejoinGrid(p, STOP);
+    if (p.isConnected) goAround(p, PASS);
+  }, STOP);
+  setTimeout(() => pothole.classList.remove('waved'), STOP + PASS * .7);
+  return STOP + PASS;
+}
 function goAround(p, DUR = 1700){
   p.classList.add('detour');
   p.animate([
@@ -4565,7 +4586,7 @@ function hopPothole(p, paid){
   p.classList.add('jumping');
   const kind = potKind, ob = OBSTACLE[kind];
   const took = kind === 'hill' ? climbHill(p) : kind === 'puddle' ? wadePuddle(p)
-             : kind === 'car' ? goAround(p) : kind === 'tout' ? goAround(p, 1300)
+             : kind === 'car' ? goAround(p) : kind === 'tout' ? payAndPass(p)
              : kind === 'gutter' ? hop(p, 760, 34) : hop(p);
   setTimeout(() => { p.classList.remove('jumping'); }, took + 20);
   if (paid) say('welldone');                        // cleared it: "Well done!"
@@ -4611,7 +4632,8 @@ function handOver(p, n){
    backwards down the hill, face first into the water — lies there a moment
    riding the road with the obstacle, gets up and hurries back to his place. */
 function slipOn(p){
-  const kind = potKind, ob = OBSTACLE[kind], DUR = 1500;
+  /* the agbero holds you 2.5s before he lets you go (user: "pass after 2 or 3 seconds") */
+  const kind = potKind, ob = OBSTACLE[kind], DUR = kind === 'tout' ? 2500 : 1500;
   p.dataset.hop = String(potLap);
   potReadyAt = performance.now() + POT_COOLDOWN;
   tell(ob.fell);
@@ -4651,6 +4673,11 @@ function slipOn(p){
     p.classList.remove('jumping', 'bumped');
     p.style.animationPlayState = '';
     rejoinGrid(p, DUR);
+    if (kind === 'tout' && p.isConnected){            // paid up: he waves you on, round behind him
+      pothole.classList.add('waved');
+      goAround(p, 1600);
+      setTimeout(() => pothole.classList.remove('waved'), 900);
+    }
     /* as after the hole: a few seconds as a passer-by, so landing back short
        of it never counts as a second miss */
     delete p.dataset.hop;
