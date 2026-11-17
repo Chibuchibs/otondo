@@ -1696,7 +1696,7 @@
 <script type="module">
 import { newGame, doAction, canDo, unlocked, ACTIONS, phaseOf, nextUnlock, postingOdds, rivalOf,
          computePosting, CHOICES, GOAL, goalStatus,
-         shareText, MAX_DAY } from './game.js?v=20261116180801';
+         shareText, MAX_DAY } from './game.js?v=20261116181107';
 
 /* ---------- scene coordinates ----------
    The scene is scaled by a transform (see the stage), so a native
@@ -1727,11 +1727,11 @@ const TS = (document.getElementById('scene').offsetWidth || 375) / 375;
 const ALLAWEE_NOTE = 'Allawee ₦77,000 — e never enter.';
 import { initNet, joinCamp, syncPlayer, platoonBoard, recentChat, postChat,
          postSuggestion, reportMessage, awardBoard, myAwards, laughChat,
-         setPresence, campRoster, renameMe, setAvatar, online } from './net.js?v=20261116180801';
-import { startMusic, stopMusic, musicOn, audioState, audioSupported, setRain, whenSilenced, wakeAudio, audible, say, sfx, BEAT, BAR } from './audio.js?v=20261116180801';
+         setPresence, campRoster, renameMe, setAvatar, online } from './net.js?v=20261116181107';
+import { startMusic, stopMusic, musicOn, audioState, audioSupported, setRain, whenSilenced, wakeAudio, audible, say, sfx, BEAT, BAR } from './audio.js?v=20261116181107';
 import { playHoop, playPenalty, playQuiz, playRegister, playParade,
          playMami, playHustle, playManOWar, playSaed, playSocial,
-         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261116180801';
+         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261116181107';
 
 /* Every dance animation is expressed in beats, so the steps are on-tempo
    whether or not the sound is playing — and genuinely on the beat when it is. */
@@ -3962,11 +3962,24 @@ const CAR_SVG = `<svg viewBox="0 0 80 48" aria-hidden="true" overflow="visible">
 const HILL_SVG = `<svg viewBox="0 0 80 48" aria-hidden="true" overflow="visible">
   <defs><path id="potArc" d="M6 30 A51 51 0 0 1 74 30" fill="none"/></defs>
   <ellipse cx="40" cy="45.6" rx="37" ry="1.8" fill="#2b2824" opacity=".3"/>
-  <path d="M3 45.6C18 45.6 26 29 40 29S62 45.6 77 45.6z" fill="#a4512b"/>
-  <path d="M11 44C22 42 28 30.6 40 30.4C46 30.4 50 33 53 36.4" stroke="#cf7a45" stroke-width="1.4" fill="none" stroke-linecap="round"/>
-  <path d="M21 41.6q8-2.2 13-8.4M47 33.6q5 4.4 11 8" stroke="#86401f" stroke-width=".8" fill="none" stroke-dasharray="1.6 1.4"/>
-  <circle cx="30" cy="40" r="1.1" fill="#6e3218"/><circle cx="44.6" cy="35.4" r=".9" fill="#6e3218"/>
-  <circle cx="55" cy="42" r="1.3" fill="#7a3a1e"/><circle cx="16" cy="44.2" r=".8" fill="#7a3a1e"/>
+  <!-- road grey with a little brown in it: tar and dirt heaped up -->
+  <path d="M3 45.6C18 45.6 26 29 40 29S62 45.6 77 45.6z" fill="#6f6658"/>
+  <!-- the far side of the hump in shade, the near shoulder lit -->
+  <path d="M40 29C54 29 62 45.6 77 45.6H52C50 38 46 31 40 29z" fill="#5c5448"/>
+  <path d="M11 44C22 42 28 30.6 40 30.4C46 30.4 50 33 53 36.4" stroke="#8c816f" stroke-width="1.4" fill="none" stroke-linecap="round"/>
+  <path d="M21 41.6q8-2.2 13-8.4M47 33.6q5 4.4 11 8" stroke="#544c41" stroke-width=".8" fill="none" stroke-dasharray="1.6 1.4"/>
+  <circle cx="30" cy="40" r="1.1" fill="#4a433a"/><circle cx="44.6" cy="35.4" r=".9" fill="#4a433a"/>
+  <circle cx="55" cy="42" r="1.3" fill="#7d6a52"/><circle cx="16" cy="44.2" r=".8" fill="#7d6a52"/>
+  <!-- grass growing out of it: a tuft on top, smaller ones down the flanks -->
+  <path d="M36.6 29.6q-1.8-3.4-1.6-6.6M38.4 29.2q-.6-3.8.4-7.4M40 29q.4-4 2.2-6.6M41.6 29.2q1.4-3 3.8-4.4M43 29.8q1.6-2 3.8-2.4"
+    stroke="#5f8a3e" stroke-width="1" fill="none" stroke-linecap="round"/>
+  <path d="M37.4 29.4q-.8-2.4-.4-4.4M40.8 29.1q1-2.6 2.8-3.6" stroke="#7aa651" stroke-width=".7" fill="none" stroke-linecap="round"/>
+  <path d="M19 41q-1-2.2-.6-4.2M20.4 40.4q.2-2.4 1.4-3.8M21.8 40q1-1.6 2.6-2.2"
+    stroke="#5f8a3e" stroke-width=".9" fill="none" stroke-linecap="round"/>
+  <path d="M57 40.2q-.2-2.4.8-4M58.4 40.8q.8-2 2.4-3M55.8 40q-1-1.8-1-3.6"
+    stroke="#5f8a3e" stroke-width=".9" fill="none" stroke-linecap="round"/>
+  <path d="M8.6 45.2q-.4-1.8.4-3M10 45.4q.6-1.6 1.8-2.2M70 45.2q.2-1.8 1.2-2.8M71.4 45.4q.8-1.2 2-1.6"
+    stroke="#6a9446" stroke-width=".8" fill="none" stroke-linecap="round"/>
   <text class="potName" font-size="8" font-weight="900" letter-spacing="0.55"
         font-family="system-ui,sans-serif" text-anchor="middle">
     <textPath href="#potArc" startOffset="50%">SMALL HILL</textPath>
