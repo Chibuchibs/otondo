@@ -505,6 +505,19 @@
   @keyframes toutBeckon{0%,100%{transform:rotate(0)}40%{transform:rotate(18deg)}62%{transform:rotate(-4deg)}}
   /* paid: the arm drops out of the way, waving him on */
   .pothole.waved .toutHand{animation:none;transform:rotate(-62deg)}
+  /* he is never quite still: steps in place, legs from the hip, a bob */
+  .pothole .tLegA,.pothole .tLegB{transform-box:view-box;transform-origin:46px 5px;
+    animation:toutStep .9s ease-in-out infinite}
+  .pothole .tLegB{animation-direction:reverse}
+  .pothole .tBody{animation:toutBob .45s ease-in-out infinite alternate}
+  @keyframes toutStep{0%,100%{transform:rotate(0)}25%{transform:rotate(5deg)}75%{transform:rotate(-5deg)}}
+  @keyframes toutBob{from{transform:translateY(0)}to{transform:translateY(-1.2px)}}
+  /* paid: he turns and walks off the way the walkers are going, quicker
+     steps; the 27 is flipped back so his back reads right */
+  .pothole.leaving > svg{transform:scaleX(-1);transform-origin:46px 50%}
+  .pothole.leaving .tNum{transform:scaleX(-1);transform-box:fill-box;transform-origin:50% 50%}
+  .pothole.leaving .tLegA,.pothole.leaving .tLegB{animation-duration:.5s}
+  .pothole.leaving .tBody{animation-duration:.25s}
   .corper.bumped{z-index:5}
   /* Leaning into the hill and going over in a slip both pivot on the feet. */
   .corper.jumping{transform-origin:50% 100%}
@@ -1664,7 +1677,7 @@
 <script type="module">
 import { newGame, doAction, canDo, unlocked, ACTIONS, phaseOf, nextUnlock, postingOdds, rivalOf,
          computePosting, CHOICES, GOAL, goalStatus,
-         shareText, MAX_DAY } from './game.js?v=20261116171622';
+         shareText, MAX_DAY } from './game.js?v=20261116173053';
 
 /* ---------- scene coordinates ----------
    The scene is scaled by a transform (see the stage), so a native
@@ -1695,11 +1708,11 @@ const TS = (document.getElementById('scene').offsetWidth || 375) / 375;
 const ALLAWEE_NOTE = 'Allawee ₦77,000 — e never enter.';
 import { initNet, joinCamp, syncPlayer, platoonBoard, recentChat, postChat,
          postSuggestion, reportMessage, awardBoard, myAwards, laughChat,
-         setPresence, campRoster, renameMe, setAvatar, online } from './net.js?v=20261116171622';
-import { startMusic, stopMusic, musicOn, audioState, audioSupported, setRain, whenSilenced, wakeAudio, audible, say, sfx, BEAT, BAR } from './audio.js?v=20261116171622';
+         setPresence, campRoster, renameMe, setAvatar, online } from './net.js?v=20261116173053';
+import { startMusic, stopMusic, musicOn, audioState, audioSupported, setRain, whenSilenced, wakeAudio, audible, say, sfx, BEAT, BAR } from './audio.js?v=20261116173053';
 import { playHoop, playPenalty, playQuiz, playRegister, playParade,
          playMami, playHustle, playManOWar, playSaed, playSocial,
-         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261116171622';
+         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261116173053';
 
 /* Every dance animation is expressed in beats, so the steps are on-tempo
    whether or not the sound is playing — and genuinely on the beat when it is. */
@@ -3960,26 +3973,32 @@ const PUDDLE_SVG = `<svg viewBox="0 0 80 48" aria-hidden="true" overflow="visibl
 const TOUT_SKIN = '#5b3820', TOUT_PALM = '#a8724a';
 const TOUT_SVG = `<svg viewBox="0 0 80 48" aria-hidden="true" overflow="visible">
   <ellipse cx="44" cy="46.6" rx="17" ry="2.4" fill="#2b2824" opacity=".3"/>
-  <!-- baggy jeans, the back leg darker, folds stacked at the ankle -->
-  <path d="M46 4.6C46.6 18 47.8 30 47.4 41.4H58C58.4 30 57.8 18 56.8 4.6Z" fill="#74879c"/>
-  <path d="M35.6 4.6C34.2 18 33.6 30 34.6 41.4H45.6C45.8 30 46.2 18 46.8 4.6Z" fill="#8ea2b6"/>
-  <path d="M35 37.6q5 1.6 10.6 0M35.2 39.8q5 1.4 10.4 0M47.6 37.8q5 1.4 10.2 0" stroke="#6a7d91" stroke-width=".7" fill="none"/>
-  <path d="M40.6 6v14M51.6 6v12" stroke="#6a7d91" stroke-width=".6"/>
-  <!-- patches, each its own cloth, stitched on; a cross patch like the photo; the torn knee -->
-  <g transform="rotate(-7 39.6 20)"><rect x="36.8" y="17.4" width="5.8" height="5.2" rx=".6" fill="#c9a26b"/>
-    <rect x="36.8" y="17.4" width="5.8" height="5.2" rx=".6" fill="none" stroke="#f4ead2" stroke-width=".45" stroke-dasharray="1 .8"/></g>
-  <g transform="rotate(9 52.6 30)"><rect x="50" y="27" width="5.4" height="6.4" rx=".6" fill="#4c5b3b"/>
-    <rect x="50" y="27" width="5.4" height="6.4" rx=".6" fill="none" stroke="#e9e2cf" stroke-width=".45" stroke-dasharray="1 .8"/></g>
-  <path d="M51.4 12.4h3.6M53.2 10.6v5.2" stroke="#2f3946" stroke-width="1.3" stroke-linecap="round"/>
-  <path d="M37.4 29.4q3.4-1.2 6 .2l-.6 2.6q-2.6 1-5-.2z" fill="${TOUT_SKIN}"/>
-  <path d="M37.4 29.4l1 .8M39.6 29l.6 1M41.8 29.1l.4 1" stroke="#c9d4df" stroke-width=".5"/>
+  <!-- baggy jeans, each leg its own group so it can step: the back leg first, darker -->
+  <g class="tLegB">
+    <path d="M46 4.6C46.6 18 47.8 30 47.4 41.4H58C58.4 30 57.8 18 56.8 4.6Z" fill="#74879c"/>
+    <path d="M47.6 37.8q5 1.4 10.2 0" stroke="#6a7d91" stroke-width=".7" fill="none"/>
+    <path d="M51.6 6v12" stroke="#6a7d91" stroke-width=".6"/>
+    <g transform="rotate(9 52.6 30)"><rect x="50" y="27" width="5.4" height="6.4" rx=".6" fill="#4c5b3b"/>
+      <rect x="50" y="27" width="5.4" height="6.4" rx=".6" fill="none" stroke="#e9e2cf" stroke-width=".45" stroke-dasharray="1 .8"/></g>
+    <path d="M51.4 12.4h3.6M53.2 10.6v5.2" stroke="#2f3946" stroke-width="1.3" stroke-linecap="round"/>
+    <path d="M46.2 41.4h13v3.8q0 1.4-1.4 1.4H47.6q-1.6 0-1.6-1.6z" fill="#232325"/>
+    <path d="M47.4 41.6h8.4" stroke="#55565a" stroke-width="1.4"/>
+  </g>
+  <g class="tLegA">
+    <path d="M35.6 4.6C34.2 18 33.6 30 34.6 41.4H45.6C45.8 30 46.2 18 46.8 4.6Z" fill="#8ea2b6"/>
+    <path d="M35 37.6q5 1.6 10.6 0M35.2 39.8q5 1.4 10.4 0" stroke="#6a7d91" stroke-width=".7" fill="none"/>
+    <path d="M40.6 6v14" stroke="#6a7d91" stroke-width=".6"/>
+    <g transform="rotate(-7 39.6 20)"><rect x="36.8" y="17.4" width="5.8" height="5.2" rx=".6" fill="#c9a26b"/>
+      <rect x="36.8" y="17.4" width="5.8" height="5.2" rx=".6" fill="none" stroke="#f4ead2" stroke-width=".45" stroke-dasharray="1 .8"/></g>
+    <path d="M37.4 29.4q3.4-1.2 6 .2l-.6 2.6q-2.6 1-5-.2z" fill="${TOUT_SKIN}"/>
+    <path d="M37.4 29.4l1 .8M39.6 29l.6 1M41.8 29.1l.4 1" stroke="#c9d4df" stroke-width=".5"/>
+    <path d="M31.6 41.4h14v3.8q0 1.4-1.4 1.4H33q-1.8 0-1.8-1.6z" fill="#2c2c2e"/>
+    <path d="M33 41.6h9" stroke="#55565a" stroke-width="1.4"/>
+  </g>
+  <g class="tBody">
   <!-- the boxer band showing over the sag -->
   <rect x="36.2" y="2.2" width="21" height="3" rx="1" fill="#ece5d2"/>
   <path d="M36.4 3.7h20.6" stroke="#c1272d" stroke-width=".8"/>
-  <!-- worn slides, toes to the left -->
-  <path d="M31.6 41.4h14v3.8q0 1.4-1.4 1.4H33q-1.8 0-1.8-1.6z" fill="#2c2c2e"/>
-  <path d="M46.2 41.4h13v3.8q0 1.4-1.4 1.4H47.6q-1.6 0-1.6-1.6z" fill="#232325"/>
-  <path d="M33 41.6h9M47.4 41.6h8.4" stroke="#55565a" stroke-width="1.4"/>
   <!-- the arm with the money, hanging, a wad of notes in the fist -->
   <path d="M56 -19.6L58.6 -7.6L57.6 2.6" stroke="${TOUT_SKIN}" stroke-width="5.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
   <g transform="rotate(14 57.6 4.4)"><rect x="54.4" y="2.6" width="7" height="4" rx=".6" fill="#2f8f5b"/>
@@ -3991,7 +4010,7 @@ const TOUT_SVG = `<svg viewBox="0 0 80 48" aria-hidden="true" overflow="visible"
   <path d="M37.8 -16v19M56.2 -16v19" stroke="#1d1d1f" stroke-width="2.2"/>
   <path d="M41.6 -24.4Q43 -18.4 47 -18.4Q51 -18.4 52.4 -24.4" stroke="#fff" stroke-width="1.3" fill="none"/>
   <path d="M38.8 -23.2q1.4 4.6 0 8.6M55.2 -23.2q-1.4 4.6 0 8.6" stroke="#fff" stroke-width="1" fill="none"/>
-  <text x="47" y="-3.6" text-anchor="middle" font-size="11" font-weight="900" font-family="system-ui,sans-serif"
+  <text class="tNum" x="47" y="-3.6" text-anchor="middle" font-size="11" font-weight="900" font-family="system-ui,sans-serif"
         fill="#fff" stroke="#1d1d1f" stroke-width=".5" paint-order="stroke">27</text>
   <path d="M42.6 -23.2Q47 -16.4 51.4 -23.2" stroke="#d9b24a" stroke-width=".9" fill="none"/>
   <!-- neck, head, the face of a man who has collected all morning -->
@@ -4018,6 +4037,7 @@ const TOUT_SVG = `<svg viewBox="0 0 80 48" aria-hidden="true" overflow="visible"
     <path d="M18.6 -11q-5.4-.6-7 1.6q1.6 3 7.2 2.6z" fill="${TOUT_SKIN}"/>
     <path d="M17.6 -10.2q-3.8-.2-5 1.2" stroke="${TOUT_PALM}" stroke-width="1" fill="none" stroke-linecap="round"/>
     <path d="M11.8 -9.2q-.8-1.8.6-2.8" stroke="${TOUT_SKIN}" stroke-width="1.6" fill="none" stroke-linecap="round"/>
+  </g>
   </g>
 </svg>`;
 /* cost: a tapped crossing; miss: the slip when you are asked and do not tap.
@@ -4046,12 +4066,37 @@ let potKind = 'pothole';
    comes round as often as he did; the hill, the gutter, the puddle and the
    car share the rest (2026-11-16). ['pothole'] alone puts the road back to
    exactly what it was. */
-const OBSTACLE_TURNS = ['pothole', 'hill', 'pothole', 'gutter', 'pothole', 'tout', 'pothole', 'puddle', 'pothole', 'car'];
+const OBSTACLE_TURNS = ['pothole', 'hill', 'pothole', 'gutter', 'pothole', 'puddle', 'pothole', 'car'];
+/* The agbero is not on the rota; he comes on a clock (user, 2026-11-16:
+   "periodically, maybe twice after 1 minute"): first a minute into play,
+   then every 30s at most, and never two passes running, so the road's own
+   turns still come round between his visits. */
+const TOUT_FIRST = 60000, TOUT_EVERY = 30000;
+let toutDueAt = performance.now() + TOUT_FIRST, turnN = 0;
+function nextObstacle(){
+  const now = performance.now();
+  if (now >= toutDueAt && potKind !== 'tout'){ toutDueAt = now + TOUT_EVERY; return 'tout'; }
+  return OBSTACLE_TURNS[turnN++ % OBSTACLE_TURNS.length];
+}
+/* Paid, he walks off: the road is clear for the rest of this pass. */
+let toutGone = -1;
+function toutLeaves(){
+  if (potKind !== 'tout' || toutGone === potLap) return;
+  toutGone = potLap;
+  pothole.classList.add('leaving', 'waved');
+  pothole.animate([
+    { transform: 'translateX(0px)', opacity: 1 },
+    { transform: 'translateX(150px)', opacity: 1, offset: .7 },
+    { transform: 'translateX(215px)', opacity: 0 },
+  ], { duration: 2600, easing: 'linear', fill: 'forwards' });
+}
 /* The wide ones keep their distance from Mrs. Pothole (HILL_CLEAR). */
 const wideObstacle = k => k === 'hill' || k === 'car' || k === 'tout';
 function setObstacle(kind){
   potKind = kind;
   pothole.innerHTML = OBSTACLE[kind].svg;
+  pothole.classList.remove('leaving', 'waved');               // a fresh pass: whoever walked off is gone
+  pothole.getAnimations().forEach(a => a.cancel());
   /* The car stands up off the road, so it is drawn in front of everyone on
      the walk: anybody passing it goes behind it, on the road side — which is
      what going round it looks like. A hole stays under their feet. */
@@ -4428,7 +4473,7 @@ if (!calm()){
         /* a longer walk between passes (user, 2026-11-16: more on the road
            without it looking congested) */
         potPos = W + 60 + W * 0.3 + Math.random() * W * 0.6; potLap++;
-        setObstacle(OBSTACLE_TURNS[potLap % OBSTACLE_TURNS.length]);   // swapped off-screen
+        setObstacle(nextObstacle());                                   // swapped off-screen
         /* the agbero gets an empty stretch of road to himself (user: "where the
            scene is less congested") — a longer run-in before he arrives */
         if (potKind === 'tout') potPos += W * 0.4;
@@ -4508,8 +4553,9 @@ function hop(p, dur = 620, h = 30){
    boot. Long enough to clear its whole length at ~75px/s. */
 /* At the agbero: stopped at his hand, riding the road with him while the
    money changes hands, his arm drops to wave you on, then round behind him. */
-function payAndPass(p){
+function payAndPass(p, paid = false){
   const STOP = 1100, PASS = 1600;      // from a step back, round him and clear
+  if (paid) setTimeout(toutLeaves, STOP);                      // your money: he is done, off he goes
   p.style.animationPlayState = 'paused';
   const drift = calm() ? null : p.animate([{ transform: 'translateX(0)' },
     { transform: `translateX(${-ROAD_SPEED * STOP / 1000}px)` }],
@@ -4521,7 +4567,7 @@ function payAndPass(p){
     rejoinGrid(p, STOP);
     if (p.isConnected) goAround(p, PASS);
   }, STOP);
-  setTimeout(() => pothole.classList.remove('waved'), STOP + PASS * .7);
+  setTimeout(() => { if (!pothole.classList.contains('leaving')) pothole.classList.remove('waved'); }, STOP + PASS * .7);
   return STOP + PASS;
 }
 function goAround(p, DUR = 1700){
@@ -4586,7 +4632,7 @@ function hopPothole(p, paid){
   p.classList.add('jumping');
   const kind = potKind, ob = OBSTACLE[kind];
   const took = kind === 'hill' ? climbHill(p) : kind === 'puddle' ? wadePuddle(p)
-             : kind === 'car' ? goAround(p) : kind === 'tout' ? payAndPass(p)
+             : kind === 'car' ? goAround(p) : kind === 'tout' ? payAndPass(p, paid)
              : kind === 'gutter' ? hop(p, 760, 34) : hop(p);
   setTimeout(() => { p.classList.remove('jumping'); }, took + 20);
   if (paid) say('welldone');                        // cleared it: "Well done!"
@@ -4674,9 +4720,8 @@ function slipOn(p){
     p.style.animationPlayState = '';
     rejoinGrid(p, DUR);
     if (kind === 'tout' && p.isConnected){            // paid up: he waves you on, round behind him
-      pothole.classList.add('waved');
       goAround(p, 1600);
-      setTimeout(() => pothole.classList.remove('waved'), 900);
+      toutLeaves();                                   // fined and paid: he walks off with it
     }
     /* as after the hole: a few seconds as a passer-by, so landing back short
        of it never counts as a second miss */
@@ -4774,6 +4819,7 @@ function watchPothole(){
   const box = sceneEl.sceneRect();
   const x = potX(), ob = OBSTACLE[potKind];
   jumpTarget = null;
+  if (potKind === 'tout' && toutGone === potLap) return;       // paid, and he has walked off
   if (x > box.width + 10) return;          // still coming, off the right edge: nobody is asked yet
   sceneEl.querySelectorAll(':scope > .corper').forEach(p => {
     if (p.matches('.riding, .hailing, .running, .munching, .shopping, .inRide, .gone, .sunk')) return;
