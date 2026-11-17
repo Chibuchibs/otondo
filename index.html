@@ -1656,7 +1656,7 @@
 <script type="module">
 import { newGame, doAction, canDo, unlocked, ACTIONS, phaseOf, nextUnlock, postingOdds, rivalOf,
          computePosting, CHOICES, GOAL, goalStatus,
-         shareText, MAX_DAY } from './game.js?v=20261112181034';
+         shareText, MAX_DAY } from './game.js?v=20261116160531';
 
 /* ---------- scene coordinates ----------
    The scene is scaled by a transform (see the stage), so a native
@@ -1687,11 +1687,11 @@ const TS = (document.getElementById('scene').offsetWidth || 375) / 375;
 const ALLAWEE_NOTE = 'Allawee ₦77,000 — e never enter.';
 import { initNet, joinCamp, syncPlayer, platoonBoard, recentChat, postChat,
          postSuggestion, reportMessage, awardBoard, myAwards, laughChat,
-         setPresence, campRoster, renameMe, setAvatar, online } from './net.js?v=20261112181034';
-import { startMusic, stopMusic, musicOn, audioState, audioSupported, setRain, whenSilenced, wakeAudio, audible, say, sfx, BEAT, BAR } from './audio.js?v=20261112181034';
+         setPresence, campRoster, renameMe, setAvatar, online } from './net.js?v=20261116160531';
+import { startMusic, stopMusic, musicOn, audioState, audioSupported, setRain, whenSilenced, wakeAudio, audible, say, sfx, BEAT, BAR } from './audio.js?v=20261116160531';
 import { playHoop, playPenalty, playQuiz, playRegister, playParade,
          playMami, playHustle, playManOWar, playSaed, playSocial,
-         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261112181034';
+         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261116160531';
 
 /* Every dance animation is expressed in beats, so the steps are on-tempo
    whether or not the sound is playing — and genuinely on the beat when it is. */
@@ -2410,9 +2410,28 @@ const SHOPS = [
   { sign: 'SKILLS BOARD',      w: 112, billboard: true, ad: 'skills' },
 ];
 
+/* ---------- depth (2026-11-16) ----------
+   Borrowed from Broke in SF, where the blocks stand up off the map: each
+   building shows its right-hand wall in shade and the top of its fascia in
+   the light, one fixed angle for the whole street (camera up and to the
+   right, sun top left). Drawn once into each shop's SVG, so it costs nothing
+   per frame and changes nothing anyone taps. */
+const DX = 4, DY = 2.4;
+/* a hex colour scaled toward black (f < 1) or white (f > 1) */
+function tint(hex, f){
+  const n = parseInt(hex.slice(1), 16), c = v => Math.round(f <= 1 ? v * f : v + (255 - v) * (f - 1));
+  return `rgb(${c((n >> 16) & 255)},${c((n >> 8) & 255)},${c(n & 255)})`;
+}
+/* the wall down the right-hand side, from `top` to the ground at `bottom` */
+const sideWall = (x, top, bottom, col) =>
+  `<path d="M${x} ${top}l${DX} ${-DY}V${bottom - DY}l${-DX} ${DY}z" fill="${tint(col, .66)}"/>`;
+/* the top of a fascia or parapet, lit */
+const topFace = (x, y, w, col) =>
+  `<path d="M${x} ${y}l${DX} ${-DY}h${w}l${-DX} ${DY}z" fill="${tint(col, 1.18)}"/>`;
+
 /* signboard: textLength forces any wording to fit, so a long brand name
    never overflows the board */
-const board = (txt, x, y, w, ink) => !ink
+const board = (txt, x, y, w, ink) => `<rect x="${x + 1.2}" y="${y - .9}" width="${w}" height="12" rx="2" fill="rgba(20,16,10,.38)"/>` + (!ink
   ? `<rect x="${x}" y="${y}" width="${w}" height="12" rx="2" fill="#f7f4ea"/>
    <rect x="${x}" y="${y}" width="${w}" height="12" rx="2" fill="none"
          stroke="#2e2a20" stroke-opacity=".35" stroke-width="1"/>
@@ -2430,7 +2449,7 @@ const board = (txt, x, y, w, ink) => !ink
          stroke-width="2.4" stroke-opacity=".35" textLength="${w - 10}" lengthAdjust="spacingAndGlyphs">${txt}</text>
    <text x="${x + w/2}" y="${y + 9}" text-anchor="middle" font-size="8.6"
          font-weight="900" font-family="system-ui,sans-serif" fill="${ink[1]}"
-         textLength="${w - 10}" lengthAdjust="spacingAndGlyphs">${txt}</text>`;
+         textLength="${w - 10}" lengthAdjust="spacingAndGlyphs">${txt}</text>`);
 
 /* A painted door with a glass pane in it. The pane keeps the `door` class so
    UP NEPA! lights the glass, not the paint. Half the shops stand ajar. */
@@ -2772,6 +2791,7 @@ function shop(cfg){
      one shop lets its drawing spill past the viewBox. */
   return `<svg viewBox="0 0 100 60" aria-hidden="true"${cfg.barber ? ' overflow="visible"' : ''}>
     ${cfg.bakery ? bakeryChimney : ''}
+    ${sideWall(92, 22, 60, cfg.body)}
     <rect x="8" y="22" width="84" height="38" rx="2" fill="${cfg.body}"/>
     ${shopBones(cfg)}
     <path d="M3 22h94l-6-8H9z" fill="${cfg.roof}"/>
@@ -2806,6 +2826,7 @@ function adBillboard(cfg){
     <rect x="29" y="30" width="3.4" height="30" fill="#5a5650"/><rect x="67" y="30" width="3.4" height="30" fill="#5a5650"/>
     <path d="M26 60h9 M64 60h9" stroke="#3f3c37" stroke-width="2"/>
     <rect x="16" y="31" width="68" height="1.6" fill="#4a4741"/>
+    <path d="M95 1l4-2.4V29.6l-4 2.4z" fill="#1a1a1a"/><path d="M5 1l4-2.4h90l-4 2.4z" fill="#454545"/>
     <rect x="5" y="1" width="90" height="31" rx="1.5" fill="#2b2b2b"/>
     <rect x="7" y="3" width="86" height="21" fill="#16a34a"/>
     <text x="50" y="12" text-anchor="middle" font-size="7.4" font-weight="900" font-family="system-ui,sans-serif"
@@ -2834,6 +2855,7 @@ function skillsBillboard(cfg){
     <rect x="29" y="30" width="3.4" height="30" fill="#5a5650"/><rect x="67" y="30" width="3.4" height="30" fill="#5a5650"/>
     <path d="M26 60h9 M64 60h9" stroke="#3f3c37" stroke-width="2"/>
     <rect x="16" y="31" width="68" height="1.6" fill="#4a4741"/>
+    <path d="M95 1l4-2.4V29.6l-4 2.4z" fill="#1a1a1a"/><path d="M5 1l4-2.4h90l-4 2.4z" fill="#454545"/>
     <rect x="5" y="1" width="90" height="31" rx="1.5" fill="#2b2b2b"/>
     <rect x="7" y="3" width="86" height="21" fill="#fff1e6"/>
     <rect x="8" y="4" width="84" height="19" rx="2" fill="none" stroke="#ffd4b8" stroke-width=".8"/>
@@ -2859,6 +2881,7 @@ function busStop(cfg){
     <rect x="27" y="9" width="16" height="6" rx="1" fill="#facc15"/>
     <rect x="34.4" y="15" width="1.2" height="2" fill="#4b5563"/>
     <text x="35" y="13.6" text-anchor="middle" font-size="3.9" font-weight="900" font-family="system-ui,sans-serif" fill="#1d1d1b" textLength="13.6" lengthAdjust="spacingAndGlyphs">BUS STOP</text>
+    <path d="M94 15l3-1.8V55.2l-3 1.8z" fill="#1a1a1a"/><path d="M63 15l3-1.8h31l-3 1.8z" fill="#454545"/>
     <rect x="63" y="15" width="31" height="42" rx="1.4" fill="#2b2b2b"/>
     <rect class="neon" x="65" y="17" width="27" height="34" fill="#fff8e1" opacity=".95"/>
     <text x="78.5" y="26" text-anchor="middle" font-size="4.6" font-weight="900" font-family="system-ui,sans-serif" fill="#d6342c">YOUR AD</text>
@@ -2891,6 +2914,7 @@ function modernShop(cfg){
       if (!(r === 1 && c < 4))
         panes.push(`<rect class="door" x="${9 + c * 10.4}" y="${19 + r * 14.6}" width="9.6" height="13.4" fill="${(c + r) % 3 ? '#b7d8e6' : '#cfe6ef'}"/>`);
     return `<svg viewBox="0 0 100 60" aria-hidden="true">
+      ${sideWall(94, 16, 60, cfg.body)}
       <rect x="6" y="16" width="88" height="44" fill="${cfg.body}"/>
       ${panes.join('')}
       <rect x="6" y="32.6" width="88" height="1.6" fill="${fascia}"/>
@@ -2899,6 +2923,7 @@ function modernShop(cfg){
       <path d="M52 54 L74 32.8" stroke="#2f4552" stroke-width=".7"/>
       <circle cx="85" cy="42" r="1.7" fill="#3f3a34"/><path d="M82.4 58 v-11 q0-3 2.6-3 q2.6 0 2.6 3 v11z" fill="#c1272d"/>
       ${doors}
+      ${topFace(4, 4, 92, fascia)}${sideWall(96, 4, 17, fascia)}
       <rect x="4" y="4" width="92" height="13" rx="1.5" fill="${fascia}"/>
       ${board(cfg.sign, 22, 4.6, 56, cfg.signInk)}
     </svg>`;
@@ -2906,6 +2931,7 @@ function modernShop(cfg){
   if (k === 'bank'){
     const pil = [47, 58, 69].map(x => `<rect class="door" x="${x + 1.4}" y="26" width="7.4" height="20" fill="#b7cfd9"/>`).join('');
     return `<svg viewBox="0 0 100 60" aria-hidden="true">
+      ${sideWall(94, 14, 60, cfg.body)}
       <rect x="6" y="14" width="88" height="46" fill="${cfg.body}"/>
       <path d="M6 24h88 M6 47.4h88" stroke="rgba(0,0,0,.14)" stroke-width=".6"/>
       ${pil}
@@ -2916,6 +2942,7 @@ function modernShop(cfg){
       <rect class="neon" x="82.2" y="33" width="8.4" height="6.4" fill="#7fe8ff"/>
       <rect x="82.2" y="41" width="8.4" height="3.6" fill="#1f262c"/>
       <rect x="83.4" y="46.6" width="6" height="1.3" fill="#0d1114"/>
+      ${topFace(4, 5, 92, fascia)}${sideWall(96, 5, 17.4, fascia)}
       <rect x="4" y="5" width="92" height="12.4" rx="1.2" fill="${fascia}"/>
       ${board(cfg.sign, 12, 5.2, 76, cfg.signInk)}
     </svg>`;
@@ -2923,6 +2950,7 @@ function modernShop(cfg){
   /* the three quick-service fronts: same bones, their own colour and icon */
   const cap = fascia;
   return `<svg viewBox="0 0 100 60" aria-hidden="true">
+    ${sideWall(94, 20, 60, cfg.body)}
     <rect x="6" y="20" width="88" height="40" fill="${cfg.body}"/>
     <rect x="47" y="27" width="44" height="23" fill="#2e2a20" opacity=".6"/>
     <rect class="door" x="48" y="28" width="42" height="21" fill="#fff4d9"/>
@@ -2935,6 +2963,7 @@ function modernShop(cfg){
     <rect x="48" y="44.4" width="42" height="4.6" fill="#d9d2c0"/>
     <rect x="47" y="50" width="44" height="10" fill="${cap}" opacity=".9"/>
     ${doors}
+    ${topFace(4, 8, 92, fascia)}${sideWall(96, 8, 22.4, fascia)}
     <rect x="4" y="8" width="92" height="14.4" rx="1.5" fill="${fascia}"/>
     ${MODERN_ICON[k]}
     ${board(cfg.sign, 18, 9.2, 74, cfg.signInk)}
@@ -2949,6 +2978,7 @@ function lounge(cfg){
     `<circle class="bulb" cx="${8 + i * 7.6}" cy="15.6" r="1.25" fill="${NEON_BULBS[i % 4]}"
        style="animation-delay:${-(i % 3) * .4}s"/>`).join('');
   return `<svg viewBox="0 0 100 60" aria-hidden="true">
+    ${sideWall(92, 22, 60, cfg.body)}
     <rect x="8" y="22" width="84" height="38" rx="2" fill="${cfg.body}"/>
     <path d="M3 22h94l-6-8H9z" fill="${cfg.roof}"/>
     <path d="M6 15.6 q3.8 1.6 7.6 0 t7.6 0 t7.6 0 t7.6 0 t7.6 0 t7.6 0 t7.6 0 t7.6 0 t7.6 0 t7.6 0 t7.6 0 t7.6 0"
@@ -4007,8 +4037,17 @@ function tower(t){
     wins += `<rect class="tw" x="${(5 + c*cw + 1.6).toFixed(1)}" y="${(18 + r*rh + 1.6).toFixed(1)}"
                width="${(cw - 3.2).toFixed(1)}" height="${(rh - 3.2).toFixed(1)}" rx=".6"
                fill="${t.win}" opacity=".75"/>`;
+  /* the side wall's windows, skewed with the wall and dimmer than the front's */
+  let sideWins = '';
+  for (let r = 0; r < rows; r++){
+    const y = 18 + r*rh + 1.6;
+    sideWins += `<path d="M${t.w + 1.5} ${(y - .9).toFixed(1)}l3 -1.8v${(rh - 3.2).toFixed(1)}l-3 1.8z" fill="${t.win}" opacity=".4"/>`;
+  }
   return `<svg class="tower" viewBox="0 0 ${t.w} ${t.h}" width="${t.w}" height="${t.h}" aria-hidden="true">
     ${t.mast ? `<rect x="${t.w/2 - .8}" y="-14" width="1.6" height="16" fill="#8a8f96"/>` : ''}
+    <path d="M${t.w} 4l6-3.6V${t.h - 3.6}l-6 3.6z" fill="${tint(t.body, .72)}"/>
+    <path d="M0 4l6-3.6h${t.w}l-6 3.6z" fill="${tint(t.body, 1.16)}"/>
+    ${sideWins}
     <rect x="0" y="4" width="${t.w}" height="${t.h - 4}" rx="1.5" fill="${t.body}"/>
     <rect x="0" y="4" width="${t.w}" height="4" fill="rgba(0,0,0,.08)"/>
     ${wins}
