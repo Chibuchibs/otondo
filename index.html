@@ -1696,7 +1696,7 @@
 <script type="module">
 import { newGame, doAction, canDo, unlocked, ACTIONS, phaseOf, nextUnlock, postingOdds, rivalOf,
          computePosting, CHOICES, GOAL, goalStatus,
-         shareText, MAX_DAY } from './game.js?v=20261116181107';
+         shareText, MAX_DAY } from './game.js?v=20261116203702';
 
 /* ---------- scene coordinates ----------
    The scene is scaled by a transform (see the stage), so a native
@@ -1727,11 +1727,11 @@ const TS = (document.getElementById('scene').offsetWidth || 375) / 375;
 const ALLAWEE_NOTE = 'Allawee ₦77,000 — e never enter.';
 import { initNet, joinCamp, syncPlayer, platoonBoard, recentChat, postChat,
          postSuggestion, reportMessage, awardBoard, myAwards, laughChat,
-         setPresence, campRoster, renameMe, setAvatar, online } from './net.js?v=20261116181107';
-import { startMusic, stopMusic, musicOn, audioState, audioSupported, setRain, whenSilenced, wakeAudio, audible, say, sfx, BEAT, BAR } from './audio.js?v=20261116181107';
+         setPresence, campRoster, renameMe, setAvatar, online } from './net.js?v=20261116203702';
+import { startMusic, stopMusic, musicOn, audioState, audioSupported, setRain, whenSilenced, wakeAudio, audible, say, sfx, BEAT, BAR } from './audio.js?v=20261116203702';
 import { playHoop, playPenalty, playQuiz, playRegister, playParade,
          playMami, playHustle, playManOWar, playSaed, playSocial,
-         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261116181107';
+         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261116203702';
 
 /* Every dance animation is expressed in beats, so the steps are on-tempo
    whether or not the sound is playing — and genuinely on the beat when it is. */
@@ -3919,7 +3919,9 @@ const GUTTER_SVG = `<svg viewBox="0 0 80 48" aria-hidden="true" overflow="visibl
    the way past is out into the road behind it (goAround). Wider than the
    80px box on both sides; the name rides over the roof. */
 const CAR_SVG = `<svg viewBox="0 0 80 48" aria-hidden="true" overflow="visible">
-  <defs><path id="potArc" d="M-8 15 A120 120 0 0 1 88 15" fill="none"/></defs>
+  <defs><path id="potArc" d="M-44 -12 A190 190 0 0 1 124 -12" fill="none"/></defs>
+  <!-- 1.65x about its ground point, to stand right beside an 86px corper -->
+  <g transform="translate(40 46) scale(1.65) translate(-40 -46)">
   <ellipse cx="40" cy="46.4" rx="58" ry="2" fill="#2b2824" opacity=".3"/>
   <!-- the gutter the front wheel went down -->
   <rect x="-16" y="41.6" width="22" height="6.4" fill="#1f1d1a"/>
@@ -3948,6 +3950,7 @@ const CAR_SVG = `<svg viewBox="0 0 80 48" aria-hidden="true" overflow="visible">
     <path d="M-12 40a8 8 0 0 1 16 0z M74 40a8 8 0 0 1 16 0z" fill="#2c2f33"/>
     <circle cx="-4" cy="40" r="6.4" fill="#1d1f22"/><circle cx="-4" cy="40" r="2.8" fill="#9aa0a6"/>
     <circle cx="82" cy="40" r="6.4" fill="#1d1f22"/><circle cx="82" cy="40" r="2.8" fill="#9aa0a6"/>
+  </g>
   </g>
   <text class="potName" font-size="8" font-weight="900" letter-spacing="0.55"
         font-family="system-ui,sans-serif" text-anchor="middle">
@@ -4090,7 +4093,7 @@ const OBSTACLE = {
              jumped: 'You waded through the puddle!', fell: 'Splash! You slipped in the puddle. Tap next time.' },
   gutter:  { svg: GUTTER_SVG, tag: 'TAP TO JUMP THE GUTTER', cost: 3, miss: 7, start: 44, edge: 42,   /* 72 open: a long leap */
              jumped: 'You jumped the open gutter!', fell: 'Straight into the gutter! Tap JUMP next time.' },
-  car:     { svg: CAR_SVG, tag: 'TAP TO GO ROUND THE CAR', cost: 2, miss: 5, start: 62, edge: 58, warn: 420,
+  car:     { svg: CAR_SVG, tag: 'TAP TO GO ROUND THE CAR', cost: 2, miss: 5, start: 104, edge: 100, warn: 560, tagBottom: 104,
              jumped: 'You went round the car!', fell: 'You walked into the car! Tap to go round.' },
   /* paid in naira, not energy: fee on a tap, fine (double) when he has to stop you */
   tout:    { svg: TOUT_SVG, tag: 'TAP: PAY ₦200 TO PASS', fee: 200, fine: 400, start: 58, edge: 52, warn: 520, tagBottom: 100,   /* stops a step short of his hand (user) */
@@ -4667,7 +4670,7 @@ function hopPothole(p, paid){
   p.classList.add('jumping');
   const kind = potKind, ob = OBSTACLE[kind];
   const took = kind === 'hill' ? climbHill(p) : kind === 'puddle' ? wadePuddle(p)
-             : kind === 'car' ? goAround(p) : kind === 'tout' ? payAndPass(p, paid)
+             : kind === 'car' ? goAround(p, 2800) : kind === 'tout' ? payAndPass(p, paid)   // the car is ~200px long
              : kind === 'gutter' ? hop(p, 1000, 36) : hop(p);
   setTimeout(() => { p.classList.remove('jumping'); }, took + 20);
   if (paid) say('welldone');                        // cleared it: "Well done!"
