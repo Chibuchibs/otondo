@@ -252,9 +252,13 @@
      that her figure can sit behind the traffic (1) while her label rises
      above the walkers (2), the chase (3) and the night (4) — a label a
      walker can cover is a tap that buys provisions instead of water. */
-  .hawker{position:absolute;bottom:54px;width:28px;height:52px;cursor:pointer;
+  /* On the far pavement, behind the road: a little smaller than the traffic
+     in front of her (2026-11-17, was 28x52 and taller than a sedan). The
+     ::before keeps the tap target the size it was. */
+  .hawker{position:absolute;bottom:54px;width:17px;height:32px;cursor:pointer;
     -webkit-tap-highlight-color:transparent;animation:hawk linear forwards}
-  .hawker .corper{position:absolute;left:-2px;bottom:0;width:32px;height:60px;z-index:1;
+  .hawker::before{content:'';position:absolute;inset:-14px -10px -4px}
+  .hawker .corper{position:absolute;left:-1.5px;bottom:0;width:20px;height:37px;z-index:1;
     animation:none;transform:scaleX(var(--face,-1));transition:none}
   .hawker .corper{--stride:.8s}
   .hawker .tapTag{background:#2f7fc1;bottom:122%;z-index:6}
@@ -397,7 +401,7 @@
   .convoy .rider i{position:absolute;left:44%;top:0;width:7px;height:7px;border-radius:50%;
     background:#3b7bff;box-shadow:0 0 6px 2px rgba(59,123,255,.7)}
   .convoy .rider i.lightR{background:#ff3b3b;box-shadow:0 0 6px 2px rgba(255,59,59,.7)}
-  .goat{position:absolute;bottom:36px;z-index:1;width:40px;pointer-events:none}
+  .goat{position:absolute;bottom:36px;z-index:1;width:30px;pointer-events:none}
   .goat svg{width:100%;display:block}
   @keyframes goatLeg{0%,100%{transform:rotate(14deg)}50%{transform:rotate(-14deg)}}
   .goat .gl{animation:goatLeg .42s ease-in-out infinite;transform-box:fill-box;transform-origin:top center}
@@ -1696,7 +1700,7 @@
 <script type="module">
 import { newGame, doAction, canDo, unlocked, ACTIONS, phaseOf, nextUnlock, postingOdds, rivalOf,
          computePosting, CHOICES, GOAL, goalStatus,
-         shareText, MAX_DAY } from './game.js?v=20261117120029';
+         shareText, MAX_DAY } from './game.js?v=20261117121016';
 
 /* ---------- scene coordinates ----------
    The scene is scaled by a transform (see the stage), so a native
@@ -1727,11 +1731,11 @@ const TS = (document.getElementById('scene').offsetWidth || 375) / 375;
 const ALLAWEE_NOTE = 'Allawee ₦77,000 — e never enter.';
 import { initNet, joinCamp, syncPlayer, platoonBoard, recentChat, postChat,
          postSuggestion, reportMessage, awardBoard, myAwards, laughChat,
-         setPresence, campRoster, renameMe, setAvatar, online } from './net.js?v=20261117120029';
-import { startMusic, stopMusic, musicOn, audioState, audioSupported, setRain, whenSilenced, wakeAudio, audible, say, sfx, BEAT, BAR } from './audio.js?v=20261117120029';
+         setPresence, campRoster, renameMe, setAvatar, online } from './net.js?v=20261117121016';
+import { startMusic, stopMusic, musicOn, audioState, audioSupported, setRain, whenSilenced, wakeAudio, audible, say, sfx, BEAT, BAR } from './audio.js?v=20261117121016';
 import { playHoop, playPenalty, playQuiz, playRegister, playParade,
          playMami, playHustle, playManOWar, playSaed, playSocial,
-         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261117120029';
+         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261117121016';
 
 /* Every dance animation is expressed in beats, so the steps are on-tempo
    whether or not the sound is playing — and genuinely on the beat when it is. */
@@ -3086,7 +3090,7 @@ const CUSTOMERS = {
   'BUS STOP':        [{ kind: 'idle',  at: .22, skin: 1, tone: 2, print: { kind: 'stripes', ink: '#1e3a6e' } },
                       { kind: 'phone', at: .40, skin: 3, tone: 0, print: { kind: 'dots', ink: '#d6342c' } }],
 };
-function customer(c, scale = .42){
+function customer(c, scale = .32){          // fits the shop doors (was .42, taller than them)
   const pos = c.kind === 'enter'
     ? `--from:${c.from * 100}%;--to:${c.to * 100}%;--d:${c.d || 0}s`
     : `left:${c.at * 100}%;--idle:${(3.2 + c.skin * .35).toFixed(2)}s;--hand:${6 + c.tone}s;--d:${-c.skin * 1.3}s`;
@@ -3159,9 +3163,9 @@ function traffic(el){
      traffic reads as behind them rather than beside them */
   const fleet = [
     { svg: danfo(),       w: 88, bottom: 34, speed: 8.0,  delay: -0.5, cls: 'plainDanfo' },
-    { svg: okada(true),   w: 60, bottom: 37, speed: 5.6,  delay: -3.6 },
-    { svg: keke(),        w: 62, bottom: 33, speed: 12.5, delay: -6.6, cls: 'keke' },
-    { svg: okada(false),  w: 54, bottom: 41, speed: 6.4,  delay: -9.4 },
+    { svg: okada(true),   w: 44, bottom: 37, speed: 5.6,  delay: -3.6 },     /* sizes on one road scale, the danfo's (2026-11-17) */
+    { svg: keke(),        w: 48, bottom: 33, speed: 12.5, delay: -6.6, cls: 'keke' },
+    { svg: okada(false),  w: 42, bottom: 41, speed: 6.4,  delay: -9.4 },
     { svg: danfoLoaded(), w: 94, bottom: 34, speed: 11.0, delay: -13.5, cls: 'loadedDanfo' },
   ];
   el.insertAdjacentHTML('beforeend', fleet.map(v =>
@@ -5790,9 +5794,9 @@ if (!calm()) setTimeout(hawkerCycle, HAWK_FIRST);
    more of the loop. Held back while a fire, a convoy or the goats have the
    road. */
 const PASSERS = [
-  () => ({ svg: sedan('#b9bec4', '#8f959c', 0), w: 78, bottom: 37, speed: 6.2 }),
-  () => ({ svg: policeHilux(), w: 92, bottom: 33, speed: 7.6, cls: 'police' }),
-  () => ({ svg: sedan('#7a1f2b', '#5a1520', 2), w: 78, bottom: 39, speed: 5.6 }),
+  () => ({ svg: sedan('#b9bec4', '#8f959c', 0), w: 92, bottom: 37, speed: 6.2 }),   // as long as a danfo, lower
+  () => ({ svg: policeHilux(), w: 104, bottom: 33, speed: 7.6, cls: 'police' }),
+  () => ({ svg: sedan('#7a1f2b', '#5a1520', 2), w: 92, bottom: 39, speed: 5.6 }),
 ];
 const PASS_FIRST = 9000, PASS_EVERY = 16000;
 let passN = 0;
@@ -6011,7 +6015,7 @@ function sendPed(){
     const looks = PED_LOOKS.map((_, i) => String(i)).filter(i => !!PED_LOOKS[i].fila !== (other ? hatOut : !hatOut));
     const lk = looks[Math.floor(Math.random() * looks.length)];
     el.dataset.look = lk;
-    el.innerHTML = civilian(SKINS[Math.floor(Math.random() * SKINS.length)], .55, 1, 0,
+    el.innerHTML = civilian(SKINS[Math.floor(Math.random() * SKINS.length)], .38, 1, 0,   // far pavement scale (was .55)
                             typeof shirt === 'number' ? shirt : 0, false, false, false,
                             typeof shirt === 'number' ? null : shirt, PED_LOOKS[+lk]);
     const v = sceneEl.querySelector('.vehicle');
@@ -6135,10 +6139,10 @@ function convoy(){
   c.className = 'convoy';
   const D = (4.6 * TS) + 's', dl = t => (t * TS) + 's';
   c.innerHTML =
-    `<div class="car rider" style="width:48px;bottom:10px;animation-duration:${D};animation-delay:0s">${okada(false)}<i class="lightB"></i></div>` +
-    `<div class="car rider" style="width:48px;bottom:14px;animation-duration:${D};animation-delay:${dl(.24)}">${okada(false)}<i class="lightR"></i></div>` +
-    `<div class="car" style="width:86px;bottom:4px;animation-duration:${D};animation-delay:${dl(.56)}">${suv()}</div>` +
-    `<div class="car" style="width:86px;bottom:7px;animation-duration:${D};animation-delay:${dl(.9)}">${suv()}</div>`;
+    `<div class="car rider" style="width:40px;bottom:10px;animation-duration:${D};animation-delay:0s">${okada(false)}<i class="lightB"></i></div>` +
+    `<div class="car rider" style="width:40px;bottom:14px;animation-duration:${D};animation-delay:${dl(.24)}">${okada(false)}<i class="lightR"></i></div>` +
+    `<div class="car" style="width:98px;bottom:4px;animation-duration:${D};animation-delay:${dl(.56)}">${suv()}</div>` +
+    `<div class="car" style="width:98px;bottom:7px;animation-duration:${D};animation-delay:${dl(.9)}">${suv()}</div>`;
   sceneEl.appendChild(c);
   if (shoutSign) shoutSign(['OGA DEY PASS!', '#1d1d1b', '#ffd34d']);
   /* Pim-pim: the escort clearing the road, as the siren riders come in. */
@@ -6157,9 +6161,9 @@ function odogwuConvoy(){
   c.dataset.dash = '5';
   const D = (ODOGWU_DRIVE * TS) + 's', dl = t => (t * TS) + 's';
   c.innerHTML =
-    `<div class="car" style="width:84px;bottom:10px;animation-duration:${D};animation-delay:0s">${pickup()}</div>` +
-    `<div class="car dash" style="width:90px;bottom:4px;animation-duration:${D};animation-delay:${dl(.5)}">${suv('#f3f1e8', false, '#c9c4b6')}<i class="tapTag">TAP FOR MONEY</i></div>` +
-    `<div class="car" style="width:86px;bottom:7px;animation-duration:${D};animation-delay:${dl(.92)}">${suv('#141414', false)}</div>`;
+    `<div class="car" style="width:100px;bottom:10px;animation-duration:${D};animation-delay:0s">${pickup()}</div>` +
+    `<div class="car dash" style="width:100px;bottom:4px;animation-duration:${D};animation-delay:${dl(.5)}">${suv('#f3f1e8', false, '#c9c4b6')}<i class="tapTag">TAP FOR MONEY</i></div>` +
+    `<div class="car" style="width:98px;bottom:7px;animation-duration:${D};animation-delay:${dl(.92)}">${suv('#141414', false)}</div>`;
   c.setAttribute('role', 'button');
   c.setAttribute('aria-label', 'Odogwu passing. Tap for money');
   sceneEl.appendChild(c);
