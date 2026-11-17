@@ -1666,6 +1666,14 @@
       <button class="primary ghost" type="button" id="streakShare" style="margin-top:8px">📸 Share my card</button>
     </div>
   </div>
+  <div class="hooray hidden" id="adPop" role="dialog" aria-modal="true" aria-labelledby="adH">
+    <div class="hoorayCard">
+      <div class="hoorayBig" id="adH">Advertise on Otondo?</div>
+      <p>Put your brand on the bus stop, a billboard, a danfo or a shop sign on the street. Send us a message and we'll reply.</p>
+      <button class="primary" type="button" id="adGo">Email us</button>
+      <button class="primary ghost" type="button" id="adClose" style="margin-top:8px">Close</button>
+    </div>
+  </div>
   <div class="hooray cardPop hidden" id="cardPop" role="dialog" aria-modal="true" aria-label="Your camp card">
     <div class="hoorayCard">
       <img id="cardImg" alt="Your Otondo camp card">
@@ -1688,7 +1696,7 @@
 <script type="module">
 import { newGame, doAction, canDo, unlocked, ACTIONS, phaseOf, nextUnlock, postingOdds, rivalOf,
          computePosting, CHOICES, GOAL, goalStatus,
-         shareText, MAX_DAY } from './game.js?v=20261116175537';
+         shareText, MAX_DAY } from './game.js?v=20261116180801';
 
 /* ---------- scene coordinates ----------
    The scene is scaled by a transform (see the stage), so a native
@@ -1719,11 +1727,11 @@ const TS = (document.getElementById('scene').offsetWidth || 375) / 375;
 const ALLAWEE_NOTE = 'Allawee ₦77,000 — e never enter.';
 import { initNet, joinCamp, syncPlayer, platoonBoard, recentChat, postChat,
          postSuggestion, reportMessage, awardBoard, myAwards, laughChat,
-         setPresence, campRoster, renameMe, setAvatar, online } from './net.js?v=20261116175537';
-import { startMusic, stopMusic, musicOn, audioState, audioSupported, setRain, whenSilenced, wakeAudio, audible, say, sfx, BEAT, BAR } from './audio.js?v=20261116175537';
+         setPresence, campRoster, renameMe, setAvatar, online } from './net.js?v=20261116180801';
+import { startMusic, stopMusic, musicOn, audioState, audioSupported, setRain, whenSilenced, wakeAudio, audible, say, sfx, BEAT, BAR } from './audio.js?v=20261116180801';
 import { playHoop, playPenalty, playQuiz, playRegister, playParade,
          playMami, playHustle, playManOWar, playSaed, playSocial,
-         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261116175537';
+         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261116180801';
 
 /* Every dance animation is expressed in beats, so the steps are on-tempo
    whether or not the sound is playing — and genuinely on the beat when it is. */
@@ -5275,7 +5283,7 @@ sceneEl.addEventListener('click', e => {
   if (adSpot){
     if (adSpot.dataset.ad === 'hagglebuddy') window.open(adLink(), '_blank', 'noopener');
     else if (adSpot.dataset.ad === 'skills') window.open(SKILLS_LINK, '_blank', 'noopener');
-    else location.href = 'mailto:hello@otondo.ng?subject=' + encodeURIComponent('Advertising on Otondo');
+    else $('adPop').classList.remove('hidden');       // asks first: a stray tap used to open a mail draft
     return;
   }
   const hw = at.closest('.hawker');
@@ -7231,6 +7239,13 @@ async function openCard(){
 }
 $('shareCard').onclick = () => { hintUsed(); openCard(); };
 $('cardClose').onclick = () => $('cardPop').classList.add('hidden');
+$('adClose').onclick = () => $('adPop').classList.add('hidden');
+$('adGo').onclick = () => {
+  $('adPop').classList.add('hidden');
+  location.href = 'mailto:hello@otondo.ng?subject=' + encodeURIComponent('Advertising on Otondo');
+};
+/* a tap on the dimmed backdrop closes it too */
+$('adPop').addEventListener('click', e => { if (e.target === $('adPop')) $('adPop').classList.add('hidden'); });
 $('cardGo').onclick = async () => {
   if (!cardBlob) return;
   const text = cardText(), file = new File([cardBlob], 'otondo-card.png', { type: 'image/png' });
