@@ -518,6 +518,17 @@
   .pothole.leaving .tNum{transform:scaleX(-1);transform-box:fill-box;transform-origin:50% 50%}
   .pothole.leaving .tLegA,.pothole.leaving .tLegB{animation-duration:.5s}
   .pothole.leaving .tBody{animation-duration:.25s}
+  /* his speech bubble: green when you have paid, red when he has stopped you */
+  .toutSay{position:absolute;left:57.5%;bottom:100px;transform:translateX(-50%);white-space:nowrap;
+    font:900 11px/1 system-ui,-apple-system,'Segoe UI',sans-serif;letter-spacing:.02em;padding:6px 9px;border-radius:10px;
+    color:#fff;-webkit-text-fill-color:#fff;box-shadow:0 2px 6px rgba(0,0,0,.28);pointer-events:none;
+    animation:toutSayIn .22s ease-out}
+  .toutSay::after{content:'';position:absolute;left:50%;bottom:-5px;margin-left:-5px;
+    border:5px solid transparent;border-bottom:0;border-top-color:var(--sb)}
+  .toutSay.paid{background:#1f8a4c;--sb:#1f8a4c}
+  .toutSay.fine{background:#c1272d;--sb:#c1272d}
+  @keyframes toutSayIn{from{transform:translateX(-50%) scale(.6);opacity:0}to{transform:translateX(-50%) scale(1);opacity:1}}
+  .cashNote.big{width:15px;height:8px;border-radius:1.5px}
   .corper.bumped{z-index:5}
   /* Leaning into the hill and going over in a slip both pivot on the feet. */
   .corper.jumping{transform-origin:50% 100%}
@@ -1677,7 +1688,7 @@
 <script type="module">
 import { newGame, doAction, canDo, unlocked, ACTIONS, phaseOf, nextUnlock, postingOdds, rivalOf,
          computePosting, CHOICES, GOAL, goalStatus,
-         shareText, MAX_DAY } from './game.js?v=20261116173053';
+         shareText, MAX_DAY } from './game.js?v=20261116174345';
 
 /* ---------- scene coordinates ----------
    The scene is scaled by a transform (see the stage), so a native
@@ -1708,11 +1719,11 @@ const TS = (document.getElementById('scene').offsetWidth || 375) / 375;
 const ALLAWEE_NOTE = 'Allawee ₦77,000 — e never enter.';
 import { initNet, joinCamp, syncPlayer, platoonBoard, recentChat, postChat,
          postSuggestion, reportMessage, awardBoard, myAwards, laughChat,
-         setPresence, campRoster, renameMe, setAvatar, online } from './net.js?v=20261116173053';
-import { startMusic, stopMusic, musicOn, audioState, audioSupported, setRain, whenSilenced, wakeAudio, audible, say, sfx, BEAT, BAR } from './audio.js?v=20261116173053';
+         setPresence, campRoster, renameMe, setAvatar, online } from './net.js?v=20261116174345';
+import { startMusic, stopMusic, musicOn, audioState, audioSupported, setRain, whenSilenced, wakeAudio, audible, say, sfx, BEAT, BAR } from './audio.js?v=20261116174345';
 import { playHoop, playPenalty, playQuiz, playRegister, playParade,
          playMami, playHustle, playManOWar, playSaed, playSocial,
-         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261116173053';
+         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261116174345';
 
 /* Every dance animation is expressed in beats, so the steps are on-tempo
    whether or not the sound is playing — and genuinely on the beat when it is. */
@@ -4058,7 +4069,7 @@ const OBSTACLE = {
   car:     { svg: CAR_SVG, tag: 'TAP TO GO ROUND THE CAR', cost: 2, miss: 5, start: 62, edge: 58, warn: 420,
              jumped: 'You went round the car!', fell: 'You walked into the car! Tap to go round.' },
   /* paid in naira, not energy: fee on a tap, fine (double) when he has to stop you */
-  tout:    { svg: TOUT_SVG, tag: 'TAP: PAY ₦200 TO PASS', fee: 200, fine: 400, start: 58, edge: 52, warn: 420, tagBottom: 100,   /* stops a step short of his hand (user) */
+  tout:    { svg: TOUT_SVG, tag: 'TAP: PAY ₦200 TO PASS', fee: 200, fine: 400, start: 58, edge: 52, warn: 520, tagBottom: 100,   /* stops a step short of his hand (user) */
              jumped: 'You settle the agbero ₦200. You fit pass!', fell: 'Agbero hold you! E collect ₦400. Tap to pay next time.' },
 };
 let potKind = 'pothole';
@@ -4554,7 +4565,7 @@ function hop(p, dur = 620, h = 30){
 /* At the agbero: stopped at his hand, riding the road with him while the
    money changes hands, his arm drops to wave you on, then round behind him. */
 function payAndPass(p, paid = false){
-  const STOP = 1100, PASS = 1600;      // from a step back, round him and clear
+  const STOP = 1600, PASS = 1600;      // from a step back: long enough to see the money change hands
   if (paid) setTimeout(toutLeaves, STOP);                      // your money: he is done, off he goes
   p.style.animationPlayState = 'paused';
   const drift = calm() ? null : p.animate([{ transform: 'translateX(0)' },
@@ -4636,12 +4647,13 @@ function hopPothole(p, paid){
              : kind === 'gutter' ? hop(p, 760, 34) : hop(p);
   setTimeout(() => { p.classList.remove('jumping'); }, took + 20);
   if (paid) say('welldone');                        // cleared it: "Well done!"
-  if (paid && s && kind === 'tout'){                // the agbero is paid in naira
-    s.money -= ob.fee;
-    tell(ob.jumped);
-    save(); render();
-    floatCost(p, `-${naira(ob.fee)}`);
-    handOver(p, 2);
+  if (paid && s && kind === 'tout'){                // already paid on the tap: the handover
+    if (p.dataset.prepaid !== String(potLap)){          // (a tap that somehow skipped the charge pays here)
+      s.money -= ob.fee; save(); render(); floatCost(p, `-${naira(ob.fee)}`);
+    }
+    delete p.dataset.prepaid;
+    handOver(p, 3, true);
+    setTimeout(() => toutSay('Correct! Waka pass.', 'paid'), 450);
     return;
   }
   if (paid && s){
@@ -4654,15 +4666,27 @@ function hopPothole(p, paid){
   }
 }
 
+/* What the agbero says, in a bubble over his head. A child of his box, so it
+   rides the road with him and goes when he goes; a new pass replaces the
+   box's contents and takes it away. */
+function toutSay(text, tone = 'paid', ms = 2400){
+  if (potKind !== 'tout') return;
+  pothole.querySelector('.toutSay')?.remove();
+  const b = document.createElement('div');
+  b.className = 'toutSay ' + tone;
+  b.textContent = text;
+  pothole.appendChild(b);
+  setTimeout(() => b.remove(), ms);
+}
 /* Notes from the walker's hand into the agbero's open palm. */
-function handOver(p, n){
+function handOver(p, n, big = false){
   const box = sceneEl.sceneRect(), r = p.sceneRect();
   const ox = r.left - box.left + r.width * .5, oy = r.top - box.top + r.height * .5;
   /* his palm: 25px left of the box's centre, 56px above the road's edge */
   const tx = potX() - 25, ty = box.height - 57;
   for (let i = 0; i < n; i++){
     const note = document.createElement('i');
-    note.className = 'cashNote';
+    note.className = 'cashNote' + (big ? ' big' : '');
     note.style.left = ox + 'px'; note.style.top = oy + 'px';
     sceneEl.appendChild(note);
     const dx = tx - ox, dy = ty - oy;
@@ -4670,7 +4694,7 @@ function handOver(p, n){
       { transform: 'translate(0,0) rotate(0)', opacity: 1 },
       { transform: `translate(${dx * .5}px,${dy * .5 - 18}px) rotate(${90 + i * 40}deg)`, opacity: 1, offset: .5 },
       { transform: `translate(${dx}px,${dy}px) rotate(${180 + i * 30}deg)`, opacity: 0 },
-    ], { duration: 520, delay: i * 120, easing: 'ease-in-out', fill: 'backwards' }).onfinish = () => note.remove();
+    ], { duration: big ? 760 : 520, delay: i * (big ? 200 : 120), easing: 'ease-in-out', fill: 'backwards' }).onfinish = () => note.remove();
   }
 }
 
@@ -4708,7 +4732,8 @@ function slipOn(p){
     s.money -= ob.fine;
     save(); render();
     floatCost(p, `-${naira(ob.fine)}`);
-    setTimeout(() => { if (p.isConnected) handOver(p, 4); }, DUR * .35);
+    toutSay(`Bring ${naira(ob.fine)} jare!`, 'fine', DUR);
+    setTimeout(() => { if (p.isConnected) handOver(p, 4, true); }, DUR * .35);
   } else if (s){
     s.energy = Math.max(0, s.energy - ob.miss);
     save(); render();
@@ -5151,6 +5176,17 @@ function takeOffer(p){
        hill 200px short of it would be walking up the air. */
     if (potKind === 'pothole') hopPothole(who, true);   // the tap is what makes it cost energy
     else { who.dataset.paid = String(potLap); potReadyAt = performance.now() + POT_COOLDOWN; }
+    /* the agbero: paid on the tap, so the player sees it go — the pocket,
+       a "-₦200" over the corper, and a green "PAID" over the agbero */
+    if (potKind === 'tout' && s){
+      const ob = OBSTACLE.tout;
+      s.money -= ob.fee;
+      tell(ob.jumped);
+      save(); render();
+      floatCost(who, `-${naira(ob.fee)}`);
+      toutSay(`✓ PAID ${naira(ob.fee)}`, 'paid');
+      who.dataset.prepaid = String(potLap);
+    }
     return true;
   }
   if (rideTag.style.display !== 'none'
