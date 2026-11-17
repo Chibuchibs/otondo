@@ -1696,7 +1696,7 @@
 <script type="module">
 import { newGame, doAction, canDo, unlocked, ACTIONS, phaseOf, nextUnlock, postingOdds, rivalOf,
          computePosting, CHOICES, GOAL, goalStatus,
-         shareText, MAX_DAY } from './game.js?v=20261117115145';
+         shareText, MAX_DAY } from './game.js?v=20261117120029';
 
 /* ---------- scene coordinates ----------
    The scene is scaled by a transform (see the stage), so a native
@@ -1727,11 +1727,11 @@ const TS = (document.getElementById('scene').offsetWidth || 375) / 375;
 const ALLAWEE_NOTE = 'Allawee ₦77,000 — e never enter.';
 import { initNet, joinCamp, syncPlayer, platoonBoard, recentChat, postChat,
          postSuggestion, reportMessage, awardBoard, myAwards, laughChat,
-         setPresence, campRoster, renameMe, setAvatar, online } from './net.js?v=20261117115145';
-import { startMusic, stopMusic, musicOn, audioState, audioSupported, setRain, whenSilenced, wakeAudio, audible, say, sfx, BEAT, BAR } from './audio.js?v=20261117115145';
+         setPresence, campRoster, renameMe, setAvatar, online } from './net.js?v=20261117120029';
+import { startMusic, stopMusic, musicOn, audioState, audioSupported, setRain, whenSilenced, wakeAudio, audible, say, sfx, BEAT, BAR } from './audio.js?v=20261117120029';
 import { playHoop, playPenalty, playQuiz, playRegister, playParade,
          playMami, playHustle, playManOWar, playSaed, playSocial,
-         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261117115145';
+         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261117120029';
 
 /* Every dance animation is expressed in beats, so the steps are on-tempo
    whether or not the sound is playing — and genuinely on the beat when it is. */
@@ -4085,6 +4085,67 @@ const CAR_RED = [['#c3c8ce', '#a8302c'], ['#e6e9ec', '#d0625b'], ['#7f848b', '#6
                  ['#a9afb6', '#8c2724'], ['#9aa1a9', '#7e2321'], ['#7d838b', '#561614']]
   .reduce((svg, [from, to]) => svg.split(from).join(to), CAR_SVG);
 let carN = 0;
+/* The dustbin (2026-11-17, user): two of them taking turns, like the car.
+   About half a corper's height. Ground at y≈46, drawn upright past the top of
+   the box (overflow visible). Lit tops, shaded right-hand sides. */
+const BIN_BAG = (x, w, h, fill = '#1e1f22', shine = '#4c5056', g = 46.4) => `
+  <path d="M${x} ${g}C${x - 3} ${g} ${x - 3} ${g - .4 - h * .55} ${x + w * .2} ${g - .4 - h * .72}C${x + w * .3} ${g - .4 - h * .9} ${x + w * .36} ${g - .4 - h} ${x + w * .44} ${g - .4 - h}
+    l${w * .06} ${h * .1} l${w * .07} ${-h * .1}C${x + w * .64} ${g - .4 - h * .9} ${x + w * .72} ${g - .4 - h * .82} ${x + w * .82} ${g - .4 - h * .7}C${x + w + 3} ${g - .4 - h * .5} ${x + w + 2} ${g} ${x + w - 2} ${g}Z" fill="${fill}"/>
+  <path d="M${x + w * .2} ${g - .4 - h * .5}q${w * .2} ${-h * .12} ${w * .34} ${-h * .04}M${x + w * .5} ${g - .4 - h * .3}q${w * .2} ${-h * .06} ${w * .3} ${h * .06}" stroke="${shine}" stroke-width=".9" fill="none" stroke-linecap="round"/>`;
+const BIN_SVG = `<svg viewBox="0 0 80 48" aria-hidden="true" overflow="visible">
+  <defs><path id="potArc" d="M-4 2 A90 90 0 0 1 84 2" fill="none"/></defs>
+  <ellipse cx="40" cy="46.6" rx="46" ry="2.4" fill="#2b2824" opacity=".3"/>
+  ${BIN_BAG(-6, 26, 18)}${BIN_BAG(3, 18, 12, '#2a2b2f')}
+  <!-- the bin: old ribbed metal, olive green, rust coming through -->
+  <path d="M26 7H54L52.2 46H27.8Z" fill="#6f7d5a"/>
+  <path d="M48.6 7H54L52.2 46H47.4Z" fill="#56623f"/>
+  <path d="M30.4 10v34M33.6 10v34M36.8 10v34M40 10v34M43.2 10v34M46.4 10v34" stroke="#5f6b4b" stroke-width=".9"/>
+  <circle cx="32" cy="20" r="1" fill="#8a5a2e"/><circle cx="44" cy="31" r="1.3" fill="#8a5a2e"/><circle cx="37" cy="40" r=".9" fill="#7a4f28"/>
+  <rect x="25.2" y="6" width="29.6" height="3" rx="1" fill="#7d8b66"/>
+  <rect x="22.6" y="12" width="3" height="1.6" rx=".6" fill="#4e573f"/><rect x="54.4" y="12" width="3" height="1.6" rx=".6" fill="#3f4733"/>
+  <!-- the lid on: its top lit, its edge, the handle -->
+  <path d="M24.6 6.2Q24.6 2.6 40 2.4Q55.4 2.6 55.4 6.2Z" fill="#8f9d76"/>
+  <rect x="24" y="5.4" width="32" height="2.2" rx="1" fill="#6a7754"/>
+  <path d="M35 2.6q5-4 10 0" stroke="#4e573f" stroke-width="1.2" fill="none"/>
+  ${BIN_BAG(56, 22, 16)}${BIN_BAG(70, 16, 11, '#2a2b2f')}
+  <text class="potName" font-size="8" font-weight="900" letter-spacing="0.55"
+        font-family="system-ui,sans-serif" text-anchor="middle">
+    <textPath href="#potArc" startOffset="50%">DUSTBIN</textPath>
+  </text>
+</svg>`;
+const BIN_FULL_SVG = `<svg viewBox="0 0 80 48" aria-hidden="true" overflow="visible">
+  <defs><path id="potArc" d="M-4 -12 A90 90 0 0 1 84 -12" fill="none"/></defs>
+  <ellipse cx="40" cy="46.6" rx="50" ry="2.6" fill="#2b2824" opacity=".3"/>
+  <!-- litter on the road round it: sachets, a can, a paper bag, a bottle -->
+  <g transform="rotate(-12 -6 45)"><rect x="-9" y="43.6" width="6" height="2.4" rx=".7" fill="#eef3f5"/><path d="M-8 44.8h4" stroke="#3a7bd5" stroke-width=".6"/></g>
+  <rect x="84" y="42.4" width="3" height="4" rx=".6" fill="#c1272d" transform="rotate(70 85.5 44.4)"/>
+  <path d="M-2 46.2l1.6-5h6.4l1.4 5z" fill="#b98a55"/><path d="M-.4 41.2h6.4" stroke="#8e6a40" stroke-width=".6"/>
+  <g transform="rotate(14 92 45)"><rect x="89" y="43.8" width="7" height="2" rx="1" fill="#9cc7b3"/></g>
+  <circle cx="20" cy="45.6" r=".8" fill="#e8e0cf"/><circle cx="64" cy="45.8" r=".7" fill="#e8e0cf"/>
+  ${BIN_BAG(2, 20, 13, '#e9eef0', '#bfc8ce')}
+  <!-- the wheelie bin: brown, its right side in shade, a wheel at the back -->
+  <path d="M25 9H56L53.4 45H27.6Z" fill="#6b4a2e"/>
+  <path d="M50.4 9H56L53.4 45H49.6Z" fill="#553a24"/>
+  <rect x="31" y="16" width="14" height="18" rx="1" fill="#5e4128"/>
+  <rect x="34" y="19" width="8" height="3" rx=".6" fill="#efe8d8" opacity=".85"/>
+  <circle cx="51.6" cy="44.4" r="2.8" fill="#1d1f22"/><circle cx="51.6" cy="44.4" r="1" fill="#55585e"/>
+  <!-- the heap: bags over the rim, a bottle sticking out -->
+  ${BIN_BAG(23, 16, 15, '#1e1f22', '#4c5056', 10)}${BIN_BAG(40, 14, 13, '#2a2b2f', '#4c5056', 10)}${BIN_BAG(31, 14, 16, '#e9eef0', '#bfc8ce', 9)}
+  <path d="M30 -5h4v6h-4z" fill="#d2463a" transform="rotate(-24 32 -2)"/><path d="M30.6 -7.6h2.8v2.8h-2.8z" fill="#efe8d8" transform="rotate(-24 32 -2)"/>
+  <path d="M40 -4q3-3 6 0" stroke="#6aa45a" stroke-width="2.2" fill="none" stroke-linecap="round"/>
+  <!-- the rim, lit on top -->
+  <rect x="23.6" y="7" width="33.8" height="3.2" rx="1" fill="#7a5636"/>
+  <path d="M23.6 7.2h33.8" stroke="#94704c" stroke-width=".9"/>
+  <!-- the lid, forced open and leaning back -->
+  <path d="M55.6 7.4L66.6 -12.6L69.4 -11.2L58.6 8.6Z" fill="#7a5636"/>
+  <path d="M66.6 -12.6L69.4 -11.2" stroke="#94704c" stroke-width="1.2"/>
+  ${BIN_BAG(58, 22, 15)}${BIN_BAG(74, 14, 9, '#e9eef0', '#bfc8ce')}
+  <text class="potName" font-size="8" font-weight="900" letter-spacing="0.55"
+        font-family="system-ui,sans-serif" text-anchor="middle">
+    <textPath href="#potArc" startOffset="50%">DUSTBIN</textPath>
+  </text>
+</svg>`;
+let binN = 0;
 /* cost: a tapped crossing; miss: the slip when you are asked and do not tap.
    warn: how far ahead the ask starts, if not POT_WARN (the hill asks early:
    user, "start a little early before reaching the hill").
@@ -4102,6 +4163,8 @@ const OBSTACLE = {
              jumped: 'You jumped the open gutter!', fell: 'Straight into the gutter! Tap JUMP next time.' },
   car:     { svg: CAR_SVG, tag: 'TAP TO GO ROUND THE CAR', cost: 2, miss: 5, start: 104, edge: 100, warn: 560, tagBottom: 104,
              jumped: 'You went round the car!', fell: 'You walked into the car! Tap to go round.' },
+  bin:     { svg: BIN_SVG, tag: 'TAP TO WAKA AROUND THE DUSTBIN', cost: 2, miss: 4, start: 62, edge: 58, warn: 480, tagBottom: 92,
+             jumped: 'You waka round the dustbin!', fell: 'You jam the dustbin! Tap to waka around.' },
   /* paid in naira, not energy: fee on a tap, fine (double) when he has to stop you */
   tout:    { svg: TOUT_SVG, tag: 'TAP: PAY ₦200 TO PASS', fee: 200, fine: 400, start: 58, edge: 52, warn: 520, tagBottom: 100,   /* stops a step short of his hand (user) */
              jumped: 'You settle the agbero ₦200. You fit pass!', fell: 'Agbero hold you! E collect ₦400. Tap to pay next time.' },
@@ -4113,7 +4176,9 @@ let potKind = 'pothole';
    exactly what it was. */
 /* the car twice a round (user, 2026-11-17: "needs to appear slightly more often"):
    once in five passes instead of once in eight */
-const OBSTACLE_TURNS = ['pothole', 'hill', 'pothole', 'car', 'pothole', 'gutter', 'pothole', 'puddle', 'pothole', 'car'];
+/* …and the dustbin twice a round as well, tidy then overflowing (2026-11-17) */
+const OBSTACLE_TURNS = ['pothole', 'hill', 'pothole', 'car', 'pothole', 'bin', 'pothole', 'gutter',
+                        'pothole', 'puddle', 'pothole', 'car', 'pothole', 'bin'];
 /* The agbero is not on the rota; he comes on a clock (user, 2026-11-16:
    "periodically, maybe twice after 1 minute"): first a minute into play,
    then every 30s at most, and never two passes running, so the road's own
@@ -4138,17 +4203,18 @@ function toutLeaves(){
   ], { duration: 2600, easing: 'linear', fill: 'forwards' });
 }
 /* The wide ones keep their distance from Mrs. Pothole (HILL_CLEAR). */
-const wideObstacle = k => k === 'hill' || k === 'car' || k === 'tout';
+const wideObstacle = k => k === 'hill' || k === 'car' || k === 'tout' || k === 'bin';
 function setObstacle(kind){
   potKind = kind;
   /* the car alternates silver and red, so its two turns a round look like two cars */
-  pothole.innerHTML = kind === 'car' && (carN++ % 2) ? CAR_RED : OBSTACLE[kind].svg;
+  pothole.innerHTML = kind === 'car' && (carN++ % 2) ? CAR_RED
+                    : kind === 'bin' && (binN++ % 2) ? BIN_FULL_SVG : OBSTACLE[kind].svg;
   pothole.classList.remove('leaving', 'waved');               // a fresh pass: whoever walked off is gone
   pothole.getAnimations().forEach(a => a.cancel());
   /* The car stands up off the road, so it is drawn in front of everyone on
      the walk: anybody passing it goes behind it, on the road side — which is
      what going round it looks like. A hole stays under their feet. */
-  pothole.classList.toggle('upright', kind === 'car' || kind === 'tout');   // the agbero stands up too
+  pothole.classList.toggle('upright', kind === 'car' || kind === 'tout' || kind === 'bin');   // the agbero and the dustbin stand up too
 }
 
 /* Up in the far lane and over to the left. Smaller, because everything in that
@@ -4680,7 +4746,8 @@ function hopPothole(p, paid){
   p.classList.add('jumping');
   const kind = potKind, ob = OBSTACLE[kind];
   const took = kind === 'hill' ? climbHill(p) : kind === 'puddle' ? wadePuddle(p)
-             : kind === 'car' ? goAround(p, 2800) : kind === 'tout' ? payAndPass(p, paid)   // the car is ~200px long
+             : kind === 'car' ? goAround(p, 2800) : kind === 'bin' ? goAround(p, 1900)
+             : kind === 'tout' ? payAndPass(p, paid)   // the car is ~200px long, the dustbin with its bags ~110
              : kind === 'gutter' ? hop(p, 1000, 36) : hop(p);
   setTimeout(() => { p.classList.remove('jumping'); }, took + 20);
   if (paid) say('welldone');                        // cleared it: "Well done!"
@@ -4745,12 +4812,12 @@ function slipOn(p){
   potReadyAt = performance.now() + POT_COOLDOWN;
   tell(ob.fell);
   p.classList.add('jumping');
-  if (kind === 'car' || kind === 'tout') p.classList.add('bumped');   // in front, where you can see him
+  if (kind === 'car' || kind === 'tout' || kind === 'bin') p.classList.add('bumped');   // in front, where you can see him
   p.style.animationPlayState = 'paused';
   const drift = calm() ? null : p.animate([{ transform: 'translateX(0)' },
     { transform: `translateX(${-ROAD_SPEED * DUR / 1000}px)` }],
     { duration: DUR, fill: 'forwards', composite: 'add' });
-  const back = kind === 'hill' || kind === 'car';
+  const back = kind === 'hill' || kind === 'car' || kind === 'bin';
   const down = back ? 'translate(-10px,4px) rotate(-82deg)' : 'translate(6px,3px) rotate(82deg)';
   if (kind === 'tout') p.animate([                  // stopped dead, a step back, then made to stand and pay
     { transform: 'translateX(0px)' }, { transform: 'translateX(-5px)', offset: .12 },
@@ -4760,7 +4827,7 @@ function slipOn(p){
   else p.animate([
     { transform: 'translate(0px,0px) rotate(0deg)' },
     { transform: kind === 'hill' ? 'translate(0px,-8px) rotate(-8deg)'
-               : kind === 'car' ? 'translate(-6px,-3px) rotate(-12deg)' : 'translate(2px,1px) rotate(14deg)', offset: .2 },
+               : kind === 'car' || kind === 'bin' ? 'translate(-6px,-3px) rotate(-12deg)' : 'translate(2px,1px) rotate(14deg)', offset: .2 },
     { transform: down, offset: .42 }, { transform: down, offset: .78 },
     { transform: 'translate(0px,0px) rotate(0deg)' },
   ], { duration: DUR, easing: 'ease-in-out', composite: 'add' });
