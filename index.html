@@ -880,6 +880,17 @@
   .corper.riding .tapRing,.corper.hailing .tapRing{display:none}
 
   .costFloat.gain{color:#b7f5c8}
+  /* the praise word: gold, pops and rises; from x3 it burns orange */
+  .cheer{position:absolute;z-index:8;transform:translateX(-50%);pointer-events:none;
+    font:900 13px/1 system-ui,-apple-system,'Segoe UI',sans-serif;color:#ffd84a;letter-spacing:.01em;
+    -webkit-text-stroke:.6px #5a3a00;text-shadow:0 2px 0 #7a4b00,0 3px 6px rgba(0,0,0,.45);
+    animation:cheerUp 1.3s cubic-bezier(.2,1.4,.4,1) forwards}
+  .cheer.hot{color:#ff9d2e;font-size:15px}
+  @keyframes cheerUp{0%{opacity:0;transform:translateX(-50%) translateY(6px) scale(.5) rotate(-6deg)}
+    18%{opacity:1;transform:translateX(-50%) translateY(0) scale(1.15) rotate(3deg)}
+    30%{transform:translateX(-50%) translateY(-2px) scale(1) rotate(0)}
+    100%{opacity:0;transform:translateX(-50%) translateY(-30px) scale(1)}}
+  @media (prefers-reduced-motion: reduce){.cheer{animation:none}}
   .costFloat{position:absolute;z-index:8;transform:translateX(-50%);
     pointer-events:none;color:#ffdede;font:800 12px/1 system-ui,sans-serif;
     text-shadow:0 1px 3px rgba(0,0,0,.6);animation:costUp 1.4s ease-out forwards}
@@ -935,6 +946,33 @@
     .runner,.flame,.puff{animation:none}
     .corper.sliding,.pickup.sliding,.pickup{transition:none}
   }
+
+  /* ---------- the labels, 2026-11-18 (user: "clunky, crowding the space") ----------
+     One system for every pressable label. A tap glyph instead of the word
+     TAP; bold sentence case in a pill; pops in from its tail, then a glow
+     ring pulses out — four times for an offer, for as long as it lasts when
+     it is urgent (an obstacle, the fire, the thief). The id raises these over
+     each label's own colour rule, which uses the background shorthand. */
+  #scene .cornTag,#scene .tapTag,#scene .runnerTag{
+    font:800 8.5px/1 system-ui,-apple-system,'Segoe UI',sans-serif;letter-spacing:.01em;
+    padding:3.6px 6.5px 3.6px 15px;border-radius:999px;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 10'%3E%3Ccircle cx='5' cy='5' r='1.9' fill='white'/%3E%3Ccircle cx='5' cy='5' r='3.9' fill='none' stroke='white' stroke-width='1.1' opacity='.75'/%3E%3C/svg%3E");background-repeat:no-repeat;background-size:8px 8px;background-position:4.5px 50%;
+    transform-origin:50% 100%;
+    animation:tagIn .32s cubic-bezier(.2,1.5,.4,1) both,tagGlow 1.5s ease-out .32s 4}
+  #scene .coin .tapTag,#scene .convoy.odogwu .tapTag{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 10'%3E%3Ccircle cx='5' cy='5' r='1.9' fill='%231d1a10'/%3E%3Ccircle cx='5' cy='5' r='3.9' fill='none' stroke='%231d1a10' stroke-width='1.1' opacity='.75'/%3E%3C/svg%3E")}
+  #scene .runnerTag.caught{background-image:none;padding-left:6.5px}
+  #scene .jumpTag,#scene .tapTag.urgent,#scene .runnerTag{animation:tagIn .32s cubic-bezier(.2,1.5,.4,1) both,tagGlow 1s ease-out .32s infinite}
+  /* the obstacle's countdown: a lighter band across the label that drains away as he
+     closes on it (a line under the words read as an underline, user 2026-11-18) */
+  #scene .jumpTag{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 10'%3E%3Ccircle cx='5' cy='5' r='1.9' fill='white'/%3E%3Ccircle cx='5' cy='5' r='3.9' fill='none' stroke='white' stroke-width='1.1' opacity='.75'/%3E%3C/svg%3E"),linear-gradient(rgba(255,255,255,.26),rgba(255,255,255,.26));
+    background-size:8px 8px,calc(var(--left,1) * 100%) 100%;background-position:4.5px 50%,0 0}
+  @keyframes tagIn{from{transform:translateX(-50%) scale(.55);opacity:0}to{transform:translateX(-50%) scale(1);opacity:1}}
+  @keyframes tagGlow{from{box-shadow:0 2px 6px rgba(0,0,0,.28),0 0 0 0 rgba(255,255,255,.75)}
+                    to  {box-shadow:0 2px 6px rgba(0,0,0,.28),0 0 0 7px rgba(255,255,255,0)}}
+  /* while an obstacle asks, everything else steps back (still pressable) */
+  #scene .tapTag,#scene .runnerTag{transition:opacity .25s}
+  #scene.asking .tapTag,#scene.asking .runnerTag{opacity:.45}
+  @media (prefers-reduced-motion: reduce){#scene .cornTag,#scene .tapTag,#scene .runnerTag,#scene .jumpTag{animation:none}}
   @keyframes munch{0%,100%{transform:translateY(0)}50%{transform:translateY(-2px)}}
   @keyframes toMouth{0%,100%{transform:rotate(-104deg)}50%{transform:rotate(-128deg)}}
 
@@ -1737,7 +1775,7 @@
 <script type="module">
 import { newGame, doAction, canDo, unlocked, ACTIONS, phaseOf, nextUnlock, postingOdds, rivalOf,
          computePosting, CHOICES, GOAL, goalStatus,
-         shareText, MAX_DAY } from './game.js?v=20261118094326';
+         shareText, MAX_DAY } from './game.js?v=20261118095854';
 
 /* ---------- scene coordinates ----------
    The scene is scaled by a transform (see the stage), so a native
@@ -1768,11 +1806,11 @@ const TS = (document.getElementById('scene').offsetWidth || 375) / 375;
 const ALLAWEE_NOTE = 'Allawee ₦77,000 — e never enter.';
 import { initNet, joinCamp, syncPlayer, platoonBoard, recentChat, postChat,
          postSuggestion, reportMessage, awardBoard, myAwards, laughChat,
-         setPresence, campRoster, renameMe, setAvatar, online } from './net.js?v=20261118094326';
-import { startMusic, stopMusic, musicOn, audioState, audioSupported, setRain, whenSilenced, wakeAudio, audible, say, sfx, BEAT, BAR } from './audio.js?v=20261118094326';
+         setPresence, campRoster, renameMe, setAvatar, online } from './net.js?v=20261118095854';
+import { startMusic, stopMusic, musicOn, audioState, audioSupported, setRain, whenSilenced, wakeAudio, audible, say, sfx, BEAT, BAR } from './audio.js?v=20261118095854';
 import { playHoop, playPenalty, playQuiz, playRegister, playParade,
          playMami, playHustle, playManOWar, playSaed, playSocial,
-         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261118094326';
+         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261118095854';
 
 /* Every dance animation is expressed in beats, so the steps are on-tempo
    whether or not the sound is playing — and genuinely on the beat when it is. */
@@ -2419,13 +2457,13 @@ function hawker(skin, wares = 'water'){
 const BOULEVARD = [
   { sign: 'NAIRA TRUST BANK', w: 112, modern: 'bank', body: '#e7e2d6', roof: '#6b1d2e', door: '#7a8791',
     signInk: ['#4a1220', '#ffe6a3', '#ffc94d'],
-    errand: 'TAP TO QUEUE AT THE ATM', price: 100, belle: 1 },
+    errand: 'Queue for ATM', price: 100, belle: 1 },
   { sign: 'OGA BURGER', w: 108, modern: 'burger', body: '#f6f1e4', roof: '#1e3a8a', door: '#1e3a8a', food: true,
     signInk: ['#14296b', '#ffe066', '#ffcc33'],
-    errand: 'TAP TO BUY A BURGER', price: 1200, belle: 11 },
+    errand: 'Grab burger', price: 1200, belle: 11 },
   { sign: 'CITY MALL', w: 116, modern: 'mall', body: '#9fc4d6', roof: '#39505f', door: '#5f7f91',
     signInk: ['#22323c', '#ffffff', '#9fe3ff'],
-    errand: 'TAP TO COOL OFF IN THE AC', price: 300, belle: 4 },
+    errand: 'Cool off for AC', price: 300, belle: 4 },
   /* The suya spot (2026-11-10): street food holding its corner outside the
      mall, the way it does on any boulevard after dark. Well down the road from
      the corn stall on purpose, and built nothing like it: a blue tarp on
@@ -2433,34 +2471,34 @@ const BOULEVARD = [
      over it in white. `call`: his voice when the spot comes into frame. */
   { sign: 'SUYA SPOT', w: 80, suya: true, call: 'suya', body: '#3a332c', roof: '#2f5d8a', food: true,
     signInk: ['#5a1a0e', '#fff4d6', '#ff9a3c'],
-    errand: 'TAP FOR SUYA', price: 1000, belle: 9 },
+    errand: 'Chop suya', price: 1000, belle: 9 },
   { sign: 'PIZZA RUN', w: 108, modern: 'pizza', body: '#f6f1e4', roof: '#15803d', door: '#15803d', food: true,
     signInk: ['#0f5e2d', '#fff4d6', '#ffd98a'],
-    errand: 'TAP FOR A SLICE OF PIZZA', price: 1100, belle: 10 },
+    errand: 'Chop pizza', price: 1100, belle: 10 },
   { sign: 'ALERT BANK', w: 112, modern: 'bank', body: '#dfe5e2', roof: '#0f4c4a', door: '#7a8791',
     signInk: ['#0a3735', '#c8ff5a', '#a4f02e'],
-    errand: 'TAP TO CHECK YOUR ALERT', price: 100, belle: 2 },
+    errand: 'Check alert', price: 100, belle: 2 },
   { sign: 'CHICKEN NATION', w: 108, modern: 'chicken', body: '#fbf7ef', roof: '#e8590c', door: '#e8590c', food: true,
     signInk: ['#b8430a', '#fff3c4', '#ffd166'],
-    errand: 'TAP FOR CHICKEN AND CHIPS', price: 1400, belle: 12 },
+    errand: 'Chop chicken', price: 1400, belle: 12 },
 ];
 
 const SHOPS = [
   ...BOULEVARD,
   /* door: each shop's own paint. heads: who is at the window (0–2). */
   { sign: 'FOOD JOINT',      w: 104, signInk: ['#7a1c14', '#ffd34d', '#ff9a3c'], body: '#b9683f', roof: '#6d6450', door: '#d6342c', heads: 2, buka: true,
-    errand: 'TAP TO BUY JOLLOF RICE', price: 600, belle: 9, food: true },
+    errand: 'Chop jollof', price: 600, belle: 9, food: true },
   { sign: 'ROASTED CORN',    w: 76, signInk: ['#1f4d2b', '#ffe066', '#ffcc33'],  body: '#8a6b3f', roof: '#5f5a38', stall: true,
-    errand: 'TAP FOR ROASTED CORN', price: 200,  belle: 5, food: true },
+    errand: 'Chop corn', price: 200,  belle: 5, food: true },
   { sign: 'SUPERMARKET',     w: 112, body: '#0fa3a0', roof: '#0a7d79', door: '#f3c53d', heads: 1, provisions: true, headX: 60,
     signInk: ['#0b3f3d', '#fff36b', '#ffe14d'],
-    errand: 'TAP TO BUY PROVISIONS', price: 450 },
+    errand: 'Buy provisions', price: 450 },
   { sign: 'ELECTRONICS',     w: 110, signInk: ['#10223f', '#7fe8ff', '#33ccff'], body: '#f7b31c', roof: '#c9820d', door: '#2b6cb0', heads: 1, electronics: true,
-    errand: 'TAP TO BUY PHONE CHARGER', price: 500,
+    errand: 'Buy charger', price: 500,
     /* A second errand on the same shop, picked at random each time it is
        offered. Recharge card is the thing anyone actually walks into an
        electronics kiosk for, and it was lost when the charger replaced it. */
-    errand2: 'TAP TO BUY RECHARGE CARD', price2: 200 },
+    errand2: 'Load credit', price2: 200 },
   /* The hand-painted board with six hairstyles on it, where FURNITURE was. A
      whitewashed front so the painted board is the colour on it, and a haircut
      is the errand — 500 and a lift to belle, because a fresh cut IS belle. */
@@ -2470,15 +2508,15 @@ const SHOPS = [
      is used, it simply stops being offered. Not food: the corper goes in to
      learn, he does not stand there eating. */
   { sign: 'BAKERY',          w: 104, signInk: ['#4a2412', '#ffe9c2', '#ffb35c'], body: '#d98f7e', roof: '#8a4b2a', bakery: true, door: '#1f7a46', heads: 1,
-    errand: 'TAP TO LEARN A TRADE', price: 1000, cred: 2, trade: true },
+    errand: 'Learn handwork', price: 1000, cred: 2, trade: true },
   { sign: 'BARBING SALON',   w: 116, body: '#ece4cf', roof: '#6d6450', barber: true, door: '#7b3fa0', heads: 2,
-    errand: 'TAP FOR A HAIRCUT', price: 500, belle: 8 },
+    errand: 'Barb hair', price: 500, belle: 8 },
   /* The lounge: dark front, neon board, bulbs along the roof, party light in
      the window and a bouncer at the door. Last in the row, so the POS stand,
      the tree and the generator keep the slots they had between the others.
      Drinks and small chops: the dearest tap on the street, a little belle. */
   { sign: 'VIBES LOUNGE',    w: 112, body: '#2b1d3a', roof: '#17111f', lounge: true, door: '#141016',
-    errand: 'TAP TO CHILL AT THE LOUNGE', price: 1500, belle: 6 },
+    errand: 'Chill for lounge', price: 1500, belle: 6 },
   /* The longer road (2026-11-07): two pieces of street that are ad space, not
      errands. A roadside billboard carrying our own HaggleBuddy ad (tap: the
      store for the phone in hand), and a bus stop whose lit panel asks
@@ -4222,20 +4260,20 @@ let binN = 0;
    width he has to cover); edge: past this point an unanswered ask is a miss.
    A tapped jump stays the cheapest crossing; walking up a hill costs more. */
 const OBSTACLE = {
-  pothole: { svg: POTHOLE_SVG, tag: 'TAP TO JUMP MR. POTHOLE',
+  pothole: { svg: POTHOLE_SVG, tag: 'Jump am!',
              jumped: 'You jumped Mr. Pothole!', fell: 'Mr. Pothole got you. Tap JUMP next time!' },
-  hill:    { svg: HILL_SVG, tag: 'TAP TO WALK UP THE HILL', cost: 3, miss: 6, start: 32, edge: 30, warn: 380,
+  hill:    { svg: HILL_SVG, tag: 'Climb am!', cost: 3, miss: 6, start: 32, edge: 30, warn: 380,
              jumped: 'You walked up the hill!', fell: 'You slid down the hill! Tap next time.' },
-  puddle:  { svg: PUDDLE_SVG, tag: 'TAP TO WALK THROUGH', cost: 2, miss: 5, start: 30, edge: 28,
+  puddle:  { svg: PUDDLE_SVG, tag: 'Splash through!', cost: 2, miss: 5, start: 30, edge: 28,
              jumped: 'You waded through the puddle!', fell: 'Splash! You slipped in the puddle. Tap next time.' },
-  gutter:  { svg: GUTTER_SVG, tag: 'TAP TO JUMP THE GUTTER', cost: 3, miss: 7, start: 44, edge: 42,   /* 72 open: a long leap */
+  gutter:  { svg: GUTTER_SVG, tag: 'Jump am!', cost: 3, miss: 7, start: 44, edge: 42,   /* 72 open: a long leap */
              jumped: 'You jumped the open gutter!', fell: 'Straight into the gutter! Tap JUMP next time.' },
-  car:     { svg: CAR_SVG, tag: 'TAP TO GO ROUND THE CAR', cost: 2, miss: 5, start: 104, edge: 100, warn: 560, tagBottom: 104,
+  car:     { svg: CAR_SVG, tag: 'Dodge am!', cost: 2, miss: 5, start: 104, edge: 100, warn: 560, tagBottom: 104,
              jumped: 'You went round the car!', fell: 'You walked into the car! Tap to go round.' },
-  bin:     { svg: BIN_SVG, tag: 'TAP TO WAKA AROUND THE DUSTBIN', cost: 2, miss: 4, start: 62, edge: 58, warn: 480, tagBottom: 92,
+  bin:     { svg: BIN_SVG, tag: 'Waka round!', cost: 2, miss: 4, start: 62, edge: 58, warn: 480, tagBottom: 92,
              jumped: 'You waka round the dustbin!', fell: 'You jam the dustbin! Tap to waka around.' },
   /* paid in naira, not energy: fee on a tap, fine (double) when he has to stop you */
-  tout:    { svg: TOUT_SVG, tag: 'TAP: PAY ₦200 TO PASS', fee: 200, fine: 400, start: 58, edge: 52, warn: 520, tagBottom: 100,   /* stops a step short of his hand (user) */
+  tout:    { svg: TOUT_SVG, tag: 'Settle ₦200', fee: 200, fine: 400, start: 58, edge: 52, warn: 520, tagBottom: 100,   /* stops a step short of his hand (user) */
              jumped: 'You settle the agbero ₦200. You fit pass!', fell: 'Agbero hold you! E collect ₦400. Tap to pay next time.' },
 };
 let potKind = 'pothole';
@@ -4823,6 +4861,7 @@ function hopPothole(p, paid){
              : kind === 'gutter' ? hop(p, 1000, 36) : hop(p);
   setTimeout(() => { p.classList.remove('jumping'); }, took + 20);
   if (paid) say('welldone');                        // cleared it: "Well done!"
+  if (paid) cheer(p);                               // and the game says so: a word, and the combo
   if (paid && s && kind === 'tout'){                // already paid on the tap: the handover
     if (p.dataset.prepaid !== String(potLap)){          // (a tap that somehow skipped the charge pays here)
       s.money -= ob.fee; save(); render(); floatCost(p, `-${naira(ob.fee)}`);
@@ -4878,6 +4917,7 @@ function handOver(p, n, big = false){
    backwards down the hill, face first into the water — lies there a moment
    riding the road with the obstacle, gets up and hurries back to his place. */
 function slipOn(p){
+  combo = 0;                                       // held up: the run of clean passes ends
   /* the agbero holds you 2.5s before he lets you go (user: "pass after 2 or 3 seconds") */
   const kind = potKind, ob = OBSTACLE[kind], DUR = kind === 'tout' ? 2500 : 1500;
   p.dataset.hop = String(potLap);
@@ -4933,6 +4973,7 @@ function slipOn(p){
 
 function fallIn(p){
   if (hopped(p)) return;
+  combo = 0;
   if (potKind !== 'pothole' && potKind !== 'gutter') return slipOn(p);
   p.dataset.hop = String(potLap);
   potReadyAt = performance.now() + POT_COOLDOWN;
@@ -5092,7 +5133,7 @@ function watchPothole(){
    .corper is an <svg>, and an HTML child inside one renders at 0x0. */
 const cornTag = document.createElement('div');
 cornTag.className = 'cornTag';
-cornTag.textContent = 'TAP FOR ROASTED CORN';
+cornTag.textContent = 'Chop corn';
 cornTag.style.display = 'none';
 sceneEl.appendChild(cornTag);
 let cornTarget = null;
@@ -5100,6 +5141,8 @@ let cornTarget = null;
 /* A label wider than the gap to the edge gets eaten by overflow:hidden.
    "TAP TO BUY STREAMING CHAIR ₦2,500" is 233px on a 375px phone, so it only
    fits centred — clamp it rather than lose half the instruction. */
+/* A label that moves to a new target pops in again (the CSS entrance + pulses). */
+function replayTag(el){ el.style.animation = 'none'; void el.offsetWidth; el.style.animation = ''; }
 function pinInside(el, box, centre, gap = 6){
   const half = el.offsetWidth / 2;
   const min = half + gap, max = box.width - half - gap;
@@ -5212,9 +5255,10 @@ function offerCorn(force){
     if (el !== cornShop) delete el.dataset.livePrice;
   });
   cornShop.dataset.livePrice = cost;          // what buy() must charge
-  cornTag.textContent = ((alt ? cornShop.dataset.errand2 : cornShop.dataset.errand)
-                         || 'TAP TO GO SHOP')
-    + (cost && s ? `  \u20a6${cost.toLocaleString()}` : '');
+  const words = ((alt ? cornShop.dataset.errand2 : cornShop.dataset.errand)
+                         || 'Go shop')
+    + (cost && s ? `\u2002\u20a6${cost.toLocaleString()}` : '');
+  if (cornTag.textContent !== words){ cornTag.textContent = words; replayTag(cornTag); }
   /* The label sits on the SHOP, not over the walker: the instruction names
      the place, the YOU marker names the person, and a tap on either sends him
      there. (The barber's board rides above its roof, so that one gets room.) */
@@ -5254,7 +5298,7 @@ function offerRide(force){
   if (!onKeke && !force){ clearRide(); return; }
   rideTarget.classList.add('wantsRide');
   markTappable(rideTarget);
-  rideTag.textContent = `TAP TO RIDE KEKE ₦${KEKE_FARE}`;
+  rideTag.textContent = `Hop on keke\u2002₦${KEKE_FARE}`;
   rideTag.style.display = 'block';
   rideAnchor = onKeke ? kk : rideTarget;
   const r = rideAnchor.sceneRect();
@@ -5301,15 +5345,23 @@ function offerTick(){
       markTappable(jumpShown);
       jumpTag.textContent = OBSTACLE[potKind].tag;
       jumpTag.style.display = 'block';
+      replayTag(jumpTag);
+      delete jumpTag.dataset.gap0;
     }
-    /* On Mr. Pothole himself, not over the walker. */
     const box = sceneEl.sceneRect();
+    /* the countdown: how much of the run-up he had when asked is left */
+    { const gap = potX() - figX(jumpShown, box) - (OBSTACLE[potKind].edge ?? 4);
+      if (!jumpTag.dataset.gap0) jumpTag.dataset.gap0 = String(Math.max(1, gap));
+      jumpTag.style.setProperty('--left', Math.max(0, Math.min(1, gap / +jumpTag.dataset.gap0)).toFixed(3)); }
+    sceneEl.classList.add('asking');
+    /* On Mr. Pothole himself, not over the walker. */
     pinInside(jumpTag, box, potX());
     jumpTag.style.bottom = (OBSTACLE[potKind].tagBottom || 74) + 'px';
     sweepOffers();
     return;
   }
   clearJump();
+  sceneEl.classList.remove('asking');
   if (rideTurn){
     /* Corn goes first, not last. offerRide refuses while a corn target exists,
        and on a ride turn nothing had cleared it yet — so the ride offer bailed
@@ -5586,7 +5638,7 @@ function catchThief(run){
     .forEach(el => { el.style.animation = 'none'; });
 
   const tag = sceneEl.querySelector('.runnerTag');
-  if (tag){ tag.textContent = 'CAUGHT!'; tag.classList.add('caught'); }
+  if (tag){ tag.textContent = 'Caught!'; tag.classList.add('caught'); }
 
   const fig = run.querySelector('svg.corper');
   if (fig){
@@ -5702,7 +5754,7 @@ function agberoChase(){
       const fig = wrap.querySelector('svg.corper');
       const tag = document.createElement('i');
       tag.className = 'runnerTag';
-      tag.textContent = 'CATCH THE THIEF';
+      tag.textContent = 'Catch am!';
       sceneEl.appendChild(tag);
       const follow = () => {
         if (!fig.isConnected){ tag.remove(); return; }
@@ -5721,7 +5773,7 @@ function agberoChase(){
       };
       follow();
     }
-    wrap.addEventListener('animationend', () => wrap.remove());
+    wrap.addEventListener('animationend', e => { if (e.target === wrap) wrap.remove(); });   // its own drive only: a child's animation (a label's pop-in) bubbles here too
     setTimeout(() => wrap.remove(), 16000 * TS);   // see burningDanfo: frozen tabs
   });
 }
@@ -5756,7 +5808,7 @@ function burningDanfo(){
      and the tap tag had to do all the work of saying this is an emergency. */
   v.innerHTML = danfo() + flameSvg(34, 1, 0) + flameSvg(66, .78, -.11)
               + '<div class="fireSmoke" aria-hidden="true">' + '<i></i>'.repeat(8) + '</div>'
-              + '<i class="tapTag">FIRE! TAP TO PUT OUT</i>';
+              + '<i class="tapTag urgent">Fire! Quench am!</i>';
   v.setAttribute('role', 'button');
   v.setAttribute('aria-label', 'Fire. Tap to put it out');
   sceneEl.appendChild(v);
@@ -5764,7 +5816,7 @@ function burningDanfo(){
      it never arrives: a tab that is backgrounded mid-crossing freezes the
      animation, the element never leaves, and the event queue deadlocks behind
      a bus that is no longer going anywhere. */
-  v.addEventListener('animationend', () => v.remove());
+  v.addEventListener('animationend', e => { if (e.target === v) v.remove(); });   // its own drive only: a child's animation (a label's pop-in) bubbles here too
   setTimeout(() => v.remove(), 20000);
 }
 
@@ -5809,9 +5861,9 @@ function douse(v){
    from the cooler. Pure water alone at +5 could not keep up with drills and a
    pothole, so the meter sat at zero; kunu is the big top-up and costs more. */
 const WARES = {
-  water: { tag: 'TAP FOR PURE WATER ₦100', price: 100, energy: 8,  belle: 0, skin: '#6b4423' },
-  akara: { tag: 'TAP FOR AKARA ₦200',      price: 200, energy: 0,  belle: 8, skin: '#8d5524' },
-  kunu:  { tag: 'TAP FOR KUNU ₦100',       price: 100, energy: 18, belle: 2, skin: '#4a2e1c' },
+  water: { tag: 'Drink water\u2002₦100', price: 100, energy: 8,  belle: 0, skin: '#6b4423' },
+  akara: { tag: 'Chop akara\u2002₦200',      price: 200, energy: 0,  belle: 8, skin: '#8d5524' },
+  kunu:  { tag: 'Drink kunu\u2002₦100',       price: 100, energy: 18, belle: 2, skin: '#4a2e1c' },
 };
 /* Kunu walks the same way as pure water, once water has gone and while akara
    is still crossing, so the far pavement always has someone on it. */
@@ -5837,7 +5889,7 @@ function sendHawker(kind){
   if (NEAR_WARES.has(kind)){
     el.classList.add('near');
     el.setAttribute('role', 'button');
-    el.setAttribute('aria-label', w.tag.replace('TAP FOR ', '') + '. Tap to buy');
+    el.setAttribute('aria-label', w.tag.replace('\u2002', ' ') + '. Tap to buy');
     /* behind the walkers (same z, earlier in the page), in front of the traffic */
     const first = sceneEl.querySelector(':scope > .corper');
     if (first) first.before(el); else sceneEl.appendChild(el);
@@ -5847,11 +5899,11 @@ function sendHawker(kind){
     return;
   }
   el.setAttribute('role', 'button');
-  el.setAttribute('aria-label', w.tag.replace('TAP FOR ', '') + '. Tap to buy');
+  el.setAttribute('aria-label', w.tag.replace('\u2002', ' ') + '. Tap to buy');
   /* Behind every vehicle, in front of the shops and the kerb. */
   const v = sceneEl.querySelector('.vehicle');
   if (v) v.before(el); else sceneEl.appendChild(el);
-  el.addEventListener('animationend', () => el.remove());
+  el.addEventListener('animationend', e => { if (e.target === el) el.remove(); });   // its own drive only: a child's animation (a label's pop-in) bubbles here too
   setTimeout(() => el.remove(), HAWK_LEN * TS * 1000 + 3000);
   if (!CALLS_ON_WALK_IN.has(kind)) return;
   setTimeout(() => { if (el.isConnected) say(CALLS_ON_WALK_IN.get(kind), { queue: true }); }, 3000 * TS);
@@ -5890,6 +5942,10 @@ function nearWalk(el){
     el.classList.toggle('standing', stand);
     x -= (ROAD_SPEED + (stand ? 0 : NEAR_PACE)) * dt / 1000;
     el.style.left = Math.round(x) + 'px';
+    /* her label stays on screen while she walks in from the edge and out */
+    const tag = el.querySelector('.tapTag');
+    if (tag){ const half = tag.offsetWidth / 2, cx = x + W / 2;
+      tag.style.marginLeft = Math.round(Math.min(Math.max(cx, half + 6), box.width - half - 6) - cx) + 'px'; }
     if (x < -W - box.width * 0.06 && !el.dataset.busy){ el.remove(); return; }
     requestAnimationFrame(step);
   };
@@ -5959,7 +6015,7 @@ function sendPasser(){
       + `animation-duration:${v.speed * TS}s;animation-iteration-count:1`;
     el.innerHTML = v.svg;
     sceneEl.appendChild(el);
-    el.addEventListener('animationend', () => el.remove());
+    el.addEventListener('animationend', e => { if (e.target === el) el.remove(); });   // its own drive only: a child's animation (a label's pop-in) bubbles here too
     /* Generous: the goats stop all traffic mid-crossing. */
     setTimeout(() => el.remove(), v.speed * TS * 1000 + 15000);
   }
@@ -6073,7 +6129,7 @@ function dropCoin(){
   el.className = 'coin';
   el.style.left = Math.round(x) + 'px';
   el.dataset.x = String(x);
-  el.innerHTML = coinSvg() + `<i class="tapTag">PICK UP ₦${COIN_VALUE}</i>`;
+  el.innerHTML = coinSvg() + `<i class="tapTag">Pick am\u2002₦${COIN_VALUE}</i>`;
   el.setAttribute('role', 'button');
   el.setAttribute('aria-label', `A ₦${COIN_VALUE} coin on the road. Tap to pick it up`);
   sceneEl.appendChild(el);
@@ -6170,7 +6226,7 @@ function sendPed(){
                             typeof shirt === 'number' ? null : shirt, PED_LOOKS[+lk]);
     const v = sceneEl.querySelector('.vehicle');
     if (v) v.before(el); else sceneEl.appendChild(el);
-    el.addEventListener('animationend', () => el.remove());
+    el.addEventListener('animationend', e => { if (e.target === el) el.remove(); });   // its own drive only: a child's animation (a label's pop-in) bubbles here too
   }
   setTimeout(sendPed, (8 + Math.random() * 9) * 1000 * TS);
 }
@@ -6315,7 +6371,7 @@ function odogwuConvoy(){
   const D = (ODOGWU_DRIVE * TS) + 's', dl = t => (t * TS) + 's';
   c.innerHTML =
     `<div class="car" style="width:100px;bottom:10px;animation-duration:${D};animation-delay:0s">${pickup()}</div>` +
-    `<div class="car dash" style="width:100px;bottom:4px;animation-duration:${D};animation-delay:${dl(.5)}">${suv('#f3f1e8', false, '#c9c4b6')}<i class="tapTag">TAP FOR MONEY</i></div>` +
+    `<div class="car dash" style="width:100px;bottom:4px;animation-duration:${D};animation-delay:${dl(.5)}">${suv('#f3f1e8', false, '#c9c4b6')}<i class="tapTag">Grab the cash!</i></div>` +
     `<div class="car" style="width:98px;bottom:7px;animation-duration:${D};animation-delay:${dl(.92)}">${suv('#141414', false)}</div>`;
   c.setAttribute('role', 'button');
   c.setAttribute('aria-label', 'Odogwu passing. Tap for money');
@@ -6846,6 +6902,21 @@ function buy(shopEl, who){
    bank statement writes it, and a minus after the naira sign reads as a typo. */
 const naira = n => (n < 0 ? '-' : '') + '₦' + Math.abs(n).toLocaleString();
 
+/* Praise for a clean pass you tapped for, and a running combo (2026-11-18,
+   user: "gamify every experience"). Pidgin draft: Gbam = spot on, Ehen = yes! */
+const CHEERS = ['Sharp!', 'Gbam!', 'Correct!', 'Clean!', 'Ehen!'];
+let combo = 0;
+function cheer(who){
+  combo++;
+  const box = sceneEl.sceneRect(), r = who.sceneRect();
+  const el = document.createElement('div');
+  el.className = 'cheer' + (combo >= 3 ? ' hot' : '');
+  el.textContent = CHEERS[Math.floor(Math.random() * CHEERS.length)] + (combo >= 2 ? ` x${combo}` : '');
+  el.style.bottom = Math.round(box.bottom - r.top + 56) + 'px';   // above the YOU pin and the cost
+  sceneEl.appendChild(el);
+  pinInside(el, box, r.left - box.left + r.width / 2);
+  setTimeout(() => el.remove(), 1300);
+}
 function floatCost(who, text){
   const box = sceneEl.sceneRect();
   const r   = who.sceneRect();
