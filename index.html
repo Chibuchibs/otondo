@@ -502,7 +502,7 @@
      `.jumping` and `.sunk` are markers only now. */
   /* Behind the pothole's rim (z1) while he goes under; the clip does the rest. */
   .corper.sunk{z-index:0;transform-origin:50% 100%}
-  .corper.detour{z-index:0}      /* round the parked car, on the road side of it */
+  .corper.detour{z-index:3}      /* round the parked car: in front of the traffic (z1), behind the car (z4) */
   .pothole.upright{z-index:4}
   /* "come": the forearm swings up and back, plain enough to read at a glance */
   .pothole .toutHand{animation:toutBeckon 1.1s ease-in-out infinite;transition:transform .3s ease}
@@ -1702,7 +1702,7 @@
 <script type="module">
 import { newGame, doAction, canDo, unlocked, ACTIONS, phaseOf, nextUnlock, postingOdds, rivalOf,
          computePosting, CHOICES, GOAL, goalStatus,
-         shareText, MAX_DAY } from './game.js?v=20261117133048';
+         shareText, MAX_DAY } from './game.js?v=20261117165111';
 
 /* ---------- scene coordinates ----------
    The scene is scaled by a transform (see the stage), so a native
@@ -1733,11 +1733,11 @@ const TS = (document.getElementById('scene').offsetWidth || 375) / 375;
 const ALLAWEE_NOTE = 'Allawee ₦77,000 — e never enter.';
 import { initNet, joinCamp, syncPlayer, platoonBoard, recentChat, postChat,
          postSuggestion, reportMessage, awardBoard, myAwards, laughChat,
-         setPresence, campRoster, renameMe, setAvatar, online } from './net.js?v=20261117133048';
-import { startMusic, stopMusic, musicOn, audioState, audioSupported, setRain, whenSilenced, wakeAudio, audible, say, sfx, BEAT, BAR } from './audio.js?v=20261117133048';
+         setPresence, campRoster, renameMe, setAvatar, online } from './net.js?v=20261117165111';
+import { startMusic, stopMusic, musicOn, audioState, audioSupported, setRain, whenSilenced, wakeAudio, audible, say, sfx, BEAT, BAR } from './audio.js?v=20261117165111';
 import { playHoop, playPenalty, playQuiz, playRegister, playParade,
          playMami, playHustle, playManOWar, playSaed, playSocial,
-         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261117133048';
+         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261117165111';
 
 /* Every dance animation is expressed in beats, so the steps are on-tempo
    whether or not the sound is playing — and genuinely on the beat when it is. */
@@ -4958,6 +4958,32 @@ function fallIn(p){
 /* Everyone hops it except whoever the player is steering, who gets the choice.
    Flags clear once a figure is back round the left-hand side. */
 let jumpTarget = null;
+/* Who is asked on this pass (2026-11-17). The walker you are steering, if he
+   still has a fair run-up when the obstacle comes on; if he is already nearly
+   on it (often, on a narrow phone) he crosses like a bystander instead, and
+   the next free walker with room is asked. Without this the label could be up
+   for a fifth of a second and then he walked into it. */
+const ASK_RUNUP = 200;                 // px of closing gap, ~2.4s at ~85px/s: a full run-up
+const ASK_MIN = 110;                   // ~1.3s: short, but still a fair chance
+let askDoneLap = -1;                   // one ask a pass: once someone has been asked, no more picking
+function planAsk(box, x, ob){
+  if (jumpShown) askDoneLap = potLap;
+  if (askDoneLap === potLap || performance.now() < potReadyAt) return;
+  const lap = String(potLap), edge = ob.edge ?? 4;
+  const figs = [...sceneEl.querySelectorAll(':scope > .corper')].filter(p => freeFig(p) && !hopped(p)
+    && !p.matches('.riding, .hailing, .running, .munching, .shopping, .inRide, .gone, .sunk')
+    && !(+p.dataset.grace > performance.now()) && x - figX(p, box) > edge);
+  const room = p => x - figX(p, box) - edge;
+  if (figs.some(p => p.dataset.askLap === lap && room(p) >= ASK_MIN)) return;        // chosen already
+  const cur = [cornTarget, rideTarget].filter(p => p && figs.includes(p) && p.dataset.skipLap !== lap);
+  if (cur.some(p => room(p) >= ASK_RUNUP)) return;                                   // yours, with room
+  const roomy = figs.filter(p => room(p) >= ASK_RUNUP).sort((a, b) => room(a) - room(b));
+  if (roomy.length){ cur.forEach(p => p.dataset.skipLap = lap); roomy[0].dataset.askLap = lap; return; }
+  /* nobody has a full run-up: yours keeps it if he has a fair second, else the one with the most room */
+  if (cur.some(p => room(p) >= ASK_MIN)) return;
+  const ok = figs.filter(p => room(p) >= ASK_MIN).sort((a, b) => room(b) - room(a));
+  if (ok.length){ cur.forEach(p => p.dataset.skipLap = lap); ok[0].dataset.askLap = lap; }
+}
 function watchPothole(){
   if (calm()) return;
   const box = sceneEl.sceneRect();
@@ -4965,6 +4991,7 @@ function watchPothole(){
   jumpTarget = null;
   if (potKind === 'tout' && toutGone === potLap) return;       // paid, and he has walked off
   if (x > box.width + 10) return;          // still coming, off the right edge: nobody is asked yet
+  planAsk(box, x, ob);
   sceneEl.querySelectorAll(':scope > .corper').forEach(p => {
     if (p.matches('.riding, .hailing, .running, .munching, .shopping, .inRide, .gone, .sunk')) return;
     const fx = figX(p, box);
@@ -4984,8 +5011,10 @@ function watchPothole(){
        ride targets, so without it the figure stopped counting as yours the
        instant it was asked — and then auto-hopped like a bystander. Nobody
        could ever fall in, which is half the mechanic. */
+    const lap = String(potLap);
     const mine = (performance.now() >= potReadyAt) && !(+p.dataset.grace > performance.now())
-              && (p === cornTarget || p === rideTarget || p === jumpShown);
+              && (p === jumpShown || (p.dataset.skipLap !== lap
+                  && (p === cornTarget || p === rideTarget || p.dataset.askLap === lap)));
     if (mine){
       if (fx < x - (ob.edge ?? 4)) jumpTarget = p;  // yours: you get asked
       else fallIn(p);                  // asked, and not answered — he is on the hole
