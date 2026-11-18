@@ -266,6 +266,14 @@
   .hawker.paused .arm2,.hawker.paused .torso,.hawker.paused .shin,.hawker.paused .fore{
     animation-play-state:paused}
   .scene.w-storm .hawker .corper,.scene.w-wind .hawker .corper,.scene.w-rain .hawker .corper{transform:scaleX(var(--face,-1))}
+  /* Pure water on the near pavement (2026-11-18, user): walkers' scale and
+     line, against them. Moved by nearWalk(), not the hawk keyframes. */
+  .hawker.near{bottom:8px;width:44px;height:82px;z-index:2;animation:none;transition:transform .35s ease}
+  .hawker.near::before{inset:-8px -6px -4px}
+  .hawker.near .corper{left:0;width:44px;height:82px;z-index:auto;--stride:1.05s}
+  .hawker.near .tapTag{bottom:112%}
+  .hawker.standing .leg,.hawker.standing .leg2,.hawker.standing .shin,
+  .hawker.standing .arm,.hawker.standing .arm2,.hawker.standing .fore{animation-play-state:paused}
 
   /* ---------- the street's own people ----------
      Customers at the shops and the POS stand, and passers-by on the far
@@ -504,6 +512,15 @@
   .corper.sunk{z-index:0;transform-origin:50% 100%}
   .corper.detour{z-index:3}      /* round the parked car: in front of the traffic (z1), behind the car (z4) */
   .pothole.upright{z-index:4}
+  /* the broken-down car's engine smoking: puffs rise, swell and thin out */
+  .pothole .carSmoke circle{fill:#5f6164;opacity:0;transform-box:fill-box;transform-origin:50% 50%;
+    animation:carSmoke 2.8s ease-out infinite}
+  .pothole .carSmoke circle:nth-child(2){animation-delay:-.56s;fill:#76787b}
+  .pothole .carSmoke circle:nth-child(3){animation-delay:-1.12s;fill:#4f5154}
+  .pothole .carSmoke circle:nth-child(4){animation-delay:-1.68s;fill:#6a6c6f}
+  .pothole .carSmoke circle:nth-child(5){animation-delay:-2.24s;fill:#888a8d}
+  @keyframes carSmoke{0%{transform:translate(0,0) scale(.6);opacity:.95}
+    45%{opacity:.8}100%{transform:translate(-7px,-30px) scale(2.6);opacity:0}}
   /* "come": the forearm swings up and back, plain enough to read at a glance */
   .pothole .toutHand{animation:toutBeckon 1.1s ease-in-out infinite;transition:transform .3s ease}
   @keyframes toutBeckon{0%,100%{transform:rotate(0)}40%{transform:rotate(18deg)}62%{transform:rotate(-4deg)}}
@@ -810,6 +827,24 @@
                      to  {transform:translateX(-50%) scaleY(1.22) scaleX(.9)}}
   .ablaze[data-fire="2"] .flame{opacity:.72;scale:.78}
   .ablaze[data-fire="1"] .flame{opacity:.45;scale:.56}
+  /* (2026-11-18, user) smoke off the fire: dark puffs over each flame, rising
+     and trailing back as the bus drives on; thinner as the flames go down */
+  .fireSmoke{position:absolute;left:0;bottom:88%;width:100%;height:70px;pointer-events:none;transition:opacity .4s}
+  .fireSmoke i{position:absolute;bottom:0;width:15px;height:15px;margin-left:-7.5px;border-radius:50%;
+    background:#3a3836;opacity:0;filter:blur(1.2px);animation:fireSmoke 2.6s ease-out infinite}
+  .fireSmoke i:nth-child(odd){background:#55524e}
+  .fireSmoke i:nth-child(1){left:34%;animation-delay:0s}
+  .fireSmoke i:nth-child(2){left:31%;animation-delay:-.65s}
+  .fireSmoke i:nth-child(3){left:37%;animation-delay:-1.3s}
+  .fireSmoke i:nth-child(4){left:33%;animation-delay:-1.95s}
+  .fireSmoke i:nth-child(5){left:66%;animation-delay:-.3s;width:12px;height:12px}
+  .fireSmoke i:nth-child(6){left:63%;animation-delay:-.95s;width:12px;height:12px}
+  .fireSmoke i:nth-child(7){left:69%;animation-delay:-1.6s;width:12px;height:12px}
+  .fireSmoke i:nth-child(8){left:65%;animation-delay:-2.25s;width:12px;height:12px}
+  @keyframes fireSmoke{0%{transform:translate(0,0) scale(.5);opacity:.9}
+    50%{opacity:.7}100%{transform:translate(-30px,-50px) scale(2.2);opacity:0}}
+  .ablaze[data-fire="2"] .fireSmoke{opacity:.7}
+  .ablaze[data-fire="1"] .fireSmoke{opacity:.4}
   .puff{position:absolute;left:50%;bottom:70%;width:34px;height:34px;
     transform:translateX(-50%);pointer-events:none;
     animation:puffUp 1.1s ease-out forwards}
@@ -1702,7 +1737,7 @@
 <script type="module">
 import { newGame, doAction, canDo, unlocked, ACTIONS, phaseOf, nextUnlock, postingOdds, rivalOf,
          computePosting, CHOICES, GOAL, goalStatus,
-         shareText, MAX_DAY } from './game.js?v=20261117165111';
+         shareText, MAX_DAY } from './game.js?v=20261118094326';
 
 /* ---------- scene coordinates ----------
    The scene is scaled by a transform (see the stage), so a native
@@ -1733,11 +1768,11 @@ const TS = (document.getElementById('scene').offsetWidth || 375) / 375;
 const ALLAWEE_NOTE = 'Allawee ₦77,000 — e never enter.';
 import { initNet, joinCamp, syncPlayer, platoonBoard, recentChat, postChat,
          postSuggestion, reportMessage, awardBoard, myAwards, laughChat,
-         setPresence, campRoster, renameMe, setAvatar, online } from './net.js?v=20261117165111';
-import { startMusic, stopMusic, musicOn, audioState, audioSupported, setRain, whenSilenced, wakeAudio, audible, say, sfx, BEAT, BAR } from './audio.js?v=20261117165111';
+         setPresence, campRoster, renameMe, setAvatar, online } from './net.js?v=20261118094326';
+import { startMusic, stopMusic, musicOn, audioState, audioSupported, setRain, whenSilenced, wakeAudio, audible, say, sfx, BEAT, BAR } from './audio.js?v=20261118094326';
 import { playHoop, playPenalty, playQuiz, playRegister, playParade,
          playMami, playHustle, playManOWar, playSaed, playSocial,
-         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261117165111';
+         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261118094326';
 
 /* Every dance animation is expressed in beats, so the steps are on-tempo
    whether or not the sound is playing — and genuinely on the beat when it is. */
@@ -2280,7 +2315,7 @@ function hawker(skin, wares = 'water'){
   const akara = wares === 'akara', kunu = wares === 'kunu';
   /* Three women, three palettes, so they are never mistaken for one another. */
   const PAL = {
-    water: ['#2f7a63', '#245f4d', '#f2d2a0', '#c14f3e'],
+    water: ['#2f7a63', '#245f4d', '#e8b53a', '#c14f3e'],   // mustard blouse: the old tan read as bare skin at full size
     akara: ['#3d6ea8', '#2f5886', '#d96fa0', '#f3c53d'],
     kunu:  ['#8a4b2a', '#6d3a20', '#f3efe2', '#2f6b4f'],
   }[wares] || ['#2f7a63', '#245f4d', '#f2d2a0', '#c14f3e'];
@@ -3924,7 +3959,9 @@ const GUTTER_SVG = `<svg viewBox="0 0 80 48" aria-hidden="true" overflow="visibl
    wheel, roof, bonnet and boot lit, back end in shade. It fills the walk, so
    the way past is out into the road behind it (goAround). Wider than the
    80px box on both sides; the name rides over the roof. */
-const CAR_SVG = `<svg viewBox="0 0 80 48" aria-hidden="true" overflow="visible">
+/* (2026-11-18, user) the silver one broken down, bonnet up and smoking; the
+   red one with its boot open; somebody at the wheel of both. */
+const carDrawing = (bonnetUp, bootUp) => `<svg viewBox="0 0 80 48" aria-hidden="true" overflow="visible">
   <defs><path id="potArc" d="M-44 -12 A190 190 0 0 1 124 -12" fill="none"/></defs>
   <!-- 1.65x about its ground point, to stand right beside an 86px corper -->
   <g transform="translate(40 46) scale(1.65) translate(-40 -46)">
@@ -3938,14 +3975,24 @@ const CAR_SVG = `<svg viewBox="0 0 80 48" aria-hidden="true" overflow="visible">
     <!-- depth: the back end in shade, then the lit tops of bonnet, roof, boot -->
     <path d="M98 24l4-2.4V37.6l-4 2.4z" fill="#7f848b"/>
     <rect x="98.8" y="28.6" width="2.4" height="4.4" fill="#f4f1e6" transform="skewY(-31)" transform-origin="99 30"/>
-    <path d="M-18 24l4-2.4h32l-4 2.4z" fill="#e6e9ec"/>
+    ${bonnetUp ? `<path d="M-18 24l4-2.4h32l-4 2.4z" fill="#2a2c2f"/>
+      <path d="M-11 23.6l1.6-1.4h12l-1.6 1.4z" fill="#45494f"/><circle cx="6" cy="22.8" r="1.1" fill="#3a3d42"/>`
+               : `<path d="M-18 24l4-2.4h32l-4 2.4z" fill="#e6e9ec"/>`}
     <path d="M22 12l4-2.4h40l-4 2.4z" fill="#e6e9ec"/>
-    <path d="M72 24l4-2.4h26l-4 2.4z" fill="#e6e9ec"/>
+    ${bootUp ? `<path d="M72 24l4-2.4h26l-4 2.4z" fill="#2a2c2f"/>
+      <rect x="78" y="19.4" width="11" height="5" rx="1" fill="#3d5a99"/>
+      <path d="M78 21h11M78 22.8h11M81.6 19.4v5M85.2 19.4v5" stroke="#b9c7e6" stroke-width=".5"/>`
+             : `<path d="M72 24l4-2.4h26l-4 2.4z" fill="#e6e9ec"/>`}
     <path d="M62 12l4-2.4 10 12-4 2.4z" fill="#9aa0a7"/>
     <!-- the body -->
     <path d="M-18 24H14L22 12H62L72 24H98V37.6Q98 40 95.6 40H-15.6Q-18 40-18 37.6Z" fill="#c3c8ce"/>
     <path d="M-18 31H98" stroke="#a9afb6" stroke-width=".7"/>
     <path d="M18 23L24.4 14H40V23Z" fill="#5d7482"/><path d="M43 14H60.6L67.6 23H43Z" fill="#5d7482"/>
+    <!-- the driver: head and shoulders in the front window -->
+    <path d="M28.4 23q0-3.4 4.2-3.6q4.2.2 4.2 3.6z" fill="${bootUp ? '#d9a521' : '#2f6b4f'}"/>
+    <rect x="31.4" y="18.4" width="2.4" height="2" fill="#5a3a22"/>
+    <circle cx="32.6" cy="16.9" r="2.6" fill="#5a3a22"/>
+    ${bootUp ? '<path d="M30 16.2a2.7 2.7 0 0 1 5.2 0z" fill="#1c1a18"/>' : '<path d="M30 16.4a2.7 2.7 0 0 1 5.2 0l.4.6h-6z" fill="#b8322a"/>'}
     <path d="M25 22l6-7M45 22l5-7" stroke="#fff" stroke-width=".7" opacity=".35"/>
     <path d="M41.5 13v26M70 24v15" stroke="#9aa1a9" stroke-width=".6"/>
     <rect x="34" y="26" width="4" height="1.2" rx=".5" fill="#7d838b"/><rect x="62" y="26" width="4" height="1.2" rx=".5" fill="#7d838b"/>
@@ -3956,6 +4003,15 @@ const CAR_SVG = `<svg viewBox="0 0 80 48" aria-hidden="true" overflow="visible">
     <path d="M-12 40a8 8 0 0 1 16 0z M74 40a8 8 0 0 1 16 0z" fill="#2c2f33"/>
     <circle cx="-4" cy="40" r="6.4" fill="#1d1f22"/><circle cx="-4" cy="40" r="2.8" fill="#9aa0a6"/>
     <circle cx="82" cy="40" r="6.4" fill="#1d1f22"/><circle cx="82" cy="40" r="2.8" fill="#9aa0a6"/>
+    ${bonnetUp ? `<!-- the bonnet, propped open on its stay, hinged at the windscreen -->
+    <path d="M-9 23.6L-1.6 -.6" stroke="#5b6067" stroke-width=".7"/>
+    <path d="M14 24L-4.4 -2.2L-1.6 -3.4L16.4 23Z" fill="#c3c8ce"/>
+    <path d="M14 24L-4.4 -2.2L-5.6 -1.4L12.6 24.6Z" fill="#7f848b"/>
+    <!-- smoke out of the engine -->
+    <g class="carSmoke"><circle cx="0" cy="18" r="3.6"/><circle cx="-6" cy="17" r="3"/><circle cx="5" cy="17.4" r="3"/><circle cx="-2" cy="16.4" r="3.2"/><circle cx="3" cy="18.4" r="2.8"/></g>` : ''}
+    ${bootUp ? `<!-- the boot lid, up, hinged at the back window -->
+    <path d="M72 24L80.9 -.4L83.8 .4L74.8 24.6Z" fill="#c3c8ce"/>
+    <path d="M72 24L80.9 -.4L79.6 -.8L70.8 23.4Z" fill="#7f848b"/>` : ''}
   </g>
   </g>
   <text class="potName" font-size="8" font-weight="900" letter-spacing="0.55"
@@ -3963,6 +4019,7 @@ const CAR_SVG = `<svg viewBox="0 0 80 48" aria-hidden="true" overflow="visible">
     <textPath href="#potArc" startOffset="50%">WHO PARK HERE?</textPath>
   </text>
 </svg>`;
+const CAR_SVG = carDrawing(true, false);
 /* Two more for the road (2026-11-10), each in the same 80x48 box and the same
    moving spot as Mr. Pothole, taking turns with him (OBSTACLE_TURNS):
    a hump of red laterite to walk up and over, and a stagnant puddle — murky
@@ -4089,7 +4146,7 @@ const TOUT_SVG = `<svg viewBox="0 0 80 48" aria-hidden="true" overflow="visible"
    the sill line, the door seams, the handles). */
 const CAR_RED = [['#c3c8ce', '#a8302c'], ['#e6e9ec', '#d0625b'], ['#7f848b', '#6b1d1b'], ['#9aa0a7', '#8a2624'],
                  ['#a9afb6', '#8c2724'], ['#9aa1a9', '#7e2321'], ['#7d838b', '#561614']]
-  .reduce((svg, [from, to]) => svg.split(from).join(to), CAR_SVG);
+  .reduce((svg, [from, to]) => svg.split(from).join(to), carDrawing(false, true));
 let carN = 0;
 /* The dustbin (2026-11-17, user): two of them taking turns, like the car.
    About half a corper's height. Ground at y≈46, drawn upright past the top of
@@ -5698,6 +5755,7 @@ function burningDanfo(){
   /* Two flames, not one: a single flame on a 96px bus read as a small problem,
      and the tap tag had to do all the work of saying this is an emergency. */
   v.innerHTML = danfo() + flameSvg(34, 1, 0) + flameSvg(66, .78, -.11)
+              + '<div class="fireSmoke" aria-hidden="true">' + '<i></i>'.repeat(8) + '</div>'
               + '<i class="tapTag">FIRE! TAP TO PUT OUT</i>';
   v.setAttribute('role', 'button');
   v.setAttribute('aria-label', 'Fire. Tap to put it out');
@@ -5727,7 +5785,7 @@ function douse(v){
   if (left > 0) return;
   tell('You put out the fire. Hero of the junction.');
   celebrate();                                     // the last flame is out
-  v.querySelectorAll('.flame').forEach(f => f.remove());
+  v.querySelectorAll('.flame, .fireSmoke').forEach(f => f.remove());
   v.querySelector('.tapTag')?.remove();
   v.classList.remove('ablaze');
   v.removeAttribute('aria-label');
@@ -5776,6 +5834,18 @@ function sendHawker(kind){
   el.dataset.food = '1';
   el.style.animationDuration = (HAWK_LEN * TS) + 's';
   el.innerHTML = hawker(w.skin, kind) + `<i class="tapTag">${w.tag}</i>`;
+  if (NEAR_WARES.has(kind)){
+    el.classList.add('near');
+    el.setAttribute('role', 'button');
+    el.setAttribute('aria-label', w.tag.replace('TAP FOR ', '') + '. Tap to buy');
+    /* behind the walkers (same z, earlier in the page), in front of the traffic */
+    const first = sceneEl.querySelector(':scope > .corper');
+    if (first) first.before(el); else sceneEl.appendChild(el);
+    nearWalk(el);
+    if (CALLS_ON_WALK_IN.has(kind))
+      setTimeout(() => { if (el.isConnected) say(CALLS_ON_WALK_IN.get(kind), { queue: true }); }, 1500 * TS);
+    return;
+  }
   el.setAttribute('role', 'button');
   el.setAttribute('aria-label', w.tag.replace('TAP FOR ', '') + '. Tap to buy');
   /* Behind every vehicle, in front of the shops and the kerb. */
@@ -5785,6 +5855,46 @@ function sendHawker(kind){
   setTimeout(() => el.remove(), HAWK_LEN * TS * 1000 + 3000);
   if (!CALLS_ON_WALK_IN.has(kind)) return;
   setTimeout(() => { if (el.isConnected) say(CALLS_ON_WALK_IN.get(kind), { queue: true }); }, 3000 * TS);
+}
+/* Who walks the near pavement, on the walkers' side, against them. */
+const NEAR_WARES = new Set(['water']);
+/* The ground alone carries her off at 40px/s, so her time on screen is set by
+   how slowly she strolls and how long she stops to sell: ~9s on a phone. */
+const NEAR_PACE = 20;                    // px/s over the ground: a slow stroll with a basin on her head
+const NEAR_WALK_MS = 3000, NEAR_STAND_MS = 2600;
+/* The road obstacle's real extent: the car and the dustbin's bags draw well
+   outside their 80px box (overflow visible), so measure the drawing. */
+function obstacleSpan(box){
+  if (!pothole.isConnected || !pothole.offsetWidth) return null;
+  let L = Infinity, R = -Infinity;
+  pothole.querySelectorAll(':scope > svg > :not(defs):not(text)').forEach(c => {
+    const r = c.sceneRect(); if (!r.width) return;
+    L = Math.min(L, r.left - box.left); R = Math.max(R, r.right - box.left);
+  });
+  return L < R ? [L, R] : null;
+}
+function nearWalk(el){
+  const box = sceneEl.sceneRect(), W = 44;
+  let x = box.width * 1.06, last = performance.now(), phase = 0, round = false;
+  el.style.left = Math.round(x) + 'px';
+  const step = now => {
+    if (!el.isConnected) return;
+    const dt = Math.min(100, now - last); last = now;
+    phase = (phase + dt) % (NEAR_WALK_MS + NEAR_STAND_MS);
+    /* round the obstacle, a step out behind it, while she overlaps it */
+    const sp = obstacleSpan(box);
+    const over = !!sp && x < sp[1] + 6 && x + W > sp[0] - 6;
+    if (over !== round){ round = over; el.style.transform = over ? 'translateY(-12px) scale(.94)' : ''; }
+    /* standing: to sell (tapped, or her own pause), never in the road */
+    const stand = !!el.dataset.busy || el.classList.contains('paused') || (!round && phase > NEAR_WALK_MS);
+    el.classList.toggle('standing', stand);
+    x -= (ROAD_SPEED + (stand ? 0 : NEAR_PACE)) * dt / 1000;
+    el.style.left = Math.round(x) + 'px';
+    if (x < -W - box.width * 0.06 && !el.dataset.busy){ el.remove(); return; }
+    requestAnimationFrame(step);
+  };
+  requestAnimationFrame(step);
+  setTimeout(() => el.remove(), 120000);         // a backstop; she is gone long before
 }
 function hawkerCycle(){
   if (calm()) return;
@@ -5803,7 +5913,7 @@ function buyWares(hw){
   if (hw.dataset.busy) return;
   const left = (+hw.dataset.left || 0) - 1;
   if (left < 0) return;
-  hw.dataset.busy = '1';
+  hw.dataset.busy = '1';                // (the near seller stands still from here: nearWalk)
   const done = () => { delete hw.dataset.busy; };
   hw.dataset.left = String(left);
   if (left === 0){ hw.querySelector('.tapTag')?.remove(); hw.removeAttribute('aria-label'); }
@@ -6085,6 +6195,9 @@ const FIRE_LEN  = 15500 * TS;
 const CHASE_LEN = 12500 * TS;
 const EVENT_GAP = 4000;     // a breath of ordinary street between them
 let fireNext = true;        // fire leads: it is the one with the louder label
+/* (2026-11-18, user: space the chases out) every other chase turn is just
+   ordinary street, so the thief comes round half as often. */
+let chaseTurn = 0;
 let fireBumped = false;     // passed over once for a convoy already
 
 function nextSceneEvent(){
@@ -6115,7 +6228,7 @@ function nextSceneEvent(){
        a phone it got a few seconds in every 25. Second time round the convoys
        wait for the bus instead. */
     if (fireNext){ makeRoom(FIRE_LEN); fireBumped = false; }
-    if (fireNext) burningDanfo(); else agberoChase();
+    if (fireNext) burningDanfo(); else if (chaseTurn++ % 2 === 0) agberoChase();
     fireNext = !fireNext;
   }
   setTimeout(nextSceneEvent, len + EVENT_GAP);
@@ -6603,7 +6716,7 @@ function snackRun(preferred, target, paid){
      shop customers are .32 of this skeleton, a hawker .43. Feet on their line
      (shops stand at 62px, hawkers at 54; he walks at 4). */
   const park = x => {
-    const ty = hawk ? -50 : -58, k = hawk ? .43 : .34;
+    const ty = near ? 0 : hawk ? -50 : -58, k = near ? 1 : hawk ? .43 : .34;
     who.style.transform = `translate(${Math.round(x - home)}px,${ty}px) scale(${k})`;
   };
 
@@ -6620,9 +6733,11 @@ function snackRun(preferred, target, paid){
   /* Beside a hawker, on the side he ran from, not on her spot. On her spot
      he stood exactly behind her — she is drawn in front — so the frames
      showed YOU over a seller with no corper anywhere: he had vanished. */
-  const BESIDE = 16;                              // he is a third of the size there now
+  const near = stall.el.classList.contains('near');   // on his own pavement: walk over, full size
+  const BESIDE = near ? 34 : 16;                  // he is a third of the size by a far seller
   const side = home < stall.c ? -1 : 1;
-  const speed = hawk
+  const speed = near ? -ROAD_SPEED / 1000        // tapped, she stands: only the ground moves her
+    : hawk
     ? (box.width * 1.30) / (HAWK_LEN * TS * 1000) * (stall.el.classList.contains('akara') ? 1 : -1)
     : (box.width * SHOP_TRAVEL) / (SHOP_CYCLE * 1000);   // px per ms
   park(stallNow() + speed * RUN_MS);
