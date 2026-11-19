@@ -1838,7 +1838,7 @@
 <script type="module">
 import { newGame, doAction, canDo, unlocked, ACTIONS, phaseOf, nextUnlock, postingOdds, rivalOf,
          computePosting, CHOICES, GOAL, goalStatus,
-         shareText, MAX_DAY } from './game.js?v=20261118200820';
+         shareText, MAX_DAY } from './game.js?v=20261119094258';
 
 /* ---------- scene coordinates ----------
    The scene is scaled by a transform (see the stage), so a native
@@ -1869,11 +1869,11 @@ const TS = (document.getElementById('scene').offsetWidth || 375) / 375;
 const ALLAWEE_NOTE = 'Allawee ₦77,000 — e never enter.';
 import { initNet, joinCamp, syncPlayer, platoonBoard, recentChat, postChat,
          postSuggestion, reportMessage, awardBoard, myAwards, laughChat,
-         setPresence, campRoster, renameMe, setAvatar, online } from './net.js?v=20261118200820';
-import { startMusic, stopMusic, musicOn, audioState, audioSupported, setRain, whenSilenced, wakeAudio, audible, say, sfx, BEAT, BAR } from './audio.js?v=20261118200820';
+         setPresence, campRoster, renameMe, setAvatar, online } from './net.js?v=20261119094258';
+import { startMusic, stopMusic, musicOn, audioState, audioSupported, setRain, whenSilenced, wakeAudio, audible, say, sfx, BEAT, BAR } from './audio.js?v=20261119094258';
 import { playHoop, playPenalty, playQuiz, playRegister, playParade,
          playMami, playHustle, playManOWar, playSaed, playSocial,
-         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261118200820';
+         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261119094258';
 
 /* Every dance animation is expressed in beats, so the steps are on-tempo
    whether or not the sound is playing — and genuinely on the beat when it is. */
@@ -4101,8 +4101,11 @@ function startDistricts(scene){
 }
 /* Tall posts, standing BEHIND the shops: the sign shows over the rooftops and
    never covers a shopfront or a paid board (it crossed the HaggleBuddy board). */
-const gantrySvg = d => `<svg viewBox="0 0 96 124" aria-hidden="true">
-  <rect x="10" y="22" width="3" height="102" fill="#6f6756"/><rect x="83" y="22" width="3" height="102" fill="#6f6756"/>
+/* Taller still (2026-11-19, user: "Computer Village is hidden"): the plazas
+   and the towers on the new streets stood in front of the sign; on these
+   posts it clears every roof on every street. */
+const gantrySvg = d => `<svg viewBox="0 0 96 150" aria-hidden="true">
+  <rect x="10" y="22" width="3" height="128" fill="#6f6756"/><rect x="83" y="22" width="3" height="128" fill="#6f6756"/>
   <rect x="13" y="40" width="70" height="1.6" fill="#6f6756"/>
   <rect x="2" y="2" width="92" height="30" rx="2.4" fill="#f7f4ea"/>
   <rect x="4" y="4" width="88" height="26" rx="1.8" fill="#1e4fa3"/>
