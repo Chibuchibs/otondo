@@ -512,6 +512,16 @@
   .corper.sunk{z-index:0;transform-origin:50% 100%}
   .corper.detour{z-index:3}      /* round the parked car: in front of the traffic (z1), behind the car (z4) */
   .pothole.upright{z-index:4}
+  /* the two arguing behind the red car: his hand going, his mouth going, and
+     the bubbles taking turns, hers then his */
+  .pothole .gestArm{transform-box:fill-box;transform-origin:100% 100%;animation:gestArm .55s ease-in-out infinite alternate}
+  @keyframes gestArm{from{transform:rotate(-10deg)}to{transform:rotate(12deg)}}
+  .pothole .talkMouth{transform-box:fill-box;transform-origin:50% 50%;animation:talkMouth .28s steps(2) infinite}
+  @keyframes talkMouth{50%{transform:scaleY(.35)}}
+  .pothole .talkB1,.pothole .talkB2{animation:talkBubble 3.2s ease-in-out infinite;opacity:0}
+  .pothole .talkB2{animation-delay:-1.6s}
+  @keyframes talkBubble{0%,4%{opacity:0;transform:translateY(2px)}10%,44%{opacity:1;transform:translateY(0)}50%,100%{opacity:0}}
+  @media (prefers-reduced-motion: reduce){.pothole .gestArm,.pothole .talkMouth{animation:none}.pothole .talkB1,.pothole .talkB2{animation:none;opacity:1}}
   /* the broken-down car's engine smoking: puffs rise, swell and thin out */
   .pothole .carSmoke circle{fill:#5f6164;opacity:0;transform-box:fill-box;transform-origin:50% 50%;
     animation:carSmoke 2.8s ease-out infinite}
@@ -1775,7 +1785,7 @@
 <script type="module">
 import { newGame, doAction, canDo, unlocked, ACTIONS, phaseOf, nextUnlock, postingOdds, rivalOf,
          computePosting, CHOICES, GOAL, goalStatus,
-         shareText, MAX_DAY } from './game.js?v=20261118095854';
+         shareText, MAX_DAY } from './game.js?v=20261118164310';
 
 /* ---------- scene coordinates ----------
    The scene is scaled by a transform (see the stage), so a native
@@ -1806,11 +1816,11 @@ const TS = (document.getElementById('scene').offsetWidth || 375) / 375;
 const ALLAWEE_NOTE = 'Allawee ₦77,000 — e never enter.';
 import { initNet, joinCamp, syncPlayer, platoonBoard, recentChat, postChat,
          postSuggestion, reportMessage, awardBoard, myAwards, laughChat,
-         setPresence, campRoster, renameMe, setAvatar, online } from './net.js?v=20261118095854';
-import { startMusic, stopMusic, musicOn, audioState, audioSupported, setRain, whenSilenced, wakeAudio, audible, say, sfx, BEAT, BAR } from './audio.js?v=20261118095854';
+         setPresence, campRoster, renameMe, setAvatar, online } from './net.js?v=20261118164310';
+import { startMusic, stopMusic, musicOn, audioState, audioSupported, setRain, whenSilenced, wakeAudio, audible, say, sfx, BEAT, BAR } from './audio.js?v=20261118164310';
 import { playHoop, playPenalty, playQuiz, playRegister, playParade,
          playMami, playHustle, playManOWar, playSaed, playSocial,
-         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261118095854';
+         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261118164310';
 
 /* Every dance animation is expressed in beats, so the steps are on-tempo
    whether or not the sound is playing — and genuinely on the beat when it is. */
@@ -4009,6 +4019,48 @@ const carDrawing = (bonnetUp, bootUp) => `<svg viewBox="0 0 80 48" aria-hidden="
   <path d="M-16 41.6l4-2.4h22l-4 2.4z" fill="#3a3832"/>
   <rect x="-22" y="41.6" width="6" height="6.4" fill="#aaa498"/><path d="M-22 41.6l4-2.4h6l-4 2.4z" fill="#d9d4c9"/>
   <rect x="6" y="41.6" width="6" height="6.4" fill="#aaa498"/><path d="M6 41.6l4-2.4h6l-4 2.4z" fill="#d9d4c9"/>
+  ${bootUp ? `<!-- two of them arguing across the car, standing behind it: the car covers them from the waist -->
+  <defs><clipPath id="behindCar"><rect x="-40" y="-60" width="200" height="82"/><rect x="-40" y="21.6" width="137" height="16.4"/></clipPath>
+    <pattern id="geleAnk" width="8" height="8" patternUnits="userSpaceOnUse">
+      <rect width="8" height="8" fill="#1d4fa8"/><circle cx="4" cy="4" r="2.3" fill="none" stroke="#f5c518" stroke-width="1.2"/>
+      <circle cx="4" cy="4" r=".9" fill="#e8702a"/><circle cx="0" cy="0" r=".8" fill="#e8702a"/><circle cx="8" cy="8" r=".8" fill="#e8702a"/></pattern></defs>
+  <g clip-path="url(#behindCar)">
+  <!-- the oga, behind the back window, turned to her: white agbada, purple fila, grey beard, hand going -->
+  <g transform="translate(73 42) scale(-.56 .56) translate(-23 -82)">
+    <g class="gestArm"><path d="M9.6 34L2.4 27.6" stroke="#6b4423" stroke-width="4.4" stroke-linecap="round"/>
+      <circle cx="1.6" cy="26.8" r="2.7" fill="#6b4423"/><path d="M.2 24.6l-.8-2.4M1.8 24.2l-.2-2.6" stroke="#6b4423" stroke-width="1.1" stroke-linecap="round"/></g>
+    <path d="M9 23.6Q23 19.6 37 23.6L45 58Q23 63.6 1 58Z" fill="#f7f5ee"/>
+    <path d="M23 22v38" stroke="#dedbd0" stroke-width=".8"/>
+    <path d="M17 23.4Q23 36 29 23.4" stroke="#d4a017" stroke-width="1.6" fill="none"/>
+    <path d="M18.6 25.8Q23 33 27.4 25.8M23 31v9" stroke="#d4a017" stroke-width=".9" fill="none"/>
+    <rect x="20.4" y="17.6" width="5.2" height="6" fill="#6b4423"/>
+    <circle cx="23" cy="12.6" r="8.8" fill="#6b4423"/>
+    <path d="M14.8 14.6Q15.6 22.6 23 22.8Q30.4 22.6 31.2 14.6Q29 19.4 23 19.6Q17 19.4 14.8 14.6Z" fill="#a8a29a"/>
+    <circle cx="19" cy="12.4" r="1.15" fill="#1d1812"/><circle cx="24.8" cy="12.4" r="1.15" fill="#1d1812"/>
+    <ellipse class="talkMouth" cx="21.8" cy="18.2" rx="1.7" ry="1.1" fill="#3a1f12"/>
+    <path d="M14 7.4Q13.6 -1.2 23 -1.8Q33.6 -1.4 36.4 4.4L33.4 8.2Q23 4.4 14 7.4Z" fill="#6a2c91"/>
+    <path d="M15.4 6.4Q23 3.8 33 6.8M31 .8Q34 2.6 35 5" stroke="#4e1f6d" stroke-width=".9" fill="none"/>
+  </g>
+  <!-- the madam, behind the open boot, folded arms resting on it: gele, ankara, shades, hoops, coral beads -->
+  <g transform="translate(95 50) scale(.56) translate(-23 -82)">
+    <path d="M14 24Q23 21 32 24L37.5 79Q23 82.4 8.5 79Z" fill="url(#geleAnk)"/>
+    <ellipse cx="13.4" cy="27.5" rx="4.6" ry="4" fill="url(#geleAnk)"/><ellipse cx="32.6" cy="27.5" rx="4.6" ry="4" fill="url(#geleAnk)"/>
+    <rect x="12" y="33.4" width="22" height="6.4" rx="3.2" fill="url(#geleAnk)"/>
+    <circle cx="32.6" cy="35.4" r="2.5" fill="#4a2c1a"/><circle cx="14" cy="38" r="2.4" fill="#4a2c1a"/>
+    <rect x="20.5" y="18" width="5" height="6" fill="#4a2c1a"/>
+    ${[16.6, 18.6, 20.8, 23, 25.2, 27.4, 29.4].map((x, i) => `<circle cx="${x}" cy="${24.8 - Math.abs(i - 3) * .55}" r="1.15" fill="#d9472b"/>`).join('')}
+    <circle cx="23" cy="12.6" r="8.8" fill="#4a2c1a"/>
+    <rect x="16.8" y="10.6" width="5.6" height="3.6" rx="1.6" fill="#111"/><rect x="23.6" y="10.6" width="5.6" height="3.6" rx="1.6" fill="#111"/>
+    <path d="M22.4 12h1.2" stroke="#d4a017" stroke-width=".8"/><path d="M18 11.4h2" stroke="#fff" stroke-width=".6" opacity=".5"/>
+    <path d="M20.6 17.4q2.4 1.4 4.8 0" stroke="#c2185b" stroke-width="1.3" fill="none" stroke-linecap="round"/>
+    <circle cx="14.2" cy="16.6" r="2.1" fill="none" stroke="#d4a017" stroke-width="1"/><circle cx="31.8" cy="16.6" r="2.1" fill="none" stroke="#d4a017" stroke-width="1"/>
+    <path d="M12 6L7.6 -6.4Q23 -15 38.4 -6.4L34 6Q23 1.6 12 6Z" fill="#f2b705"/>
+    <path d="M14.6 4.4L11 -5.6M18.6 3.2L17 -8.6M23 2.6L23 -10M27.4 3.2L29 -8.6M31.4 4.4L35 -5.6" stroke="#c48a00" stroke-width=".9"/>
+    <path d="M13.2 10.6Q12.8 3 23 2.4Q33.2 3 32.8 10.6Q23 7.4 13.2 10.6Z" fill="#f7c936"/>
+    <path d="M14.2 8.6Q23 5.6 31.8 8.6" stroke="#c48a00" stroke-width=".8" fill="none"/>
+    <path d="M33 3.4l8.2-3.4l-2.2 6.2z" fill="#f2b705"/>
+  </g>
+  </g>` : ''}
   <g transform="rotate(-5 82 40)">
     <!-- depth: the back end in shade, then the lit tops of bonnet, roof, boot -->
     <path d="M98 24l4-2.4V37.6l-4 2.4z" fill="#7f848b"/>
@@ -4051,6 +4103,13 @@ const carDrawing = (bonnetUp, bootUp) => `<svg viewBox="0 0 80 48" aria-hidden="
     <path d="M72 24L80.9 -.4L83.8 .4L74.8 24.6Z" fill="#c3c8ce"/>
     <path d="M72 24L80.9 -.4L79.6 -.8L70.8 23.4Z" fill="#7f848b"/>` : ''}
   </g>
+  ${bootUp ? `<!-- what they are saying, taking turns -->
+  <g class="talkB2"><rect x="77" y="-19" width="20" height="9" rx="4" fill="#fff" stroke="#2b2b2b" stroke-width=".45"/>
+    <path d="M79.6 -10.2l-2.2 3l3.8-3z" fill="#fff" stroke="#2b2b2b" stroke-width=".45"/>
+    <text x="87" y="-12.6" font-size="5.4" font-weight="900" font-family="system-ui,sans-serif" text-anchor="middle" fill="#4e1f6d">Abeg!</text></g>
+  <g class="talkB1"><rect x="101" y="-15" width="20" height="9" rx="4" fill="#fff" stroke="#2b2b2b" stroke-width=".45"/>
+    <path d="M103.4 -6.2l-2.6 3.4l4.2-3.4z" fill="#fff" stroke="#2b2b2b" stroke-width=".45"/>
+    <text x="111" y="-8.6" font-size="5.4" font-weight="900" font-family="system-ui,sans-serif" text-anchor="middle" fill="#c2185b">Ehn?!</text></g>` : ''}
   </g>
   <text class="potName" font-size="8" font-weight="900" letter-spacing="0.55"
         font-family="system-ui,sans-serif" text-anchor="middle">
