@@ -1320,6 +1320,31 @@
   .ablurb{font-size:11.5px;color:var(--muted)}
   .nobody{color:var(--muted);font-size:13.5px;font-style:italic}
 
+  /* ---------- the weekly prize (2026-11-19) ---------- */
+  .prizeHook{display:block;width:100%;margin:0 0 14px;padding:11px 12px;border:2px solid #e0a800;
+    border-radius:14px;background:linear-gradient(180deg,#fff7d1,#ffe9a0);color:#3d2b00;
+    font:inherit;text-align:center;cursor:pointer;animation:prizeGlow 2.4s ease-in-out infinite}
+  .prizeHook .pzT{display:block;font-size:16px;font-weight:800;line-height:1.25}
+  .prizeHook .pzS{display:block;margin-top:3px;font-size:12.5px;color:#6b5000}
+  .prizeHook .pzS u{font-weight:800}
+  @keyframes prizeGlow{50%{box-shadow:0 0 0 5px rgba(224,168,0,.22)}}
+  @media (prefers-reduced-motion:reduce){ .prizeHook{animation:none} }
+  .prizeBox{margin:0 0 12px;padding:12px;border:2px solid #e0a800;border-radius:14px;background:#fff7d1;color:#3d2b00}
+  .prizeBox h3{margin:0 0 2px;font-size:15px}
+  .prizeBox .pzEnds{font-size:11.5px;color:#6b5000;margin:0 0 7px}
+  .prizeBox ol{margin:0;padding:0 0 0 20px;font-size:13.5px}
+  .prizeBox li{padding:2px 0}
+  .prizeBox li em{font-style:normal;color:#6b5000;font-size:11px;font-weight:700}
+  .prizeBox .pzMe,.prizeBox .pzLast{font-size:12.5px;margin:7px 0 0}
+  .prizeBox .pzMe b{color:var(--green-dk)}
+  .prizeBox button{margin-top:9px;font:inherit;font-size:12.5px;font-weight:800;padding:6px 12px;
+    border-radius:99px;border:1.5px solid #c99700;background:#fff;color:#3d2b00;cursor:pointer}
+  .prizeBox.won{background:#e7f7ee;border-color:var(--green)}
+  .pzRules{text-align:left;margin:8px 0 14px;padding-left:18px;font-size:13.5px;line-height:1.4}
+  .pzRules li{margin:4px 0}
+  .pzCode{display:inline-block;margin:6px 0 4px;padding:8px 14px;border:2px dashed var(--green);
+    border-radius:10px;font-size:22px;font-weight:900;letter-spacing:.08em;color:var(--green-dk);user-select:all}
+
   /* badges you are wearing, on the camp screen */
   .badges{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 11px}
   .badges:empty{display:none}
@@ -1677,6 +1702,10 @@
        allawee never enter. 21 days of parade, bad beans, Man O War and Mami
        market. Build credibility, keep your belle full, make the money last.
        Then find out where dem post you.</p>
+    <button class="prizeHook hidden" id="prizeHook" type="button">
+      <span class="pzT">🏆 Top the board this week, win <b>₦5,000 airtime</b></span>
+      <span class="pzS"><span id="prizeLead">New race every Monday. Free to play.</span> <u>Rules</u></span>
+    </button>
     <button class="primary" id="start">Enter camp</button>
     <p class="note" style="text-align:center;margin-top:9px">
       No sign up. You can pick your name later.</p>
@@ -1734,6 +1763,7 @@
     </div>
 
     <div id="panelAwards" class="hidden">
+      <div class="prizeBox hidden" id="prizeBox"></div>
       <ul class="awards" id="awardList"></ul>
       <p class="note" id="awardNote">Loading the notice board…</p>
     </div>
@@ -1816,6 +1846,9 @@
       <button class="primary ghost" type="button" id="adClose" style="margin-top:8px">Close</button>
     </div>
   </div>
+  <div class="hooray hidden" id="prizePop" role="dialog" aria-modal="true" aria-labelledby="prizeH">
+    <div class="hoorayCard" id="prizeCard"></div>
+  </div>
   <div class="hooray cardPop hidden" id="cardPop" role="dialog" aria-modal="true" aria-label="Your camp card">
     <div class="hoorayCard">
       <img id="cardImg" alt="Your Otondo camp card">
@@ -1838,7 +1871,7 @@
 <script type="module">
 import { newGame, doAction, canDo, unlocked, ACTIONS, phaseOf, nextUnlock, postingOdds, rivalOf,
          computePosting, CHOICES, GOAL, goalStatus,
-         shareText, MAX_DAY } from './game.js?v=20261119094258';
+         shareText, MAX_DAY } from './game.js?v=20261119101121';
 
 /* ---------- scene coordinates ----------
    The scene is scaled by a transform (see the stage), so a native
@@ -1869,11 +1902,11 @@ const TS = (document.getElementById('scene').offsetWidth || 375) / 375;
 const ALLAWEE_NOTE = 'Allawee ₦77,000 — e never enter.';
 import { initNet, joinCamp, syncPlayer, platoonBoard, recentChat, postChat,
          postSuggestion, reportMessage, awardBoard, myAwards, laughChat,
-         setPresence, campRoster, renameMe, setAvatar, online } from './net.js?v=20261119094258';
-import { startMusic, stopMusic, musicOn, audioState, audioSupported, setRain, whenSilenced, wakeAudio, audible, say, sfx, BEAT, BAR } from './audio.js?v=20261119094258';
+         setPresence, campRoster, renameMe, setAvatar, online, prizeBoard, myPrize } from './net.js?v=20261119101121';
+import { startMusic, stopMusic, musicOn, audioState, audioSupported, setRain, whenSilenced, wakeAudio, audible, say, sfx, BEAT, BAR } from './audio.js?v=20261119101121';
 import { playHoop, playPenalty, playQuiz, playRegister, playParade,
          playMami, playHustle, playManOWar, playSaed, playSocial,
-         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261119094258';
+         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261119101121';
 
 /* Every dance animation is expressed in beats, so the steps are on-tempo
    whether or not the sound is playing — and genuinely on the beat when it is. */
@@ -3006,7 +3039,7 @@ function shop(cfg){
   if (cfg.suya) return suyaSpot(cfg);
   if (cfg.lounge) return lounge(cfg);
   if (cfg.modern) return modernShop(cfg);
-  if (cfg.billboard) return cfg.ad === 'skills' ? skillsBillboard(cfg) : adBillboard(cfg);
+  if (cfg.billboard) return cfg.ad === 'skills' ? skillsBillboard(cfg) : cfg.ad === 'prize' ? prizeBillboard(cfg) : adBillboard(cfg);
   if (cfg.busstop) return busStop(cfg);
   /* The barber's board is taller than a sign and rides above the roof, so that
      one shop lets its drawing spill past the viewBox. */
@@ -3057,6 +3090,32 @@ function adBillboard(cfg){
     <rect x="7" y="24" width="86" height="6.4" fill="#facc15"/>
     <text x="50" y="29" text-anchor="middle" font-size="4.6" font-weight="900" font-family="system-ui,sans-serif"
       fill="#14532d" textLength="80" lengthAdjust="spacingAndGlyphs">HaggleBuddy · free on Play Store &amp; App Store ↗</text>
+    <path d="M20 -1.5l3 2.5 M80 -1.5l-3 2.5" stroke="#3f3c37" stroke-width="1.2"/>
+    <circle class="lampGlow" cx="22" cy="2" r="6" fill="#fff6c8" opacity="0"/><circle class="lampGlow" cx="78" cy="2" r="6" fill="#fff6c8" opacity="0"/>
+  </svg>`;
+}
+/* The weekly prize board (2026-11-19): gold, the trophy, the prize in naira.
+   Tap: the rules. Shares the Skills board's slot on alternate streets. */
+function prizeBillboard(cfg){
+  return `<svg viewBox="0 0 100 60" aria-hidden="true" overflow="visible">
+    <rect x="29" y="30" width="3.4" height="30" fill="#5a5650"/><rect x="67" y="30" width="3.4" height="30" fill="#5a5650"/>
+    <path d="M26 60h9 M64 60h9" stroke="#3f3c37" stroke-width="2"/>
+    <rect x="16" y="31" width="68" height="1.6" fill="#4a4741"/>
+    <path d="M95 1l4-2.4V29.6l-4 2.4z" fill="#1a1a1a"/><path d="M5 1l4-2.4h90l-4 2.4z" fill="#454545"/>
+    <rect x="5" y="1" width="90" height="31" rx="1.5" fill="#2b2b2b"/>
+    <rect x="7" y="3" width="86" height="21" fill="#ffd23f"/>
+    <g transform="translate(10.5 5.6)">
+      <path d="M2 1h10v4.6a5 5 0 0 1-10 0z" fill="#b8860b"/>
+      <path d="M2 2.2H0.2v1.6a3 3 0 0 0 2.4 3M12 2.2h1.8v1.6a3 3 0 0 1-2.4 3" fill="none" stroke="#b8860b" stroke-width="1.1"/>
+      <rect x="6.2" y="10.4" width="1.6" height="2.6" fill="#b8860b"/><rect x="3.6" y="13" width="6.8" height="2" rx=".6" fill="#7a5a07"/>
+    </g>
+    <text x="56" y="12" text-anchor="middle" font-size="6.6" font-weight="900" font-family="system-ui,sans-serif"
+      fill="#3d2b00" textLength="60" lengthAdjust="spacingAndGlyphs">TOP THE BOARD</text>
+    <text x="56" y="21" text-anchor="middle" font-size="7.4" font-weight="900" font-family="system-ui,sans-serif"
+      fill="#b3261e" textLength="66" lengthAdjust="spacingAndGlyphs">WIN ₦5,000 AIRTIME</text>
+    <rect x="7" y="24" width="86" height="6.4" fill="#0a7a43"/>
+    <text x="50" y="29" text-anchor="middle" font-size="4.6" font-weight="900" font-family="system-ui,sans-serif"
+      fill="#fff" textLength="80" lengthAdjust="spacingAndGlyphs">Every week on Otondo · tap for the rules ↗</text>
     <path d="M20 -1.5l3 2.5 M80 -1.5l-3 2.5" stroke="#3f3c37" stroke-width="1.2"/>
     <circle class="lampGlow" cx="22" cy="2" r="6" fill="#fff6c8" opacity="0"/><circle class="lampGlow" cx="78" cy="2" r="6" fill="#fff6c8" opacity="0"/>
   </svg>`;
@@ -4223,6 +4282,18 @@ const YABA_TOWERS = [
   { name: 'SABO',     w: 36, h: 80,  body: '#a8b4c4', win: '#e2e9f1' },
 ];
 DISTRICTS.push({ name: 'OJUELEGBA', area: 'YABA', shops: YABA_SHOPS, towers: YABA_TOWERS });
+/* The weekly ₦5,000 airtime race (2026-11-19, user). Every week until Sunday
+   10 January 2027 (supabase/prize.sql's prize_last() says the same; extend
+   both together). Its board takes the Skills board's slot on Allen Avenue,
+   Admiralty Way and Ojuelegba, so a first visit sees it; Broad Street and
+   Computer Village keep the Skills ad. After the end date it all goes away. */
+const PRIZE_END = Date.parse('2027-01-11T00:00:00+01:00');
+const PRIZE_ON = Date.now() < PRIZE_END;
+const PRIZE_BOARD = { sign: 'PRIZE BOARD', w: 112, billboard: true, ad: 'prize' };
+if (PRIZE_ON){
+  const slot = SHOPS.findIndex(c => c.ad === 'skills');
+  DISTRICTS.forEach((d, n) => { if (n % 2 === 0) d.shops = d.shops.map((c, i) => i === slot ? PRIZE_BOARD : c); });
+}
 if (DISTRICT_Q === 'yaba'){ districtN = 4; shownDistrict = 4; }
 /* A plain visit starts on the street after the one you last reached, so a
    returning player sees somewhere new (2026-11-18, user: not seeing all the
@@ -6861,6 +6932,7 @@ sceneEl.addEventListener('click', e => {
   if (adSpot){
     if (adSpot.dataset.ad === 'hagglebuddy') window.open(adLink(), '_blank', 'noopener');
     else if (adSpot.dataset.ad === 'skills') window.open(SKILLS_LINK, '_blank', 'noopener');
+    else if (adSpot.dataset.ad === 'prize') showPrize();
     else $('adPop').classList.remove('hidden');       // asks first: a stray tap used to open a mail draft
     return;
   }
@@ -9699,6 +9771,104 @@ async function drawAwards(){
   }).join('');
   $('awardNote').textContent =
     'Updates every minute. Laugh at a message in Chat to crown the Funniest Corper.';
+  drawPrizeBox();
+}
+
+/* ---------- the weekly ₦5,000 race ----------
+   Weeks are Lagos weeks (UTC+1 all year): Monday 00:00 to Sunday 23:59. */
+const PRIZE_MAIL = 'hello@otondo.ng';
+function prizeEndsIn(){
+  const lagos = new Date(Date.now() + 3600e3);                 // Lagos wall clock, read as UTC
+  const daysToMon = (8 - lagos.getUTCDay()) % 7 || 7;
+  const end = Date.UTC(lagos.getUTCFullYear(), lagos.getUTCMonth(), lagos.getUTCDate() + daysToMon) - 3600e3;
+  const h = Math.max(0, Math.round((end - Date.now()) / 3600e3));
+  return h < 1 ? 'ends within the hour' : h < 24 ? `ends in ${h} hour${h === 1 ? '' : 's'}` : `ends Sunday night · ${Math.ceil(h / 24)} days left`;
+}
+const prizeDay = iso => new Date(iso + 'T12:00:00+01:00').toLocaleDateString('en-NG',
+  { weekday: 'short', day: 'numeric', month: 'short' });
+let prizeMine = null;
+const PRIZE_RULES = `<ul class="pzRules">
+  <li>Whoever <b>earns the most credibility this week</b> wins. Credibility from before Monday doesn't count, so everyone starts level. Any run counts. A tie goes to whoever got there first.</li>
+  <li>A week runs Monday 12am to Sunday 11:59pm, Lagos time. There is a race every week until Sunday 10 January 2027.</li>
+  <li>Free to play. No payment, no sign up.</li>
+  <li>The winner's game shows a claim code, on the phone or computer they played on. Email the code with a Nigerian phone number and network to ${PRIZE_MAIL} within 14 days.</li>
+  <li>One prize per week. We check every winning run before paying: a tampered score is disqualified and the next player wins.</li>
+</ul>`;
+function showPrize(){
+  const w = prizeMine && prizeMine.won;
+  if (w){
+    const subject = `Otondo prize ${w.code}`;
+    const body = `Claim code: ${w.code}\nPhone number: \nNetwork (MTN, Airtel, Glo, 9mobile): \n`;
+    $('prizeCard').innerHTML = `
+      <div class="hoorayBig" id="prizeH">You top the board! 🏆</div>
+      <p>The <b>${esc(String(w.cred))} credibility</b> you earned won the week. Your ₦5,000 airtime dey wait.</p>
+      <div class="pzCode">${esc(w.code)}</div>
+      <p style="font-size:13.5px">Email this code with your phone number and network to <b>${PRIZE_MAIL}</b> by ${prizeDay(w.deadline)}.</p>
+      <a class="primary" style="display:block;text-decoration:none" href="mailto:${PRIZE_MAIL}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}">Email my claim</a>
+      <button class="primary ghost" type="button" id="prizeClose" style="margin-top:8px">Later</button>`;
+  } else {
+    $('prizeCard').innerHTML = `
+      <div class="hoorayBig" id="prizeH">₦5,000 airtime, every week</div>
+      <p style="margin-bottom:0">Top the board and the airtime na your own. This week's race ${prizeEndsIn()}.</p>
+      ${PRIZE_RULES}
+      <button class="primary" type="button" id="prizeClose">${s ? 'Oya, continue' : 'Enter camp'}</button>`;
+  }
+  $('prizePop').classList.remove('hidden');
+  $('prizeClose').onclick = () => { $('prizePop').classList.add('hidden'); if (!w && !s) $('start').click(); };
+}
+$('prizePop').addEventListener('click', e => { if (e.target === $('prizePop')) $('prizePop').classList.add('hidden'); });
+$('prizeHook').onclick = showPrize;
+
+/* The start card: the hook, and who is leading right now. */
+async function drawPrizeHook(){
+  if (!PRIZE_ON) return;
+  /* Shown only once the server answers: no race is ever promised on a
+     database that is not counting it. */
+  const b = await prizeBoard();
+  if (!b) return;
+  $('prizeHook').classList.remove('hidden');
+  const top = b.top && b.top[0];
+  if (top) $('prizeLead').textContent = `Leading now: ${top.nickname} · +${top.cred} cred this week. You fit pass am.`;
+}
+/* The Awards tab: the race, top five, where you stand, last week's winner. */
+async function drawPrizeBox(){
+  const box = $('prizeBox');
+  const [b, me] = await Promise.all([prizeBoard(), myPrize()]);
+  if (me) prizeMine = me;
+  const w = prizeMine && prizeMine.won;
+  if (!b && !w){ box.classList.add('hidden'); return; }
+  if (!PRIZE_ON && !w){ box.classList.add('hidden'); return; }
+  let html;
+  if (w) html = `<h3>🎉 You won ₦5,000 airtime!</h3>
+      <p class="pzMe">Claim code <b>${esc(w.code)}</b>. Email it with your phone number to ${PRIZE_MAIL} by ${prizeDay(w.deadline)}.</p>
+      <button type="button" data-pz="1">How to claim</button>`;
+  else {
+    const top = (b && b.top) || [];
+    html = `<h3>🏆 This week: ₦5,000 airtime</h3><p class="pzEnds">Most credibility earned this week wins · ${prizeEndsIn()}</p>`
+      + (top.length ? `<ol>${top.map(t => `<li><b>${esc(t.nickname)}</b> <em>P${t.platoon}</em> · +${t.cred} cred</li>`).join('')}</ol>`
+                    : `<p class="pzMe">Nobody on the board yet this week. E fit be you.</p>`)
+      + (prizeMine && prizeMine.best ? `<p class="pzMe">You: <b>#${prizeMine.rank}</b> with +${prizeMine.best} cred this week.</p>`
+                                     : `<p class="pzMe">Earn credibility to get on the board.</p>`)
+      + (prizeMine && prizeMine.paid ? `<p class="pzMe">✅ Your airtime don land. Well done!</p>` : '')
+      + (b && b.last ? `<p class="pzLast">Last week: <b>${esc(b.last.nickname)}</b> won with ${b.last.cred} cred.</p>` : '')
+      + `<button type="button" data-pz="1">Rules</button>`;
+  }
+  box.innerHTML = html;
+  box.classList.toggle('won', !!w);
+  box.classList.remove('hidden');
+  box.querySelector('[data-pz]').onclick = showPrize;
+}
+/* A returning winner is told the moment the camp loads, once per visit. */
+async function checkMyPrize(){
+  const me = await myPrize();
+  if (!me) return;
+  prizeMine = me;
+  if (!me.won) return;
+  let told = false;
+  try { told = sessionStorage.getItem('otondo:prizeTold') === me.won.code; } catch {}
+  if (told) return;
+  try { sessionStorage.setItem('otondo:prizeTold', me.won.code); } catch {}
+  showPrize();
 }
 
 function addMsg(m, scroll = true){
@@ -9846,6 +10016,8 @@ initNet({
   mine = await myAwards();
   drawBadges();
   pushPresence();          // a resumed save is already in camp
+  drawPrizeHook();
+  checkMyPrize();
 });
 
 if (freshCampDue()) freshCamp(); else render();

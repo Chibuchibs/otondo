@@ -2,7 +2,7 @@
    Every function is failure-tolerant on purpose: if Supabase is unset, slow,
    or down, the game must still be playable. Nothing here throws upward. */
 
-import { SUPABASE_URL, SUPABASE_ANON_KEY } from './config.js?v=20261119094258';
+import { SUPABASE_URL, SUPABASE_ANON_KEY } from './config.js?v=20261119101121';
 
 const TOKEN_KEY = 'otondo:token';
 let sb = null, token = null, channel = null;
@@ -245,4 +245,28 @@ export async function postSuggestion(body) {
     if (error) throw error;
     return data === true;
   } catch (e) { console.warn('[otondo] suggestion failed:', e.message); return false; }
+}
+
+/* The weekly ₦5,000 airtime race (supabase/prize.sql). The board is cached for
+   a minute like the others; your own standing is asked for by token, so a
+   claim code only ever reaches the device that earned it. Before prize.sql is
+   run these return null and the game simply shows no race. */
+let prizeCache = null, prizeAt = 0;
+export async function prizeBoard() {
+  if (!sb) return null;
+  if (prizeCache && Date.now() - prizeAt < 60000) return prizeCache;
+  try {
+    const { data, error } = await sb.rpc('prize_board');
+    if (error) throw error;
+    prizeCache = data; prizeAt = Date.now();
+    return data;
+  } catch (e) { console.warn('[otondo] prize board failed:', e.message); return prizeCache; }
+}
+export async function myPrize() {
+  if (!sb || !token) return null;
+  try {
+    const { data, error } = await sb.rpc('my_prize', { p_token: token });
+    if (error) throw error;
+    return data;
+  } catch (e) { console.warn('[otondo] my prize failed:', e.message); return null; }
 }
