@@ -731,6 +731,8 @@
      Level with the stalls (0) and later in the DOM, so he stands in front of
      the shop but behind anything driving past. */
   .corper.running,.corper.munching,.corper.shopping{z-index:0}
+  /* ...except buying from the pure water seller on his own pavement: there he stays in front of the traffic */
+  .corper.nearErrand.running,.corper.nearErrand.munching,.corper.nearErrand.shopping{z-index:2}
   /* scaled from his feet on an errand, so shrinking to a seller's size keeps him on the ground */
   .corper.running,.corper.munching,.corper.shopping{transform-origin:50% 100%}
 
@@ -936,7 +938,7 @@
   .runnerTag::after{content:'';position:absolute;left:50%;top:100%;margin-left:-3px;
     border:3px solid transparent;border-top-color:#b3281c}
 
-  .rideTag{background:#8a5a1f !important}
+  .rideTag{background-color:#8a5a1f !important}   /* colour only: the shorthand wiped the tap glyph */
   .rideTag::after{border-top-color:#8a5a1f !important}
   /* The label IS the button. It says TAP TO BUY PHONE CHARGER in a rounded
      green pill with a pointer tail — every cue says press me — and it carried
@@ -1803,7 +1805,7 @@
 <script type="module">
 import { newGame, doAction, canDo, unlocked, ACTIONS, phaseOf, nextUnlock, postingOdds, rivalOf,
          computePosting, CHOICES, GOAL, goalStatus,
-         shareText, MAX_DAY } from './game.js?v=20261118172325';
+         shareText, MAX_DAY } from './game.js?v=20261118175330';
 
 /* ---------- scene coordinates ----------
    The scene is scaled by a transform (see the stage), so a native
@@ -1834,11 +1836,11 @@ const TS = (document.getElementById('scene').offsetWidth || 375) / 375;
 const ALLAWEE_NOTE = 'Allawee ₦77,000 — e never enter.';
 import { initNet, joinCamp, syncPlayer, platoonBoard, recentChat, postChat,
          postSuggestion, reportMessage, awardBoard, myAwards, laughChat,
-         setPresence, campRoster, renameMe, setAvatar, online } from './net.js?v=20261118172325';
-import { startMusic, stopMusic, musicOn, audioState, audioSupported, setRain, whenSilenced, wakeAudio, audible, say, sfx, BEAT, BAR } from './audio.js?v=20261118172325';
+         setPresence, campRoster, renameMe, setAvatar, online } from './net.js?v=20261118175330';
+import { startMusic, stopMusic, musicOn, audioState, audioSupported, setRain, whenSilenced, wakeAudio, audible, say, sfx, BEAT, BAR } from './audio.js?v=20261118175330';
 import { playHoop, playPenalty, playQuiz, playRegister, playParade,
          playMami, playHustle, playManOWar, playSaed, playSocial,
-         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261118172325';
+         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261118175330';
 
 /* Every dance animation is expressed in beats, so the steps are on-tempo
    whether or not the sound is playing — and genuinely on the beat when it is. */
@@ -3204,15 +3206,15 @@ const CUSTOMERS = {
    one building at a time from the left, behind a WELCOME gantry, and the far
    skyline fades across as it passes. Same game, same 17 slots, same paid ad
    boards in the same places; different buildings, businesses and errands.
-   OFF unless the address carries ?streets (?streets=broad starts on Broad
-   Street), until the user has seen it.
+   ON for everyone since 2026-11-18 (user approved); ?streets=off turns it
+   off, ?streets=broad starts on Broad Street.
    Broad Street, Lagos Island: towers drawn after Bookshop House (dark grid),
    Mandilas (white bands) and Afriland (glass, red letters); a bureau de change
    as round Tinubu Square; Balogun-style fabric for the wholesale markets.
    Invented names on every board, as on the rest of the street: real banks'
    names and colours are theirs, and these boards are what we would sell. */
 const DISTRICT_Q = new URLSearchParams(location.search).get('streets');
-const DISTRICTS_ON = DISTRICT_Q !== null;
+const DISTRICTS_ON = DISTRICT_Q !== 'off';       // on for everyone (user, 2026-11-18); ?streets=off turns them off
 const BROAD_OWN = [
   { sign: 'ISLAND BANK', w: 116, broad: 'tower', style: 'glass', glass: '#5b8db8', roof: '#1d3557', door: '#1d3557',
     signInk: ['#8f1d21', '#ffffff', '#ffb3b3'], errand: 'Open account', price: 1000, cred: 2 },
@@ -4657,10 +4659,6 @@ const DANFO_BROKEN = `<svg viewBox="0 0 80 48" aria-hidden="true" overflow="visi
   <g class="talkB1"><rect x="22" y="-57" width="56" height="11" rx="4.6" fill="#fff" stroke="#2b2b2b" stroke-width=".6"/>
     <path d="M30 -46.4l-3 4.4l6 -4.4z" fill="#fff" stroke="#2b2b2b" stroke-width=".6"/>
     <text x="50" y="-49.2" text-anchor="middle" font-size="6.6" font-weight="900" font-family="system-ui,sans-serif" fill="#c1272d" textLength="48" lengthAdjust="spacingAndGlyphs">E don knock o!</text></g>
-  <text class="potName" font-size="8" font-weight="900" letter-spacing="0.55"
-        font-family="system-ui,sans-serif" text-anchor="middle">
-    <textPath href="#potArc" startOffset="50%">DANFO DON SPOIL</textPath>
-  </text>
 </svg>`;
 /* The dustbin (2026-11-17, user): two of them taking turns, like the car.
    About half a corper's height. Ground at y≈46, drawn upright past the top of
@@ -4795,7 +4793,7 @@ function setObstacle(kind){
   /* the car alternates silver and red, so its two turns a round look like two cars */
   /* on Broad Street (on screen) the parked vehicle is the broken-down danfo */
   const danfo = kind === 'car' && DISTRICTS_ON && shownDistrict === 1;
-  if (danfo){ pothole.dataset.tagBottom = '168'; pothole.dataset.long = '1'; } else { delete pothole.dataset.tagBottom; delete pothole.dataset.long; }
+  if (danfo){ pothole.dataset.tagBottom = '112'; pothole.dataset.long = '1'; } else { delete pothole.dataset.tagBottom; delete pothole.dataset.long; }
   pothole.innerHTML = danfo ? DANFO_BROKEN : kind === 'car' && (carN++ % 2) ? CAR_RED
                     : kind === 'bin' && (binN++ % 2) ? BIN_FULL_SVG : OBSTACLE[kind].svg;
   pothole.classList.remove('leaving', 'waved');               // a fresh pass: whoever walked off is gone
@@ -5603,7 +5601,10 @@ function watchPothole(){
                   && (p === cornTarget || p === rideTarget || p.dataset.askLap === lap)));
     if (mine){
       if (fx < x - (ob.edge ?? 4)) jumpTarget = p;  // yours: you get asked
-      else fallIn(p);                  // asked, and not answered — he is on the hole
+      else if (p === jumpShown) fallIn(p);   // asked, and not answered — he is on the hole
+      /* never asked (it came on screen already on him: a long danfo does) —
+         nobody falls without having been told; he goes round like anyone */
+      else if (fx >= x - (ob.start ?? 26)) hopPothole(p, p.dataset.paid === String(potLap));
       return;
     }
     /* A bystander takes off just short of the hole rather than the moment it
@@ -6664,6 +6665,9 @@ function claimCoin(coin){
         || performance.now() - t0 > 9000){ clearInterval(watch); grab(); return; }
     if (who.matches('.jumping') || room(who) > 0) return;
     clearInterval(watch);
+    /* gone past it (a hop on the way, or nobody had room): no stooping down
+       well beyond the coin — it is simply his */
+    if (room(who) < -14){ grab(); return; }
     who.classList.add('stoop');
     who.style.animationPlayState = 'paused';            // stop walking, as he does at the pothole
     setTimeout(grab, 450);                              // the bottom of the bend
@@ -7278,6 +7282,7 @@ function snackRun(preferred, target, paid){
      he stood exactly behind her — she is drawn in front — so the frames
      showed YOU over a seller with no corper anywhere: he had vanished. */
   const near = stall.el.classList.contains('near');   // on his own pavement: walk over, full size
+  if (near) who.classList.add('nearErrand');          // and in front of the traffic, with her (user: the danfos covered them)
   const BESIDE = near ? 34 : 16;                  // he is a third of the size by a far seller
   const side = home < stall.c ? -1 : 1;
   const speed = near ? -ROAD_SPEED / 1000        // tapped, she stands: only the ground moves her
@@ -7340,7 +7345,7 @@ function snackRun(preferred, target, paid){
   }, RUN_MS + EAT_MS);
 
   setTimeout(() => {
-    who.classList.remove('running');
+    who.classList.remove('running', 'nearErrand');
     who.style.animationPlayState = '';            // rejoin the trek mid-stride
     delete stall.el.dataset.target;
     /* The march stood still for the whole errand — a quarter of a cycle, about
