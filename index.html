@@ -450,9 +450,13 @@
   .kekeCouple{position:absolute;bottom:56px;width:120px;z-index:0;pointer-events:none;animation:shopDrive linear infinite}
   .kekeCouple svg{width:100%;display:block}
   /* the couple on the near walk: the walkers' scale and line, behind them */
-  .nearCouple{position:absolute;bottom:20px;width:58px;height:76px;z-index:2;pointer-events:none}   /* back by the kerb (user): a step up the walk, a touch smaller */
+  /* at the front edge of the walk (user: "further to the kerb, not in the middle of the road"):
+     nearer the camera than the walkers, so a touch bigger and drawn over them */
+  .nearCouple{position:absolute;bottom:1px;width:64px;height:92px;z-index:3;pointer-events:none}
   .nearCouple svg{display:block;width:100%;height:100%}
-  .nearCouple .coupleLaugh{animation:coupleLaugh 2.4s ease-in-out infinite}
+  .nearCouple .coupleHeart{transform-box:fill-box;transform-origin:50% 100%;animation:coupleHeart 1.4s ease-in-out infinite}
+  @keyframes coupleHeart{0%,100%{transform:translateY(0) scale(1)}15%{transform:translateY(-.6px) scale(1.22)}30%{transform:translateY(-.8px) scale(1)}45%{transform:translateY(-1px) scale(1.14)}}
+  @media (prefers-reduced-motion: reduce){.nearCouple .coupleHeart{animation:none}}
   .kekeCouple .coupleLaugh{animation:coupleLaugh 2.4s ease-in-out infinite}
   @keyframes coupleLaugh{0%,55%{opacity:0}65%,90%{opacity:1}100%{opacity:0}}
   /* Towers: bases hidden behind the shops, tops kept under the signboard
@@ -1821,7 +1825,7 @@
 <script type="module">
 import { newGame, doAction, canDo, unlocked, ACTIONS, phaseOf, nextUnlock, postingOdds, rivalOf,
          computePosting, CHOICES, GOAL, goalStatus,
-         shareText, MAX_DAY } from './game.js?v=20261118191710';
+         shareText, MAX_DAY } from './game.js?v=20261118193059';
 
 /* ---------- scene coordinates ----------
    The scene is scaled by a transform (see the stage), so a native
@@ -1852,11 +1856,11 @@ const TS = (document.getElementById('scene').offsetWidth || 375) / 375;
 const ALLAWEE_NOTE = 'Allawee ₦77,000 — e never enter.';
 import { initNet, joinCamp, syncPlayer, platoonBoard, recentChat, postChat,
          postSuggestion, reportMessage, awardBoard, myAwards, laughChat,
-         setPresence, campRoster, renameMe, setAvatar, online } from './net.js?v=20261118191710';
-import { startMusic, stopMusic, musicOn, audioState, audioSupported, setRain, whenSilenced, wakeAudio, audible, say, sfx, BEAT, BAR } from './audio.js?v=20261118191710';
+         setPresence, campRoster, renameMe, setAvatar, online } from './net.js?v=20261118193059';
+import { startMusic, stopMusic, musicOn, audioState, audioSupported, setRain, whenSilenced, wakeAudio, audible, say, sfx, BEAT, BAR } from './audio.js?v=20261118193059';
 import { playHoop, playPenalty, playQuiz, playRegister, playParade,
          playMami, playHustle, playManOWar, playSaed, playSocial,
-         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261118191710';
+         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261118193059';
 
 /* Every dance animation is expressed in beats, so the steps are on-tempo
    whether or not the sound is playing — and genuinely on the beat when it is. */
@@ -5663,7 +5667,9 @@ const COUPLE_FIRST = 30000, COUPLE_EVERY = 48000;
 function nearCoupleSvg(){
   const svg = kekeCouple();
   const figs = svg.slice(svg.indexOf('<!-- the couple at the corner -->'), svg.lastIndexOf('</svg>'));
-  return `<svg viewBox="74 8 28 36.6" aria-hidden="true" overflow="visible">${figs}</svg>`;
+  return `<svg viewBox="74 4 28 40.6" aria-hidden="true" overflow="visible">${figs.replace(/<g class="coupleLaugh">[\s\S]*?<\/g>/, '')}
+    <g class="coupleHeart"><path d="M88.8 11.6 l-2.9 -2.8 a1.7 1.7 0 0 1 2.9 -2.4 a1.7 1.7 0 0 1 2.9 2.4 z" fill="#ff2e63" stroke="#fff" stroke-width=".5"/>
+      <path d="M86.9 7.6 q.5 -.6 1.1 -.5" stroke="#fff" stroke-width=".45" fill="none" stroke-linecap="round" opacity=".8"/></g></svg>`;
 }
 function sendNearCouple(){
   const again = ms => setTimeout(sendNearCouple, ms);
