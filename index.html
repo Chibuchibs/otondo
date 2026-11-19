@@ -564,7 +564,9 @@
   /* paid: he turns and walks off the way the walkers are going, quicker
      steps; the 27 is flipped back so his back reads right */
   .pothole.leaving > svg{transform:scaleX(-1);transform-origin:46px 50%}
-  .pothole.leaving .tNum{transform:scaleX(-1);transform-box:fill-box;transform-origin:50% 50%}
+  .pothole .tNumBack{display:none}
+  .pothole.leaving .tNum{display:none}
+  .pothole.leaving .tNumBack{display:inline}   /* pre-mirrored in the drawing: no CSS transform on text (Safari put it off his jersey) */
   .pothole.leaving .tLegA,.pothole.leaving .tLegB{animation-duration:.5s}
   .pothole.leaving .tBody{animation-duration:.25s}
   /* his speech bubble: green when you have paid, red when he has stopped you */
@@ -1805,7 +1807,7 @@
 <script type="module">
 import { newGame, doAction, canDo, unlocked, ACTIONS, phaseOf, nextUnlock, postingOdds, rivalOf,
          computePosting, CHOICES, GOAL, goalStatus,
-         shareText, MAX_DAY } from './game.js?v=20261118175330';
+         shareText, MAX_DAY } from './game.js?v=20261118181404';
 
 /* ---------- scene coordinates ----------
    The scene is scaled by a transform (see the stage), so a native
@@ -1836,11 +1838,11 @@ const TS = (document.getElementById('scene').offsetWidth || 375) / 375;
 const ALLAWEE_NOTE = 'Allawee ₦77,000 — e never enter.';
 import { initNet, joinCamp, syncPlayer, platoonBoard, recentChat, postChat,
          postSuggestion, reportMessage, awardBoard, myAwards, laughChat,
-         setPresence, campRoster, renameMe, setAvatar, online } from './net.js?v=20261118175330';
-import { startMusic, stopMusic, musicOn, audioState, audioSupported, setRain, whenSilenced, wakeAudio, audible, say, sfx, BEAT, BAR } from './audio.js?v=20261118175330';
+         setPresence, campRoster, renameMe, setAvatar, online } from './net.js?v=20261118181404';
+import { startMusic, stopMusic, musicOn, audioState, audioSupported, setRain, whenSilenced, wakeAudio, audible, say, sfx, BEAT, BAR } from './audio.js?v=20261118181404';
 import { playHoop, playPenalty, playQuiz, playRegister, playParade,
          playMami, playHustle, playManOWar, playSaed, playSocial,
-         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261118175330';
+         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261118181404';
 
 /* Every dance animation is expressed in beats, so the steps are on-tempo
    whether or not the sound is playing — and genuinely on the beat when it is. */
@@ -2901,6 +2903,7 @@ function suyaSpot(cfg){
 
 function shop(cfg){
   if (cfg.broad) return broadShop(cfg);          // Broad Street (districts)
+  if (cfg.lekki) return lekkiShop(cfg);          // Admiralty Way, Lekki
   /* a corn seller is a brazier under an umbrella, not a building */
   if (cfg.stall){
     return `<svg viewBox="0 0 76 60" aria-hidden="true">
@@ -3048,6 +3051,9 @@ const MODERN_ICON = {
   chicken: `<path d="M8.6 13.4 q3-2 4.6.4 q1.2 2.2-1.2 3.6 q-1.6.8-3-.2 l-2 2 q-1 .4-1.3-.7 q-1-.1-.7-1.2 l2-1.9 q-.5-1 1.6-2z" fill="#fff3c4"/>`,
   pizza:   `<path d="M5.5 12.6 h8.6 l-4.3 8z" fill="#f7c948"/><path d="M5.5 12.6 h8.6" stroke="#b45309" stroke-width="1.3"/><circle cx="8.3" cy="14.8" r=".8" fill="#c1272d"/><circle cx="11" cy="15" r=".8" fill="#c1272d"/><circle cx="9.7" cy="17.3" r=".7" fill="#c1272d"/>`,
   pharmacy:`<rect x="8.4" y="12.2" width="3" height="8.4" rx=".5" fill="#fff"/><rect x="5.7" y="14.9" width="8.4" height="3" rx=".5" fill="#fff"/>`,
+  smoothie:`<path d="M6.6 13.2h6.8l-1 7h-4.8z" fill="#ffd6a5"/><path d="M6.6 13.2h6.8" stroke="#fff" stroke-width=".8"/><path d="M10.8 13.2l1.8-3.6" stroke="#fff" stroke-width=".8"/>`,
+  icecream:`<path d="M7.6 15.6l2.4 5.2l2.4-5.2z" fill="#e9c46a"/><circle cx="10" cy="14" r="2.8" fill="#ffd6e0"/>`,
+  grill:   `<path d="M5.6 18.6L14.4 12.6" stroke="#fff3c4" stroke-width=".7"/><circle cx="8" cy="16.9" r="1.5" fill="#ffb88a"/><circle cx="10.4" cy="15.2" r="1.5" fill="#fff3c4"/><circle cx="12.6" cy="13.7" r="1.5" fill="#ffb88a"/>`,
   pie:     `<path d="M5.4 18.6 q4.4-7 8.8 0z" fill="#e8a23a"/><path d="M5.4 18.6h8.8" stroke="#a8641a" stroke-width="1.1"/><path d="M7.6 16.4l1 1M10 15.4v1.2M12 16.4l-1 1" stroke="#a8641a" stroke-width=".6"/>`,
   burger:  `<path d="M5.6 15.4 q0-3.4 4.2-3.4 q4.2 0 4.2 3.4z" fill="#f2b45a"/><rect x="5.4" y="15.8" width="8.8" height="1" fill="#57a639"/><rect x="5.4" y="16.8" width="8.8" height="1.5" rx=".5" fill="#6b3a1e"/><rect x="5.8" y="18.5" width="8" height="1.5" rx=".7" fill="#f2b45a"/>`,
 };
@@ -3277,6 +3283,11 @@ function broadShop(cfg){
     if (cfg.style === 'bands'){            /* white floor bands, dark strip windows between (Mandilas) */
       for (let y = top + 6; y < 26; y += 6) face += `<rect x="6" y="${y}" width="88" height="2.6" fill="#2a3138"/>
         <rect class="win" x="8" y="${y + .4}" width="84" height="1.8" fill="#3e4a55" opacity=".7"/>`;
+    } else if (cfg.style === 'balcony'){    /* apartments: glass floors, white balcony slabs, a plant here and there (Lekki) */
+      for (let y = top + 3; y < 26; y += 7) face += `<rect class="win" x="8" y="${y}" width="84" height="5" fill="${tint(g, 1.25)}"/>
+        <rect x="6" y="${y + 5}" width="88" height="1.6" fill="#f4f4f2"/>
+        ${[12, 38, 64].map(x => `<path d="M${x} ${y + 5}v-2.4M${x + 22} ${y + 5}v-2.4M${x} ${y + 2.6}h22" stroke="#f4f4f2" stroke-width=".5"/>`).join('')}
+        <circle cx="${20 + (Math.round(y + 40) % 3) * 24}" cy="${y + 3.4}" r="1.5" fill="#40916c"/>`;
     } else if (cfg.style === 'grid'){       /* a dark concrete grid, deep-set windows (Bookshop House) */
       for (let y = top + 4; y < 26; y += 5.4) for (let c = 0; c < 11; c++)
         face += `<rect class="${(c + Math.round(y)) % 7 ? 'pane' : 'win'}" x="${8.4 + c * 7.8}" y="${y.toFixed(1)}" width="5.6" height="3.8" fill="${(c + Math.round(y)) % 3 ? '#8d9aa6' : '#b4c2cc'}"/>`;
@@ -3456,6 +3467,153 @@ function broadShop(cfg){
   return '';
 }
 
+/* ---------- Admiralty Way, Lekki Phase 1 (2026-11-18, user: "let's do
+   Admiralty Way Lekki next") ----------
+   The new Lagos: glass fronts, a café terrace, a car showroom, a nail bar, a
+   gym, a boutique, a co-working hub, an estate agent, apartment towers with
+   balconies, smoothies and gelato; the Lekki–Ikoyi Link Bridge on the skyline.
+   Most of it is one glass shopfront (lekkiShop 'front') with its own interior
+   behind the window. Invented names on every board, as everywhere else. */
+const LEKKI_OWN = [
+  { sign: 'THE GLASS CAFÉ', w: 112, lekki: 'cafe', body: '#f4efe6', roof: '#2d6a4f', door: '#2d6a4f', food: true,
+    signInk: ['#1b4332', '#f1faee', '#b7e4c7'], errand: 'Order cappuccino', price: 2500, energy: 10 },
+  { sign: 'SHAWARMA HUB', w: 84, lekki: 'shawarma', body: '#3a3a3a', roof: '#e85d04', kerb: true, food: true,
+    signInk: ['#6a2c00', '#fff1e0', '#ffb703'], errand: 'Chop shawarma', price: 2000, belle: 12 },
+  { sign: 'LEKKI MOTORS', w: 116, lekki: 'front', inside: 'showroom', body: '#e9ecef', roof: '#212529', door: '#212529',
+    signInk: ['#111111', '#ffffff', '#adb5bd'], errand: 'Test drive', price: 500, cred: 1 },
+  { sign: 'NAIL BAR', w: 104, lekki: 'front', inside: 'nails', body: '#fff0f5', roof: '#c9184a', door: '#c9184a',
+    signInk: ['#800f2f', '#ffe5ec', '#ff8fab'], errand: 'Fix nails', price: 2500, belle: 5 },
+  { sign: 'FIT FAM GYM', w: 108, lekki: 'front', inside: 'gym', body: '#2b2d42', roof: '#ef233c', door: '#ef233c',
+    signInk: ['#1a1b2e', '#ffffff', '#ff6b7a'], errand: 'Hit the gym', price: 1500, cred: 2 },
+  { sign: 'MEGA MART', w: 116, modern: 'mall', body: '#fde7c8', roof: '#d62828', door: '#d62828',
+    signInk: ['#7a1414', '#ffffff', '#ffb3b3'], errand: 'Buy groceries', price: 1200, belle: 6 },
+  { sign: 'LEKKI HEIGHTS', w: 116, broad: 'tower', style: 'balcony', glass: '#8ecae6', roof: '#023047', door: '#023047',
+    signInk: ['#023047', '#ffffff', '#8ecae6'], errand: 'View apartment', price: 500, cred: 1 },
+  { sign: 'SMOOTHIE BAR', w: 104, modern: 'smoothie', body: '#f1fff4', roof: '#2a9d8f', door: '#2a9d8f', food: true,
+    signInk: ['#1d6d63', '#ffffff', '#a8f0e4'], errand: 'Drink smoothie', price: 1500, energy: 12 },
+  { sign: 'THE BOUTIQUE', w: 108, lekki: 'front', inside: 'boutique', body: '#f8f4ec', roof: '#3d2b1f', door: '#3d2b1f',
+    signInk: ['#2a1d14', '#f5e6c8', '#d4a373'], errand: 'Buy outfit', price: 4000, cred: 2 },
+  { sign: 'CO-WORK HUB', w: 112, lekki: 'front', inside: 'cowork', body: '#e7ecef', roof: '#5a189a', door: '#5a189a',
+    signInk: ['#3c096c', '#ffffff', '#c77dff'], errand: 'Pitch startup', price: 1000, cred: 3 },
+  { sign: 'GELATO', w: 96, modern: 'icecream', body: '#fffaf0', roof: '#f28482', door: '#f28482', food: true,
+    signInk: ['#9d3c3a', '#ffffff', '#ffd6d5'], errand: 'Lick ice cream', price: 1000, belle: 5 },
+  { sign: 'LEKKI BANK', w: 112, modern: 'bank', body: '#eef2f5', roof: '#0b3954', door: '#7a8791',
+    signInk: ['#082a3e', '#9fffe0', '#4fe3b7'], errand: 'Withdraw cash', price: 100, belle: 1 },
+  { sign: 'ISLAND GRILL', w: 108, modern: 'grill', body: '#fbf3ea', roof: '#9c2c2c', door: '#9c2c2c', food: true,
+    signInk: ['#5e1414', '#ffe8d6', '#ffb88a'], errand: 'Chop small chops', price: 1800, belle: 10 },
+  { sign: 'PRIME REALTY', w: 104, lekki: 'front', inside: 'realty', body: '#f2efe9', roof: '#1d3557', door: '#1d3557',
+    signInk: ['#14253d', '#ffffff', '#a8dadc'], errand: 'Ask for rent', price: 200, cred: 1 },
+];
+const LEKKI_SHOPS = [...LEKKI_OWN, ...SHOPS.slice(LEKKI_OWN.length)];   // the paid boards keep their places
+Object.assign(CUSTOMERS, {
+  'LEKKI MOTORS':  [{ kind: 'phone', at: .3, skin: 2, tone: 0, print: { kind: 'pinstripe', ink: '#212529' } }],
+  'NAIL BAR':      [{ kind: 'enter', from: 1.08, to: .29, skin: 1, tone: 3, d: -4, print: { kind: 'dots', ink: '#c9184a' } }],
+  'FIT FAM GYM':   [{ kind: 'enter', from: -.12, to: .29, skin: 3, tone: 2, d: -7, print: { kind: 'jersey', ink: '#ef233c', num: 7 } }],
+  'MEGA MART':     [{ kind: 'enter', from: 1.08, to: .29, skin: 0, tone: 1, d: -2, print: { kind: 'chevron', ink: '#d62828' } }],
+  'LEKKI HEIGHTS': [{ kind: 'phone', at: .76, skin: 4, tone: 0, print: { kind: 'adire' } }],
+  'THE BOUTIQUE':  [{ kind: 'enter', from: 1.08, to: .29, skin: 2, tone: 4, d: -6, print: { kind: 'ankara', ink: '#3d2b1f', ground: '#d4a373' } }],
+  'CO-WORK HUB':   [{ kind: 'phone', at: .3, skin: 1, tone: 1, print: { kind: 'stripes', ink: '#5a189a' } }],
+  'LEKKI BANK':    [{ kind: 'wait', at: .74, skin: 3, tone: 0, print: { kind: 'pinstripe', ink: '#0b3954' } }],
+  'PRIME REALTY':  [{ kind: 'idle', at: .82, skin: 0, tone: 2, print: { kind: 'pinstripe', ink: '#1d3557' } }],
+});
+function lekkiShop(cfg){
+  const k = cfg.lekki;
+  const glassDoors = `<rect x="15" y="31" width="28" height="29" fill="#14181c" opacity=".55"/>
+    <rect class="door" x="16.4" y="32.4" width="12" height="27.6" fill="#c3e3ee"/>
+    <rect class="door" x="29.6" y="32.4" width="12" height="27.6" fill="#b4d8e6"/>
+    <path d="M26.6 44v6 M31.4 44v6" stroke="${cfg.door}" stroke-width="1.1" stroke-linecap="round"/>
+    <path d="M18 57 L25 36 M31 57 L38 36" stroke="#fff" stroke-width=".7" opacity=".5"/>`;
+  const planter = x => `<rect x="${x}" y="54" width="6" height="6" fill="#3d3d3d"/><path d="M${x + 3} 54 q-4 -6 -2 -10 M${x + 3} 54 q1 -7 4 -9 M${x + 3} 54 q-1 -5 0 -8" stroke="#2d6a4f" stroke-width="1.4" fill="none" stroke-linecap="round"/>`;
+  if (k === 'front'){
+    const IN = {
+      showroom: `<rect x="46.4" y="46" width="44.2" height="7.6" fill="#d9dde1"/>
+        <path d="M50 49 q2 -7 10 -8 h14 q7 1 10 6 l2 3z" fill="#f8f9fa"/><path d="M58 42 h12 l4 4 h-19z" fill="#5d7482"/>
+        <circle cx="56" cy="50" r="3" fill="#212529"/><circle cx="80" cy="50" r="3" fill="#212529"/>
+        <path d="M60 24.4 L52 46 M76 24.4 L84 46" stroke="#fff" stroke-width="3" opacity=".12"/>
+        <rect x="70" y="27" width="16" height="5" rx="1" fill="#212529"/><text x="78" y="30.8" text-anchor="middle" font-size="3.2" font-weight="900" font-family="system-ui,sans-serif" fill="#fff">0% DOWN</text>`,
+      nails: `<rect x="48" y="27" width="40" height="3" fill="#ffd6e0"/>
+        ${[50, 54, 58, 62, 66, 70].map((x, i) => `<rect x="${x}" y="24.6" width="2.2" height="3.6" rx=".6" fill="${['#c9184a', '#ff8fab', '#9d4edd', '#f72585', '#ffb703', '#e5383b'][i]}"/>`).join('')}
+        <rect x="52" y="44" width="12" height="9" rx="2" fill="#ff8fab"/><rect x="72" y="44" width="12" height="9" rx="2" fill="#ff8fab"/>
+        <circle cx="58" cy="37" r="3" fill="#6b4423"/><path d="M54 44 v-3 q0 -2.6 4 -2.6 q4 0 4 2.6 v3z" fill="#fff"/>
+        <circle cx="78" cy="37" r="3" fill="#4a2e1c"/><path d="M74 44 v-3 q0 -2.6 4 -2.6 q4 0 4 2.6 v3z" fill="#c9184a"/>
+        <rect x="64" y="45" width="8" height="2" fill="#f1f1f1"/>`,
+      gym: `<rect x="46.4" y="24.4" width="44.2" height="29.2" fill="#3a3c55"/>
+        <rect x="48" y="26" width="18" height="12" fill="#4d5070" opacity=".8"/>
+        <path d="M52 52 l12 -3 v2 l-12 3z" fill="#111"/><rect x="62" y="40" width="1.6" height="10" fill="#888"/>
+        <circle cx="57" cy="37" r="2.4" fill="#6b4423"/><path d="M55 46 v-5 q0 -2 2 -2 q2 0 2 2 v5z" fill="#ef233c"/>
+        <path d="M55.6 46 l-2 4 M58.4 46 l2 4" stroke="#222" stroke-width="1.6" stroke-linecap="round"/>
+        <rect x="70" y="47" width="18" height="2" fill="#777"/>${[72, 77, 82, 86].map(x => `<rect x="${x}" y="44.6" width="2.4" height="6.6" rx=".6" fill="#1d1d1d"/>`).join('')}
+        <path d="M71 30 h6 M71 30 v-2 v4 M77 30 v-2 v4" stroke="#ef233c" stroke-width="1.6"/>`,
+      boutique: [52, 64, 76].map((x, i) => `<circle cx="${x + 4}" cy="30" r="2.2" fill="#d9c7b0"/>
+        <path d="M${x + 1} 50 L${x + 2.4} 34 Q${x + 4} 32.4 ${x + 5.6} 34 L${x + 7} 50z" fill="${['#e76f51', '#2a9d8f', '#e9c46a'][i]}"/>
+        <rect x="${x + 3.4}" y="50" width="1.2" height="3.6" fill="#999"/>`).join('') + `<rect x="80" y="40" width="9" height="5" rx="1" fill="#fff"/><text x="84.5" y="43.4" text-anchor="middle" font-size="2.6" font-weight="900" font-family="system-ui,sans-serif" fill="#3d2b1f">NEW IN</text>`,
+      cowork: `<text class="neon" x="68" y="31" text-anchor="middle" font-size="7" font-weight="900" font-family="monospace" fill="#c77dff">{ }</text>
+        <rect x="48" y="44" width="40" height="2" fill="#bfa58a"/>
+        ${[51, 66, 79].map(x => `<rect class="neon" x="${x}" y="38.6" width="7" height="5" rx=".5" fill="#9fd0ff"/><rect x="${x - 1}" y="43.4" width="9" height=".8" fill="#555"/>`).join('')}
+        <circle cx="56" cy="36" r="2.4" fill="#4a2e1c"/><path d="M53.6 44 v-4 q0 -2 2.4 -2 q2.4 0 2.4 2 v4z" fill="#5a189a"/>
+        <ellipse cx="84" cy="51" rx="5" ry="3" fill="#ffb703"/>`,
+      realty: [[48, '3 BED', '₦5M/YR'], [62, 'DUPLEX', '₦12M/YR'], [76, 'STUDIO', '₦2.5M/YR']].map(([x, a, b]) => `<rect x="${x}" y="27" width="12" height="20" rx="1" fill="#fff"/>
+        <path d="M${x + 2} 35 l4 -4 l4 4 v4 h-8z" fill="#a8dadc"/><rect x="${x + 4.8}" y="36.4" width="2.4" height="2.6" fill="#1d3557"/>
+        <text x="${x + 6}" y="42.6" text-anchor="middle" font-size="2.6" font-weight="900" font-family="system-ui,sans-serif" fill="#1d3557">${a}</text>
+        <text x="${x + 6}" y="45.6" text-anchor="middle" font-size="2.4" font-weight="800" font-family="system-ui,sans-serif" fill="#e63946">${b}</text>`).join(''),
+    };
+    const dark = cfg.inside === 'gym';
+    return `<svg viewBox="0 0 100 60" aria-hidden="true">
+      ${sideWall(94, 16, 60, cfg.body)}
+      <rect x="6" y="16" width="88" height="44" fill="${cfg.body}"/>
+      <rect x="45" y="23" width="47" height="32" fill="#1f2a33"/>
+      <rect class="door" x="46.4" y="24.4" width="44.2" height="29.2" fill="${dark ? '#3a3c55' : '#f7fbfd'}"/>
+      ${IN[cfg.inside] || ''}
+      <path d="M50 54 L60 24.4 M64 54 L72 24.4" stroke="#fff" stroke-width="1.2" opacity=".22"/>
+      ${glassDoors}
+      ${planter(7)}${planter(45.4)}
+      ${topFace(4, 6, 92, cfg.roof)}${sideWall(96, 6, 18, cfg.roof)}
+      <rect x="4" y="6" width="92" height="11" fill="${cfg.roof}"/>
+      ${board(cfg.sign, 16, 5.6, 68, cfg.signInk)}
+    </svg>`;
+  }
+  if (k === 'cafe'){                        /* a glass café, its terrace on the pavement: umbrellas, a couple with cups */
+    const table = (x, u) => `<path d="M${x - 11} 40 Q${x} 33 ${x + 11} 40z" fill="${u}"/><rect x="${x - .5}" y="40" width="1" height="13" fill="#555"/>
+      <rect x="${x - 5}" y="49" width="10" height="1.4" fill="#e9e4da"/><rect x="${x - .6}" y="50.4" width="1.2" height="9.6" fill="#555"/>`;
+    return `<svg viewBox="0 0 100 60" aria-hidden="true">
+      ${sideWall(94, 16, 60, cfg.body)}
+      <rect x="6" y="16" width="88" height="44" fill="${cfg.body}"/>
+      <rect x="45" y="23" width="47" height="22" fill="#1f2a33"/><rect class="door" x="46.4" y="24.4" width="44.2" height="19.2" fill="#fff4e0"/>
+      <rect x="48" y="30" width="40" height="2" fill="#8b5e3c"/>${[51, 57, 63].map(x => `<rect x="${x}" y="26" width="3.4" height="4" rx=".6" fill="#6f4e37"/>`).join('')}
+      <circle cx="78" cy="31" r="2.4" fill="#6b4423"/><path d="M75.4 38 v-3 q0 -2 2.6 -2 q2.6 0 2.6 2 v3z" fill="${cfg.roof}"/>
+      ${glassDoors}
+      ${table(58, cfg.roof)}${table(82, '#f4a261')}
+      <!-- the couple at the near table, cups up -->
+      <rect x="51" y="52" width="2" height="8" fill="#555"/><path d="M49 52 v-6 q0 -2.4 2.6 -2.4 q2.6 0 2.6 2.4 v6z" fill="#e9c46a"/><circle cx="51.6" cy="41.6" r="2.4" fill="#4a2e1c"/>
+      <rect x="63" y="52" width="2" height="8" fill="#555"/><path d="M61 52 v-6 q0 -2.4 2.6 -2.4 q2.6 0 2.6 2.4 v6z" fill="#264653"/><circle cx="63.6" cy="41.6" r="2.4" fill="#8d5524"/>
+      <rect x="55.4" y="47.4" width="1.8" height="1.8" fill="#fff"/><rect x="59" y="47.4" width="1.8" height="1.8" fill="#fff"/>
+      ${topFace(4, 6, 92, cfg.roof)}${sideWall(96, 6, 18, cfg.roof)}
+      <rect x="4" y="6" width="92" height="11" fill="${cfg.roof}"/>
+      ${board(cfg.sign, 16, 5.6, 68, cfg.signInk)}
+    </svg>`;
+  }
+  if (k === 'shawarma'){                    /* the cone turning in front of the heater, the man with the long knife */
+    return `<svg viewBox="0 0 84 60" aria-hidden="true">
+      ${sideWall(64, 24, 60, cfg.body)}
+      <rect x="10" y="24" width="54" height="36" fill="${cfg.body}"/>
+      ${topFace(8, 20, 58, cfg.roof)}<rect x="8" y="20" width="58" height="5" fill="${cfg.roof}"/>
+      <rect x="14" y="28" width="46" height="18" fill="#1d1d1d"/>
+      <rect x="18" y="29" width="8" height="16" rx="1" fill="#ff7b00" opacity=".55"/>
+      <path d="M27 29 L33 29 L32 45 L28 45z" fill="#a0522d"/><path d="M28 32h4M28 36h4M28.4 40h3.2" stroke="#7a3b16" stroke-width=".7"/>
+      <rect x="29.6" y="27" width=".8" height="20" fill="#bbb"/>
+      <circle cx="44" cy="34" r="3" fill="#6b4423"/><rect x="41" y="31" width="6" height="1.6" fill="#fff"/>
+      <path d="M40 46 v-6 q0 -3 4 -3 q4 0 4 3 v6z" fill="#fff"/><path d="M38 40 l-4 -1" stroke="#ccc" stroke-width="1"/>
+      ${[50, 54].map(x => `<rect x="${x}" y="40" width="3" height="6" rx="1.4" fill="#f3e3c3"/>`).join('')}
+      <rect x="12" y="46" width="50" height="3" fill="#d9d2c0"/>
+      <rect x="16" y="50" width="42" height="7" rx="1" fill="#fff1e0"/>
+      <text x="37" y="55.2" text-anchor="middle" font-size="4" font-weight="900" font-family="system-ui,sans-serif" fill="#6a2c00"
+            textLength="36" lengthAdjust="spacingAndGlyphs">CHICKEN · BEEF · ₦2,000</text>
+      ${board(cfg.sign, 6, 4, 72, cfg.signInk)}
+    </svg>`;
+  }
+  return '';
+}
+
 /* Shop attributes and contents from a config: the strip is built with these,
    and a district repaints a slot with them in place, so its animation clock
    (and with it the row's spacing) is never touched. */
@@ -3530,6 +3688,35 @@ const BROAD_TOWERS = [
   { name: 'ASSURANCE',   w: 42, h: 106, body: '#8fa9b8', win: '#dde9ef' },
   { name: 'PORT',        w: 38, h: 88,  body: '#a99ab8', win: '#e6dfec' },
 ];
+
+/* Admiralty Way's skyline: the Link Bridge's pylon and its fan of cables over
+   the rooftops (the deck is down behind the shops), and four newer towers. */
+const LEKKI_TOWERS = [
+  { name: 'LEKKI',    w: 38, h: 96,  body: '#9ec9d9', win: '#e3f2f7' },
+  { bridge: true,     w: 74, h: 142 },
+  { name: 'PEARL',    w: 34, h: 80,  body: '#e6d5c3', win: '#f7efe6' },
+  { name: 'ATLANTIC', w: 42, h: 104, body: '#7fb7be', win: '#dff1f2', mast: true },
+  { name: 'PALMS',    w: 36, h: 86,  body: '#b8c5a6', win: '#eef3e6' },
+];
+function linkBridge(t){
+  const top = 8, deck = t.h - 18, px = t.w / 2, cables = [];
+  for (let i = 0; i < 8; i++){
+    const y = top + 3 + i * 3.6;
+    cables.push(`<path d="M${px} ${y} L${3 + i * 3.8} ${deck}" stroke="#b3ada2" stroke-width=".8"/>`,
+                `<path d="M${px} ${y} L${t.w - 3 - i * 3.8} ${deck}" stroke="#b3ada2" stroke-width=".8"/>`);
+  }
+  return `<svg class="tower bridge" viewBox="0 0 ${t.w} ${t.h}" width="${t.w}" height="${t.h}" aria-hidden="true" overflow="visible">
+    ${cables.join('')}
+    <path d="M${px - 3.4} ${t.h} L${px - 1.6} ${top} H${px + 1.6} L${px + 3.4} ${t.h}Z" fill="#e8e4dc"/>
+    <path d="M${px + .6} ${t.h} L${px + 1.4} ${top} L${px + 2.8} ${t.h}Z" fill="#c9c4ba"/>
+    <rect x="${px - 2.2}" y="${top - 3.4}" width="4.4" height="4" rx="1.2" fill="#d4cfc6"/>
+    <rect x="-6" y="${deck}" width="${t.w + 12}" height="3" fill="#bdb7ab"/>
+  </svg>`;
+}
+const skyItem = t => t.bridge ? linkBridge(t) : tower(t);
+DISTRICTS[1].towers = BROAD_TOWERS;
+DISTRICTS.push({ name: 'ADMIRALTY WAY', area: 'LEKKI PHASE 1', shops: LEKKI_SHOPS, towers: LEKKI_TOWERS });
+if (DISTRICT_Q === 'lekki'){ districtN = 2; shownDistrict = 2; }
 
 function customer(c, scale = .32){          // fits the shop doors (was .42, taller than them)
   const pos = c.kind === 'enter'
@@ -4469,10 +4656,10 @@ const carDrawing = (bonnetUp, bootUp) => `<svg viewBox="0 0 80 48" aria-hidden="
     <path d="M102.4 -10.2l-2.6 3.4l4.2-3.4z" fill="#fff" stroke="#2b2b2b" stroke-width=".45"/>
     <text x="110" y="-12.6" font-size="5.4" font-weight="900" font-family="system-ui,sans-serif" text-anchor="middle" fill="#c2185b">Ehn?!</text></g>` : ''}
   </g>
-  <text class="potName" font-size="8" font-weight="900" letter-spacing="0.55"
+  ${bootUp ? '' : `<text class="potName" font-size="8" font-weight="900" letter-spacing="0.55"
         font-family="system-ui,sans-serif" text-anchor="middle">
     <textPath href="#potArc" startOffset="50%">WHO PARK HERE?</textPath>
-  </text>
+  </text>`}
 </svg>`;
 const CAR_SVG = carDrawing(true, false);
 /* Two more for the road (2026-11-10), each in the same 80x48 box and the same
@@ -4568,6 +4755,9 @@ const TOUT_SVG = `<svg viewBox="0 0 80 48" aria-hidden="true" overflow="visible"
   <path d="M38.8 -23.2q1.4 4.6 0 8.6M55.2 -23.2q-1.4 4.6 0 8.6" stroke="#fff" stroke-width="1" fill="none"/>
   <text class="tNum" x="47" y="-3.6" text-anchor="middle" font-size="11" font-weight="900" font-family="system-ui,sans-serif"
         fill="#fff" stroke="#1d1d1f" stroke-width=".5" paint-order="stroke">27</text>
+  <!-- the same 27 mirrored about its own middle (x 47), shown while he walks off with the drawing flipped -->
+  <text class="tNumBack" x="47" y="-3.6" text-anchor="middle" font-size="11" font-weight="900" font-family="system-ui,sans-serif"
+        fill="#fff" stroke="#1d1d1f" stroke-width=".5" paint-order="stroke" transform="translate(94 0) scale(-1 1)">27</text>
   <path d="M42.6 -23.2Q47 -16.4 51.4 -23.2" stroke="#d9b24a" stroke-width=".9" fill="none"/>
   <!-- neck, head, the face of a man who has collected all morning -->
   <rect x="43.8" y="-26.6" width="6.4" height="6" rx="2" fill="${TOUT_SKIN}"/>
@@ -5029,11 +5219,15 @@ function palmTree(s){
   if (sun) sun.insertAdjacentElement('afterend', sky); else sceneEl.prepend(sky);
   if (DISTRICTS_ON){
     sky.dataset.district = '0';
-    const sky2 = document.createElement('div');
-    sky2.className = 'skyline';
-    sky2.dataset.district = '1';
-    sky2.innerHTML = BROAD_TOWERS.map(tower).join('');
-    sky.insertAdjacentElement('afterend', sky2);
+    let after = sky;
+    DISTRICTS.forEach((d, n) => {
+      if (!n || !d.towers) return;
+      const k = document.createElement('div');
+      k.className = 'skyline';
+      k.dataset.district = String(n);
+      k.innerHTML = d.towers.map(skyItem).join('');
+      after.insertAdjacentElement('afterend', k); after = k;
+    });
     setSkyline(districtN);
   }
 })();
