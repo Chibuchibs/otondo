@@ -1838,7 +1838,7 @@
 <script type="module">
 import { newGame, doAction, canDo, unlocked, ACTIONS, phaseOf, nextUnlock, postingOdds, rivalOf,
          computePosting, CHOICES, GOAL, goalStatus,
-         shareText, MAX_DAY } from './game.js?v=20261118195623';
+         shareText, MAX_DAY } from './game.js?v=20261118200659';
 
 /* ---------- scene coordinates ----------
    The scene is scaled by a transform (see the stage), so a native
@@ -1869,11 +1869,11 @@ const TS = (document.getElementById('scene').offsetWidth || 375) / 375;
 const ALLAWEE_NOTE = 'Allawee ₦77,000 — e never enter.';
 import { initNet, joinCamp, syncPlayer, platoonBoard, recentChat, postChat,
          postSuggestion, reportMessage, awardBoard, myAwards, laughChat,
-         setPresence, campRoster, renameMe, setAvatar, online } from './net.js?v=20261118195623';
-import { startMusic, stopMusic, musicOn, audioState, audioSupported, setRain, whenSilenced, wakeAudio, audible, say, sfx, BEAT, BAR } from './audio.js?v=20261118195623';
+         setPresence, campRoster, renameMe, setAvatar, online } from './net.js?v=20261118200659';
+import { startMusic, stopMusic, musicOn, audioState, audioSupported, setRain, whenSilenced, wakeAudio, audible, say, sfx, BEAT, BAR } from './audio.js?v=20261118200659';
 import { playHoop, playPenalty, playQuiz, playRegister, playParade,
          playMami, playHustle, playManOWar, playSaed, playSocial,
-         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261118195623';
+         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261118200659';
 
 /* Every dance animation is expressed in beats, so the steps are on-tempo
    whether or not the sound is playing — and genuinely on the beat when it is. */
@@ -4133,13 +4133,15 @@ function showStreetCard(n){
   sceneEl.querySelector('.streetCard')?.remove();
   const c = document.createElement('div');
   c.className = 'streetCard';
-  c.innerHTML = `<small>WELCOME TO</small><b><i aria-hidden="true"></i>${d.name}</b><small>${d.area}</small>`;
+  c.innerHTML = `<small>WELCOME TO</small><b><i aria-hidden="true"></i>${d.name}</b><small>${d.area} · ${n + 1} OF ${DISTRICTS.length}</small>`;
+  try { localStorage.setItem('otondo:street', String(n)); } catch {}
   sceneEl.appendChild(c);
   setTimeout(() => c.remove(), 3400);
 }
 function setSkyline(n){
   if (n !== shownDistrict) setTimeout(() => showStreetCard(n), 600);
   shownDistrict = n;
+  try { localStorage.setItem('otondo:street', String(n)); } catch {}
   sceneEl.querySelector('.streetPost')?.dispatchEvent(new Event('repaint'));
   sceneEl.querySelectorAll('.skyline[data-district]').forEach(k => k.classList.toggle('away', +k.dataset.district !== n));
 }
@@ -4219,6 +4221,13 @@ const YABA_TOWERS = [
 ];
 DISTRICTS.push({ name: 'OJUELEGBA', area: 'YABA', shops: YABA_SHOPS, towers: YABA_TOWERS });
 if (DISTRICT_Q === 'yaba'){ districtN = 4; shownDistrict = 4; }
+/* A plain visit starts on the street after the one you last reached, so a
+   returning player sees somewhere new (2026-11-18, user: not seeing all the
+   streets — five of them take ~13 minutes to come round). */
+if (DISTRICTS_ON && (DISTRICT_Q === null || DISTRICT_Q === '')){
+  let last = -1; try { last = parseInt(localStorage.getItem('otondo:street'), 10); } catch {}
+  if (Number.isInteger(last) && last >= 0){ districtN = (last + 1) % DISTRICTS.length; shownDistrict = districtN; }
+}
 
 function customer(c, scale = .32){          // fits the shop doors (was .42, taller than them)
   const pos = c.kind === 'enter'
@@ -5694,7 +5703,7 @@ function kekeCouple(){
    to the other side of the road to see how it looks") ----------
    The same two, drawn from kekeCouple's figures at the walkers' scale, riding
    with the ground across the near pavement every so often. */
-const COUPLE_FIRST = 30000, COUPLE_EVERY = 48000;
+const COUPLE_FIRST = 60000, COUPLE_EVERY = 120000;   // (user: too often at 48s)
 function nearCoupleSvg(){
   const svg = kekeCouple();
   const figs = svg.slice(svg.indexOf('<!-- the couple at the corner -->'), svg.lastIndexOf('</svg>'));
@@ -6936,7 +6945,7 @@ function mobCatch(run){
     c.style.transition = 'transform .35s ease-out';
     c.style.setProperty('--trail', (12 + i * 9) + 'px');
   }, 380 + i * 170));
-  setTimeout(() => { if (tag) tag.textContent = 'MOB DON CATCH AM!'; }, 1000);
+  setTimeout(() => { if (tag) tag.textContent = chasers.length ? 'MOB DON CATCH AM!' : 'POTHOLE CATCH AM!'; }, 1000);   // alone, nobody to catch him but the hole
   setTimeout(() => {
     sceneEl.querySelectorAll('.runner').forEach(el => el.remove());
     sceneEl.querySelectorAll('.runnerTag').forEach(el => el.remove());
@@ -7012,6 +7021,16 @@ function trip(run){
    event on top of that reads as life; two at once reads as noise. */
 const sceneBusy = () => !!sceneEl.querySelector('.runner, .ablaze, .goat, .convoy');
 
+/* Five thieves taking turns, so the chase is not the same man every time
+   (2026-11-18, user: "only one thief"). */
+const THIEVES = [
+  { skin: 2, rags: true },                                                         // the man in rags
+  { skin: 0, rags: true, look: { fila: '#1d1d1f' } },                              // rags and a black cap
+  { skin: 3, tone: 2, print: { kind: 'jersey', ink: '#141414', num: 0 }, look: 'dreads' },   // locs, black jersey
+  { skin: 4, rags: true, look: 'afro' },                                           // big afro, rags
+  { skin: 1, tone: 4, print: { kind: 'plaid', ink: '#5a3b8c' }, look: { fila: '#c1272d' } }, // the smart one
+];
+let thiefN = Math.floor(Math.random() * THIEVES.length);
 function agberoChase(){
   if (calm() || sceneBusy()) return;
   /* One chase in eight, he trips on Mr. Pothole on the way out and the mob
@@ -7025,7 +7044,7 @@ function agberoChase(){
      read as four separate people rather than one blur, and the gap no longer
      changes meaning when the pack turns around. */
   const cast = [
-    { skin: 2, scale: 1.02, tone: 0, trail: 0,   rags: true },   // the man himself
+    { scale: 1.02, trail: 0, thief: true, ...THIEVES[thiefN++ % THIEVES.length] },   // the man himself: a different one each chase
     /* One hand up, two sticks. Raising both outer chasers left a single stick
        in the whole mob, which undoes the point of them carrying one; and a
        line of identical raised arms reads as a drill squad rather than a
@@ -7043,9 +7062,13 @@ function agberoChase(){
     const t = sceneEl.querySelector('.runner.thief');
     if (t && !t.dataset.caught) say('thief', { queue: true });   // after a line already playing, not instead
   }, 0.6 * 12 * TS * 1000);
+  /* how many are after him on this street: alone, then one, two, the full mob */
+  const CHASERS_BY_STREET = [0, 1, 2, 3, 3];
+  const chasing = DISTRICTS_ON ? (CHASERS_BY_STREET[shownDistrict] ?? 3) : 3;
+  cast.splice(1 + chasing);
   cast.forEach(c => {
     const wrap = document.createElement('div');
-    wrap.className = 'runner' + (c.rags ? ' thief' : '') + (c.raised ? ' raised' : '');
+    wrap.className = 'runner' + (c.thief ? ' thief' : '') + (c.raised ? ' raised' : '');
     wrap.style.animationDuration = (12 * TS) + 's';     // both of its animations
     wrap.style.width = Math.round(46 * c.scale) + 'px';
     wrap.style.setProperty('--trail', c.trail + 'px');
@@ -7053,7 +7076,7 @@ function agberoChase(){
     flip.className = 'flip';
     flip.style.animationDuration = (12 * TS) + 's';
     flip.innerHTML = civilian(SKINS[c.skin % SKINS.length], c.scale, 9, 0,
-                              c.tone, !!c.rags, !!c.stick, !!c.raised, c.print);
+                              c.tone || 0, !!c.rags, !!c.stick, !!c.raised, c.print || null, c.look || null);
     wrap.appendChild(flip);
     /* the inner figure must not also be marching, or it drifts out of its own
        wrapper and the chase comes apart */
@@ -7070,7 +7093,7 @@ function agberoChase(){
     /* The label lives in the scene, not in the runner, and is driven onto the
        figure every frame. Pegging it to the wrapper looked right at rest and
        sat up to 180px adrift for the first seconds of a run. */
-    if (c.rags){
+    if (c.thief){
       const fig = wrap.querySelector('svg.corper');
       const tag = document.createElement('i');
       tag.className = 'runnerTag';
