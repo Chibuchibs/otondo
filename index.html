@@ -6,6 +6,8 @@
 <title>Otondo — free Lagos street game and NYSC camp game</title>
 <meta name="description" content="Free in your browser, no download. Walk Allen Avenue, Broad Street, Lekki, Computer Village and Ojuelegba, dodge Mr. Pothole, and survive 21 days of NYSC camp.">
 <link rel="canonical" href="https://otondo.ng/">
+<!-- Google Search Console ownership (URL-prefix property https://otondo.ng/, 2026-11-19). Do not remove. -->
+<meta name="google-site-verification" content="xnP5ghXnat1s-Wslkq3ivQEVia_22Nwy0jcXYX8usuc">
 <meta name="theme-color" content="#0a7a43">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cdefs%3E%3CradialGradient id='r' cx='38%25' cy='32%25' r='75%25'%3E%3Cstop offset='0' stop-color='%23fff3b0'/%3E%3Cstop offset='.45' stop-color='%23ffd34d'/%3E%3Cstop offset='1' stop-color='%23c98a00'/%3E%3C/radialGradient%3E%3CradialGradient id='c' cx='38%25' cy='30%25' r='80%25'%3E%3Cstop offset='0' stop-color='%23f0634f'/%3E%3Cstop offset='.35' stop-color='%23e8402f'/%3E%3Cstop offset='1' stop-color='%23a81d17'/%3E%3C/radialGradient%3E%3C/defs%3E%3Ccircle cx='16' cy='16' r='15' fill='url%28%23r%29' stroke='%23c98a00' stroke-width='1'/%3E%3Ccircle cx='16' cy='16' r='10.8' fill='url%28%23c%29'/%3E%3Cpath d='M11.3 10v6.2a4.7 4.7 0 0 0 9.4 0V10' fill='none' stroke='%23fff' stroke-width='3.6' stroke-linecap='round'/%3E%3Cellipse cx='9.4' cy='7.6' rx='2.8' ry='1.5' fill='%23fff' opacity='.55' transform='rotate%28-35 9.4 7.6%29'/%3E%3C/svg%3E">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -1900,7 +1902,7 @@
 <script type="module">
 import { newGame, doAction, canDo, unlocked, ACTIONS, phaseOf, nextUnlock, postingOdds, rivalOf,
          computePosting, CHOICES, GOAL, goalStatus,
-         shareText, MAX_DAY } from './game.js?v=20261119111501';
+         shareText, MAX_DAY } from './game.js?v=20261119112431';
 
 /* ---------- scene coordinates ----------
    The scene is scaled by a transform (see the stage), so a native
@@ -1931,11 +1933,11 @@ const TS = (document.getElementById('scene').offsetWidth || 375) / 375;
 const ALLAWEE_NOTE = 'Allawee ₦77,000 — e never enter.';
 import { initNet, joinCamp, syncPlayer, platoonBoard, recentChat, postChat,
          postSuggestion, reportMessage, awardBoard, myAwards, laughChat,
-         setPresence, campRoster, renameMe, setAvatar, online, prizeBoard, myPrize } from './net.js?v=20261119111501';
-import { startMusic, stopMusic, musicOn, audioState, audioSupported, setRain, whenSilenced, wakeAudio, audible, say, sfx, BEAT, BAR } from './audio.js?v=20261119111501';
+         setPresence, campRoster, renameMe, setAvatar, online, prizeBoard, myPrize } from './net.js?v=20261119112431';
+import { startMusic, stopMusic, musicOn, audioState, audioSupported, setRain, whenSilenced, wakeAudio, audible, say, sfx, BEAT, BAR } from './audio.js?v=20261119112431';
 import { playHoop, playPenalty, playQuiz, playRegister, playParade,
          playMami, playHustle, playManOWar, playSaed, playSocial,
-         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261119111501';
+         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261119112431';
 
 /* Every dance animation is expressed in beats, so the steps are on-tempo
    whether or not the sound is playing — and genuinely on the beat when it is. */
