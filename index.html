@@ -3,16 +3,17 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>Otondo — survive camp</title>
-<meta name="description" content="You enter camp with ₦20,000 and allawee never enter. Survive 21 days of parade, bad beans, Man O War and Mami market — then find out where dem post you.">
+<title>Otondo — free Lagos street game and NYSC camp game</title>
+<meta name="description" content="Free in your browser, no download. Walk Allen Avenue, Broad Street, Lekki, Computer Village and Ojuelegba, dodge Mr. Pothole, and survive 21 days of NYSC camp.">
+<link rel="canonical" href="https://otondo.ng/">
 <meta name="theme-color" content="#0a7a43">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cdefs%3E%3CradialGradient id='r' cx='38%25' cy='32%25' r='75%25'%3E%3Cstop offset='0' stop-color='%23fff3b0'/%3E%3Cstop offset='.45' stop-color='%23ffd34d'/%3E%3Cstop offset='1' stop-color='%23c98a00'/%3E%3C/radialGradient%3E%3CradialGradient id='c' cx='38%25' cy='30%25' r='80%25'%3E%3Cstop offset='0' stop-color='%23f0634f'/%3E%3Cstop offset='.35' stop-color='%23e8402f'/%3E%3Cstop offset='1' stop-color='%23a81d17'/%3E%3C/radialGradient%3E%3C/defs%3E%3Ccircle cx='16' cy='16' r='15' fill='url%28%23r%29' stroke='%23c98a00' stroke-width='1'/%3E%3Ccircle cx='16' cy='16' r='10.8' fill='url%28%23c%29'/%3E%3Cpath d='M11.3 10v6.2a4.7 4.7 0 0 0 9.4 0V10' fill='none' stroke='%23fff' stroke-width='3.6' stroke-linecap='round'/%3E%3Cellipse cx='9.4' cy='7.6' rx='2.8' ry='1.5' fill='%23fff' opacity='.55' transform='rotate%28-35 9.4 7.6%29'/%3E%3C/svg%3E">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Otondo">
-<meta property="og:title" content="Otondo — survive 21 days of camp">
-<meta property="og:description" content="You enter camp with ₦20,000 and allawee never enter. 21 days of parade, bad beans and Mami market — then find out where dem post you.">
+<meta property="og:title" content="Otondo — the Lagos street game">
+<meta property="og:description" content="Walk Broad Street, Lekki, Computer Village and Ojuelegba, dodge Mr. Pothole and survive 21 days of NYSC camp. Free, no download.">
 <meta property="og:url" content="https://otondo.ng/">
 <meta property="og:image" content="https://otondo.ng/share.png">
 <meta property="og:image:width" content="1200">
@@ -20,9 +21,20 @@
 <meta property="og:image:alt" content="Three corps members in khaki walking a dusty road past a roadside signboard">
 
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="Otondo — survive 21 days of camp">
-<meta name="twitter:description" content="You enter camp with ₦20,000 and allawee never enter. Then find out where dem post you.">
+<meta name="twitter:title" content="Otondo — the Lagos street game">
+<meta name="twitter:description" content="Dodge Mr. Pothole from Broad Street to Ojuelegba and survive 21 days of NYSC camp. Free, no download.">
 <meta name="twitter:image" content="https://otondo.ng/share.png">
+<script type="application/ld+json">
+{"@context":"https://schema.org","@graph":[
+ {"@type":"WebSite","@id":"https://otondo.ng/#website","url":"https://otondo.ng/","name":"Otondo",
+  "alternateName":["Otondo game","otondo.ng"],"inLanguage":"en-NG"},
+ {"@type":"VideoGame","@id":"https://otondo.ng/#game","name":"Otondo","url":"https://otondo.ng/",
+  "description":"Free in your browser, no download. Walk Allen Avenue, Broad Street, Lekki, Computer Village and Ojuelegba, dodge Mr. Pothole, and survive 21 days of NYSC camp.",
+  "image":"https://otondo.ng/share.png","genre":["Simulation","Casual"],"gamePlatform":"Web browser",
+  "applicationCategory":"Game","operatingSystem":"Any","inLanguage":"en-NG","isAccessibleForFree":true,
+  "publisher":{"@type":"Organization","name":"Haggle & Dende Limited","url":"https://otondo.ng/"}}
+]}
+</script>
 <style>
   :root{
     --khaki:#9a8f5f; --khaki-dk:#6f6742; --khaki-lt:#b9ae7c;
@@ -1548,6 +1560,10 @@
   .row button{flex:none;padding:0 16px;background:var(--green);color:#fff;
     border:0;border-radius:12px;font-weight:800}
   .note{font-size:12px;color:var(--muted);margin:8px 2px 0}
+  /* About (2026-11-19): real text for search engines and for anyone who scrolls */
+  .about{margin-top:26px;font-size:14px;line-height:1.55;color:var(--muted)}
+  .about h2{font-size:13px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink);margin:0 0 6px}
+  .about p{margin:0 0 9px}
   footer{margin-top:26px;padding-top:14px;border-top:1px solid var(--line);
     text-align:center;font-size:12.5px;color:var(--muted);line-height:1.7}
   footer a{color:var(--green-dk);font-weight:700;text-decoration:none}
@@ -1857,6 +1873,19 @@
       <p class="note" id="cardNote"></p>
     </div>
   </div>
+  <section class="about" aria-labelledby="aboutH">
+    <h2 id="aboutH">About Otondo</h2>
+    <p>Otondo is a free Lagos street game you play in your browser. No download, no sign up.
+       You walk the road as a corps member: dodge Mr. Pothole, step round the broken-down danfo,
+       buy pure water and akara from the hawkers, catch the thief and quench the fire.</p>
+    <p>The street changes as you walk: Allen Avenue in Ikeja, Broad Street on Lagos Island,
+       Admiralty Way in Lekki Phase 1, Computer Village in Ikeja and Ojuelegba in Yaba, each with
+       its own buildings, skyline and sellers.</p>
+    <p>Underneath it is 21 days of NYSC camp. You arrive with ₦20,000 and allawee never enter:
+       parade, Man O War, Mami market and bad beans. Build your credibility, keep your belle full,
+       make the money last, then find out where dem post you. In camp, an otondo is the fresh corper
+       who doesn't know how things work yet. Everybody starts as one.</p>
+  </section>
   <footer>
     Advertise on Otondo — put your brand on the danfo, a Mami stall or the
     camp notice board.<br>
@@ -1871,7 +1900,7 @@
 <script type="module">
 import { newGame, doAction, canDo, unlocked, ACTIONS, phaseOf, nextUnlock, postingOdds, rivalOf,
          computePosting, CHOICES, GOAL, goalStatus,
-         shareText, MAX_DAY } from './game.js?v=20261119101121';
+         shareText, MAX_DAY } from './game.js?v=20261119111501';
 
 /* ---------- scene coordinates ----------
    The scene is scaled by a transform (see the stage), so a native
@@ -1902,11 +1931,11 @@ const TS = (document.getElementById('scene').offsetWidth || 375) / 375;
 const ALLAWEE_NOTE = 'Allawee ₦77,000 — e never enter.';
 import { initNet, joinCamp, syncPlayer, platoonBoard, recentChat, postChat,
          postSuggestion, reportMessage, awardBoard, myAwards, laughChat,
-         setPresence, campRoster, renameMe, setAvatar, online, prizeBoard, myPrize } from './net.js?v=20261119101121';
-import { startMusic, stopMusic, musicOn, audioState, audioSupported, setRain, whenSilenced, wakeAudio, audible, say, sfx, BEAT, BAR } from './audio.js?v=20261119101121';
+         setPresence, campRoster, renameMe, setAvatar, online, prizeBoard, myPrize } from './net.js?v=20261119111501';
+import { startMusic, stopMusic, musicOn, audioState, audioSupported, setRain, whenSilenced, wakeAudio, audible, say, sfx, BEAT, BAR } from './audio.js?v=20261119111501';
 import { playHoop, playPenalty, playQuiz, playRegister, playParade,
          playMami, playHustle, playManOWar, playSaed, playSocial,
-         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261119101121';
+         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261119111501';
 
 /* Every dance animation is expressed in beats, so the steps are on-tempo
    whether or not the sound is playing — and genuinely on the beat when it is. */
