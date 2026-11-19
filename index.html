@@ -1838,7 +1838,7 @@
 <script type="module">
 import { newGame, doAction, canDo, unlocked, ACTIONS, phaseOf, nextUnlock, postingOdds, rivalOf,
          computePosting, CHOICES, GOAL, goalStatus,
-         shareText, MAX_DAY } from './game.js?v=20261118195147';
+         shareText, MAX_DAY } from './game.js?v=20261118195623';
 
 /* ---------- scene coordinates ----------
    The scene is scaled by a transform (see the stage), so a native
@@ -1869,11 +1869,11 @@ const TS = (document.getElementById('scene').offsetWidth || 375) / 375;
 const ALLAWEE_NOTE = 'Allawee ₦77,000 — e never enter.';
 import { initNet, joinCamp, syncPlayer, platoonBoard, recentChat, postChat,
          postSuggestion, reportMessage, awardBoard, myAwards, laughChat,
-         setPresence, campRoster, renameMe, setAvatar, online } from './net.js?v=20261118195147';
-import { startMusic, stopMusic, musicOn, audioState, audioSupported, setRain, whenSilenced, wakeAudio, audible, say, sfx, BEAT, BAR } from './audio.js?v=20261118195147';
+         setPresence, campRoster, renameMe, setAvatar, online } from './net.js?v=20261118195623';
+import { startMusic, stopMusic, musicOn, audioState, audioSupported, setRain, whenSilenced, wakeAudio, audible, say, sfx, BEAT, BAR } from './audio.js?v=20261118195623';
 import { playHoop, playPenalty, playQuiz, playRegister, playParade,
          playMami, playHustle, playManOWar, playSaed, playSocial,
-         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261118195147';
+         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261118195623';
 
 /* Every dance animation is expressed in beats, so the steps are on-tempo
    whether or not the sound is playing — and genuinely on the beat when it is. */
@@ -5158,10 +5158,7 @@ const carDrawing = (bonnetUp, bootUp) => `<svg viewBox="0 0 80 48" aria-hidden="
     <path d="M102.4 -10.2l-2.6 3.4l4.2-3.4z" fill="#fff" stroke="#2b2b2b" stroke-width=".45"/>
     <text x="110" y="-12.6" font-size="5.4" font-weight="900" font-family="system-ui,sans-serif" text-anchor="middle" fill="#c2185b">Ehn?!</text></g>` : ''}
   </g>
-  ${bootUp ? '' : `<text class="potName" font-size="8" font-weight="900" letter-spacing="0.55"
-        font-family="system-ui,sans-serif" text-anchor="middle">
-    <textPath href="#potArc" startOffset="50%">WHO PARK HERE?</textPath>
-  </text>`}
+  <!-- no name over the parked cars (user, 2026-11-18): the drawing says it -->
 </svg>`;
 const CAR_SVG = carDrawing(true, false);
 /* Two more for the road (2026-11-10), each in the same 80x48 box and the same
