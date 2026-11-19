@@ -463,11 +463,16 @@
   .shop .fanNotes{transform-box:fill-box;transform-origin:0% 100%;animation:fanNotes 1.1s ease-in-out infinite alternate}
   @keyframes fanNotes{from{transform:rotate(-6deg)}to{transform:rotate(8deg)}}
   .shop .shineBrush{animation:shineBrush .32s ease-in-out infinite alternate}
+  /* Ojuelegba: the conductor's call comes and goes; the music shop's notes float up */
+  .shop .parkCall{animation:parkCall 2.4s ease-in-out infinite}
+  @keyframes parkCall{0%,8%{opacity:0}16%,70%{opacity:1}80%,100%{opacity:0}}
+  .shop .musicNotes{animation:musicNotes 1.6s ease-in-out infinite alternate}
+  @keyframes musicNotes{from{transform:translateY(0);opacity:.6}to{transform:translateY(-3px);opacity:1}}
   @keyframes shineBrush{from{transform:translateX(-1.2px)}to{transform:translateX(1.2px)}}
   .shop .teaSteam circle{fill:#fff;opacity:0;transform-box:fill-box;animation:teaSteam 2s ease-out infinite}
   .shop .teaSteam circle:nth-child(2){animation-delay:-1s}
   @keyframes teaSteam{0%{opacity:.7;transform:translate(0,0) scale(.6)}100%{opacity:0;transform:translate(-2px,-9px) scale(1.8)}}
-  @media (prefers-reduced-motion: reduce){.shop .fanNotes,.shop .shineBrush,.shop .teaSteam circle,.gantry{animation:none}}
+  @media (prefers-reduced-motion: reduce){.shop .fanNotes,.shop .shineBrush,.shop .teaSteam circle,.shop .parkCall,.shop .musicNotes,.gantry{animation:none}}
   /* Trees: a row further back than the towers, showing only in the gaps and
      at the ends. Coconut palms and broad shade trees, the two that line a
      Lagos road. Greens kept a step duller than the street so they read as
@@ -1807,7 +1812,7 @@
 <script type="module">
 import { newGame, doAction, canDo, unlocked, ACTIONS, phaseOf, nextUnlock, postingOdds, rivalOf,
          computePosting, CHOICES, GOAL, goalStatus,
-         shareText, MAX_DAY } from './game.js?v=20261118181404';
+         shareText, MAX_DAY } from './game.js?v=20261118185150';
 
 /* ---------- scene coordinates ----------
    The scene is scaled by a transform (see the stage), so a native
@@ -1838,11 +1843,11 @@ const TS = (document.getElementById('scene').offsetWidth || 375) / 375;
 const ALLAWEE_NOTE = 'Allawee ₦77,000 — e never enter.';
 import { initNet, joinCamp, syncPlayer, platoonBoard, recentChat, postChat,
          postSuggestion, reportMessage, awardBoard, myAwards, laughChat,
-         setPresence, campRoster, renameMe, setAvatar, online } from './net.js?v=20261118181404';
-import { startMusic, stopMusic, musicOn, audioState, audioSupported, setRain, whenSilenced, wakeAudio, audible, say, sfx, BEAT, BAR } from './audio.js?v=20261118181404';
+         setPresence, campRoster, renameMe, setAvatar, online } from './net.js?v=20261118185150';
+import { startMusic, stopMusic, musicOn, audioState, audioSupported, setRain, whenSilenced, wakeAudio, audible, say, sfx, BEAT, BAR } from './audio.js?v=20261118185150';
 import { playHoop, playPenalty, playQuiz, playRegister, playParade,
          playMami, playHustle, playManOWar, playSaed, playSocial,
-         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261118181404';
+         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261118185150';
 
 /* Every dance animation is expressed in beats, so the steps are on-tempo
    whether or not the sound is playing — and genuinely on the beat when it is. */
@@ -2904,6 +2909,8 @@ function suyaSpot(cfg){
 function shop(cfg){
   if (cfg.broad) return broadShop(cfg);          // Broad Street (districts)
   if (cfg.lekki) return lekkiShop(cfg);          // Admiralty Way, Lekki
+  if (cfg.cv) return cvShop(cfg);                // Computer Village, Ikeja
+  if (cfg.yb) return ybShop(cfg);                // Ojuelegba & Yaba
   /* a corn seller is a brazier under an umbrella, not a building */
   if (cfg.stall){
     return `<svg viewBox="0 0 76 60" aria-hidden="true">
@@ -3614,12 +3621,395 @@ function lekkiShop(cfg){
   return '';
 }
 
+/* ---------- Computer Village, Ikeja (2026-11-18, user: "yes" to the next
+   streets) ----------
+   Nigeria's phone market: plazas stacked three floors high with a little
+   sign over every unit, repairers bent over their benches, a charging point
+   with phones on a power strip, UK-used phones under glass, SIM registration
+   under an umbrella, a gaming centre, a laptop shop, a mama feeding the
+   traders, POS. Crowded and loud on purpose: the opposite of Admiralty Way.
+   Telecom masts on the skyline. Invented names on every board. */
+const CV_OWN = [
+  { sign: 'GADGET PLAZA', w: 116, cv: 'plaza', body: '#e9d8a6', roof: '#94461c', units: ['PHONE DOC', 'SIM ZONE', 'LAPI WORLD', 'CHARGER KING', 'MEGA PHONES', 'GADGET PLUG'],
+    signInk: ['#5c2a0c', '#ffe8a8', '#ffc14d'], errand: 'Buy phone case', price: 800, cred: 1 },
+  { sign: 'PHONE REPAIRS', w: 84, cv: 'repair', body: '#5a4632', roof: '#2b6cb0', kerb: true,
+    signInk: ['#123a66', '#ffffff', '#9fd0ff'], errand: 'Fix cracked screen', price: 3000, cred: 1 },
+  { sign: 'CHARGING POINT', w: 80, cv: 'charge', body: '#3a3a3a', roof: '#f3c53d', kerb: true,
+    signInk: ['#3a2c00', '#fff3c4', '#ffd166'], errand: 'Charge phone', price: 200, energy: 5 },
+  { sign: 'MAMA CHOPS', w: 84, cv: 'mama', body: '#8a6b3f', roof: '#c1272d', kerb: true, food: true,
+    signInk: ['#5a1010', '#ffe6c2', '#ffb35c'], errand: 'Chop rice & stew', price: 800, belle: 10 },
+  { sign: 'UK USED PHONES', w: 84, cv: 'used', body: '#2f4858', roof: '#86bbd8', kerb: true,
+    signInk: ['#1b2a33', '#ffffff', '#86bbd8'], errand: 'Buy UK used', price: 5000, cred: 2 },
+  { sign: 'COMPUTER PLAZA', w: 116, cv: 'plaza', body: '#cfd8dc', roof: '#37474f', units: ['TECH BABA', 'FIX AM FAST', 'LAPTOP KING', 'PRINT PLUG', 'IPHONE PLUG', 'SOFTWARE'],
+    signInk: ['#263238', '#ffffff', '#b0bec5'], errand: 'Buy flash drive', price: 1500, cred: 1 },
+  { sign: 'SIM REG', w: 76, cv: 'desk', body: '#1f7a46', roof: '#1f7a46', kerb: true, desk: 'NIN · SIM · ₦500',
+    signInk: ['#0f3d24', '#ffffff', '#b7f5c8'], errand: 'Register SIM', price: 500, cred: 2 },
+  { sign: 'GAMING ZONE', w: 108, cv: 'gaming', body: '#1b1b2f', roof: '#7b2cbf', door: '#7b2cbf',
+    signInk: ['#240046', '#ffffff', '#e0aaff'], errand: 'Play FIFA', price: 500, belle: 6 },
+  { sign: 'ACCESSORIES', w: 80, cv: 'rack', body: '#6d4a2a', roof: '#e85d04', kerb: true,
+    signInk: ['#6a2c00', '#fff1e0', '#ffb703'], errand: 'Buy earpiece', price: 700, belle: 3 },
+  { sign: 'PRINT & BIND', w: 104, broad: 'cyber', body: '#e6e2d8', roof: '#c1272d', door: '#c1272d',
+    signInk: ['#6b1414', '#ffffff', '#ffb3b3'], errand: 'Print & bind', price: 300, cred: 1 },
+  { sign: 'LAPTOP HUB', w: 108, cv: 'laptops', body: '#e3e7ea', roof: '#0f4c81', door: '#0f4c81',
+    signInk: ['#0a3459', '#ffffff', '#9fd0ff'], errand: 'Buy laptop bag', price: 2000, cred: 1 },
+  { sign: 'POS & TRANSFER', w: 76, cv: 'desk', body: '#1e3a8a', roof: '#1e3a8a', kerb: true, desk: 'WITHDRAW · TRANSFER',
+    signInk: ['#14296b', '#ffffff', '#9fd0ff'], errand: 'Withdraw cash', price: 100, belle: 1 },
+  { sign: 'ICT CENTRE', w: 104, body: '#d9c8a9', roof: '#4a4a4a', door: '#2b6cb0', heads: 2,
+    signInk: ['#1d1d1d', '#9fffe0', '#4fe3b7'], errand: 'Learn coding', price: 1000, cred: 3 },
+  { sign: 'TECH PLAZA', w: 116, cv: 'plaza', body: '#f1c0b9', roof: '#7a2e2e', units: ['SCREEN GUARD', 'POWER BANK', 'PHONE HOSPITAL', 'GADGET CITY', 'SIM PLUG', 'BUY ORIGINAL'],
+    signInk: ['#4d1414', '#ffe0dc', '#ff9f94'], errand: 'Buy screen guard', price: 500, cred: 1 },
+];
+const CV_SHOPS = [...CV_OWN, ...SHOPS.slice(CV_OWN.length)];   // the paid boards keep their places
+Object.assign(CUSTOMERS, {
+  'GADGET PLAZA':   [{ kind: 'phone', at: .14, skin: 2, tone: 1, print: { kind: 'stripes', ink: '#94461c' } },
+                     { kind: 'enter', from: 1.08, to: .29, skin: 0, tone: 3, d: -3, print: { kind: 'dots', ink: '#1e3a6e' } },
+                     { kind: 'idle', at: .84, skin: 4, tone: 2, print: { kind: 'jersey', ink: '#1f8a4c', num: 10 } }],
+  'COMPUTER PLAZA': [{ kind: 'phone', at: .8, skin: 1, tone: 0, print: { kind: 'pinstripe', ink: '#37474f' } },
+                     { kind: 'enter', from: -.12, to: .29, skin: 3, tone: 2, d: -6, print: { kind: 'chevron', ink: '#c1272d' } }],
+  'TECH PLAZA':     [{ kind: 'idle', at: .14, skin: 0, tone: 4, print: { kind: 'adire' } },
+                     { kind: 'phone', at: .82, skin: 2, tone: 1, print: { kind: 'stripes', ink: '#7a2e2e' } }],
+  'GAMING ZONE':    [{ kind: 'enter', from: 1.08, to: .29, skin: 1, tone: 2, d: -5, print: { kind: 'jersey', ink: '#7b2cbf', num: 9 } }],
+  'LAPTOP HUB':     [{ kind: 'wait', at: .76, skin: 3, tone: 0, print: { kind: 'pinstripe', ink: '#0f4c81' } }],
+  'ICT CENTRE':     [{ kind: 'enter', from: -.12, to: .29, skin: 4, tone: 1, d: -8, print: { kind: 'stripes', ink: '#2b6cb0' } }],
+});
+function cvShop(cfg){
+  const k = cfg.cv;
+  const person = (x, y, skin, shirt, cap) => `<path d="M${x - 3} ${y + 9} v-5 q0 -2.6 3 -2.6 q3 0 3 2.6 v5z" fill="${shirt}"/>
+    <circle cx="${x}" cy="${y}" r="2.6" fill="${skin}"/>${cap ? `<path d="M${x - 2.7} ${y - .6}a2.7 2.7 0 0 1 5.4 0z" fill="${cap}"/>` : ''}`;
+  if (k === 'plaza'){                       /* three floors of little units, a sign over every one, the stair up the side */
+    const top = -10, C = ['#c1272d', '#1e3a8a', '#1f7a46', '#f3c53d', '#7b2cbf', '#e85d04'];   // low enough to clear the story line
+    const unit = (x, y, i) => `<rect x="${x}" y="${y}" width="24" height="16" fill="${tint(cfg.body, .86)}"/>
+      <rect class="win" x="${x + 2}" y="${y + 6}" width="20" height="10" fill="#2e3a42" opacity=".75"/>
+      ${i % 2 ? `<path d="M${x + 2} ${y + 7.5}h20M${x + 2} ${y + 9.5}h20M${x + 2} ${y + 11.5}h20M${x + 2} ${y + 13.5}h20" stroke="#8a949b" stroke-width=".6"/>` : `<rect x="${x + 4}" y="${y + 8}" width="3" height="5" rx=".6" fill="#9fd0ff"/><rect x="${x + 9}" y="${y + 8}" width="3" height="5" rx=".6" fill="#ffd166"/><rect x="${x + 14}" y="${y + 8}" width="3" height="5" rx=".6" fill="#ff8fab"/>`}
+      <rect x="${x}" y="${y}" width="24" height="5" fill="${C[i % C.length]}"/>
+      <text x="${x + 12}" y="${y + 3.8}" text-anchor="middle" font-size="3.4" font-weight="900" font-family="system-ui,sans-serif" fill="#fff"
+            textLength="21" lengthAdjust="spacingAndGlyphs">${(cfg.units || [])[i] || ''}</text>`;
+    return `<svg viewBox="0 0 100 60" aria-hidden="true" overflow="visible">
+      ${sideWall(94, top, 60, cfg.body)}
+      <rect x="6" y="${top}" width="88" height="${60 - top}" fill="${cfg.body}"/>
+      ${unit(48, -2, 0)}${unit(70, -2, 1)}
+      ${unit(48, 16, 2)}${unit(70, 16, 3)}
+      ${unit(48, 34, 4)}${unit(70, 34, 5)}
+      <rect x="46" y="14" width="48" height="1.6" fill="#f4efe2"/><rect x="46" y="32" width="48" height="1.6" fill="#f4efe2"/>
+      ${[0, 1].map(f => Array.from({ length: 12 }, (_, i) => `<rect x="${47 + i * 4}" y="${11 + f * 18}" width=".6" height="3" fill="#f4efe2"/>`).join('') + `<rect x="46" y="${10.6 + f * 18}" width="48" height=".8" fill="#f4efe2"/>`).join('')}
+      <!-- the stair up the front: real steps and a handrail, two people climbing it on their own feet
+           (user 2026-11-18: they floated, no legs, on a plain sloping band) -->
+      ${(() => { const N = 9, run = 4, rise = 46 / 9, x0 = 10;
+        let d = `M${x0} 60`;
+        for (let k = 0; k < N; k++) d += ` V${(60 - rise * (k + 1)).toFixed(2)} H${x0 + run * (k + 1)}`;
+        d += ` V18.6 L${x0 + 4} 60Z`;
+        const foot = k => [x0 + run * k + 2, 60 - rise * (k + 1)];
+        const climber = (k, skin, shirt, cap, trou) => { const [x, y] = foot(k);
+          return `<rect x="${x - 2}" y="${y - 7}" width="1.8" height="7" fill="${trou}"/><rect x="${x + .2}" y="${y - 7.6}" width="1.8" height="5.6" fill="${trou}"/>
+            <rect x="${x - 2.4}" y="${y - .6}" width="2.6" height="1.2" rx=".5" fill="#1d1d1d"/><rect x="${x}" y="${y - 2.4}" width="2.6" height="1.2" rx=".5" fill="#1d1d1d"/>
+            ${person(x, y - 16, skin, shirt, cap)}`; };
+        return `<path d="${d}" fill="${tint(cfg.body, .78)}"/>
+          ${Array.from({ length: N }, (_, k) => `<path d="M${x0 + run * k} ${(60 - rise * (k + 1)).toFixed(2)}h${run}" stroke="${tint(cfg.body, 1.12)}" stroke-width=".7"/>`).join('')}
+          <path d="M${x0} 51 L${x0 + run * N} 5" stroke="${tint(cfg.body, .55)}" stroke-width=".9"/>
+          ${[0, 2, 4, 6, 8].map(k => `<path d="M${x0 + run * k + 1} ${(51 - (46 / N) * k).toFixed(2)} v${(rise + 2).toFixed(2)}" stroke="${tint(cfg.body, .55)}" stroke-width=".6"/>`).join('')}
+          ${climber(2, '#6b4423', '#2b6cb0', null, '#2b2b30')}${climber(6, '#4a2e1c', '#f3c53d', '#c1272d', '#3d405b')}`; })()}
+      <rect x="28" y="44" width="17" height="16" fill="#2e2a20" opacity=".55"/><rect class="door" x="29.6" y="45.6" width="13.8" height="14.4" fill="#5d7482"/>   <!-- the door under the stair, clear of the climbers -->
+      ${topFace(4, top - 4, 92, cfg.roof)}${sideWall(96, top - 4, top + 8, cfg.roof)}
+      <rect x="4" y="${top - 4}" width="92" height="12" fill="${cfg.roof}"/>
+      ${board(cfg.sign, 14, top - 4, 72, cfg.signInk)}
+    </svg>`;
+  }
+  if (k === 'gaming' || k === 'laptops'){
+    const gaming = k === 'gaming';
+    return `<svg viewBox="0 0 100 60" aria-hidden="true">
+      ${sideWall(92, 22, 60, cfg.body)}
+      <rect x="8" y="22" width="84" height="38" rx="2" fill="${cfg.body}"/>
+      <path d="M3 22h94l-6-8H9z" fill="${cfg.roof}"/>
+      ${door(cfg)}
+      <rect x="50" y="31" width="36" height="20" rx="1.4" fill="#141420"/>
+      ${gaming
+        ? `<rect class="neon" x="52.4" y="33" width="14" height="9" fill="#38b000"/><rect class="neon" x="69.6" y="33" width="14" height="9" fill="#4cc9f0"/>
+           <circle cx="59.4" cy="37.4" r="1.4" fill="#fff"/><path d="M71 40l4 -4l3 3l4 -4" stroke="#fff" stroke-width=".8" fill="none"/>
+           ${[56, 63, 73, 80].map((x, i) => `<circle cx="${x}" cy="46" r="2.2" fill="${['#6b4423', '#4a2e1c', '#8d5524', '#6b4423'][i]}"/><rect x="${x - 2.2}" y="48.2" width="4.4" height="2.6" rx="1" fill="#1d1d1d"/>`).join('')}
+           <rect x="52" y="52" width="32" height="5" rx="1" fill="#ffd60a"/>
+           <text x="68" y="55.8" text-anchor="middle" font-size="3.4" font-weight="900" font-family="system-ui,sans-serif" fill="#240046" textLength="29" lengthAdjust="spacingAndGlyphs">FIFA · ₦500 PER MATCH</text>`
+        : `${[52, 63, 74].map(x => `<path d="M${x} 44 h10 l1.4 2.6 h-12.8z" fill="#9aa3ab"/><rect class="neon" x="${x + .8}" y="34.4" width="8.4" height="9.4" rx=".6" fill="#9fd0ff"/>`).join('')}
+           <rect x="52" y="52" width="32" height="5" rx="1" fill="#0f4c81"/>
+           <text x="68" y="55.8" text-anchor="middle" font-size="3.4" font-weight="900" font-family="system-ui,sans-serif" fill="#fff" textLength="29" lengthAdjust="spacingAndGlyphs">NEW · UK USED · REPAIRS</text>`}
+      ${board(cfg.sign, 10, 4, 80, cfg.signInk)}
+    </svg>`;
+  }
+  /* the kerb trades: an umbrella or a kiosk, a table, someone working */
+  if (k === 'repair'){
+    return `<svg viewBox="0 0 84 60" aria-hidden="true">
+      <path d="M4 25 Q42 10 80 25Z" fill="${cfg.roof}"/><path d="M22 25 Q42 15 62 25Z" fill="#f4f0e4"/><rect x="41.2" y="21" width="1.6" height="39" fill="#6d6450"/>
+      <rect x="10" y="43" width="46" height="3" fill="${cfg.body}"/><rect x="12" y="46" width="2" height="14" fill="${tint(cfg.body, .7)}"/><rect x="52" y="46" width="2" height="14" fill="${tint(cfg.body, .7)}"/>
+      <!-- the bench: phones opened up, a lamp with a magnifier, little parts -->
+      ${[16, 24, 32].map((x, i) => `<rect x="${x}" y="39" width="5" height="4" rx=".6" fill="${['#1d1d1d', '#3a3a3a', '#1d1d1d'][i]}"/><rect x="${x + .6}" y="39.6" width="3.8" height="2.6" fill="${i === 1 ? '#5aa9e6' : '#2b2b2b'}"/>`).join('')}
+      <path d="M44 43 V33 L50 30" stroke="#555" stroke-width="1.2" fill="none"/><circle cx="51" cy="30" r="3" fill="#c8e6ff" stroke="#555" stroke-width=".8"/>
+      <circle cx="40" cy="41.8" r=".8" fill="#ffd166"/><circle cx="38" cy="42.2" r=".6" fill="#c1272d"/>
+      ${person(48, 35, '#6b4423', '#e9e4f5')}
+      <!-- the customer waiting, holding the broken phone -->
+      <rect x="64" y="50" width="2.4" height="10" fill="#2b2b30"/><rect x="67.6" y="50" width="2.4" height="10" fill="#2b2b30"/>
+      <path d="M62.6 51V42q0-2.6 2.6-2.6h3.6q2.6 0 2.6 2.6v9z" fill="#c1272d"/>
+      <rect x="65.6" y="35.6" width="2.6" height="3.4" fill="#8d5524"/><circle cx="66.9" cy="33.6" r="2.8" fill="#8d5524"/>
+      <rect x="59.6" y="40" width="3" height="4.6" rx=".6" fill="#1d1d1d"/><path d="M60 41 l2 2.6" stroke="#9fd0ff" stroke-width=".5"/>
+      ${board(cfg.sign, 8, 2, 68, cfg.signInk)}
+    </svg>`;
+  }
+  if (k === 'charge'){
+    return `<svg viewBox="0 0 80 60" aria-hidden="true">
+      <path d="M4 26h72l-6-7H10z" fill="${cfg.roof}"/><rect x="39" y="26" width="2" height="34" fill="#6d6450"/>
+      <rect x="8" y="40" width="50" height="3" fill="${cfg.body}"/><rect x="10" y="43" width="2" height="17" fill="#222"/><rect x="54" y="43" width="2" height="17" fill="#222"/>
+      <!-- the power strip and a row of phones charging on it, the generator humming behind -->
+      <rect x="10" y="37.6" width="44" height="2.6" rx=".6" fill="#f4f0e4"/>
+      ${Array.from({ length: 8 }, (_, i) => `<path d="M${13 + i * 5.2} 37.6 v-3" stroke="#222" stroke-width=".5"/><rect x="${11.4 + i * 5.2}" y="28" width="3.4" height="6.2" rx=".6" fill="${['#1d1d1d', '#f4f4f2', '#3a5a78', '#1d1d1d'][i % 4]}"/><rect class="neon" x="${12 + i * 5.2}" y="29" width="2.2" height="1" fill="#38b000"/>`).join('')}
+      <rect x="60" y="48" width="16" height="12" rx="1" fill="#c1272d"/><rect x="62" y="50" width="6" height="5" fill="#333"/><circle cx="72" cy="53" r="2.4" fill="#555"/>
+      <rect x="70" y="44" width="1.4" height="4" fill="#555"/>
+      ${person(26, 46, '#4a2e1c', '#f3c53d')}
+      <rect x="15" y="50" width="20" height="7" rx="1" fill="#fff3c4"/>
+      <text x="25" y="55" text-anchor="middle" font-size="3.4" font-weight="900" font-family="system-ui,sans-serif" fill="#3a2c00" textLength="18" lengthAdjust="spacingAndGlyphs">₦200 / PHONE</text>
+      ${board(cfg.sign, 8, 4, 64, cfg.signInk)}
+    </svg>`;
+  }
+  if (k === 'mama'){
+    return `<svg viewBox="0 0 84 60" aria-hidden="true">
+      <path d="M4 25 Q42 11 80 25Z" fill="${cfg.roof}"/><path d="M24 25 Q42 16 60 25Z" fill="#f4f0e4"/><rect x="41.2" y="21" width="1.6" height="39" fill="#6d6450"/>
+      <!-- the coolers, the pot, plates going out -->
+      <rect x="10" y="44" width="14" height="12" rx="2" fill="#2b6cb0"/><rect x="10" y="44" width="14" height="3" rx="1" fill="#f4f0e4"/>
+      <rect x="26" y="44" width="14" height="12" rx="2" fill="#d6342c"/><rect x="26" y="44" width="14" height="3" rx="1" fill="#f4f0e4"/>
+      <path d="M44 46h14l-1.6 8h-10.8z" fill="#5a5a5a"/><ellipse cx="51" cy="46" rx="7" ry="1.6" fill="#c1272d"/>
+      <!-- mama: headtie, wrapper, ladle up -->
+      <path d="M60 56V44q0-3.4 3.4-3.4h4.4q3.4 0 3.4 3.4v12z" fill="#f3c53d"/><circle cx="62" cy="47" r=".9" fill="#c1272d"/><circle cx="68" cy="51" r=".9" fill="#c1272d"/>
+      <rect x="64.2" y="36" width="3" height="4" fill="#4a2e1c"/><circle cx="65.7" cy="33.8" r="3.2" fill="#4a2e1c"/>
+      <path d="M62.2 32.6a3.6 3.6 0 0 1 7.2 0l.6 1.2h-8.4z" fill="#1f8a4c"/><path d="M69 31l3 -1.6l-.8 2.8z" fill="#1f8a4c"/>
+      <path d="M60.4 45 L56 40" stroke="#4a2e1c" stroke-width="2" stroke-linecap="round"/><path d="M56 40 l-1 -5" stroke="#888" stroke-width="1"/>
+      <rect x="14" y="56" width="22" height="2" fill="#8a6b3f"/>
+      ${board(cfg.sign, 8, 3, 68, cfg.signInk)}
+    </svg>`;
+  }
+  if (k === 'used'){
+    return `<svg viewBox="0 0 84 60" aria-hidden="true">
+      ${sideWall(64, 26, 60, cfg.body)}
+      <rect x="10" y="26" width="54" height="34" fill="${cfg.body}"/>
+      ${topFace(8, 22, 58, cfg.roof)}<rect x="8" y="22" width="58" height="5" fill="${cfg.roof}"/>
+      <!-- the glass case: phones in rows, each with its price -->
+      <rect x="14" y="32" width="46" height="18" fill="#cfe8f3" opacity=".9"/>
+      ${[0, 1].map(r => Array.from({ length: 6 }, (_, c) => `<rect x="${16.4 + c * 7.2}" y="${33.6 + r * 8}" width="4.4" height="6.4" rx=".8" fill="${['#1d1d1d', '#e9e4da', '#3a5a78', '#1d1d1d', '#b8a17a', '#1d1d1d'][(c + r) % 6]}"/>`).join('')).join('')}
+      <path d="M16 50 L30 32 M36 50 L48 32" stroke="#fff" stroke-width="1" opacity=".45"/>
+      <rect x="14" y="52" width="46" height="5.6" rx="1" fill="#ffd166"/>
+      <text x="37" y="56.2" text-anchor="middle" font-size="3.8" font-weight="900" font-family="system-ui,sans-serif" fill="#1b2a33" textLength="40" lengthAdjust="spacingAndGlyphs">BUY ORIGINAL! · WARRANTY</text>
+      ${person(70, 43, '#6b4423', '#86bbd8', '#1b2a33')}<rect x="67.6" y="52" width="2.4" height="8" fill="#2b2b30"/><rect x="70.8" y="52" width="2.4" height="8" fill="#2b2b30"/>
+      ${board(cfg.sign, 6, 5, 72, cfg.signInk)}
+    </svg>`;
+  }
+  if (k === 'desk'){                        /* a table and a chair under an umbrella: SIM registration, POS */
+    return `<svg viewBox="0 0 76 60" aria-hidden="true">
+      <path d="M6 26 Q38 12 70 26Z" fill="${cfg.roof}"/><path d="M22 26 Q38 16 54 26Z" fill="#f4f0e4"/><rect x="37.2" y="22" width="1.6" height="38" fill="#6d6450"/>
+      <rect x="10" y="44" width="34" height="3" fill="#8a6b3f"/><rect x="12" y="47" width="2" height="13" fill="#6d5230"/><rect x="40" y="47" width="2" height="13" fill="#6d5230"/>
+      <rect x="14" y="48" width="26" height="8" rx="1" fill="${cfg.body}"/>
+      <text x="27" y="53.4" text-anchor="middle" font-size="3.4" font-weight="900" font-family="system-ui,sans-serif" fill="#fff" textLength="23" lengthAdjust="spacingAndGlyphs">${cfg.desk}</text>
+      <rect x="18" y="40" width="7" height="4" rx=".6" fill="#2a2a2a"/><rect class="neon" x="18.8" y="40.6" width="5.4" height="1.6" fill="#7fe8ff"/>
+      <rect x="28" y="41.4" width="6" height="2.6" fill="#f4f2ea"/>
+      ${person(48, 36, '#8d5524', '#f4f0e4', cfg.roof)}<rect x="45" y="45" width="8" height="2" fill="#333"/><rect x="45.6" y="47" width="1.4" height="13" fill="#333"/><rect x="51" y="47" width="1.4" height="13" fill="#333"/>
+      ${board(cfg.sign, 8, 4, 60, cfg.signInk)}
+    </svg>`;
+  }
+  if (k === 'rack'){                        /* a pegboard of chargers, earpieces and screen guards on hooks */
+    return `<svg viewBox="0 0 80 60" aria-hidden="true">
+      <rect x="8" y="18" width="50" height="34" fill="#c9a26b"/><rect x="8" y="18" width="50" height="34" fill="none" stroke="${cfg.body}" stroke-width="2"/>
+      ${Array.from({ length: 4 }, (_, r) => Array.from({ length: 6 }, (_, c) => { const x = 12 + c * 7.6, y = 22 + r * 7.4, t = (r * 6 + c) % 4;
+        return t === 0 ? `<path d="M${x + 2} ${y} v2 q-2 1 -1.4 3.4 M${x + 2} ${y + 2} q2 1 1.4 3.4" stroke="#f4f4f2" stroke-width=".8" fill="none"/>`
+             : t === 1 ? `<rect x="${x}" y="${y}" width="4.4" height="5.4" rx=".6" fill="#1d1d1d"/><rect x="${x + 1.2}" y="${y + 3.6}" width="2" height="1" fill="#ffd166"/>`
+             : t === 2 ? `<rect x="${x}" y="${y}" width="4.6" height="5.6" rx=".4" fill="#e3f2fd" stroke="#90caf9" stroke-width=".4"/>`
+             :           `<rect x="${x + .6}" y="${y}" width="3.4" height="5.4" rx="1.2" fill="${['#e85d04', '#2b6cb0', '#7b2cbf'][c % 3]}"/>`; }).join('')).join('')}
+      <rect x="6" y="52" width="54" height="8" fill="${cfg.body}"/>
+      ${person(68, 42, '#4a2e1c', '#e85d04')}<rect x="65.6" y="51" width="2.4" height="9" fill="#2b2b30"/><rect x="68.8" y="51" width="2.4" height="9" fill="#2b2b30"/>
+      ${board(cfg.sign, 8, 3, 60, cfg.signInk)}
+    </svg>`;
+  }
+  return '';
+}
+
+/* ---------- Ojuelegba & Yaba (2026-11-18, user: "yes" to the next streets) ----------
+   The mainland's busiest junction running into the student and tech end of
+   town: the motor park with the conductor calling, the bridge with traders and
+   gala sellers under it, a music shop, a buka, the university gate, books on a
+   table, a tech hub, a students' cyber, a tailor, Yaba market's okrika heaps,
+   a passport studio, suya, a pharmacy. Invented names on every board. */
+const YABA_OWN = [
+  { sign: 'OJUELEGBA PARK', w: 116, yb: 'park', body: '#6b6b6b', roof: '#f2c413', kerb: true,
+    signInk: ['#1c1c1c', '#f2c413', '#ffe066'], errand: 'Buy bus ticket', price: 300, cred: 1 },
+  { sign: 'AMALA SPOT', w: 104, signInk: ['#3a1c0c', '#ffd34d', '#ff9a3c'], body: '#a86a3d', roof: '#5a4630', door: '#1f7a46', heads: 2, buka: true,
+    errand: 'Chop amala', price: 700, belle: 10, food: true },
+  { sign: 'MUSIC SHOP', w: 96, yb: 'music', body: '#2b2b2b', roof: '#ff006e', kerb: true,
+    signInk: ['#3a0019', '#ffffff', '#ff7ab6'], errand: 'Buy Afrobeats mix', price: 300, belle: 4 },
+  { sign: 'UNDER BRIDGE', w: 116, yb: 'bridge', body: '#a8a29a', roof: '#7a746c', kerb: true, food: true,
+    signInk: ['#2b2b2b', '#ffffff', '#cccccc'], errand: 'Buy gala', price: 200, belle: 4 },
+  { sign: 'UNIVERSITY GATE', w: 116, yb: 'gate', body: '#e8dcc2', roof: '#1e3a8a', kerb: true,
+    signInk: ['#14296b', '#ffffff', '#ffd166'], errand: 'Buy course form', price: 1000, cred: 3 },
+  { sign: 'BOOKS & STATIONERY', w: 84, yb: 'books', body: '#8a6b3f', roof: '#1f7a46', kerb: true,
+    signInk: ['#0f3d24', '#ffffff', '#b7f5c8'], errand: 'Buy textbook', price: 1500, cred: 2 },
+  { sign: 'YABACON HUB', w: 112, lekki: 'front', inside: 'cowork', body: '#f2e9dc', roof: '#ff5400', door: '#ff5400',
+    signInk: ['#6b2300', '#ffffff', '#ffb38a'], errand: 'Pitch your idea', price: 500, cred: 3 },
+  { sign: 'STUDENTS CYBER', w: 104, broad: 'cyber', body: '#e3eaf2', roof: '#3a0ca3', door: '#3a0ca3',
+    signInk: ['#240046', '#ffffff', '#c7b3ff'], errand: 'Check JAMB result', price: 200, cred: 1 },
+  { sign: 'MALLAM SUYA', w: 80, suya: true, call: 'suya', body: '#3a332c', roof: '#7a3b16', food: true,
+    signInk: ['#4a1a08', '#fff4d6', '#ff9a3c'], errand: 'Chop suya', price: 1000, belle: 9 },
+  { sign: 'TAILOR', w: 80, yb: 'tailor', body: '#6d4a2a', roof: '#7b3fa0', kerb: true,
+    signInk: ['#3c1a52', '#ffffff', '#d9b3ff'], errand: 'Amend trouser', price: 500, cred: 1 },
+  { sign: 'YABA MARKET', w: 112, yb: 'market', body: '#7a5a3a', roof: '#d6342c', kerb: true,
+    signInk: ['#5a1010', '#ffe6c2', '#ffb35c'], errand: 'Buy okrika', price: 1000, cred: 1, belle: 2 },
+  { sign: 'PHOTO STUDIO', w: 104, yb: 'studio', body: '#1d1d1d', roof: '#f3c53d', door: '#f3c53d',
+    signInk: ['#2b2200', '#ffffff', '#ffe066'], errand: 'Snap passport', price: 500, cred: 1 },
+  { sign: 'MAINLAND PHARMACY', w: 108, modern: 'pharmacy', body: '#f3f7f2', roof: '#2a9d8f', door: '#2a9d8f',
+    signInk: ['#1d6d63', '#ffffff', '#a8f0e4'], errand: 'Buy Panadol', price: 200, energy: 8 },
+  { sign: 'MAINLAND BITES', w: 108, modern: 'chicken', body: '#fbf7ef', roof: '#d00000', door: '#d00000', food: true,
+    signInk: ['#7a0000', '#fff3c4', '#ffd166'], errand: 'Chop jollof & chicken', price: 1500, belle: 12 },
+];
+const YABA_SHOPS = [...YABA_OWN, ...SHOPS.slice(YABA_OWN.length)];   // the paid boards keep their places
+Object.assign(CUSTOMERS, {
+  'AMALA SPOT':        [{ kind: 'idle', at: .7, skin: 3, tone: 2, print: { kind: 'stripes', ink: '#1f7a46' } }],
+  'YABACON HUB':       [{ kind: 'phone', at: .3, skin: 2, tone: 0, print: { kind: 'stripes', ink: '#ff5400' } }],
+  'STUDENTS CYBER':    [{ kind: 'enter', from: 1.08, to: .29, skin: 1, tone: 3, d: -4, print: { kind: 'jersey', ink: '#3a0ca3', num: 23 } }],
+  'PHOTO STUDIO':      [{ kind: 'wait', at: .3, skin: 4, tone: 1, print: { kind: 'pinstripe', ink: '#1d1d1d' } }],
+  'MAINLAND PHARMACY': [{ kind: 'wait', at: .74, skin: 0, tone: 2, print: { kind: 'chevron', ink: '#2a9d8f' } }],
+  'MAINLAND BITES':    [{ kind: 'enter', from: -.12, to: .29, skin: 2, tone: 1, d: -6, print: { kind: 'dots', ink: '#d00000' } }],
+});
+function ybShop(cfg){
+  const k = cfg.yb;
+  const person = (x, y, skin, shirt, cap) => `<path d="M${x - 3} ${y + 9} v-5 q0 -2.6 3 -2.6 q3 0 3 2.6 v5z" fill="${shirt}"/>
+    <circle cx="${x}" cy="${y}" r="2.6" fill="${skin}"/>${cap ? `<path d="M${x - 2.7} ${y - .6}a2.7 2.7 0 0 1 5.4 0z" fill="${cap}"/>` : ''}`;
+  const legs = (x, y, c = '#2b2b30') => `<rect x="${x - 2.4}" y="${y}" width="2.2" height="${60 - y}" fill="${c}"/><rect x="${x + .2}" y="${y}" width="2.2" height="${60 - y}" fill="${c}"/>`;
+  if (k === 'park'){                        /* the motor park: an arch, danfos lined up inside, the conductor calling */
+    const bus = (x, y) => `<rect x="${x}" y="${y}" width="26" height="12" rx="2" fill="#f2c413"/><rect x="${x}" y="${y + 6}" width="26" height="1.6" fill="#1c1c1c"/>
+      ${[2, 9, 16].map(dx => `<rect x="${x + dx}" y="${y + 1.6}" width="5.6" height="3.6" rx=".6" fill="#cfe3ee"/>`).join('')}
+      <circle cx="${x + 6}" cy="${y + 12}" r="2.2" fill="#1d1f22"/><circle cx="${x + 20}" cy="${y + 12}" r="2.2" fill="#1d1f22"/>`;
+    return `<svg viewBox="0 0 100 60" aria-hidden="true" overflow="visible">
+      <rect x="0" y="46" width="100" height="14" fill="#8a847a"/>
+      ${bus(30, 34)}${bus(58, 32)}${bus(44, 40)}
+      <!-- the arch over the gate -->
+      <rect x="4" y="14" width="6" height="46" fill="${cfg.body}"/><rect x="90" y="14" width="6" height="46" fill="${cfg.body}"/>
+      <rect x="2" y="10" width="96" height="6" fill="${tint(cfg.body, .8)}"/>
+      ${board(cfg.sign, 16, 0, 68, cfg.signInk)}
+      <!-- the ticket booth -->
+      <rect x="12" y="36" width="14" height="24" fill="#c1272d"/><rect x="14" y="40" width="10" height="7" fill="#2a2a2a"/>
+      <circle cx="19" cy="43.4" r="2" fill="#6b4423"/><rect x="12" y="34" width="14" height="2.4" fill="#8a1c1c"/>
+      <!-- the conductor calling the route, a hand up -->
+      ${legs(80, 50, '#3a3a3a')}<path d="M77 50V43q0-2.6 3-2.6t3 2.6v7z" fill="#e9e4d4"/>
+      <rect x="78.8" y="36.6" width="2.4" height="3.2" fill="#4a2e1c"/><circle cx="80" cy="34.6" r="2.7" fill="#4a2e1c"/>
+      <path d="M83 42 L86 36" stroke="#4a2e1c" stroke-width="1.8" stroke-linecap="round"/>
+      <g class="parkCall"><rect x="62" y="20" width="30" height="9" rx="4" fill="#fff" stroke="#2b2b2b" stroke-width=".5"/><path d="M80 29l-1.6 3.4l4 -3.4z" fill="#fff" stroke="#2b2b2b" stroke-width=".5"/>
+        <text x="77" y="26.4" text-anchor="middle" font-size="5" font-weight="900" font-family="system-ui,sans-serif" fill="#c1272d" textLength="26" lengthAdjust="spacingAndGlyphs">OSHODI! OSHODI!</text></g>
+    </svg>`;
+  }
+  if (k === 'bridge'){                      /* the bridge overhead, the traders in its shade, a gala seller with his tray */
+    return `<svg viewBox="0 0 100 60" aria-hidden="true">
+      <rect x="0" y="6" width="100" height="10" fill="${cfg.body}"/><rect x="0" y="16" width="100" height="2.6" fill="${tint(cfg.body, .7)}"/>
+      <rect x="0" y="3.6" width="100" height="2.6" fill="${tint(cfg.body, 1.15)}"/>
+      ${[0, 1, 2, 3, 4, 5, 6, 7, 8].map(i => `<rect x="${i * 12}" y="1" width="1.4" height="3" fill="#8a847a"/>`).join('')}
+      <rect x="14" y="18" width="10" height="42" fill="${cfg.roof}"/><rect x="76" y="18" width="10" height="42" fill="${cfg.roof}"/>
+      <text x="50" y="13.4" text-anchor="middle" font-size="6.4" font-weight="900" font-family="system-ui,sans-serif" fill="#2b2b2b" letter-spacing="1">OJUELEGBA</text>
+      <path d="M16 30 q3 -3 6 0 M16 34 l6 3" stroke="#e85d04" stroke-width="1.2" fill="none"/><text x="81" y="40" text-anchor="middle" font-size="3.2" font-weight="900" font-family="system-ui,sans-serif" fill="#f3c53d" transform="rotate(-90 81 40)">POST NO BILLS</text>
+      <rect x="0" y="18.6" width="100" height="41.4" fill="#000" opacity=".12"/>
+      <!-- traders in the shade: a table of phones' screen guards, a woman with a basin of oranges -->
+      <rect x="30" y="46" width="20" height="2.6" fill="#8a6b3f"/><rect x="31" y="48.6" width="1.6" height="11.4" fill="#6d5230"/><rect x="47.4" y="48.6" width="1.6" height="11.4" fill="#6d5230"/>
+      ${[32, 37, 42].map(x => `<rect x="${x}" y="43" width="4" height="3" rx=".5" fill="#e3f2fd" stroke="#90caf9" stroke-width=".4"/>`).join('')}
+      ${person(40, 36, '#6b4423', '#2b6cb0')}
+      ${legs(62, 50)}<path d="M59 50V43q0-2.6 3-2.6t3 2.6v7z" fill="#c1272d"/><rect x="60.8" y="36.6" width="2.4" height="3.2" fill="#4a2e1c"/><circle cx="62" cy="34.6" r="2.7" fill="#4a2e1c"/>
+      <ellipse cx="62" cy="31" rx="6" ry="1.6" fill="#a86a3d"/>${[58.6, 61, 63.4, 65.6].map(x => `<circle cx="${x}" cy="29.6" r="1.3" fill="#f77f00"/>`).join('')}
+      <!-- the gala seller, tray of sausage rolls on his head -->
+      ${legs(92, 50)}<path d="M89 50V43q0-2.6 3-2.6t3 2.6v7z" fill="#f4f0e4"/><rect x="90.8" y="36.6" width="2.4" height="3.2" fill="#8d5524"/><circle cx="92" cy="34.6" r="2.7" fill="#8d5524"/>
+      <rect x="86" y="29.4" width="12" height="2.4" fill="#d6342c"/>${[87.6, 90.6, 93.6].map(x => `<rect x="${x}" y="27.4" width="2.4" height="2" rx=".6" fill="#f3c53d"/>`).join('')}
+      ${board(cfg.sign, 28, 20, 44, cfg.signInk)}
+    </svg>`;
+  }
+  if (k === 'gate'){                        /* the university gate: pillars, the name across, a barrier, security, students */
+    return `<svg viewBox="0 0 100 60" aria-hidden="true">
+      <rect x="0" y="40" width="100" height="20" fill="#cfc6b2"/>
+      <rect x="8" y="12" width="12" height="48" fill="${cfg.body}"/><rect x="80" y="12" width="12" height="48" fill="${cfg.body}"/>
+      <rect x="6" y="10" width="16" height="3" fill="${tint(cfg.body, .8)}"/><rect x="78" y="10" width="16" height="3" fill="${tint(cfg.body, .8)}"/>
+      <rect x="20" y="14" width="60" height="10" fill="${cfg.roof}"/>
+      <text x="50" y="21" text-anchor="middle" font-size="5.6" font-weight="900" font-family="Georgia,serif" fill="#ffd166" textLength="52" lengthAdjust="spacingAndGlyphs">KNOWLEDGE · SERVICE</text>
+      <path d="M22 44 h40" stroke="#c1272d" stroke-width="2"/><path d="M26 44h4M34 44h4M42 44h4M50 44h4M58 44h4" stroke="#fff" stroke-width="2"/>
+      <rect x="62" y="38" width="10" height="22" fill="#e9e4d4"/><rect x="63" y="40" width="8" height="5" fill="#2e3a42"/>
+      ${legs(68, 52, '#1d3557')}<path d="M65 52V45q0-2.6 3-2.6t3 2.6v7z" fill="#1d3557"/><circle cx="68" cy="38.6" r="2.6" fill="#4a2e1c"/><path d="M65.2 37.6h5.6l-.6-1.8h-4.4z" fill="#1d3557"/>
+      <!-- students: backpacks, files -->
+      ${legs(30, 52, '#2b2b30')}<path d="M27 52V45q0-2.6 3-2.6t3 2.6v7z" fill="#e9c46a"/><circle cx="30" cy="38.6" r="2.6" fill="#6b4423"/><rect x="32.4" y="44" width="3" height="5" rx="1" fill="#1e3a8a"/>
+      ${legs(40, 52, '#3d405b')}<path d="M37 52V45q0-2.6 3-2.6t3 2.6v7z" fill="#f4a261"/><circle cx="40" cy="38.6" r="2.6" fill="#8d5524"/><rect x="35.6" y="45" width="3" height="4" fill="#f4f2ea"/>
+      ${board(cfg.sign, 14, 0, 72, cfg.signInk)}
+    </svg>`;
+  }
+  if (k === 'music'){                       /* speakers stacked high, flash drives and CDs, the notes coming out */
+    return `<svg viewBox="0 0 96 60" aria-hidden="true">
+      <path d="M4 24h88l-6-7H10z" fill="${cfg.roof}"/>
+      <rect x="8" y="24" width="80" height="36" fill="${cfg.body}"/>
+      ${[[10, 34], [10, 46], [24, 40]].map(([x, y]) => `<rect x="${x}" y="${y}" width="13" height="12" rx="1" fill="#141414"/><circle cx="${x + 6.5}" cy="${y + 7}" r="3.6" fill="#333"/><circle cx="${x + 6.5}" cy="${y + 7}" r="1.4" fill="#666"/><circle cx="${x + 6.5}" cy="${y + 2.4}" r="1.2" fill="#444"/>`).join('')}
+      <rect x="44" y="40" width="34" height="3" fill="#8a6b3f"/>
+      ${Array.from({ length: 6 }, (_, i) => `<rect x="${46 + i * 5.4}" y="35" width="4.2" height="5" rx=".6" fill="${['#ff006e', '#3a86ff', '#ffbe0b', '#8338ec', '#fb5607', '#06d6a0'][i]}"/>`).join('')}
+      ${person(62, 46, '#4a2e1c', '#ff006e', '#1d1d1d')}
+      <g class="musicNotes"><text x="26" y="30" font-size="7" fill="#ff7ab6">♪</text><text x="34" y="26" font-size="6" fill="#ffd166">♫</text></g>
+      <rect x="44" y="50" width="34" height="7" rx="1" fill="#ff006e"/>
+      <text x="61" y="55.2" text-anchor="middle" font-size="3.6" font-weight="900" font-family="system-ui,sans-serif" fill="#fff" textLength="30" lengthAdjust="spacingAndGlyphs">AFROBEATS · AMAPIANO · ₦300</text>
+      ${board(cfg.sign, 10, 3, 76, cfg.signInk)}
+    </svg>`;
+  }
+  if (k === 'books'){
+    return `<svg viewBox="0 0 84 60" aria-hidden="true">
+      <path d="M4 25 Q42 11 80 25Z" fill="${cfg.roof}"/><path d="M24 25 Q42 16 60 25Z" fill="#f4f0e4"/><rect x="41.2" y="21" width="1.6" height="39" fill="#6d6450"/>
+      <rect x="8" y="44" width="50" height="3" fill="${cfg.body}"/><rect x="10" y="47" width="2" height="13" fill="${tint(cfg.body, .7)}"/><rect x="54" y="47" width="2" height="13" fill="${tint(cfg.body, .7)}"/>
+      ${Array.from({ length: 8 }, (_, i) => `<rect x="${10 + i * 5.8}" y="${38 - (i % 3)}" width="4.8" height="${6 + (i % 3)}" fill="${['#1e3a8a', '#c1272d', '#1f7a46', '#f3c53d', '#7b3fa0', '#e85d04', '#0f8a7a', '#3d3d3d'][i]}"/><rect x="${10.8 + i * 5.8}" y="${39 - (i % 3)}" width="3.2" height="1" fill="#fff" opacity=".7"/>`).join('')}
+      <rect x="10" y="30" width="14" height="6" fill="#f4f2ea"/><text x="17" y="34.4" text-anchor="middle" font-size="2.8" font-weight="900" font-family="system-ui,sans-serif" fill="#1e3a8a">JAMB PAST Q</text>
+      ${person(66, 40, '#8d5524', '#1f7a46')}${legs(66, 49)}
+      ${board(cfg.sign, 6, 3, 72, cfg.signInk)}
+    </svg>`;
+  }
+  if (k === 'tailor'){
+    return `<svg viewBox="0 0 80 60" aria-hidden="true">
+      <path d="M4 26h72l-6-7H10z" fill="${cfg.roof}"/><rect x="39" y="26" width="2" height="34" fill="#6d6450"/>
+      <!-- the clothes hung up waiting, the machine on the table, the tailor at it -->
+      <rect x="6" y="28" width="30" height="1.2" fill="#555"/>
+      ${[8, 15, 22, 29].map((x, i) => `<path d="M${x + 3} 29 l-3 3 v10 h6 v-10z" fill="${['#2a9d8f', '#e9c46a', '#264653', '#e76f51'][i]}"/>`).join('')}
+      <rect x="40" y="44" width="30" height="3" fill="${cfg.body}"/><rect x="42" y="47" width="2" height="13" fill="${tint(cfg.body, .7)}"/><rect x="66" y="47" width="2" height="13" fill="${tint(cfg.body, .7)}"/>
+      <path d="M48 44 v-6 h12 v3 h-3 v3z" fill="#1d1d1d"/><circle cx="58" cy="40" r="1.6" fill="#888"/><rect x="45" y="42.4" width="18" height="1.6" fill="#f4f2ea"/>
+      ${person(54, 31, '#6b4423', '#7b3fa0')}
+      <path d="M50 37 q2 3 0 5" stroke="#f3c53d" stroke-width=".6" fill="none"/><path d="M40 39 h8" stroke="#f3c53d" stroke-width=".8"/>
+      ${board(cfg.sign, 10, 4, 60, cfg.signInk)}
+    </svg>`;
+  }
+  if (k === 'market'){                      /* Yaba market: umbrellas, okrika heaped on tarps, shoes in rows, buyers digging */
+    const umb = (x, c) => `<path d="M${x - 14} 28 Q${x} 18 ${x + 14} 28z" fill="${c}"/><rect x="${x - .6}" y="28" width="1.2" height="32" fill="#6d6450"/>`;
+    return `<svg viewBox="0 0 100 60" aria-hidden="true">
+      ${umb(22, cfg.roof)}${umb(52, '#1e3a8a')}${umb(80, '#f3c53d')}
+      <path d="M8 56 q6 -10 14 -8 q8 -2 12 8z" fill="#c1272d"/><path d="M12 54 q4 -6 8 -5 q6 -1 9 5z" fill="#2a9d8f"/><path d="M16 52 q3 -3 6 -2" stroke="#f3c53d" stroke-width="1.4" fill="none"/>
+      <rect x="38" y="52" width="28" height="2" fill="#8a6b3f"/>
+      ${Array.from({ length: 6 }, (_, i) => `<path d="M${39 + i * 4.4} 52 v-2.6 h3 q1.2 0 1.2 1.4 v1.2z" fill="${['#1d1d1d', '#8a5a2e', '#f4f2ea', '#c1272d', '#1d1d1d', '#3a5a78'][i]}"/>`).join('')}
+      <rect x="70" y="40" width="20" height="2" fill="#555"/>${[72, 77, 82, 87].map((x, i) => `<path d="M${x} 42 v8 h4 v-8z" fill="${['#e76f51', '#264653', '#e9c46a', '#8338ec'][i]}"/>`).join('')}
+      ${person(30, 40, '#4a2e1c', '#f4a261')}${person(58, 40, '#8d5524', '#264653', '#c1272d')}
+      <rect x="40" y="56" width="22" height="4" rx="1" fill="#fff3c4"/>
+      <text x="51" y="59.2" text-anchor="middle" font-size="3" font-weight="900" font-family="system-ui,sans-serif" fill="#5a1010" textLength="20" lengthAdjust="spacingAndGlyphs">OKRIKA ₦1,000 · SELECT</text>
+      ${board(cfg.sign, 16, 3, 68, cfg.signInk)}
+    </svg>`;
+  }
+  if (k === 'studio'){                      /* passport photos: the backdrop, the camera on its tripod, the flash umbrella */
+    return `<svg viewBox="0 0 100 60" aria-hidden="true">
+      ${sideWall(92, 22, 60, cfg.body)}
+      <rect x="8" y="22" width="84" height="38" rx="2" fill="${cfg.body}"/>
+      <path d="M3 22h94l-6-8H9z" fill="${cfg.roof}"/>
+      ${door(cfg)}
+      <rect x="50" y="30" width="36" height="22" fill="#f4f2ea"/><rect x="66" y="31" width="18" height="20" fill="#cfe3ee"/>
+      <circle cx="75" cy="38" r="3" fill="#6b4423"/><path d="M71 51v-6q0-3 4-3t4 3v6z" fill="#1e3a8a"/>
+      <path d="M58 52 l-3 0 l3 -12 l3 12z" fill="none" stroke="#333" stroke-width=".7"/><rect x="55.6" y="37" width="5" height="3.4" rx=".6" fill="#1d1d1d"/><circle cx="60.4" cy="38.6" r="1" fill="#555"/>
+      <path d="M52 34 q4 -6 8 0z" fill="#f4f2ea" stroke="#999" stroke-width=".4"/><path d="M56 34 v6" stroke="#999" stroke-width=".5"/>
+      <rect x="50" y="53" width="36" height="5" rx="1" fill="${cfg.roof}"/>
+      <text x="68" y="56.8" text-anchor="middle" font-size="3.4" font-weight="900" font-family="system-ui,sans-serif" fill="#1d1d1d" textLength="32" lengthAdjust="spacingAndGlyphs">PASSPORT · 4 COPIES · ₦500</text>
+      ${board(cfg.sign, 10, 4, 80, cfg.signInk)}
+    </svg>`;
+  }
+  return '';
+}
+
 /* Shop attributes and contents from a config: the strip is built with these,
    and a district repaints a slot with them in place, so its animation clock
    (and with it the row's spacing) is never touched. */
 function shopAttrs(cfg){
   return `${cfg.food ? ' data-food="1"' : ''}${cfg.kerb ? ' data-kerb="1"' : ''}${cfg.errand ? ` data-errand="${cfg.errand}"` : ''}${cfg.ad ? ` data-ad="${cfg.ad}"` : ''}${cfg.call ? ` data-call="${cfg.call}"` : ''}
-       data-sign="${cfg.sign}" data-price="${cfg.price || 0}" data-belle="${cfg.belle || 0}"${cfg.energy ? ` data-energy="${cfg.energy}"` : ''}${cfg.broad === 'tower' ? ' data-tall="16"' : ''}
+       data-sign="${cfg.sign}" data-price="${cfg.price || 0}" data-belle="${cfg.belle || 0}"${cfg.energy ? ` data-energy="${cfg.energy}"` : ''}${cfg.broad === 'tower' ? ' data-tall="16"' : cfg.cv === 'plaza' ? ' data-tall="18"' : ''}
        ${cfg.cred ? `data-cred="${cfg.cred}"` : ''} ${cfg.trade ? 'data-trade="1"' : ''}
        ${cfg.errand2 ? `data-errand2="${cfg.errand2}" data-price2="${cfg.price2 || 0}"` : ''}`;
 }
@@ -3713,10 +4103,48 @@ function linkBridge(t){
     <rect x="-6" y="${deck}" width="${t.w + 12}" height="3" fill="#bdb7ab"/>
   </svg>`;
 }
-const skyItem = t => t.bridge ? linkBridge(t) : tower(t);
+const skyItem = t => t.bridge ? linkBridge(t) : t.mastOnly ? telecomMast(t) : tower(t);
 DISTRICTS[1].towers = BROAD_TOWERS;
 DISTRICTS.push({ name: 'ADMIRALTY WAY', area: 'LEKKI PHASE 1', shops: LEKKI_SHOPS, towers: LEKKI_TOWERS });
 if (DISTRICT_Q === 'lekki'){ districtN = 2; shownDistrict = 2; }
+
+/* Computer Village's skyline: Ikeja is lower and busier, and full of telecom
+   masts — two of them, red and white, between the blocks. */
+const IKEJA_TOWERS = [
+  { name: 'ALLEN',      w: 40, h: 92,  body: '#c9b79c', win: '#efe6d8' },
+  { mastOnly: true,     w: 22, h: 136 },
+  { name: 'OTIGBA',     w: 36, h: 78,  body: '#a8b8c8', win: '#e3ebf2' },
+  { name: 'IKEJA MALL', w: 52, h: 70,  body: '#d9c3a5', win: '#f3e9dc' },
+  { mastOnly: true,     w: 20, h: 118 },
+  { name: 'OPEBI',      w: 36, h: 88,  body: '#b5a3c4', win: '#ebe3f2' },
+];
+function telecomMast(t){
+  const w = t.w, h = t.h, braces = [];
+  for (let y = 14; y < h; y += 9){
+    const a = (y / h) * (w / 2 - 2), b = ((y + 9) / h) * (w / 2 - 2);
+    braces.push(`<path d="M${w / 2 - a} ${y} L${w / 2 + b} ${y + 9} M${w / 2 + a} ${y} L${w / 2 - b} ${y + 9}" stroke="#cfc9bf" stroke-width=".5"/>`);
+  }
+  return `<svg class="tower mast" viewBox="0 0 ${w} ${h}" width="${w}" height="${h}" aria-hidden="true" overflow="visible">
+    ${braces.join('')}
+    <path d="M${w / 2 - 1} 8 L2 ${h} M${w / 2 + 1} 8 L${w - 2} ${h}" stroke="#d7d2c9" stroke-width="1.2"/>
+    ${[22, 46, 70].map((y, i) => `<path d="M${w / 2 - (y / h) * (w / 2 - 2)} ${y} H${w / 2 + (y / h) * (w / 2 - 2)}" stroke="${i % 2 ? '#e8e4dc' : '#d99a94'}" stroke-width="2.4"/>`).join('')}
+    <rect x="${w / 2 - 4.6}" y="10" width="2.4" height="7" fill="#e3ded5"/><rect x="${w / 2 + 2.2}" y="10" width="2.4" height="7" fill="#e3ded5"/>
+    <rect x="${w / 2 - 1.2}" y="1" width="2.4" height="5" fill="#e3ded5"/><circle cx="${w / 2}" cy="0" r="1.2" fill="#d96a60"/>
+  </svg>`;
+}
+DISTRICTS.push({ name: 'COMPUTER VILLAGE', area: 'IKEJA', shops: CV_SHOPS, towers: IKEJA_TOWERS });
+if (DISTRICT_Q === 'cv'){ districtN = 3; shownDistrict = 3; }
+
+/* Ojuelegba's skyline: the mainland, lower and plainer, a mast among the blocks. */
+const YABA_TOWERS = [
+  { name: 'YABA',     w: 38, h: 86,  body: '#c4b49a', win: '#ede4d4' },
+  { name: 'HERBERT',  w: 42, h: 98,  body: '#a9b4a0', win: '#e6ece0' },
+  { mastOnly: true,   w: 20, h: 112 },
+  { name: 'AKOKA',    w: 40, h: 90,  body: '#b8a8a0', win: '#efe6e2' },
+  { name: 'SABO',     w: 36, h: 80,  body: '#a8b4c4', win: '#e2e9f1' },
+];
+DISTRICTS.push({ name: 'OJUELEGBA', area: 'YABA', shops: YABA_SHOPS, towers: YABA_TOWERS });
+if (DISTRICT_Q === 'yaba'){ districtN = 4; shownDistrict = 4; }
 
 function customer(c, scale = .32){          // fits the shop doors (was .42, taller than them)
   const pos = c.kind === 'enter'
@@ -7363,16 +7791,12 @@ try {
    street dances when you have done something: goals hit, a thief caught, a
    fire out, light back. With the music on it waits for the next bar line so
    it lands on the beat; without, it goes straight away. */
-let danceOwed = false;
-function celebrate(){
-  if (audible()) { danceOwed = true; return; }
-  setTimeout(danceBreak, 500);
-}
-function onMusicBar(){
-  if (!danceOwed) return;
-  danceOwed = false;
-  danceBreak();                     // danceBreak itself ends it one bar later
-}
+/* No more dancing (2026-11-18, user: "we can get rid of the dancing, I don't
+   think it serves much purpose"). The moments still land — the story line,
+   the praise and the sound — the street just keeps walking. The routine
+   (danceBreak, lineUp) stays in the file, unused, should it ever come back. */
+function celebrate(){}
+function onMusicBar(){}
 
 /* ---------- the boli run ----------
    Every so often one corper peels off to a food stall and catches back up.
