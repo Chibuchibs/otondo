@@ -443,9 +443,22 @@
      the shops, and each time it comes round it carries the next name — Broad
      Street, then Marina, then Allen — so the trek reads as a walk through
      the city rather than past one row of shops. Scenery, not a button. */
-  .streetPost{position:absolute;bottom:62px;width:64px;z-index:0;pointer-events:none;
+  .streetPost{position:absolute;bottom:62px;width:96px;z-index:0;pointer-events:none;
     animation:shopDrive linear infinite}
   .streetPost svg{width:100%;display:block;overflow:visible}
+  /* the arrival card: Lagos-blue signboard, white border, drops in at the top */
+  /* under the tap labels (z7): it names the place, it never covers an instruction (user) */
+  .streetCard{position:absolute;left:50%;top:16px;z-index:6;pointer-events:none;text-align:center;
+    background:#1e4fa3;color:#fff;border:2.5px solid #f7f4ea;border-radius:8px;padding:5px 16px 6px;
+    box-shadow:0 4px 14px rgba(0,0,0,.35);font-family:system-ui,-apple-system,'Segoe UI',sans-serif;
+    transform:translateX(-50%);animation:streetCard 3.4s cubic-bezier(.2,1.2,.4,1) forwards}
+  .streetCard small{display:block;font:800 8px/1.3 system-ui,sans-serif;letter-spacing:.14em;color:#cfe0ff}
+  .streetCard b{display:flex;align-items:center;justify-content:center;gap:6px;font:900 19px/1.15 system-ui,sans-serif;letter-spacing:.02em;white-space:nowrap}
+  .streetCard b i{width:10px;height:13px;background:#ff4d4d;border-radius:50% 50% 50% 0;transform:rotate(-45deg);box-shadow:inset 0 0 0 3px #ff4d4d,inset 0 0 0 5px #fff;flex:none}
+  @keyframes streetCard{0%{opacity:0;transform:translateX(-50%) translateY(-24px) scale(.9)}
+    10%{opacity:1;transform:translateX(-50%) translateY(0) scale(1)}
+    82%{opacity:1;transform:translateX(-50%) translateY(0) scale(1)}
+    100%{opacity:0;transform:translateX(-50%) translateY(-10px) scale(.96)}}
   /* the parked keke and the couple, under the billboard (far pavement, in front of the shops' line) */
   .kekeCouple{position:absolute;bottom:56px;width:120px;z-index:0;pointer-events:none;animation:shopDrive linear infinite}
   .kekeCouple svg{width:100%;display:block}
@@ -1825,7 +1838,7 @@
 <script type="module">
 import { newGame, doAction, canDo, unlocked, ACTIONS, phaseOf, nextUnlock, postingOdds, rivalOf,
          computePosting, CHOICES, GOAL, goalStatus,
-         shareText, MAX_DAY } from './game.js?v=20261118193059';
+         shareText, MAX_DAY } from './game.js?v=20261118195147';
 
 /* ---------- scene coordinates ----------
    The scene is scaled by a transform (see the stage), so a native
@@ -1856,11 +1869,11 @@ const TS = (document.getElementById('scene').offsetWidth || 375) / 375;
 const ALLAWEE_NOTE = 'Allawee ₦77,000 — e never enter.';
 import { initNet, joinCamp, syncPlayer, platoonBoard, recentChat, postChat,
          postSuggestion, reportMessage, awardBoard, myAwards, laughChat,
-         setPresence, campRoster, renameMe, setAvatar, online } from './net.js?v=20261118193059';
-import { startMusic, stopMusic, musicOn, audioState, audioSupported, setRain, whenSilenced, wakeAudio, audible, say, sfx, BEAT, BAR } from './audio.js?v=20261118193059';
+         setPresence, campRoster, renameMe, setAvatar, online } from './net.js?v=20261118195147';
+import { startMusic, stopMusic, musicOn, audioState, audioSupported, setRain, whenSilenced, wakeAudio, audible, say, sfx, BEAT, BAR } from './audio.js?v=20261118195147';
 import { playHoop, playPenalty, playQuiz, playRegister, playParade,
          playMami, playHustle, playManOWar, playSaed, playSocial,
-         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261118193059';
+         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261118195147';
 
 /* Every dance animation is expressed in beats, so the steps are on-tempo
    whether or not the sound is playing — and genuinely on the beat when it is. */
@@ -4092,10 +4105,10 @@ const gantrySvg = d => `<svg viewBox="0 0 96 124" aria-hidden="true">
   <rect x="10" y="22" width="3" height="102" fill="#6f6756"/><rect x="83" y="22" width="3" height="102" fill="#6f6756"/>
   <rect x="13" y="40" width="70" height="1.6" fill="#6f6756"/>
   <rect x="2" y="2" width="92" height="30" rx="2.4" fill="#f7f4ea"/>
-  <rect x="4" y="4" width="88" height="26" rx="1.8" fill="#157347"/>
-  <text x="48" y="11.6" text-anchor="middle" font-size="5" font-weight="800" font-family="system-ui,sans-serif" fill="#cfe9d9" letter-spacing=".6">WELCOME TO</text>
+  <rect x="4" y="4" width="88" height="26" rx="1.8" fill="#1e4fa3"/>
+  <text x="48" y="11.6" text-anchor="middle" font-size="5" font-weight="800" font-family="system-ui,sans-serif" fill="#cfe0ff" letter-spacing=".6">WELCOME TO</text>
   <text x="48" y="22" text-anchor="middle" font-size="10" font-weight="900" font-family="system-ui,sans-serif" fill="#f7f4ea" textLength="78" lengthAdjust="spacingAndGlyphs">${d.name}</text>
-  <text x="48" y="27.6" text-anchor="middle" font-size="4" font-weight="800" font-family="system-ui,sans-serif" fill="#cfe9d9" letter-spacing=".5">${d.area}</text>
+  <text x="48" y="27.6" text-anchor="middle" font-size="4" font-weight="800" font-family="system-ui,sans-serif" fill="#cfe0ff" letter-spacing=".5">${d.area}</text>
 </svg>`;
 function sendGantry(){
   const d = DISTRICTS[districtN];
@@ -4113,8 +4126,21 @@ function sendGantry(){
   const n = districtN;
   setTimeout(() => setSkyline(n), ((45 - from) / 100) * secPerScene * 1000);
 }
+/* The arrival card: the street's name dropped in big at the top of the scene
+   when it comes on screen (2026-11-18, user: "I barely notice them"). */
+function showStreetCard(n){
+  const d = DISTRICTS[n]; if (!d || calm()) return;
+  sceneEl.querySelector('.streetCard')?.remove();
+  const c = document.createElement('div');
+  c.className = 'streetCard';
+  c.innerHTML = `<small>WELCOME TO</small><b><i aria-hidden="true"></i>${d.name}</b><small>${d.area}</small>`;
+  sceneEl.appendChild(c);
+  setTimeout(() => c.remove(), 3400);
+}
 function setSkyline(n){
+  if (n !== shownDistrict) setTimeout(() => showStreetCard(n), 600);
   shownDistrict = n;
+  sceneEl.querySelector('.streetPost')?.dispatchEvent(new Event('repaint'));
   sceneEl.querySelectorAll('.skyline[data-district]').forEach(k => k.classList.toggle('away', +k.dataset.district !== n));
 }
 /* The third stands behind the NEPA pole, so it is the short one with the short name. */
@@ -5570,21 +5596,29 @@ const STREETS = ['BROAD STREET', 'MARINA', 'ALLEN AVENUE', 'AWOLOWO ROAD',
   el.className = 'streetPost';
   let i = Math.floor(Math.random() * STREETS.length);
   const paint = () => {
-    el.innerHTML = `<svg viewBox="0 0 64 42" aria-hidden="true">
-      <rect x="30.6" y="16" width="2.8" height="26" fill="#6f6756"/>
-      <rect x="2" y="4" width="60" height="15" rx="2" fill="#f7f4ea"/>
-      <rect x="3.6" y="5.6" width="56.8" height="11.8" rx="1.4" fill="#157347"/>
-      <text x="32" y="14.4" text-anchor="middle" font-size="7.4" font-weight="800"
-            font-family="system-ui,sans-serif" fill="#f7f4ea" letter-spacing=".3"
-            textLength="52" lengthAdjust="spacingAndGlyphs">${DISTRICTS_ON ? DISTRICTS[districtN].name : STREETS[i]}</text>
+    const d = DISTRICTS_ON ? DISTRICTS[shownDistrict] : { name: STREETS[i], area: 'LAGOS' };   // the street on screen
+    /* a tall pole, so the plate stands above the shop roofs where nothing covers it */
+    el.innerHTML = `<svg viewBox="0 0 96 100" aria-hidden="true">
+      <rect x="46.6" y="24" width="2.8" height="76" fill="#5a5a5a"/><rect x="47.6" y="24" width=".8" height="76" fill="#8a8a8a"/>
+      <rect x="1" y="1" width="94" height="26" rx="2.6" fill="rgba(0,0,0,.25)" transform="translate(1.2 1.2)"/>
+      <rect x="1" y="1" width="94" height="26" rx="2.6" fill="#f7f4ea"/>
+      <rect x="3" y="3" width="90" height="22" rx="1.8" fill="#1e4fa3"/>
+      <text x="48" y="15.4" text-anchor="middle" font-size="10.4" font-weight="900"
+            font-family="system-ui,sans-serif" fill="#ffffff" letter-spacing=".3"
+            textLength="${Math.min(84, d.name.length * 7)}" lengthAdjust="spacingAndGlyphs">${d.name}</text>
+      <text x="48" y="22" text-anchor="middle" font-size="4.6" font-weight="800"
+            font-family="system-ui,sans-serif" fill="#cfe0ff" letter-spacing=".8">${d.area}</text>
     </svg>`;
   };
   paint();
   el.style.animationDuration = SHOP_CYCLE + 's';
   el.style.animationDelay = -((BOULEVARD.length + 1) * SHOP_CYCLE / SHOPS.length) + 's';   // the corn stall's slot
-  el.style.marginLeft = '-22px';
+  el.style.marginLeft = '-38px';
   /* A new street each time the post comes round from the left. */
   el.addEventListener('animationiteration', () => { i = (i + 1) % STREETS.length; paint(); });
+  el.addEventListener('repaint', paint);     // the street on screen changed
+  /* and the first street named the moment you start */
+  if (DISTRICTS_ON) document.getElementById('start')?.addEventListener('click', () => setTimeout(() => showStreetCard(shownDistrict), 1800), { once: true });
   onKerb(el);
 })();
 
