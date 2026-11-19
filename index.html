@@ -446,6 +446,15 @@
   .streetPost{position:absolute;bottom:62px;width:64px;z-index:0;pointer-events:none;
     animation:shopDrive linear infinite}
   .streetPost svg{width:100%;display:block;overflow:visible}
+  /* the parked keke and the couple, under the billboard (far pavement, in front of the shops' line) */
+  .kekeCouple{position:absolute;bottom:56px;width:120px;z-index:0;pointer-events:none;animation:shopDrive linear infinite}
+  .kekeCouple svg{width:100%;display:block}
+  /* the couple on the near walk: the walkers' scale and line, behind them */
+  .nearCouple{position:absolute;bottom:20px;width:58px;height:76px;z-index:2;pointer-events:none}   /* back by the kerb (user): a step up the walk, a touch smaller */
+  .nearCouple svg{display:block;width:100%;height:100%}
+  .nearCouple .coupleLaugh{animation:coupleLaugh 2.4s ease-in-out infinite}
+  .kekeCouple .coupleLaugh{animation:coupleLaugh 2.4s ease-in-out infinite}
+  @keyframes coupleLaugh{0%,55%{opacity:0}65%,90%{opacity:1}100%{opacity:0}}
   /* Towers: bases hidden behind the shops, tops kept under the signboard
      (bottom 150) on the right and clear of the sun on the left by the
      padding. Lit windows join the UP NEPA! moment. */
@@ -1812,7 +1821,7 @@
 <script type="module">
 import { newGame, doAction, canDo, unlocked, ACTIONS, phaseOf, nextUnlock, postingOdds, rivalOf,
          computePosting, CHOICES, GOAL, goalStatus,
-         shareText, MAX_DAY } from './game.js?v=20261118185150';
+         shareText, MAX_DAY } from './game.js?v=20261118191710';
 
 /* ---------- scene coordinates ----------
    The scene is scaled by a transform (see the stage), so a native
@@ -1843,11 +1852,11 @@ const TS = (document.getElementById('scene').offsetWidth || 375) / 375;
 const ALLAWEE_NOTE = 'Allawee ₦77,000 — e never enter.';
 import { initNet, joinCamp, syncPlayer, platoonBoard, recentChat, postChat,
          postSuggestion, reportMessage, awardBoard, myAwards, laughChat,
-         setPresence, campRoster, renameMe, setAvatar, online } from './net.js?v=20261118185150';
-import { startMusic, stopMusic, musicOn, audioState, audioSupported, setRain, whenSilenced, wakeAudio, audible, say, sfx, BEAT, BAR } from './audio.js?v=20261118185150';
+         setPresence, campRoster, renameMe, setAvatar, online } from './net.js?v=20261118191710';
+import { startMusic, stopMusic, musicOn, audioState, audioSupported, setRain, whenSilenced, wakeAudio, audible, say, sfx, BEAT, BAR } from './audio.js?v=20261118191710';
 import { playHoop, playPenalty, playQuiz, playRegister, playParade,
          playMami, playHustle, playManOWar, playSaed, playSocial,
-         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261118185150';
+         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261118191710';
 
 /* Every dance animation is expressed in beats, so the steps are on-tempo
    whether or not the sound is playing — and genuinely on the beat when it is. */
@@ -2386,7 +2395,36 @@ function civilian(skin, scale, speed, delay, tone = 0, rags = false, stick = fal
    a woman selling water at this size: the wrapper (a print, not trousers),
    the headtie, and the basin on her head stacked with sachets — the one
    silhouette nobody in Lagos has to look at twice. */
-function hawker(skin, wares = 'water'){
+/* What the sellers wear on each street (2026-11-18, user): wrapper ground,
+   wrapper ink, pattern, blouse, headtie. Index = DISTRICTS order; Allen
+   Avenue (0) is null: the outfits players already know. */
+const SELLER_LOOKS = [
+  null,
+  { water: ['#1d3557', '#f1c40f', 'rings',   '#f4f1de', '#e63946'],     // Broad Street: navy and gold, office-smart
+    akara: ['#6a040f', '#ffba08', 'zigzag',  '#fefae0', '#1d3557'],
+    kunu:  ['#283618', '#dda15e', 'stripes', '#fefae0', '#bc6c25'] },
+  { water: ['#ff8fab', '#ffffff', 'dots',    '#caf0f8', '#0077b6'],     // Admiralty Way: bright and new
+    akara: ['#00b4d8', '#ffd60a', 'check',   '#fff1e6', '#ff006e'],
+    kunu:  ['#8338ec', '#ffbe0b', 'rings',   '#f8f9fa', '#3a86ff'] },
+  { water: ['#3a5a40', '#a3b18a', 'check',   '#ffb703', '#219ebc'],     // Computer Village: workday checks
+    akara: ['#023047', '#8ecae6', 'stripes', '#fb8500', '#ffb703'],
+    kunu:  ['#9c6644', '#ede0d4', 'zigzag',  '#e6ccb2', '#7f5539'] },
+  { water: ['#d00000', '#ffba08', 'zigzag',  '#f1faee', '#1b4332'],     // Ojuelegba: loud market prints
+    akara: ['#2d6a4f', '#f77f00', 'rings',   '#fcbf49', '#d62828'],
+    kunu:  ['#3c096c', '#ff9e00', 'dots',    '#f8f9fa', '#ff6d00'] },
+];
+let sellerPatN = 0;
+function sellerPattern(id, ground, ink, kind){
+  const body = {
+    dots:    `<circle cx="2" cy="2" r=".9" fill="${ink}"/><circle cx="6" cy="6" r=".9" fill="${ink}"/>`,
+    stripes: `<rect x="0" width="1.6" height="8" fill="${ink}"/><rect x="4" width=".8" height="8" fill="${ink}"/>`,
+    zigzag:  `<path d="M0 3l2 -2l2 2l2 -2l2 2M0 7l2 -2l2 2l2 -2l2 2" stroke="${ink}" stroke-width=".9" fill="none"/>`,
+    check:   `<rect width="4" height="4" fill="${ink}" opacity=".55"/><rect x="4" y="4" width="4" height="4" fill="${ink}" opacity=".55"/>`,
+    rings:   `<circle cx="4" cy="4" r="2.2" fill="none" stroke="${ink}" stroke-width="1"/><circle cx="4" cy="4" r=".7" fill="${ink}"/>`,
+  }[kind] || '';
+  return `<pattern id="${id}" width="8" height="8" patternUnits="userSpaceOnUse"><rect width="8" height="8" fill="${ground}"/>${body}</pattern>`;
+}
+function hawker(skin, wares = 'water', look = null){
   const akara = wares === 'akara', kunu = wares === 'kunu';
   /* Three women, three palettes, so they are never mistaken for one another. */
   const PAL = {
@@ -2394,7 +2432,13 @@ function hawker(skin, wares = 'water'){
     akara: ['#3d6ea8', '#2f5886', '#d96fa0', '#f3c53d'],
     kunu:  ['#8a4b2a', '#6d3a20', '#f3efe2', '#2f6b4f'],
   }[wares] || ['#2f7a63', '#245f4d', '#f2d2a0', '#c14f3e'];
-  const [WRAP, WRAP2, BLOUSE, TIE] = PAL, DOT = '#f3c53d';
+  let [WRAP, WRAP2, BLOUSE, TIE] = PAL, DOT = '#f3c53d', patDefs = '';
+  /* this street's outfit: the wrapper in a print, its own blouse and headtie */
+  if (look){
+    const [ground, ink, kind, blouse, tie] = look, id = 'sp' + (sellerPatN++);
+    patDefs = `<defs>${sellerPattern(id + 'a', ground, ink, kind)}${sellerPattern(id + 'b', tint(ground, .8), ink, kind)}</defs>`;
+    WRAP = `url(#${id}a)`; WRAP2 = `url(#${id}b)`; BLOUSE = blouse; TIE = tie; DOT = 'none';   // the print replaces the dots
+  }
   const leg = (x, c) =>
     `<rect x="${x}" y="48" width="7.5" height="15.5" rx="3.4" fill="${c}"/>
      <circle cx="${x+2.4}" cy="52" r=".9" fill="${DOT}"/><circle cx="${x+5.2}" cy="57" r=".9" fill="${DOT}"/>
@@ -2424,7 +2468,7 @@ function hawker(skin, wares = 'water'){
            transform="rotate(${r} ${x+3.1} ${y+2.1})"/>
      <rect x="${x+1}" y="${y+1.6}" width="4.2" height=".9" fill="#3b8fd0" opacity=".8"
            transform="rotate(${r} ${x+3.1} ${y+2.1})"/>`;
-  return `<svg class="corper civ" viewBox="0 0 46 86" aria-hidden="true" style="overflow:visible">
+  return `<svg class="corper civ" viewBox="0 0 46 86" aria-hidden="true" style="overflow:visible">${patDefs}
     <ellipse cx="23" cy="81" rx="12" ry="2.6" fill="rgba(0,0,0,.16)"/>
     <g class="leg">${leg(16, WRAP2)}</g>
     <g class="leg2">${leg(22.5, WRAP)}</g>
@@ -5221,6 +5265,24 @@ const CAR_RED = [['#c3c8ce', '#a8302c'], ['#e6e9ec', '#d0625b'], ['#7f848b', '#6
                  ['#a9afb6', '#8c2724'], ['#9aa1a9', '#7e2321'], ['#7d838b', '#561614']]
   .reduce((svg, [from, to]) => svg.split(from).join(to), carDrawing(false, true));
 let carN = 0;
+
+/* The agbero's clothes on each street (2026-11-18, user): [jersey, jeans,
+   jeans shade, jeans dark leg, cap & panels]. Always 27. Allen Avenue (0):
+   the red jersey everyone has paid. */
+const TOUT_LOOKS = [
+  null,
+  ['#1d4fa8', '#4a4e57', '#3a3d45', '#42464e', '#c9a227'],   // Broad Street: blue jersey, charcoal jeans, gold cap
+  ['#7b2cbf', '#d8c7a6', '#b8a684', '#c9b893', '#141414'],   // Admiralty Way: purple, khaki
+  ['#1f8a4c', '#2f3e46', '#22303a', '#2a3840', '#f3c53d'],   // Computer Village: green, dark denim, yellow cap
+  ['#f77f00', '#6b4a2e', '#56391f', '#5f4128', '#141414'],   // Ojuelegba: orange, brown
+];
+function toutDressed(n){
+  const L = TOUT_LOOKS[n];
+  if (!L) return TOUT_SVG;
+  const [jersey, jeans, shade, dark, cap] = L;
+  return [['#c1272d', jersey], ['#8ea2b6', jeans], ['#6a7d91', shade], ['#74879c', dark], ['#1d1d1f', cap]]
+    .reduce((svg, [from, to]) => svg.split(from).join(to), TOUT_SVG);
+}
 /* The broken-down danfo (2026-11-18, user), Broad Street's parked vehicle.
    Drawn in the box's own pixels: ground 46.4, front at the left (the walkers
    meet it nose first), 210 long and 98 high against an 86px corper. */
@@ -5413,7 +5475,8 @@ function setObstacle(kind){
   const danfo = kind === 'car' && DISTRICTS_ON && shownDistrict === 1;
   if (danfo){ pothole.dataset.tagBottom = '112'; pothole.dataset.long = '1'; } else { delete pothole.dataset.tagBottom; delete pothole.dataset.long; }
   pothole.innerHTML = danfo ? DANFO_BROKEN : kind === 'car' && (carN++ % 2) ? CAR_RED
-                    : kind === 'bin' && (binN++ % 2) ? BIN_FULL_SVG : OBSTACLE[kind].svg;
+                    : kind === 'bin' && (binN++ % 2) ? BIN_FULL_SVG
+                    : kind === 'tout' && DISTRICTS_ON ? toutDressed(shownDistrict) : OBSTACLE[kind].svg;
   pothole.classList.remove('leaving', 'waved');               // a fresh pass: whoever walked off is gone
   pothole.getAnimations().forEach(a => a.cancel());
   /* The car stands up off the road, so it is drawn in front of everyone on
@@ -5520,6 +5583,115 @@ const STREETS = ['BROAD STREET', 'MARINA', 'ALLEN AVENUE', 'AWOLOWO ROAD',
   el.addEventListener('animationiteration', () => { i = (i + 1) % STREETS.length; paint(); });
   onKerb(el);
 })();
+
+
+/* ---------- under the billboard: a parked keke and a couple (2026-11-18, user) ----------
+   On the open ground below the HaggleBuddy board's legs: the keke man between
+   fares, and a young couple at the corner. Customers' scale (~28px a person). */
+function kekeCouple(){
+  const SK = '#6b4423', SK2 = '#4a2e1c', SK3 = '#8d5524';
+  return `<svg viewBox="0 0 120 44" aria-hidden="true" overflow="visible">
+    <ellipse cx="24" cy="43.4" rx="24" ry="1.4" fill="rgba(0,0,0,.18)"/>
+    <!-- the keke, parked, nobody in the back -->
+    <g transform="translate(0 6) scale(.86)">
+      <rect x="9" y="19" width="20" height="4.5" rx="1" fill="#2f3337"/>
+      <rect x="32" y="20" width="10" height="3.5" rx="1" fill="#2f3337"/>
+      <!-- the keke man: back in his seat, cap down, on his phone, a foot up on the dash -->
+      <g transform="translate(0 2.6)">
+      <path d="M33 23 v-4.6 q0 -2.4 2.6 -2.4 h2 q2.4 0 2.4 2.4 v4.6z" fill="#f4f0e4"/>
+      <circle cx="36.6" cy="13.6" r="2.6" fill="${SK2}"/><path d="M33.8 13 a2.8 2.8 0 0 1 5.6 0 l2 .4 h-7.6z" fill="#1f6f8b"/>
+      <path d="M38.4 18.6 l2.4 -2.6" stroke="${SK2}" stroke-width="1.4" stroke-linecap="round"/><rect x="40.2" y="14.4" width="1.6" height="2.4" rx=".3" fill="#111"/>
+      <path d="M39 22.6 L46.6 19.6" stroke="#3d405b" stroke-width="1.8" stroke-linecap="round"/><rect x="46" y="18.2" width="2.6" height="1.6" rx=".5" fill="#1d1d1d"/>
+      </g>
+      <rect x="6" y="14" width="2.2" height="9.5" fill="${DANFO_DK}"/>
+      <rect x="30" y="14" width="1.4" height="9.5" fill="#8a9097"/>
+      <path d="M44 14.5 L50 23 L46 23 L41 14.5z" fill="#cfe6f2"/>
+      <path d="M7 14.5 L10 9.5 H42 a5 5 0 0 1 5 5z" fill="${DANFO_DK}"/>
+      <path d="M8 22.5 H45 L50.5 26 V30 H6 V24z" fill="${DANFO_Y}"/>
+      <rect x="6" y="25.6" width="44.5" height="2.6" fill="${DANFO_DK}"/>
+      <circle cx="49.2" cy="27.6" r="1.1" fill="#f6e7a1"/>
+      ${wheel(15, 30, 5.6)}${wheel(43, 30, 5.6)}
+    </g>
+    <!-- the couple at the corner -->
+    <ellipse cx="88" cy="43.4" rx="13" ry="1.2" fill="rgba(0,0,0,.18)"/>
+    <!-- her: braids, gold hoops, pink crop top, short denim skirt, sandals, a little bag -->
+    <rect x="80.4" y="34" width="2" height="8.6" rx=".9" fill="${SK3}"/><rect x="83.2" y="34" width="2" height="8.6" rx=".9" fill="${SK3}"/>
+    <path d="M79.6 42.6h3.4M82.6 42.6h3.4" stroke="#d4a017" stroke-width="1.1" stroke-linecap="round"/>
+    <path d="M79 29.4 h7.6 l1 5.2 h-9.6z" fill="#4a7ab8"/><path d="M79.2 31.6h7.8" stroke="#6d98cf" stroke-width=".4"/>
+    <rect x="79.8" y="27.6" width="6" height="2" fill="${SK3}"/>
+    <path d="M79.2 27.8 v-4.4 q0 -1.6 1.6 -1.6 h4 q1.6 0 1.6 1.6 v4.4z" fill="#ff5d8f"/>
+    <path d="M86.4 23.6 L88.6 28.6" stroke="${SK3}" stroke-width="1.5" stroke-linecap="round"/>
+    <rect x="87.2" y="27.6" width="3.4" height="2.8" rx=".6" fill="#ffd166"/><path d="M87.6 27.8 q1.3 -1.6 2.6 0" stroke="#c48a00" stroke-width=".4" fill="none"/>
+    <rect x="81.6" y="20" width="2.2" height="2" fill="${SK3}"/>
+    <circle cx="82.8" cy="17.6" r="3.1" fill="${SK3}"/>
+    <path d="M79.6 17 q.2 -3.8 3.2 -3.8 q3 0 3.2 3.8" fill="#1a1110"/>
+    <path d="M79.8 16.6 q-1.2 4 -.6 8.6 M80.6 17.4 q-.8 4 -.2 7.8 M85.8 16.6 q1 3 .8 6" stroke="#1a1110" stroke-width=".9" fill="none" stroke-linecap="round"/>
+    <circle cx="79.8" cy="18.8" r=".9" fill="none" stroke="#d4a017" stroke-width=".4"/><circle cx="85.8" cy="18.8" r=".9" fill="none" stroke="#d4a017" stroke-width=".4"/>
+    <circle cx="83.8" cy="17.4" r=".4" fill="#1d1812"/><path d="M83.4 19.2 q.9 .7 1.8 0" stroke="#c2185b" stroke-width=".6" fill="none" stroke-linecap="round"/>
+    <!-- him: a fade, white tee, jeans, white sneakers, his arm round her shoulders -->
+    <rect x="91.4" y="32" width="2.4" height="10.4" fill="#2f4e7a"/><rect x="94.4" y="32" width="2.4" height="10.4" fill="#2a4570"/>
+    <rect x="90.6" y="42" width="3.6" height="1.6" rx=".6" fill="#f4f4f2"/><rect x="94" y="42" width="3.6" height="1.6" rx=".6" fill="#f4f4f2"/>
+    <path d="M90.4 32.4 v-8 q0 -2 2 -2 h3 q2 0 2 2 v8z" fill="#f7f7f5"/>
+    <path d="M91 23.4 Q86 21.6 84.4 23.2" stroke="${SK}" stroke-width="1.7" fill="none" stroke-linecap="round"/>
+    <path d="M97 24.6 L97.8 31" stroke="${SK}" stroke-width="1.6" stroke-linecap="round"/>
+    <rect x="92.8" y="19.2" width="2.4" height="2.6" fill="${SK}"/>
+    <circle cx="94" cy="16.8" r="3.3" fill="${SK}"/>
+    <path d="M90.8 16 q.4 -3.2 3.2 -3.2 q2.8 0 3.2 3.2 q-1.6 -1.4 -3.2 -1.4 q-1.6 0 -3.2 1.4z" fill="#141010"/>
+    <circle cx="92.6" cy="16.8" r=".4" fill="#1d1812"/><path d="M91.8 18.4 q.9 .9 1.8 0" stroke="#3a1f12" stroke-width=".6" fill="none" stroke-linecap="round"/>
+    <g class="coupleLaugh"><path d="M87.4 11.6 l1.4 -1.6 M89.2 12 l.4 -2 M91 11.6 l-.6 -1.8" stroke="#ff5d8f" stroke-width=".6" stroke-linecap="round"/></g>
+  </svg>`;
+}
+(() => {
+  if (calm()) return;
+  const el = document.createElement('div');
+  el.className = 'kekeCouple';
+  el.innerHTML = kekeCouple().replace(/<!-- the couple at the corner -->[\s\S]*(?=<\/svg>)/, '');   // the couple are on the near walk now
+  el.style.animationDuration = SHOP_CYCLE + 's';
+  /* the HaggleBuddy board's slot: open ground under its legs on every street */
+  const slot = SHOPS.findIndex(c => c.ad === 'hagglebuddy');
+  el.style.animationDelay = -(slot * SHOP_CYCLE / SHOPS.length) + 's';
+  el.style.marginLeft = '4px';
+  onKerb(el);
+})();
+
+
+/* ---------- the couple on the near walk (2026-11-18, user: "bring the couple
+   to the other side of the road to see how it looks") ----------
+   The same two, drawn from kekeCouple's figures at the walkers' scale, riding
+   with the ground across the near pavement every so often. */
+const COUPLE_FIRST = 30000, COUPLE_EVERY = 48000;
+function nearCoupleSvg(){
+  const svg = kekeCouple();
+  const figs = svg.slice(svg.indexOf('<!-- the couple at the corner -->'), svg.lastIndexOf('</svg>'));
+  return `<svg viewBox="74 8 28 36.6" aria-hidden="true" overflow="visible">${figs}</svg>`;
+}
+function sendNearCouple(){
+  const again = ms => setTimeout(sendNearCouple, ms);
+  if (calm() || sceneEl.querySelector('.nearCouple')) return again(COUPLE_EVERY);
+  const box = sceneEl.sceneRect(), W = 64;
+  let x = box.width + 8;
+  /* not walking in on top of the road obstacle or the pure water seller */
+  const clash = Math.abs(potX() - x) < 200 || [...sceneEl.querySelectorAll('.hawker.near')]
+    .some(h => Math.abs(h.sceneRect().left - box.left - x) < 160);
+  if (clash) return again(4000);
+  const el = document.createElement('div');
+  el.className = 'nearCouple';
+  el.innerHTML = nearCoupleSvg();
+  el.style.left = Math.round(x) + 'px';
+  const first = sceneEl.querySelector(':scope > .corper');
+  if (first) first.before(el); else sceneEl.appendChild(el);   // behind the walkers: they pass in front
+  let last = performance.now();
+  const step = now => {
+    if (!el.isConnected) return;
+    x -= ROAD_SPEED * Math.min(100, now - last) / 1000; last = now;
+    el.style.left = Math.round(x) + 'px';
+    if (x < -W - 10){ el.remove(); return; }
+    requestAnimationFrame(step);
+  };
+  requestAnimationFrame(step);
+  again(COUPLE_EVERY);
+}
+if (!calm()) setTimeout(sendNearCouple, COUPLE_FIRST);
 
 /* ---------- skyline ----------
    Towers behind the shops, each with its name on the roof the way the banks
@@ -6996,7 +7168,8 @@ function sendHawker(kind){
   el.dataset.price = w.price; el.dataset.belle = w.belle; el.dataset.energy = w.energy;
   el.dataset.food = '1';
   el.style.animationDuration = (HAWK_LEN * TS) + 's';
-  el.innerHTML = hawker(w.skin, kind) + `<i class="tapTag">${w.tag}</i>`;
+  const look = DISTRICTS_ON ? SELLER_LOOKS[shownDistrict]?.[kind] || null : null;   // dressed for the street she walks into
+  el.innerHTML = hawker(w.skin, kind, look) + `<i class="tapTag">${w.tag}</i>`;
   if (NEAR_WARES.has(kind)){
     el.classList.add('near');
     el.setAttribute('role', 'button');
