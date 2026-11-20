@@ -799,7 +799,11 @@
      behind the traffic (z-index 1) or his legs show through a passing danfo.
      Level with the stalls (0) and later in the DOM, so he stands in front of
      the shop but behind anything driving past. */
-  .corper.running,.corper.munching,.corper.shopping{z-index:0}
+  /* Only once he is actually across. Dropping on the first step put him,
+     still full size on his own pavement, behind a passing danfo (user, with a
+     screenshot: the player is partly covered by danfo). `farSide` goes on a
+     third of the way into the dash and comes off halfway back. */
+  .corper.farSide.running,.corper.farSide.munching,.corper.farSide.shopping{z-index:0}
   /* ...except buying from the pure water seller on his own pavement: there he stays in front of the traffic */
   .corper.nearErrand.running,.corper.nearErrand.munching,.corper.nearErrand.shopping{z-index:2}
   /* scaled from his feet on an errand, so shrinking to a seller's size keeps him on the ground */
@@ -1925,7 +1929,7 @@
 <script type="module">
 import { newGame, doAction, canDo, unlocked, ACTIONS, phaseOf, nextUnlock, postingOdds, rivalOf,
          computePosting, CHOICES, GOAL, goalStatus,
-         shareText, MAX_DAY } from './game.js?v=20261119165811';
+         shareText, MAX_DAY } from './game.js?v=20261119222009';
 
 /* ---------- scene coordinates ----------
    The scene is scaled by a transform (see the stage), so a native
@@ -1956,11 +1960,11 @@ const TS = (document.getElementById('scene').offsetWidth || 375) / 375;
 const ALLAWEE_NOTE = 'Allawee ₦77,000 — e never enter.';
 import { initNet, joinCamp, syncPlayer, platoonBoard, recentChat, postChat,
          postSuggestion, reportMessage, awardBoard, myAwards, laughChat,
-         setPresence, campRoster, renameMe, setAvatar, online, prizeBoard, myPrize } from './net.js?v=20261119165811';
-import { startMusic, stopMusic, musicOn, audioState, audioSupported, setRain, whenSilenced, wakeAudio, audible, say, sfx, BEAT, BAR } from './audio.js?v=20261119165811';
+         setPresence, campRoster, renameMe, setAvatar, online, prizeBoard, myPrize } from './net.js?v=20261119222009';
+import { startMusic, stopMusic, musicOn, audioState, audioSupported, setRain, whenSilenced, wakeAudio, audible, say, sfx, BEAT, BAR } from './audio.js?v=20261119222009';
 import { playHoop, playPenalty, playQuiz, playRegister, playParade,
          playMami, playHustle, playManOWar, playSaed, playSocial,
-         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261119165811';
+         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261119222009';
 
 /* Every dance animation is expressed in beats, so the steps are on-tempo
    whether or not the sound is playing — and genuinely on the beat when it is. */
@@ -6775,7 +6779,16 @@ function clearJump(){
    shops. The keke is one thing you can do, not the main thing. */
 let turnNo = 0;
 let rideTurn = false;
-const flipTurn = () => { turnNo++; rideTurn = (turnNo % 4 === 0); };
+/* And never more than once a minute (user: "the tap for keke is showing up
+   way too many times"). Measured before: every tap flips the turn too, so a
+   player taking every shop got the keke every ~17s, and within one keke turn
+   the label came back each time the keke drove out of frame and round again.
+   The clock runs from when the label was last ON screen, not when it was
+   offered, so one turn shows it once. */
+const RIDE_GAP = 60000;
+let rideSeenAt = -Infinity;
+const rideAllowed = () => rideTag.style.display !== 'none' || performance.now() - rideSeenAt > RIDE_GAP;
+const flipTurn = () => { turnNo++; rideTurn = (turnNo % 4 === 0) && rideAllowed(); };
 /* 10s turns: at 14s a one-in-four keke came round only every 56s and vanished
    from a 40s window entirely. Same share, four times round in 40s. */
 
@@ -6892,10 +6905,12 @@ function offerRide(force){
   const kk = sceneEl.querySelector('.vehicle.keke');
   const onKeke = kk && inFrame(kk, box, 0.08);
   if (!onKeke && !force){ clearRide(); return; }
+  if (!rideAllowed()){ clearRide(); return; }   // the no-shop fallback too
   rideTarget.classList.add('wantsRide');
   markTappable(rideTarget);
   rideTag.textContent = `Hop on keke\u2002₦${KEKE_FARE}`;
   rideTag.style.display = 'block';
+  rideSeenAt = performance.now();
   rideAnchor = onKeke ? kk : rideTarget;
   const r = rideAnchor.sceneRect();
   pinInside(rideTag, box, r.left - box.left + r.width / 2);
@@ -6968,7 +6983,7 @@ function offerTick(){
        a random one 150ms later, so the label flipped between two shops six
        times a second whenever the keke was elsewhere. */
     const kk = sceneEl.querySelector('.vehicle.keke');
-    if (kk && inFrame(kk, sceneEl.sceneRect(), 0.08)){ clearCorn(); offerRide(); }
+    if (kk && inFrame(kk, sceneEl.sceneRect(), 0.08) && rideAllowed()){ clearCorn(); offerRide(); }
     if (!rideTarget) offerCorn(true);
   } else {
     offerCorn();
@@ -8409,6 +8424,10 @@ function snackRun(preferred, target, paid){
     ? (box.width * 1.30) / (HAWK_LEN * TS * 1000) * (stall.el.classList.contains('akara') ? 1 : -1)
     : (box.width * SHOP_TRAVEL) / (SHOP_CYCLE * 1000);   // px per ms
   park(stallNow() + speed * RUN_MS);
+  /* The run eases out fast (most of the climb is in its first third), so that
+     is where he passes behind the traffic; on the way back he is level with
+     the near pavement again by half time. */
+  const depthT = near ? 0 : setTimeout(() => { if (who.classList.contains('running')) who.classList.add('farSide'); }, RUN_MS * .3);
 
   let pin = 0, fade = null, shrink = null;
   setTimeout(() => {
@@ -8441,7 +8460,8 @@ function snackRun(preferred, target, paid){
        while invisible, then faded in walking. No run back across the road,
        no catch-up hurry: that double dash was the hectic part. */
     setTimeout(() => {
-      who.classList.remove('shopping', 'running');
+      clearTimeout(depthT);
+      who.classList.remove('shopping', 'running', 'farSide');
       who.style.transition = 'none';
       who.style.transform = '';
       void who.offsetWidth;
@@ -8462,9 +8482,11 @@ function snackRun(preferred, target, paid){
     who.classList.replace(stall.el.dataset.food ? 'munching' : 'shopping', 'running');
     who.style.transform = '';
   }, RUN_MS + EAT_MS);
+  setTimeout(() => who.classList.remove('farSide'), RUN_MS + EAT_MS + RUN_MS * .5);
 
   setTimeout(() => {
-    who.classList.remove('running', 'nearErrand');
+    clearTimeout(depthT);
+    who.classList.remove('running', 'nearErrand', 'farSide');
     who.style.animationPlayState = '';            // rejoin the trek mid-stride
     delete stall.el.dataset.target;
     /* The march stood still for the whole errand — a quarter of a cycle, about
