@@ -517,7 +517,8 @@
      at the ends. Coconut palms and broad shade trees, the two that line a
      Lagos road. Greens kept a step duller than the street so they read as
      distance. They lean in the wind and the storm, from the root. */
-  .treeline{position:absolute;left:0;right:0;bottom:58px;height:120px;pointer-events:none;opacity:.9}
+  .treeline{position:absolute;left:0;right:0;bottom:58px;height:120px;pointer-events:none;opacity:.9;transition:opacity .45s ease}
+  .treeline.swap{opacity:0}
   .treeline .tree{position:absolute;bottom:0;display:block;overflow:visible;
     transform:translateX(-50%);transform-origin:50% 100%}
   @keyframes treeSway{0%,100%{transform:translateX(-50%) rotate(0)}50%{transform:translateX(-50%) rotate(var(--lean,2deg))}}
@@ -555,6 +556,27 @@
      the spark's), so both ran on one clock and moved together. */
   .nepaPole .perch2 .bird{animation-duration:9s;animation-delay:-3s}
   .scene.light .nepaPole .bird{animation:birdHop .5s ease-out 1}
+  /* Per-street pole scenes (see setPoleScene). The wire layer sits on the
+     wires' own 150px box, x in % of the scene, so things on the wire sit ON it
+     at any width without being stretched with the wire svg. */
+  .wireThings{position:absolute;left:0;right:0;bottom:40px;height:150px;pointer-events:none}
+  .wireThings > *{position:absolute;transform:translate(-50%,-100%)}
+  .wireThings svg{display:block;overflow:visible}
+  .wireThings .bird{animation:birdBob 7s ease-in-out infinite}
+  .scene.light .wireThings .bird{animation:birdHop .5s ease-out 1}
+  .nepaPole .perch3 .bird{animation-duration:11s;animation-delay:-6s}
+  /* the NEPA man: his arm works at the transformer; when light comes he throws it up */
+  @keyframes nepaFix{0%,100%{transform:rotate(0)}30%{transform:rotate(-9deg)}60%{transform:rotate(4deg)}}
+  @keyframes nepaUp{0%,100%{transform:rotate(0)}25%,75%{transform:rotate(-78deg)}}
+  .nepaPole .nepaMan .fix{transform-box:view-box;transform-origin:16.4px 41px;animation:nepaFix 2.6s ease-in-out infinite}
+  .scene.light .nepaPole .nepaMan .fix{animation:nepaUp 2.2s ease-in-out 1}
+  /* the kite's tail and the snagged nylon move in the air, harder in the wind */
+  @keyframes kiteTail{0%,100%{transform:rotate(-7deg)}50%{transform:rotate(9deg)}}
+  @keyframes nylonFlap{0%,100%{transform:scale(1,1) rotate(0)}50%{transform:scale(.8,1.08) rotate(10deg)}}
+  .wireThings .kTail{transform-box:fill-box;transform-origin:50% 0;animation:kiteTail 2.4s ease-in-out infinite}
+  .wireThings .nylon{transform-box:fill-box;transform-origin:50% 0;animation:nylonFlap 1.7s ease-in-out infinite}
+  .scene.w-wind .wireThings .kTail,.scene.w-storm .wireThings .kTail{animation-duration:.8s}
+  .scene.w-wind .wireThings .nylon,.scene.w-storm .wireThings .nylon{animation-duration:.55s}
   /* Letters only — no plate. A second dark pill down among the figures read as
      another instruction to press; the name is scenery, not a button. Pink
      because nothing else in the scene is, so it reads as a label rather than
@@ -1434,6 +1456,7 @@
     .cust.idle .corper .torso,.cust.idle .corper .arm2 .fore,.shop .bulb,.shop .steam,.shop .boom,
     .shop .note,.shop .smoke,.shop .poleStripes,.shop .peek,.genSet .smoke,.genSet .engine,
     .treeline .tree,.treeline .gHand,.treeline .gNod,.treeline .gTalk,.nepaPole .bird,
+    .wireThings .bird,.wireThings .kTail,.wireThings .nylon,.nepaPole .nepaMan .fix,
     .pothole .ripple,.wheel,.vehicle .cab,.vehicle .cond .wave,.coin .glint){animation:none!important}
   .liteNote{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:-4px 2px 12px;padding:9px 12px;
     background:#eef4ef;border:1.5px solid #cfe3d5;border-radius:12px;font-size:13.5px;font-weight:700;color:var(--green-dk)}
@@ -1902,7 +1925,7 @@
 <script type="module">
 import { newGame, doAction, canDo, unlocked, ACTIONS, phaseOf, nextUnlock, postingOdds, rivalOf,
          computePosting, CHOICES, GOAL, goalStatus,
-         shareText, MAX_DAY } from './game.js?v=20261119112431';
+         shareText, MAX_DAY } from './game.js?v=20261119162034';
 
 /* ---------- scene coordinates ----------
    The scene is scaled by a transform (see the stage), so a native
@@ -1933,11 +1956,11 @@ const TS = (document.getElementById('scene').offsetWidth || 375) / 375;
 const ALLAWEE_NOTE = 'Allawee ₦77,000 — e never enter.';
 import { initNet, joinCamp, syncPlayer, platoonBoard, recentChat, postChat,
          postSuggestion, reportMessage, awardBoard, myAwards, laughChat,
-         setPresence, campRoster, renameMe, setAvatar, online, prizeBoard, myPrize } from './net.js?v=20261119112431';
-import { startMusic, stopMusic, musicOn, audioState, audioSupported, setRain, whenSilenced, wakeAudio, audible, say, sfx, BEAT, BAR } from './audio.js?v=20261119112431';
+         setPresence, campRoster, renameMe, setAvatar, online, prizeBoard, myPrize } from './net.js?v=20261119162034';
+import { startMusic, stopMusic, musicOn, audioState, audioSupported, setRain, whenSilenced, wakeAudio, audible, say, sfx, BEAT, BAR } from './audio.js?v=20261119162034';
 import { playHoop, playPenalty, playQuiz, playRegister, playParade,
          playMami, playHustle, playManOWar, playSaed, playSocial,
-         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261119112431';
+         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261119162034';
 
 /* Every dance animation is expressed in beats, so the steps are on-tempo
    whether or not the sound is playing — and genuinely on the beat when it is. */
@@ -4234,6 +4257,7 @@ function showStreetCard(n){
 function setSkyline(n){
   if (n !== shownDistrict) setTimeout(() => showStreetCard(n), 600);
   shownDistrict = n;
+  setPoleScene(n);                            // the gantry is in front of the pole right now: the swap is hidden
   try { localStorage.setItem('otondo:street', String(n)); } catch {}
   sceneEl.querySelector('.streetPost')?.dispatchEvent(new Event('repaint'));
   sceneEl.querySelectorAll('.skyline[data-district]').forEach(k => k.classList.toggle('away', +k.dataset.district !== n));
@@ -5947,21 +5971,71 @@ function shadeTree(s, gist = false){
     ${gist ? gistPair() : ''}
   </svg>`;
 }
-function palmTree(s){
+/* Palms come in five kinds, so no two streets have the same three:
+     lush   — the plain coconut palm
+     full   — a thick crown, fronds every way, a bunch of coconuts
+     broken — snapped fronds bent at the knee, dead ones hanging down the trunk
+     dry    — harmattan-browned, olive and straw, a few fronds dead
+     lean   — the trunk bowed hard over, a thinner crown */
+const PALM_INK = {
+  green: ['#3e6a39', '#476f36', '#548a45', '#5f9449', '#6a9c50'],
+  dry:   ['#6f6a34', '#7d6f37', '#8f7c40', '#a08a4a', '#ad9655'],
+};
+function palmTree(s, kind = 'lush'){
   const w = Math.round(56 * s), h = Math.round(104 * s);
-  /* A frond: a tapered leaf from the crown, bent by its control point. */
-  const frond = (ex, ey, cx, cy, fill) =>
-    `<path d="M28 22 Q${cx} ${cy - 3} ${ex} ${ey} Q${cx} ${cy + 3} 28 22Z" fill="${fill}"/>`;
-  return `<svg class="tree" viewBox="0 0 56 104" width="${w}" height="${h}" aria-hidden="true">
-    <path d="M25 104 Q21 64 28 22" stroke="#8b7457" stroke-width="3.6" fill="none" stroke-linecap="round"/>
-    <path d="M25 104 Q21 64 28 22" stroke="#6c5841" stroke-width="3.6" fill="none" stroke-dasharray="1 4.5"/>
-    ${frond(2, 34, 12, 20, '#3e6a39')}${frond(54, 36, 44, 20, '#3e6a39')}
-    ${frond(6, 46, 14, 30, '#476f36')}${frond(50, 48, 44, 32, '#476f36')}
-    ${frond(8, 12, 16, 10, '#548a45')}${frond(48, 10, 40, 8, '#548a45')}
-    ${frond(30, 2, 28, 10, '#5f9449')}${frond(18, 28, 22, 20, '#6a9c50')}
-    <circle cx="26.5" cy="25" r="2" fill="#6e5639"/><circle cx="29.5" cy="25.5" r="2" fill="#6e5639"/>
+  const ink = PALM_INK[kind === 'dry' ? 'dry' : 'green'];
+  const dead = '#8a6a3e', deadDk = '#6e5230';
+  /* A frond: a tapered leaf from (x0,y0), bent by its control point. */
+  const leaf = (x0, y0, ex, ey, cx, cy, fill) =>
+    `<path d="M${x0} ${y0} Q${cx} ${cy - 3} ${ex} ${ey} Q${cx} ${cy + 3} ${x0} ${y0}Z" fill="${fill}"/>`;
+  const frond = (ex, ey, cx, cy, fill) => leaf(28, 22, ex, ey, cx, cy, fill);
+  /* a dead frond hanging straight down beside the trunk */
+  const hang = (ex, ey, fill) => `<path d="M28 23 Q${ex + (ex < 28 ? 3 : -3)} 26 ${ex} ${ey} Q${(ex + 28) / 2} 30 28 23Z" fill="${fill}"/>`;
+  /* snapped: out to the knee, then the rest dangling */
+  const snap = (kx, ky, ex, ey, fill) => leaf(28, 22, kx, ky, (28 + kx) / 2, Math.min(22, ky) - 4, fill) +
+    `<path d="M${kx} ${ky} Q${kx + (ex - kx) * .3 - 1} ${ky + 3} ${ex} ${ey} Q${kx + (ex - kx) * .3 + 1.6} ${ky + 2} ${kx} ${ky}Z" fill="${dead}"/>`;
+  const trunkD = kind === 'lean' ? 'M20 104 Q15 50 30 22' : 'M25 104 Q21 64 28 22';
+  const trunkInk = kind === 'dry' ? ['#968a76', '#776b58'] : ['#8b7457', '#6c5841'];
+  const nuts = n => [[26.5, 25], [29.5, 25.5], [28, 27.4], [25, 27], [31, 27.6]].slice(0, n)
+    .map(([x, y]) => `<circle cx="${x}" cy="${y}" r="2" fill="#6e5639"/>`).join('');
+  let crown;
+  if (kind === 'full') crown =
+      frond(0, 30, 10, 18, ink[0]) + frond(56, 32, 46, 18, ink[0]) + frond(3, 44, 12, 30, ink[1]) + frond(53, 46, 44, 30, ink[1])
+    + frond(10, 54, 16, 36, ink[0]) + frond(46, 56, 40, 38, ink[0])
+    + frond(4, 16, 14, 12, ink[2]) + frond(52, 14, 42, 10, ink[2]) + frond(14, 4, 20, 8, ink[3]) + frond(42, 3, 36, 7, ink[3])
+    + frond(29, 0, 28, 10, ink[3]) + frond(18, 28, 22, 20, ink[4]) + frond(39, 29, 34, 20, ink[4]) + nuts(5);
+  else if (kind === 'broken') crown =
+      hang(22, 52, deadDk) + hang(33, 50, dead)
+    + frond(2, 34, 12, 20, ink[0]) + snap(46, 18, 49, 38, ink[1])
+    + snap(12, 16, 8, 34, ink[1]) + frond(48, 10, 40, 8, ink[2])
+    + frond(30, 2, 28, 10, ink[3]) + frond(38, 30, 34, 22, ink[4]) + nuts(2);
+  else if (kind === 'dry') crown =
+      hang(23, 50, deadDk)
+    + frond(2, 36, 12, 22, ink[0]) + frond(54, 38, 44, 22, ink[0]) + frond(7, 48, 14, 32, dead) + frond(50, 48, 44, 32, ink[1])
+    + frond(8, 13, 16, 10, ink[2]) + frond(48, 11, 40, 8, ink[2]) + frond(30, 3, 28, 10, ink[3]) + frond(18, 28, 22, 20, ink[4]) + nuts(2);
+  else if (kind === 'lean') crown =
+      frond(4, 38, 12, 22, ink[0]) + frond(54, 34, 46, 20, ink[0]) + frond(52, 50, 46, 34, ink[1])
+    + frond(10, 14, 18, 11, ink[2]) + frond(46, 9, 40, 7, ink[2]) + frond(32, 2, 30, 10, ink[3]) + frond(40, 28, 36, 20, ink[4]) + nuts(3);
+  else crown =
+      frond(2, 34, 12, 20, ink[0]) + frond(54, 36, 44, 20, ink[0]) + frond(6, 46, 14, 30, ink[1]) + frond(50, 48, 44, 32, ink[1])
+    + frond(8, 12, 16, 10, ink[2]) + frond(48, 10, 40, 8, ink[2]) + frond(30, 2, 28, 10, ink[3]) + frond(18, 28, 22, 20, ink[4]) + nuts(2);
+  return `<svg class="tree" viewBox="0 0 56 104" width="${w}" height="${h}" aria-hidden="true" overflow="visible">
+    <path d="${trunkD}" stroke="${trunkInk[0]}" stroke-width="3.6" fill="none" stroke-linecap="round"/>
+    <path d="${trunkD}" stroke="${trunkInk[1]}" stroke-width="3.6" fill="none" stroke-dasharray="1 4.5"/>
+    ${crown}
   </svg>`;
 }
+/* Which palm stands in each of the three palm spots, street by street. */
+const PALM_SETS = [
+  ['lush', 'full', 'lush'],       // Allen Avenue
+  ['broken', 'lush', 'dry'],      // Broad Street: the old island
+  ['full', 'lean', 'full'],       // Admiralty Way: estate palms, looked after
+  ['dry', 'broken', 'dry'],       // Computer Village: Ikeja dust
+  ['broken', 'full', 'lean'],     // Ojuelegba
+];
+const treeRowHtml = n => { let p = 0; const set = PALM_SETS[n % PALM_SETS.length];
+  return TREES.map(t => (t.kind === 'palm' ? palmTree(t.s, set[p++ % set.length]) : shadeTree(t.s, t.gist))
+    .replace('class="tree"', `class="tree" style="left:${t.at * 100}%${t.kind === 'palm' ? ';--lean:3deg' : ''}"`)).join(''); };
 (() => {
   const sky = document.createElement('div');
   sky.className = 'skyline';
@@ -5986,10 +6060,101 @@ function palmTree(s){
 (() => {
   const row = document.createElement('div');
   row.className = 'treeline';
-  row.innerHTML = TREES.map(t => (t.kind === 'palm' ? palmTree : shadeTree)(t.s, t.gist)
-    .replace('class="tree"', `class="tree" style="left:${t.at * 100}%${t.kind === 'palm' ? ';--lean:3deg' : ''}"`)).join('');
+  row.innerHTML = treeRowHtml(DISTRICTS_ON ? shownDistrict : 0);
   sceneEl.querySelector('.skyline').insertAdjacentElement('beforebegin', row);
 })();
+
+/* ---------- what is on the pole, street by street ----------
+   (2026-11-19, user: "on each street lets have some variations".) Things you
+   actually see on a Lagos pole: birds on the crossarm, a NEPA man up a bamboo
+   ladder at the transformer, a row of birds along the sagging wire, a kite and
+   a black nylon caught on the line. Pole units: 40 wide, crossarm top at y 14,
+   transformer at x 24-37, y 30-50. */
+const BIRD = `<g class="bird">
+      <path d="M-2.4 -2.6 l-1.9 -1.1 l.3 1.7z" fill="#2a2622"/>
+      <ellipse cx="0" cy="-2.2" rx="2.7" ry="1.7" fill="#2a2622"/>
+      <circle cx="2.4" cy="-4" r="1.35" fill="#2a2622"/>
+      <path d="M3.6 -4.1 l1.5 .45 l-1.5 .55z" fill="#d9a441"/>
+      <path d="M-.8 -.6 v.7 M.8 -.6 v.7" stroke="#2a2622" stroke-width=".6"/>
+    </g>`;
+// Position lives on the outer group so the inner one is free to animate: a CSS
+// transform replaces the attribute, it does not add to it.
+const perch = (cls, x, y, flip) => `<g class="${cls}" transform="translate(${x} ${y})${flip ? ' scale(-1 1)' : ''}">${BIRD}</g>`;
+const NEPA_MAN = `<g class="nepaMan">
+    <!-- the bamboo ladder against the pole -->
+    <path d="M4 150 L16.6 31 M10.5 150 L19.4 31" stroke="#b8924c" stroke-width="1.3" stroke-linecap="round"/>
+    ${[40, 48, 56, 64, 72, 80, 88, 96, 104, 112, 120, 128, 136, 144].map(y =>
+      `<path d="M${(4 + (150 - y) * .1059).toFixed(1)} ${y} L${(10.5 + (150 - y) * .0754).toFixed(1)} ${y}" stroke="#9c7a3c" stroke-width=".9"/>`).join('')}
+    <!-- legs, bent on the rungs, and boots -->
+    <path d="M14.6 47 L12.8 52 L14.4 56" stroke="#f26b1d" stroke-width="2.1" fill="none" stroke-linejoin="round"/>
+    <path d="M16.6 47 L17.2 51.6 L16.8 56" stroke="#e05a12" stroke-width="2.1" fill="none" stroke-linejoin="round"/>
+    <path d="M13.2 56 h3 M15.8 56 h2.4" stroke="#1f1d1a" stroke-width="1.6" stroke-linecap="round"/>
+    <!-- orange overall, the reflective band, the tool belt -->
+    <path d="M13.4 39.4 Q15.6 38.4 18 39.6 L17.6 47.6 L13.8 47.6 Z" fill="#f26b1d"/>
+    <rect x="13.6" y="42.2" width="4.2" height="1" fill="#e9eef2"/>
+    <rect x="13.7" y="45.6" width="4" height="1.1" fill="#5a3c22"/>
+    <rect x="17" y="45.2" width="1.4" height="2" rx=".3" fill="#3b3835"/>
+    <!-- the safety rope round the pole -->
+    <path d="M17.4 46 Q21 45 22.6 43.6" stroke="#d9c27a" stroke-width=".7" fill="none"/>
+    <!-- the arm on the ladder -->
+    <path d="M14.2 40.6 L13 44.4 L15.6 45" stroke="#e05a12" stroke-width="1.5" fill="none" stroke-linejoin="round"/>
+    <!-- head and yellow helmet -->
+    <circle cx="15.6" cy="36" r="2.3" fill="#6b4226"/>
+    <path d="M13 35.4 Q13.2 32 15.8 32 Q18.4 32 18.6 35.4 Z" fill="#ffd23f"/>
+    <rect x="12.6" y="35" width="6.6" height=".9" rx=".4" fill="#e6b800"/>
+    <!-- the working arm, a spanner at the transformer -->
+    <g class="fix">
+      <path d="M16.4 41 L20.6 38.6 L24.2 37.4" stroke="#f26b1d" stroke-width="1.5" fill="none" stroke-linejoin="round"/>
+      <circle cx="24.6" cy="37.3" r=".95" fill="#6b4226"/>
+      <path d="M24.8 37.2 l2.4 -1.6" stroke="#9aa3ab" stroke-width=".8" stroke-linecap="round"/>
+    </g>
+  </g>`;
+// A point on a quadratic wire, in the wire layer's units (x 0-1000 across, y px).
+const onWire = (x0, y0, cx, cy, x1, y1, t) => [
+  (1 - t) ** 2 * x0 + 2 * t * (1 - t) * cx + t * t * x1,
+  (1 - t) ** 2 * y0 + 2 * t * (1 - t) * cy + t * t * y1];
+const wireBird = ([x, y], flip, i) => `<svg style="left:${x / 10}%;top:${(y + .6).toFixed(1)}px" width="11" height="6" viewBox="-5.5 -5.6 11 6" aria-hidden="true">
+  <g${flip ? ' transform="scale(-1 1)"' : ''}><g class="bird" style="animation-duration:${6 + (i * 1.7) % 5}s;animation-delay:-${(i * 2.3) % 6}s">${BIRD.replace('<g class="bird">', '<g>')}</g></g></svg>`;
+const POLE_SCENES = [
+  // Allen Avenue: the first two, on the tip and the end of the crossarm
+  { pole: perch('perch1', 20, 8) + perch('perch2', 7, 14, true) },
+  // Broad Street: a NEPA man up the ladder, at the transformer
+  { pole: NEPA_MAN },
+  // Admiralty Way: three along the crossarm
+  { pole: perch('perch1', 11.5, 14) + perch('perch2', 25, 14) + perch('perch3', 34.5, 14, true) },
+  // Computer Village: a row along the wire, bunched the way they sit
+  { wire: [[.16, 0], [.22, 1], [.27, 0], [.55, 1], [.6, 0], [.66, 0]].map(([t, f], i) =>
+      wireBird(onWire(470, 20, 735, 52, 1000, 18, t), f, i)).join('')
+        + [[.42, 1], [.5, 0]].map(([t, f], i) => wireBird(onWire(0, 24, 235, 46, 470, 20, t), f, i + 6)).join('') },
+  // Ojuelegba: somebody's kite caught on the wire, and a black nylon
+  { wire: (() => {
+      const [kx, ky] = onWire(0, 24, 235, 46, 470, 20, .4), [nx, ny] = onWire(470, 32, 740, 66, 1000, 30, .2);
+      return `<svg style="left:${kx / 10}%;top:${(ky + 15).toFixed(1)}px" width="16" height="30" viewBox="-8 -15 16 30" aria-hidden="true">
+          <g transform="rotate(-24)">
+            <path d="M0 -14 L7 -4 L0 6 L-7 -4 Z" fill="#e63946"/><path d="M0 -14 L7 -4 L0 -4 Z M0 6 L-7 -4 L0 -4 Z" fill="#ffd23f"/>
+            <path d="M0 -14 V6 M-7 -4 H7" stroke="#5a3c22" stroke-width=".6"/>
+            <g class="kTail"><path d="M0 6 q2 4 -1 8 q-2 4 1 8" stroke="#2a2622" stroke-width=".5" fill="none"/>
+              <path d="M-1.6 9 l3.2 1.2 M-1.8 13.6 l3.4 -1 M-1.2 18 l3 1" stroke="#1d4ed8" stroke-width="1.2" stroke-linecap="round"/></g>
+          </g></svg>
+        <svg style="left:${nx / 10}%;top:${(ny + 9).toFixed(1)}px" width="9" height="10" viewBox="-4.5 -1 9 10" aria-hidden="true">
+          <g class="nylon"><path d="M-1.2 0 L1.2 0 L3.6 3 Q4 7 0 8.6 Q-4 7 -3.4 3 Z" fill="#1f1d1a"/>
+          <path d="M-1.2 0 q-2 -1 -2.4 1.4 M1.2 0 q2 -1 2.6 1.2" stroke="#1f1d1a" stroke-width=".7" fill="none"/></g></svg>`;
+    })() },
+];
+function setPoleScene(n){
+  const g = sceneEl.querySelector('.nepaPole .poleScene'), w = sceneEl.querySelector('.wireThings');
+  if (!g || !w) return;                       // the pole is drawn later; it sets its own
+  const k = POLE_SCENES[n % POLE_SCENES.length];
+  g.innerHTML = k.pole || ''; w.innerHTML = k.wire || '';
+  const row = sceneEl.querySelector('.treeline');
+  if (row && row.dataset.street !== String(n)){
+    const first = !row.dataset.street;
+    row.dataset.street = String(n);
+    if (first) return;                        // drawn for this street already
+    row.classList.add('swap');
+    setTimeout(() => { row.innerHTML = treeRowHtml(n); row.classList.remove('swap'); }, 480);
+  }
+}
 
 /* ---------- NEPA pole ----------
    Mid-background: in front of the towers, behind the shops. Concrete pole,
@@ -6015,24 +6180,7 @@ function palmTree(s){
     <g class="spark" opacity="0">
       <path d="M30 29 l-3 -5 l5 2 l-1 -5 l4 6 l-4 0 z" fill="#ffd34d"/>
     </g>
-    <!-- Two birds: one on the pole tip, one on the end of the crossarm, facing
-         opposite ways. Position lives on the outer group so the inner one is
-         free to animate — a CSS transform replaces the attribute, it does not
-         add to it. -->
-    <g class="perch1" transform="translate(20 8)"><g class="bird">
-      <path d="M-2.4 -2.6 l-1.9 -1.1 l.3 1.7z" fill="#2a2622"/>
-      <ellipse cx="0" cy="-2.2" rx="2.7" ry="1.7" fill="#2a2622"/>
-      <circle cx="2.4" cy="-4" r="1.35" fill="#2a2622"/>
-      <path d="M3.6 -4.1 l1.5 .45 l-1.5 .55z" fill="#d9a441"/>
-      <path d="M-.8 -.6 v.7 M.8 -.6 v.7" stroke="#2a2622" stroke-width=".6"/>
-    </g></g>
-    <g class="perch2" transform="translate(7 14) scale(-1 1)"><g class="bird">
-      <path d="M-2.4 -2.6 l-1.9 -1.1 l.3 1.7z" fill="#2a2622"/>
-      <ellipse cx="0" cy="-2.2" rx="2.7" ry="1.7" fill="#2a2622"/>
-      <circle cx="2.4" cy="-4" r="1.35" fill="#2a2622"/>
-      <path d="M3.6 -4.1 l1.5 .45 l-1.5 .55z" fill="#d9a441"/>
-      <path d="M-.8 -.6 v.7 M.8 -.6 v.7" stroke="#2a2622" stroke-width=".6"/>
-    </g></g>
+    <g class="poleScene"></g>
   </svg>`;
   const wires = document.createElement('div');
   wires.className = 'nepaWires';
@@ -6046,8 +6194,12 @@ function palmTree(s){
     <path d="M458 32 q10 -12 20 0 q6 8 14 -4" fill="none" stroke="#2a2622" stroke-width="1" opacity=".6"/>
   </svg>`;
   const firstShop = sceneEl.querySelector('.shop');
+  const things = document.createElement('div');
+  things.className = 'wireThings';
   sceneEl.insertBefore(wires, firstShop);
+  sceneEl.insertBefore(things, firstShop);
   sceneEl.insertBefore(pole,  firstShop);
+  setPoleScene(DISTRICTS_ON ? shownDistrict : 0);
 })();
 
 /* ---------- the generator ----------
@@ -8595,7 +8747,15 @@ const TOD = ['tod-morning', 'tod-day', 'tod-dusk', 'tod-night'];
    runs a short day: day 3:00 → dusk 0:45 → night 1:15 → morning 0:45, and
    round again (6 minutes), so everyone sees all four lights and most of the
    time is bright. */
-const TOD_PLAN = [['tod-day', 180], ['tod-dusk', 45], ['tod-night', 75], ['tod-morning', 45]];
+/* ALWAYS DUSK (2026-11-19, user: "this color scheme is so nice… have this
+   color throughout"): the street sits in the orange dusk light all session.
+   The weather still cycles over it. To bring the day/night cycle back, set
+   ALWAYS_DUSK to false. ?sky=cycle shows the old cycle without a deploy. */
+const ALWAYS_DUSK = true;
+const TOD_CYCLE_ON = !ALWAYS_DUSK || new URLSearchParams(location.search).get('sky') === 'cycle';
+const TOD_PLAN = TOD_CYCLE_ON
+  ? [['tod-day', 180], ['tod-dusk', 45], ['tod-night', 75], ['tod-morning', 45]]
+  : [['tod-dusk', 3600]];
 const TOD_CYCLE = TOD_PLAN.reduce((a, [, n]) => a + n, 0);
 const TOD_T0 = Date.now();
 function todNow(now = Date.now()){
