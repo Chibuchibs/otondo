@@ -1173,6 +1173,26 @@
   .stat b{display:block;font-size:10px;text-transform:uppercase;letter-spacing:.1em;
     color:var(--muted);font-weight:800}
   .stat span.debt{color:var(--red)}
+  /* The little person in the corner of each card (2026-11-20, user): how
+     that number feels, at a glance. Swaps when the number crosses a line. */
+  .stat .mood{position:absolute;top:4px;right:6px;width:38px;height:46px;pointer-events:none}
+  .stat .mood svg{display:block;width:100%;height:100%;overflow:visible}
+  .stat .mood.pop svg{animation:moodPop .55s cubic-bezier(.2,1.5,.4,1)}
+  @keyframes moodPop{0%{transform:scale(.4) translateY(10px);opacity:0}100%{transform:none;opacity:1}}
+  .mood .bob{animation:moodBob .6s ease-in-out infinite alternate;transform-box:view-box}
+  @keyframes moodBob{to{transform:translateY(-2px)}}
+  .mood .zz{animation:moodZ 2.2s ease-in-out infinite}
+  .mood .zz2{animation:moodZ 2.2s ease-in-out .8s infinite}
+  @keyframes moodZ{0%{opacity:0;transform:translate(0,3px)}30%,70%{opacity:1}100%{opacity:0;transform:translate(3px,-4px)}}
+  .mood .shiver{animation:moodShiver .18s linear infinite alternate}
+  @keyframes moodShiver{to{transform:translateX(.6px)}}
+  .mood .sway{animation:moodSway 1.4s ease-in-out infinite alternate;transform-box:view-box;transform-origin:20px 46px}
+  @keyframes moodSway{from{transform:rotate(-4deg)}to{transform:rotate(4deg)}}
+  .mood .glint{animation:moodGlint 1.8s ease-in-out infinite}
+  @keyframes moodGlint{0%,60%,100%{opacity:0}75%{opacity:1}}
+  .mood .drip{animation:moodDrip 1.6s ease-in infinite}
+  @keyframes moodDrip{0%{transform:translateY(-1px);opacity:0}20%{opacity:1}100%{transform:translateY(4px);opacity:0}}
+  @media (prefers-reduced-motion:reduce){.mood *, .stat .mood.pop svg{animation:none!important}}
   .stat span{font-size:19px;font-weight:800}
   .bar{height:6px;background:var(--line);border-radius:3px;margin-top:6px;overflow:hidden}
   .bar i{display:block;height:100%;background:var(--stat-bar,var(--green));transition:width .25s}
@@ -1812,18 +1832,18 @@
 
   <section id="game" class="hidden">
     <div class="stats">
-      <div class="stat energy"><b>Energy</b><span id="sEnergy"></span>
+      <div class="stat energy"><b>Energy</b><span id="sEnergy"></span><i class="mood" id="mEnergy" aria-hidden="true"></i>
         <div class="bar" id="bEnergy"><i></i></div>
         <small class="tip">Low. Buy kunu or pure water from the hawkers.</small>
         <small class="goalLine" id="gEnergy"></small></div>
-      <div class="stat belle"><b>Belle</b><span id="sBelle"></span>
+      <div class="stat belle"><b>Belle</b><span id="sBelle"></span><i class="mood" id="mBelle" aria-hidden="true"></i>
         <div class="bar" id="bBelle"><i></i></div>
         <small class="tip">Hungry. Jollof, roasted corn or akara.</small>
         <small class="goalLine" id="gBelle"></small></div>
-      <div class="stat money"><b>Your money</b><span id="sMoney"></span>
+      <div class="stat money"><b>Your money</b><span id="sMoney"></span><i class="mood" id="mMoney" aria-hidden="true"></i>
         <small class="tip">Broke. Tap Odogwu when he pass, or hustle for mami market.</small>
         <small class="goalLine" id="gMoney"></small></div>
-      <div class="stat cred"><b>Credibility</b><span id="sCred"></span>
+      <div class="stat cred"><b>Credibility</b><span id="sCred"></span><i class="mood" id="mCred" aria-hidden="true"></i>
         <small class="tip">Earn it: put out fires, catch the thief, learn a trade at the bakery, or fall in for parade and Man O War.</small>
         <small class="goalLine" id="gCred"></small></div>
     </div>
@@ -1983,7 +2003,7 @@
 <script type="module">
 import { newGame, doAction, canDo, unlocked, ACTIONS, phaseOf, nextUnlock, postingOdds, rivalOf,
          computePosting, CHOICES, GOAL, goalStatus,
-         shareText, MAX_DAY } from './game.js?v=20261120154302';
+         shareText, MAX_DAY } from './game.js?v=20261120155206';
 
 /* ---------- scene coordinates ----------
    The scene is scaled by a transform (see the stage), so a native
@@ -2014,11 +2034,11 @@ const TS = (document.getElementById('scene').offsetWidth || 375) / 375;
 const ALLAWEE_NOTE = 'Allawee ₦77,000 — e never enter.';
 import { initNet, joinCamp, syncPlayer, platoonBoard, recentChat, postChat,
          postSuggestion, reportMessage, awardBoard, myAwards, laughChat,
-         setPresence, campRoster, renameMe, setAvatar, online, prizeBoard, myPrize } from './net.js?v=20261120154302';
-import { startMusic, stopMusic, musicOn, audioState, audioSupported, setRain, whenSilenced, wakeAudio, audible, say, sfx, BEAT, BAR } from './audio.js?v=20261120154302';
+         setPresence, campRoster, renameMe, setAvatar, online, prizeBoard, myPrize } from './net.js?v=20261120155206';
+import { startMusic, stopMusic, musicOn, audioState, audioSupported, setRain, whenSilenced, wakeAudio, audible, say, sfx, BEAT, BAR } from './audio.js?v=20261120155206';
 import { playHoop, playPenalty, playQuiz, playRegister, playParade,
          playMami, playHustle, playManOWar, playSaed, playSocial,
-         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261120154302';
+         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261120155206';
 
 /* Every dance animation is expressed in beats, so the steps are on-tempo
    whether or not the sound is playing — and genuinely on the beat when it is. */
@@ -9675,6 +9695,160 @@ setInterval(() => {
   if (lastStats && lastStats.run === s) lastStats.belle = s.belle;
   save(); render();
 }, BELLE_WALK_MS);
+/* ---------- the little people on the stat cards ----------
+   Each is a 40x48 drawing, ground at y≈46, in the street's flat style. The
+   card number picks one of four looks; drawMoods() swaps it (with a pop) only
+   when the look changes, so it never flickers while a number ticks. */
+const MS = '#8d5524', MI = '#1d1812', MTEE = '#f4f1e8', MKH = '#7c8a4a', MGR = '#1f8a4c';
+const mLimb = (d, c, w = 3) => `<path d="${d}" stroke="${c}" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round" fill="none"/>`;
+const mHand = (x, y, r = 1.5) => `<circle cx="${x}" cy="${y}" r="${r}" fill="${MS}"/>`;
+const mShoes = (a = 16.6, b = 23.4, y = 45.6, c = MI) => `<ellipse cx="${a}" cy="${y}" rx="2.3" ry="1.1" fill="${c}"/><ellipse cx="${b}" cy="${y}" rx="2.3" ry="1.1" fill="${c}"/>`;
+const mShadow = (rx = 9) => `<ellipse cx="20" cy="46.4" rx="${rx}" ry="1.3" fill="rgba(0,0,0,.14)"/>`;
+function mHead(cx, cy, eyes, mouth, hat){
+  const e = {
+    open:  `<circle cx="${cx-2.2}" cy="${cy-.2}" r=".95" fill="${MI}"/><circle cx="${cx+2.2}" cy="${cy-.2}" r=".95" fill="${MI}"/>`,
+    happy: `<path d="M${cx-3.2} ${cy} q1 -1.4 2 0 M${cx+1.2} ${cy} q1 -1.4 2 0" stroke="${MI}" stroke-width=".8" fill="none" stroke-linecap="round"/>`,
+    tired: `<path d="M${cx-3.3} ${cy-.7} h2.2 M${cx+1.1} ${cy-.7} h2.2" stroke="${MI}" stroke-width=".8" stroke-linecap="round"/><circle cx="${cx-2.2}" cy="${cy+.1}" r=".7" fill="${MI}"/><circle cx="${cx+2.2}" cy="${cy+.1}" r=".7" fill="${MI}"/>`,
+    closed:`<path d="M${cx-3.2} ${cy} q1 .9 2 0 M${cx+1.2} ${cy} q1 .9 2 0" stroke="${MI}" stroke-width=".8" fill="none" stroke-linecap="round"/>`,
+    worried:`<circle cx="${cx-2.2}" cy="${cy}" r=".9" fill="${MI}"/><circle cx="${cx+2.2}" cy="${cy}" r=".9" fill="${MI}"/><path d="M${cx-3.4} ${cy-2.4} l2.2 .9 M${cx+3.4} ${cy-2.4} l-2.2 .9" stroke="${MI}" stroke-width=".7" stroke-linecap="round"/>`,
+    brow:  `<circle cx="${cx-2.2}" cy="${cy-.2}" r=".95" fill="${MI}"/><circle cx="${cx+2.2}" cy="${cy-.2}" r=".95" fill="${MI}"/><path d="M${cx+1} ${cy-2.6} q1.4 -.9 2.6 .2" stroke="${MI}" stroke-width=".7" fill="none" stroke-linecap="round"/>`,
+    shades:`<rect x="${cx-4.4}" y="${cy-1.6}" width="8.8" height="2.6" rx="1.2" fill="${MI}"/><path class="glint" d="M${cx-3.4} ${cy-1} l1 0" stroke="#fff" stroke-width=".7" stroke-linecap="round"/>`,
+    mask:  `<rect x="${cx-5.6}" y="${cy-1.8}" width="11.2" height="3" rx="1.4" fill="${MI}"/><circle cx="${cx-2.2}" cy="${cy-.3}" r=".75" fill="#fff"/><circle cx="${cx+2.2}" cy="${cy-.3}" r=".75" fill="#fff"/>`,
+  }[eyes];
+  const m = {
+    smile: `<path d="M${cx-2} ${cy+2.4} q2 1.7 4 0" stroke="${MI}" stroke-width=".8" fill="none" stroke-linecap="round"/>`,
+    grin:  `<path d="M${cx-2.7} ${cy+2} q2.7 3.4 5.4 0z" fill="${MI}"/><path d="M${cx-2.2} ${cy+2.3} h4.4" stroke="#fff" stroke-width=".8"/>`,
+    flat:  `<path d="M${cx-1.6} ${cy+3} h3.2" stroke="${MI}" stroke-width=".8" stroke-linecap="round"/>`,
+    frown: `<path d="M${cx-2} ${cy+3.6} q2 -1.6 4 0" stroke="${MI}" stroke-width=".8" fill="none" stroke-linecap="round"/>`,
+    wavy:  `<path d="M${cx-2.2} ${cy+3} q.55 -.8 1.1 0 t1.1 0 t1.1 0 t1.1 0" stroke="${MI}" stroke-width=".7" fill="none" stroke-linecap="round"/>`,
+    smirk: `<path d="M${cx-1.6} ${cy+3} q2 .7 3.6 -1" stroke="${MI}" stroke-width=".8" fill="none" stroke-linecap="round"/>`,
+    o:     `<ellipse cx="${cx+.4}" cy="${cy+3}" rx=".9" ry="1.1" fill="${MI}"/>`,
+    tache: `<path d="M${cx-2.4} ${cy+1.9} q1.2 -.9 2.4 0 q1.2 -.9 2.4 0" stroke="${MI}" stroke-width="1" fill="none" stroke-linecap="round"/><path d="M${cx-1.6} ${cy+3.4} q1.6 1 3.2 0" stroke="${MI}" stroke-width=".7" fill="none" stroke-linecap="round"/>`,
+  }[mouth];
+  const h = {
+    hair:   `<path d="M${cx-6} ${cy-1} q.2-6.2 6-6.4 q5.8.2 6 6.4 q-2.4-2.4-6-2.4 q-3.6 0-6 2.4z" fill="${MI}"/>`,
+    cap:    `<path d="M${cx-6.3} ${cy-1.4} q.4-6.2 6.3-6.4 q5.9.2 6.3 6.4z" fill="${MTEE}" stroke="#cfc6b0" stroke-width=".5"/><path d="M${cx+.2} ${cy-7.8} q5.7.6 6.1 6.4 h-6.1z" fill="${MGR}"/><rect x="${cx-.6}" y="${cy-2.4}" width="9" height="1.6" rx=".8" fill="${MGR}"/>`,
+    capBack:`<path d="M${cx-6.3} ${cy-1.4} q.4-6.2 6.3-6.4 q5.9.2 6.3 6.4z" fill="#c1272d"/><rect x="${cx-8.4}" y="${cy-2.4}" width="7" height="1.6" rx=".8" fill="#8f1d21"/>`,
+    beanie: `<path d="M${cx-6.4} ${cy-.6} q.2-7 6.4-7.2 q6.2.2 6.4 7.2z" fill="#2a2a30"/><rect x="${cx-6.6}" y="${cy-2}" width="13.2" height="2" rx="1" fill="#3d3d46"/>`,
+    bowler: `<path d="M${cx-4.6} ${cy-3.4} q.2-5.4 4.6-5.6 q4.4.2 4.6 5.6z" fill="${MI}"/><rect x="${cx-7.4}" y="${cy-3.8}" width="14.8" height="1.6" rx=".8" fill="${MI}"/><rect x="${cx-4.6}" y="${cy-4.8}" width="9.2" height="1" fill="#7a1f2b"/>`,
+  }[hat] || '';
+  return `<circle cx="${cx}" cy="${cy}" r="6" fill="${MS}"/>${h}${e}${m}`;
+}
+const mTorso = (c, extra = '') => `<path d="M14 18.4 q6-2.2 12 0 l.6 13 h-13.2z" fill="${c}"${c === MTEE ? ' stroke="#cfc6b0" stroke-width=".5"' : ''}/>${extra}`;
+const mLegs = (c, a = 'M17.6 31 L17 45', b = 'M22.4 31 L23 45') => mLimb(a, c, 3.4) + mLimb(b, c, 3.4);
+const mArm = (d, sleeve, hx, hy) => mLimb(d, MS, 2.4) + (sleeve ? mLimb(d.split(' L')[0] + ' L' + d.split(' L')[1].split(' ').slice(0, 2).join(' '), sleeve, 3) : '') + mHand(hx, hy);
+const mSvg = inner => `<svg viewBox="0 0 40 48">${inner}</svg>`;
+const MOODS = {
+  energy: [
+    /* 0: worn out, slumped on the ground asleep */
+    mSvg(`${mShadow(12)}${mLimb('M15 37 L23 34.6 L24.6 44', MKH, 3.4)}${mLimb('M19 37.4 L27 35.4 L28.6 44.4', MKH, 3.4)}${mShoes(25.6, 29.6, 45, MI)}
+      <path d="M13 24.4 q5-2 10 0 l.4 12.6 h-10.8z" fill="${MTEE}"/>${mLimb('M13.8 25.6 L12.2 36', MS, 2.4)}${mHand(12.2, 36.4)}${mLimb('M22.4 25.6 L24.2 34.4', MS, 2.4)}${mHand(24.4, 34.8)}
+      <g transform="rotate(24 18 22)">${mHead(18, 17.4, 'closed', 'o', 'cap')}</g>
+      <text class="zz" x="27" y="13" font-size="6.5" font-weight="900" font-family="system-ui,sans-serif" fill="#9a7b2c">z</text>
+      <text class="zz2" x="31" y="7.5" font-size="5" font-weight="900" font-family="system-ui,sans-serif" fill="#9a7b2c">z</text>`),
+    /* 1: tired, slouched, sweating */
+    mSvg(`${mShadow()}${mLegs(MKH)}${mShoes()}<g transform="rotate(9 20 31)">${mTorso(MTEE)}
+      ${mLimb('M14.6 20 L14.2 31', MS, 2.4)}${mHand(14.2, 31.6)}${mLimb('M25.4 20 L26.6 31.4', MS, 2.4)}${mHand(26.6, 32)}
+      ${mHead(20.6, 12.4, 'tired', 'flat', 'cap')}</g><path class="drip" d="M29.6 6.4 q1.7 2.5 0 3.6 q-1.7-1.1 0-3.6z" fill="#5aa9e6"/>`),
+    /* 2: fine */
+    mSvg(`${mShadow()}${mLegs(MKH)}${mShoes()}${mTorso(MTEE)}${mLimb('M14.4 19.6 L12.6 30', MS, 2.4)}${mHand(12.6, 30.6)}${mLimb('M25.6 19.6 L27.4 30', MS, 2.4)}${mHand(27.4, 30.6)}
+      ${mHead(20, 11, 'open', 'smile', 'cap')}`),
+    /* 3: full of it, flexing */
+    mSvg(`${mShadow(10)}<g class="bob">${mLegs(MKH, 'M17.6 31 L15.4 45', 'M22.4 31 L24.6 45')}${mShoes(15, 25)}${mTorso(MTEE)}
+      ${mLimb('M14.4 19.6 L9.6 17 L10.6 11.4', MS, 2.6)}${mHand(10.6, 10.8, 1.8)}${mLimb('M25.6 19.6 L30.4 17 L29.4 11.4', MS, 2.6)}${mHand(29.4, 10.8, 1.8)}
+      ${mHead(20, 11, 'happy', 'grin', 'cap')}</g>
+      <path class="glint" d="M4 5l.8 1.8 1.8.8-1.8.8-.8 1.8-.8-1.8-1.8-.8 1.8-.8z" fill="#f7c948"/><path class="glint" style="animation-delay:.9s" d="M36 3l.6 1.4 1.4.6-1.4.6-.6 1.4-.6-1.4-1.4-.6 1.4-.6z" fill="#f7c948"/>`),
+  ],
+  belle: [
+    /* 0: starving, doubled over, belly rumbling */
+    mSvg(`${mShadow()}${mLegs('#2e5d8a')}${mShoes()}<g class="shiver"><g transform="rotate(15 20 31)"><path d="M15 18.8 q5-1.8 10 0 l-.6 12.6 h-8.8z" fill="#e86a50"/>
+      ${mLimb('M15.2 20.4 Q13 25.4 18 26.6', MS, 2.4)}${mHand(18.4, 26.6)}${mLimb('M24.8 20.4 Q27 25 22.4 27.4', MS, 2.4)}${mHand(22, 27.4)}
+      ${mHead(21, 12.4, 'worried', 'frown', 'hair')}</g></g>
+      <path d="M30.2 24.6 q1.4 1.2 0 2.4 M32.4 23.6 q2 1.8 0 3.8" stroke="${MI}" stroke-width=".8" fill="none" stroke-linecap="round"/>`),
+    /* 1: peckish, a hand on the belly, thinking of food */
+    mSvg(`${mShadow()}${mLegs('#2e5d8a')}${mShoes()}${mTorso('#e86a50')}${mLimb('M14.4 19.6 L12.8 30', MS, 2.4)}${mHand(12.8, 30.6)}
+      ${mLimb('M25.6 19.6 Q28 25 22.4 26.4', MS, 2.4)}${mHand(22, 26.4)}${mHead(19.4, 11, 'worried', 'wavy', 'hair')}
+      <circle cx="28.4" cy="5.6" r=".8" fill="#fff" stroke="#d9c9b0" stroke-width=".4"/><ellipse cx="34" cy="2.8" rx="5" ry="3.2" fill="#fff" stroke="#d9c9b0" stroke-width=".4"/>
+      <ellipse cx="34" cy="3.6" rx="3.2" ry="1" fill="#e7e2d6"/><path d="M31.6 3.2 q2.4-2.4 4.8 0z" fill="#d9573f"/>`),
+    /* 2: fine */
+    mSvg(`${mShadow()}${mLegs('#2e5d8a')}${mShoes()}${mTorso('#e86a50')}${mLimb('M14.4 19.6 L12.6 30', MS, 2.4)}${mHand(12.6, 30.6)}${mLimb('M25.6 19.6 L27.4 30', MS, 2.4)}${mHand(27.4, 30.6)}
+      ${mHead(20, 11, 'open', 'smile', 'hair')}`),
+    /* 3: belle full, patting it */
+    mSvg(`${mShadow(11)}${mLegs('#2e5d8a', 'M17 31 L16.4 45', 'M23 31 L23.6 45')}${mShoes(16, 24)}<path d="M14 18.4 q6-2.2 12 0 q4 6.4 1.4 13 h-14.8 q-2.6-6.6 1.4-13z" fill="#e86a50"/>
+      <path d="M17.6 27.4 q2.4 1 4.8 0" stroke="#c4553e" stroke-width=".6" fill="none"/>
+      ${mLimb('M14.2 19.8 Q11 25 15.8 27.6', MS, 2.4)}${mHand(16.2, 27.6)}${mLimb('M25.8 19.8 Q29 25 24.2 27.6', MS, 2.4)}${mHand(23.8, 27.6)}
+      ${mHead(20, 11, 'happy', 'smile', 'hair')}<circle cx="29" cy="5" r="1.1" fill="none" stroke="#d9a28f" stroke-width=".5"/><circle cx="31.6" cy="2.4" r=".7" fill="none" stroke="#d9a28f" stroke-width=".5"/>`),
+  ],
+  money: [
+    /* 0: broke: tattered, patched, pockets turned out */
+    mSvg(`${mShadow()}${mLimb('M17.6 31 L17.2 40', '#6e6a5c', 3.4)}${mLimb('M22.4 31 L22.8 40', '#6e6a5c', 3.4)}${mLimb('M17.2 40 L17 45', MS, 2.2)}${mLimb('M22.8 40 L23 45', MS, 2.2)}
+      <path d="M15.4 40 l1 1.2 1-1.2 1 1.2 M20.8 40 l1 1.2 1-1.2 1 1.2" stroke="#6e6a5c" stroke-width="1" fill="none"/>${mShoes(16.6, 23.4, 45.6, '#5c4a36')}
+      <path d="M14 18.4 q6-2.2 12 0 l.6 12.4 l-1.6 1.4 -1.6-1.4 -1.6 1.4 -1.6-1.4 -1.6 1.4 -1.6-1.4 -1.6 1.4 -1.4-1.4z" fill="#9a8f78"/>
+      <rect x="15.6" y="21" width="3.4" height="3" fill="#c1272d" transform="rotate(-8 17 22)"/><rect x="21.6" y="25" width="3" height="2.6" fill="#2b6cb0" transform="rotate(10 23 26)"/>
+      <path d="M12.6 30.4 q-1 2.6.8 3 q1.4-.4.8-3z M27.4 30.4 q1 2.6-.8 3 q-1.4-.4-.8-3z" fill="#f4f1e8" stroke="#bdb5a2" stroke-width=".4"/>
+      ${mLimb('M14.4 19.6 L10.2 24.6', MS, 2.4)}${mHand(9.8, 25)}${mLimb('M25.6 19.6 L29.8 24.6', MS, 2.4)}${mHand(30.2, 25)}
+      ${mHead(20, 11, 'worried', 'frown', 'hair')}`),
+    /* 1: getting by: faded tee, a patch, hands in pockets */
+    mSvg(`${mShadow()}${mLegs('#5d6a7a')}<rect x="21.4" y="37" width="3" height="3" fill="#8a7a5a"/>${mShoes()}${mTorso('#b3aa94')}
+      ${mLimb('M14.4 19.6 L14.6 29.6', MS, 2.4)}${mLimb('M25.6 19.6 L25.4 29.6', MS, 2.4)}${mHead(20, 11, 'open', 'flat', 'hair')}`),
+    /* 2: comfortable: shirt and tie, hand on hip */
+    mSvg(`${mShadow()}${mLegs(MKH)}${mShoes()}${mTorso('#3d6ea8', '<path d="M17.4 17.4 L20 20.6 L22.6 17.4z" fill="#fff"/><path d="M20 20.2 L19.2 26.4 L20 27.6 L20.8 26.4z" fill="#c1272d"/>')}
+      ${mLimb('M14.4 19.6 L11.2 25 L14.6 28', MS, 2.4)}${mHand(14.8, 28)}${mLimb('M25.6 19.6 L27.4 30', MS, 2.4)}${mHand(27.4, 30.6)}${mHead(20, 11, 'open', 'smile', 'hair')}`),
+    /* 3: big man: suit, shades, gold chain, cash fanned out */
+    mSvg(`${mShadow()}${mLegs('#1f2a44')}${mShoes(16.6, 23.4, 45.6, '#111')}${mTorso('#1f2a44', '<path d="M17.6 17.6 L20 23.6 L22.4 17.6z" fill="#fff"/><path d="M20 19.4 L19.3 23 L20 24 L20.7 23z" fill="#c9a227"/><path d="M16.2 18.6 q3.8 5.6 7.6 0" stroke="#e8c547" stroke-width=".7" fill="none"/>')}
+      ${mLimb('M14.4 19.6 L11.2 25 L14.6 28', '#1f2a44', 2.8)}${mHand(14.8, 28)}${mLimb('M25.6 19.6 L29.6 15.4', '#1f2a44', 2.8)}
+      <g transform="translate(30.4 13.4)"><rect x="-1" y="-6.4" width="3.4" height="6" rx=".5" fill="#2f8f4e" transform="rotate(-28)"/><rect x="-1" y="-6.6" width="3.4" height="6" rx=".5" fill="#3aa05a"/><rect x="-1" y="-6.4" width="3.4" height="6" rx=".5" fill="#2f8f4e" transform="rotate(28)"/></g>${mHand(30, 14.4, 1.6)}
+      ${mHead(20, 11, 'shades', 'grin', 'hair')}`),
+  ],
+  cred: [
+    /* 0: a thief: mask, beanie, striped top, a sack, on tiptoe */
+    mSvg(`${mShadow()}<g class="sway"><path d="M27 10 q6 1 5.6 8.4 q-.6 5.6-5.6 5.2 q-4.6-.6-4-6.4 q.4-6 4-7.2z" fill="#8a6a3e"/><path d="M26 10.6 q1.6-1.6 3.2 0" stroke="#5c4428" stroke-width="1"/>
+      ${mLimb('M17.6 31 L16.2 38.6 L18.4 44.4', '#2a2a30', 3.4)}${mLimb('M22.4 31 L24.4 44.6', '#2a2a30', 3.4)}<ellipse cx="18.8" cy="45" rx="2" ry="1" fill="${MI}"/><ellipse cx="25" cy="45.4" rx="2" ry="1" fill="${MI}"/>
+      ${mTorso('#2a2a30', '<path d="M13.8 21.6 h12.6 M13.6 25 h13 M13.4 28.4 h13.4" stroke="#e9e6dc" stroke-width="1.4"/>')}
+      ${mLimb('M14.4 19.6 L11.8 26.6', MS, 2.4)}${mHand(11.6, 27)}${mLimb('M25.6 19.6 L27.6 13.6', MS, 2.4)}${mHand(27.8, 13)}
+      ${mHead(19.4, 11, 'mask', 'smirk', 'beanie')}</g>`),
+    /* 1: up to something: cap backwards, smirk, hands in pockets */
+    mSvg(`${mShadow()}${mLegs('#3b4a5e')}${mShoes(16.6, 23.4, 45.6, '#c1272d')}${mTorso('#e3b23c')}${mLimb('M14.4 19.6 L14.6 29.6', MS, 2.4)}${mLimb('M25.6 19.6 L25.4 29.6', MS, 2.4)}
+      ${mHead(20, 11, 'brow', 'smirk', 'capBack')}`),
+    /* 2: decent: neat polo */
+    mSvg(`${mShadow()}${mLegs('#4a4a52')}${mShoes()}${mTorso('#3b6fb6', '<path d="M17 17.6 L20 20.4 L23 17.6 L21.6 17 L20 18.6 L18.4 17z" fill="#fff"/>')}
+      ${mLimb('M14.4 19.6 L12.6 30', MS, 2.4)}${mHand(12.6, 30.6)}${mLimb('M25.6 19.6 L27.4 30', MS, 2.4)}${mHand(27.4, 30.6)}${mHead(20, 11, 'open', 'smile', 'hair')}`),
+    /* 3: a gentleman: bowler, bow tie, moustache, cane */
+    mSvg(`${mShadow()}${mLegs('#2d2d33')}${mShoes(16.6, 23.4, 45.6, '#111')}${mTorso('#2d2d33', '<path d="M17.8 17.6 L20 23 L22.2 17.6z" fill="#fff"/><path d="M18.2 18.8 l1.8 1 l-1.8 1z M21.8 18.8 l-1.8 1 l1.8 1z" fill="#c1272d"/><circle cx="20" cy="19.8" r=".6" fill="#8f1d21"/>')}
+      ${mLimb('M28.6 31 L30.4 46', '#6b4a2a', 1.2)}<path d="M28.6 31 q-.4-2.4 1.8-2.4" stroke="#6b4a2a" stroke-width="1.2" fill="none" stroke-linecap="round"/>
+      ${mLimb('M14.4 19.6 L12.6 30', '#2d2d33', 2.8)}${mHand(12.6, 30.6)}${mLimb('M25.6 19.6 L28.6 30.4', '#2d2d33', 2.8)}${mHand(28.8, 30.8)}
+      ${mHead(20, 11, 'happy', 'tache', 'bowler')}`),
+  ],
+};
+/* Where each look starts. Energy and belle on the same 0-100 lines as their
+   goal (40+); money in naira (the game starts you near N20,000); credibility
+   toward the 150 goal. */
+const moodTier = {
+  energy: v => v >= 70 ? 3 : v >= 40 ? 2 : v >= 20 ? 1 : 0,
+  belle:  v => v >= 70 ? 3 : v >= 40 ? 2 : v >= 20 ? 1 : 0,
+  money:  v => v >= 40000 ? 3 : v >= 10000 ? 2 : v >= 1000 ? 1 : 0,
+  cred:   v => v >= 120 ? 3 : v >= 60 ? 2 : v >= 20 ? 1 : 0,
+};
+const MOOD_SAYS = {
+  energy: ['Worn out', 'Tired', 'Fine', 'Full of energy'],
+  belle:  ['Starving', 'Hungry', 'Fine', 'Belle full'],
+  money:  ['Broke', 'Getting by', 'Comfortable', 'Big man'],
+  cred:   ['Shady', 'Up to something', 'Decent', 'Gentleman'],
+};
+function drawMoods(){
+  if (!s) return;
+  for (const [kind, id, v] of [['energy', 'mEnergy', s.energy], ['belle', 'mBelle', s.belle], ['money', 'mMoney', s.money], ['cred', 'mCred', s.cred]]){
+    const el = $(id); if (!el) continue;
+    const t = moodTier[kind](+v || 0);
+    if (el.dataset.tier === String(t)) continue;
+    const first = el.dataset.tier == null;
+    el.dataset.tier = String(t);
+    el.innerHTML = MOODS[kind][t];
+    el.title = MOOD_SAYS[kind][t];
+    if (!first){ el.classList.remove('pop'); void el.offsetWidth; el.classList.add('pop'); }
+  }
+}
+
 function flashStats(){
   const now = { energy: s.energy, belle: s.belle, money: s.money, cred: s.cred };
   if (lastStats && lastStats.run === s){     // same run: a new game starts quiet
@@ -9723,6 +9897,7 @@ function render(){
   $('sMoney').textContent = naira(s.money);
   $('sMoney').classList.toggle('debt', s.money < 0);
   $('sCred').textContent = s.cred;
+  drawMoods();
   flashStats();
   /* Low marks. Credibility starts at zero for everybody, so its red pulse
      only nags once there has been a day to earn some. The how-to line under it
