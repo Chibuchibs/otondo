@@ -652,6 +652,13 @@
   /* the flood: the barrow boy on the near bank calls; on the far bank once he has pushed you over */
   .toutSay.floodSay{left:-2%;bottom:62px;background:#2f7fc1;--sb:#2f7fc1}
   .pothole .barrowDone{display:none}
+  /* Above the traffic (user: "partially covered by vehicle"): he stands on
+     your side of the road, so the danfos pass behind him; the water over the
+     walkers' feet reads as them being in it. */
+  .pothole.floodZ{z-index:3}
+  .barrowBoy .bArm{transform-box:fill-box;transform-origin:0 0}
+  .pothole.boyCall .barrowWait .bArm{animation:bWave .28s ease-in-out 6 alternate}
+  @keyframes bWave{to{transform:rotate(-80deg)}}
   .pothole.crossed .barrowDone{display:inline}
   .pothole.crossed .barrowWait,.pothole.carrying .barrowWait{display:none}
   /* riding in the barrow: legs in the tray, arms still, the boy's legs going */
@@ -1954,7 +1961,7 @@
 <script type="module">
 import { newGame, doAction, canDo, unlocked, ACTIONS, phaseOf, nextUnlock, postingOdds, rivalOf,
          computePosting, CHOICES, GOAL, goalStatus,
-         shareText, MAX_DAY } from './game.js?v=20261120145550';
+         shareText, MAX_DAY } from './game.js?v=20261120151027';
 
 /* ---------- scene coordinates ----------
    The scene is scaled by a transform (see the stage), so a native
@@ -1985,11 +1992,11 @@ const TS = (document.getElementById('scene').offsetWidth || 375) / 375;
 const ALLAWEE_NOTE = 'Allawee ₦77,000 — e never enter.';
 import { initNet, joinCamp, syncPlayer, platoonBoard, recentChat, postChat,
          postSuggestion, reportMessage, awardBoard, myAwards, laughChat,
-         setPresence, campRoster, renameMe, setAvatar, online, prizeBoard, myPrize } from './net.js?v=20261120145550';
-import { startMusic, stopMusic, musicOn, audioState, audioSupported, setRain, whenSilenced, wakeAudio, audible, say, sfx, BEAT, BAR } from './audio.js?v=20261120145550';
+         setPresence, campRoster, renameMe, setAvatar, online, prizeBoard, myPrize } from './net.js?v=20261120151027';
+import { startMusic, stopMusic, musicOn, audioState, audioSupported, setRain, whenSilenced, wakeAudio, audible, say, sfx, BEAT, BAR } from './audio.js?v=20261120151027';
 import { playHoop, playPenalty, playQuiz, playRegister, playParade,
          playMami, playHustle, playManOWar, playSaed, playSocial,
-         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261120145550';
+         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261120151027';
 
 /* Every dance animation is expressed in beats, so the steps are on-tempo
    whether or not the sound is playing — and genuinely on the beat when it is. */
@@ -2354,17 +2361,20 @@ function policeHilux(){
 }
 /* An ordinary saloon, the Corolla/Camry shape that is most of the private
    cars in Lagos: one driver, nothing to see, which is the point. */
+/* The cabin sits toward the back: a long bonnet, a short boot. It was the
+   other way round (boot 20 long, bonnet 16) and the user saw both directions
+   of sedan "driving in reverse" (2026-11-20). Headlight right, tail left. */
 function sedan(body, shade, k = 0){
   return `<svg viewBox="0 0 90 36" aria-hidden="true">
-    <path d="M4 28 V22.4 q0-3.4 4-3.9 L24 17 l9-7.6 q2-1.6 5-1.6 H58 q3 0 5 2 l8 7.2 12 1.5 q4 .5 4 4.5 V28z" fill="${body}"/>
+    <path d="M4 28 V22.4 q0-3.4 4-3.9 L17 17 l8-7.4 q2-1.8 5-1.8 H50 q3 0 5 2 l8.6 7.2 L83 18.5 q4 .5 4 4.5 V28z" fill="${body}"/>
     <path d="M4 24.6 H87 V28 H4z" fill="${shade}"/>
-    <path d="M35.4 10.6 H47 V17 H28.4z" fill="#3a4a5c"/>
-    <path d="M49 10.6 h9.4 q1.6 0 2.6 1 L66.2 17 H49z" fill="#3a4a5c"/>
-    <circle cx="55.6" cy="14.2" r="2.2" fill="${BUS_SKIN[k % 4]}"/>${faceOf(55.6, 14.2, 2.2)}
-    <path d="M53.2 17 q2.4-2.4 4.8 0z" fill="${BUS_WEAR[k % 5]}"/>
-    <path d="M48 17 V26" stroke="${shade}" stroke-width=".8"/>
-    <rect x="40" y="19.4" width="3.4" height="1" rx=".5" fill="${shade}"/>
-    <rect x="57" y="19.4" width="3.4" height="1" rx=".5" fill="${shade}"/>
+    <path d="M27.6 10.6 H40 V17 H20.6z" fill="#3a4a5c"/>
+    <path d="M42 10.6 h8.4 q1.6 0 2.6 1 L59 17 H42z" fill="#3a4a5c"/>
+    <circle cx="49" cy="14.2" r="2.2" fill="${BUS_SKIN[k % 4]}"/>${faceOf(49, 14.2, 2.2)}
+    <path d="M46.6 17 q2.4-2.4 4.8 0z" fill="${BUS_WEAR[k % 5]}"/>
+    <path d="M41 17 V26" stroke="${shade}" stroke-width=".8"/>
+    <rect x="33" y="19.4" width="3.4" height="1" rx=".5" fill="${shade}"/>
+    <rect x="50" y="19.4" width="3.4" height="1" rx=".5" fill="${shade}"/>
     <rect x="83" y="19.8" width="4" height="2.4" rx=".8" fill="#ffd34d"/>
     <rect x="3.6" y="19.8" width="2.4" height="2.6" rx=".6" fill="#d6342c"/>
     ${wheel(20,28.4,5.6)}${wheel(70,28.4,5.6)}
@@ -5444,7 +5454,7 @@ const barrowBoy = (cls = '') => `<g class="barrowBoy ${cls}">
     <path d="M-7.4 20.6 h9.4 l.7 9.8 h-4.2 l-1.1-4.8 -1 4.8 h-4.2z" fill="#2e5d8a"/>
     <path d="M-7.8 6.2 q4.6-2.2 9.6 0 l.6 15 h-10.8z" fill="#e8c547"/>
     <path d="M-5.8 6.4 q1.2 3.6 0 6.6 M-.4 6.4 q-1.2 3.6 0 6.6" stroke="#c9a52f" stroke-width=".7" fill="none"/>
-    <path d="M-1.4 9.4 q5.6 5.6 8.4 12.8" stroke="#6b4423" stroke-width="2.6" fill="none" stroke-linecap="round"/>
+    <path class="bArm" d="M-1.4 9.4 q5.6 5.6 8.4 12.8" stroke="#6b4423" stroke-width="2.6" fill="none" stroke-linecap="round"/>
     <circle cx="-2.6" cy="0" r="5.2" fill="#6b4423"/>
     <path d="M-7.7 -1.2 q.4-6.6 5.1-6.8 q4.8.1 5.3 6.2 q-2.6-2.4-5.2-2.3 q-2.8 0-5.2 2.9z" fill="#1d1812"/>
     ${faceOf(-2.6, 0, 5.2)}
@@ -5793,12 +5803,13 @@ function setObstacle(kind){
   pothole.innerHTML = danfo ? DANFO_BROKEN : kind === 'car' && (carN++ % 2) ? CAR_RED
                     : kind === 'bin' && (binN++ % 2) ? BIN_FULL_SVG
                     : kind === 'tout' && DISTRICTS_ON ? toutDressed(shownDistrict) : OBSTACLE[kind].svg;
-  pothole.classList.remove('leaving', 'waved', 'carrying', 'crossed');   // a fresh pass: whoever walked off is gone
+  pothole.classList.remove('leaving', 'waved', 'carrying', 'crossed', 'boyCall');   // a fresh pass: whoever walked off is gone
   pothole.getAnimations().forEach(a => a.cancel());
   /* The car stands up off the road, so it is drawn in front of everyone on
      the walk: anybody passing it goes behind it, on the road side — which is
      what going round it looks like. A hole stays under their feet. */
   pothole.classList.toggle('upright', kind === 'car' || kind === 'tout' || kind === 'bin');   // the agbero and the dustbin stand up too
+  pothole.classList.toggle('floodZ', kind === 'flood');
 }
 
 /* Up in the far lane and over to the left. Smaller, because everything in that
@@ -6609,10 +6620,10 @@ function hopPothole(p, paid){
     return;
   }
   if (paid && s && kind === 'flood'){                // naira, not energy: the boy is paid
-    s.money -= ob.fee;
+    if (p.dataset.prepaid !== String(potLap)){ s.money -= ob.fee; floatCost(p, `-${naira(ob.fee)}`); }   // (paid on the tap, normally)
+    delete p.dataset.prepaid;
     tell(ob.jumped);
     save(); render();
-    floatCost(p, `-${naira(ob.fee)}`);
     return;
   }
   if (paid && s){
@@ -6697,6 +6708,35 @@ function barrowRide(p){
     if (potKind === 'flood'){ pothole.classList.remove('carrying'); pothole.classList.add('crossed'); }
   }, D);
   return D;
+}
+/* A tap on the barrow, the boy or his label: the next corper walking up to
+   the water is his customer. Paid there and then, so the tap answers at once
+   (the money, his wave, his "Oya come!") instead of seconds later when the
+   corper reaches the water (user: "the kid with wheelbarrow is not doing
+   action when clicked"). Returns true when the tap was his. */
+function floodTap(who){
+  if (potKind !== 'flood') return false;
+  const lap = String(potLap);
+  if (pothole.classList.contains('carrying')) return true;          // busy pushing someone
+  const box = sceneEl.sceneRect(), x = potX(), ob = OBSTACLE.flood;
+  if (!who || hopped(who) || who.dataset.paid === lap){
+    who = [...sceneEl.querySelectorAll(':scope > .corper')]
+      .filter(p => freeFig(p) && !hopped(p) && p.dataset.paid !== lap)
+      .map(p => ({ p, gap: x - (ob.edge ?? 4) - figX(p, box) }))
+      .filter(c => c.gap > 0 && c.gap < box.width)
+      .sort((a, b) => a.gap - b.gap)[0]?.p || null;
+  }
+  pothole.classList.remove('boyCall'); void pothole.offsetWidth; pothole.classList.add('boyCall');
+  if (!who){ toutSay(pothole.classList.contains('crossed') ? 'Next time, oga!' : 'Your people don pass!', 'paid floodSay', 1600); return true; }
+  hintUsed();
+  who.dataset.paid = lap;
+  who.dataset.skipLap = lap;          // paid: not asked again on the way, just pushed when he gets there
+  potReadyAt = performance.now() + POT_COOLDOWN;
+  if (s){ s.money -= ob.fee; save(); render(); floatCost(who, `-${naira(ob.fee)}`); who.dataset.prepaid = lap; }
+  sfx('kaching');
+  toutSay('Oya come! I go push you.', 'paid floodSay', 2200);
+  if (who === jumpShown) clearJump();
+  return true;
 }
 /* Asked about the barrow and not answered: in up to the thighs, and it costs. */
 function floodSoak(p){
@@ -7240,6 +7280,7 @@ function takeOffer(p){
     /* The hole is jumped the moment you tap. The hill and the puddle are
        walked, so he carries on to the edge and crosses there: walking up a
        hill 200px short of it would be walking up the air. */
+    if (potKind === 'flood'){ floodTap(who); return true; }   // paid now, pushed when he gets there
     if (potKind === 'pothole') hopPothole(who, true);   // the tap is what makes it cost energy
     else { who.dataset.paid = String(potLap); potReadyAt = performance.now() + POT_COOLDOWN; }
     /* the agbero: paid on the tap, so the player sees it go — the pocket,
@@ -7341,6 +7382,14 @@ sceneEl.addEventListener('click', e => {
     else if (adSpot.dataset.ad === 'prize') showPrize();
     else $('adPop').classList.remove('hidden');       // asks first: a stray tap used to open a mail draft
     return;
+  }
+  /* the barrow boy: by his drawing's box, since the road layer takes no taps */
+  if (potKind === 'flood'){
+    const g = pothole.querySelector('.barrowWait');
+    const r = g && !pothole.classList.contains('carrying') && !pothole.classList.contains('crossed') ? g.getBoundingClientRect() : null;
+    const k = sceneEl.getBoundingClientRect().width / sceneEl.offsetWidth, pad = 10 * k;
+    if (r && r.width && e.clientX > r.left - pad && e.clientX < r.right + pad && e.clientY > r.top - pad && e.clientY < r.bottom + pad
+        && floodTap(jumpShown)) return;
   }
   const hw = at.closest('.hawker');
   if (hw){ hintUsed(); buyWares(hw); return; }
