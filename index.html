@@ -1925,7 +1925,7 @@
 <script type="module">
 import { newGame, doAction, canDo, unlocked, ACTIONS, phaseOf, nextUnlock, postingOdds, rivalOf,
          computePosting, CHOICES, GOAL, goalStatus,
-         shareText, MAX_DAY } from './game.js?v=20261119163621';
+         shareText, MAX_DAY } from './game.js?v=20261119165811';
 
 /* ---------- scene coordinates ----------
    The scene is scaled by a transform (see the stage), so a native
@@ -1956,11 +1956,11 @@ const TS = (document.getElementById('scene').offsetWidth || 375) / 375;
 const ALLAWEE_NOTE = 'Allawee ₦77,000 — e never enter.';
 import { initNet, joinCamp, syncPlayer, platoonBoard, recentChat, postChat,
          postSuggestion, reportMessage, awardBoard, myAwards, laughChat,
-         setPresence, campRoster, renameMe, setAvatar, online, prizeBoard, myPrize } from './net.js?v=20261119163621';
-import { startMusic, stopMusic, musicOn, audioState, audioSupported, setRain, whenSilenced, wakeAudio, audible, say, sfx, BEAT, BAR } from './audio.js?v=20261119163621';
+         setPresence, campRoster, renameMe, setAvatar, online, prizeBoard, myPrize } from './net.js?v=20261119165811';
+import { startMusic, stopMusic, musicOn, audioState, audioSupported, setRain, whenSilenced, wakeAudio, audible, say, sfx, BEAT, BAR } from './audio.js?v=20261119165811';
 import { playHoop, playPenalty, playQuiz, playRegister, playParade,
          playMami, playHustle, playManOWar, playSaed, playSocial,
-         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261119163621';
+         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261119165811';
 
 /* Every dance animation is expressed in beats, so the steps are on-tempo
    whether or not the sound is playing — and genuinely on the beat when it is. */
@@ -1968,6 +1968,14 @@ document.documentElement.style.setProperty('--beat', BEAT + 's');
 
 const $ = id => document.getElementById(id);
 const SKINS = ['#6b4423','#8d5524','#4a2c16','#a9714b','#5c3317'];
+/* A face for every small figure, in the corper's proportions (his head is r
+   9.6 with eyes r 1.15 at +-3.1 and a smile 5.3 down). dy lowers it under a
+   helmet's brim. A floor on the sizes keeps the tiny ones from vanishing. */
+const faceOf = (cx, cy, r, dy = 0) => {
+  const f = v => +v.toFixed(2), e = f(Math.max(.34, r * .12)), y = f(cy + r * .12 + dy);
+  return `<circle cx="${f(cx - r * .32)}" cy="${y}" r="${e}" fill="#1d1812"/><circle cx="${f(cx + r * .32)}" cy="${y}" r="${e}" fill="#1d1812"/>`
+    + `<path d="M${f(cx - r * .24)} ${f(cy + r * .55 + dy)}q${f(r * .24)} ${f(r * .18)} ${f(r * .48)} 0" stroke="#3a2216" stroke-width="${f(Math.max(.24, r * .08))}" fill="none" stroke-linecap="round"/>`;
+};
 const NAIRA = `<svg viewBox="0 0 26 20" width="25" height="19" aria-hidden="true"><rect x="1" y="9.5" width="24" height="9.5" rx="2" fill="#5f7f55"/><rect x="1.8" y="5.5" width="22.4" height="9.5" rx="2" fill="#6f9463"/><rect x="2.6" y="1.5" width="20.8" height="10" rx="2" fill="#0a7a43"/><rect x="4.4" y="3.1" width="17.2" height="6.8" rx="1.2" fill="none" stroke="#d9ece1" stroke-width=".8"/><text x="13" y="8.6" text-anchor="middle" font-size="7.4" font-weight="800" fill="#f7fbf8" font-family="system-ui,sans-serif">&#8358;</text></svg>`;
 /* Phase strip under the stats — four bars, one per week of camp. */
 const PHASE_LIST = [
@@ -2139,7 +2147,7 @@ let busN = 0;
 function rider(cx, cy, k, hat){
   const skin = BUS_SKIN[k % 4], wear = BUS_WEAR[k % 5];
   return `<path d="M${cx-4} ${cy+6} q4-4 8 0z" fill="${wear}"/>
-    <circle cx="${cx}" cy="${cy}" r="2.5" fill="${skin}"/>
+    <circle cx="${cx}" cy="${cy}" r="2.5" fill="${skin}"/>${faceOf(cx, cy, 2.5)}
     ${hat === 1 ? `<path d="M${cx-2.7} ${cy-.6} a2.7 2.7 0 0 1 5.4 0z" fill="#1d2023"/>` : ''}
     ${hat === 2 ? `<path d="M${cx-3.2} ${cy-.4} q3.2-5 6.4 0z" fill="#b53a8f"/>` : ''}`;
 }
@@ -2171,7 +2179,7 @@ function conductor(seed, n){
         <rect x="-2.6" y="-8" width="2.4" height="8" rx="1" fill="${COND_PANTS[n % 4]}"/>
         <rect x="0.4" y="-8" width="2.4" height="8" rx="1" fill="${COND_PANTS[n % 4]}"/>
         <circle cx="0" cy="-20" r="2.9" fill="${skin}"/>
-        ${hatSvg}
+        ${hatSvg}${faceOf(0, -20, 2.9)}
         <g class="wave">
           <path d="M1.8 -15 L10.5 -12.5" stroke="${skin}" stroke-width="2" stroke-linecap="round"/>
           ${n % 3 !== 2 ? `<rect x="9.4" y="-15.2" width="2.8" height="1.5" rx=".3" fill="#8fbf6a" transform="rotate(-24 10.8 -14.4)"/>
@@ -2298,7 +2306,7 @@ function policeHilux(){
     <rect x="4" y="22" width="36" height="1.6" fill="#2c2c31"/>
     <path d="M43 12.4 h10 v7 h-10z" fill="#33404e"/>
     <path d="M55 12.4 h8.4 l5.6 7 H55z" fill="#33404e"/>
-    <circle cx="59.4" cy="15.8" r="2.2" fill="#5c3317"/>
+    <circle cx="59.4" cy="15.8" r="2.2" fill="#5c3317"/>${faceOf(59.4, 15.8, 2.2)}
     <path d="M57.2 15.2 q.2-2.8 2.6-2.6 q2.2.2 1.8 1.8 q-2.4-.2-4.4.8z" fill="#1f6b3a"/>
     <path d="M57 19.4 q2.4-2.4 4.8 0z" fill="#1b1b1e"/>
     <rect x="54" y="13" width="1" height="20" fill="#0d0d0f"/>
@@ -2323,7 +2331,7 @@ function sedan(body, shade, k = 0){
     <path d="M4 24.6 H87 V28 H4z" fill="${shade}"/>
     <path d="M35.4 10.6 H47 V17 H28.4z" fill="#3a4a5c"/>
     <path d="M49 10.6 h9.4 q1.6 0 2.6 1 L66.2 17 H49z" fill="#3a4a5c"/>
-    <circle cx="55.6" cy="14.2" r="2.2" fill="${BUS_SKIN[k % 4]}"/>
+    <circle cx="55.6" cy="14.2" r="2.2" fill="${BUS_SKIN[k % 4]}"/>${faceOf(55.6, 14.2, 2.2)}
     <path d="M53.2 17 q2.4-2.4 4.8 0z" fill="${BUS_WEAR[k % 5]}"/>
     <path d="M48 17 V26" stroke="${shade}" stroke-width=".8"/>
     <rect x="40" y="19.4" width="3.4" height="1" rx=".5" fill="${shade}"/>
@@ -2342,11 +2350,11 @@ function okada(passenger){
     <g>
       <path d="M25 17h7l3 9H23z" fill="#2f6b4f"/>
       <circle cx="29" cy="11" r="4.6" fill="#6b4423"/>
-      <path d="M24.4 11a4.6 4.6 0 0 1 9.2 0c0 .7-.5 1.2-1.2 1.2h-6.8c-.7 0-1.2-.5-1.2-1.2z" fill="#1d2023"/>
+      <path d="M24.4 11a4.6 4.6 0 0 1 9.2 0c0 .7-.5 1.2-1.2 1.2h-6.8c-.7 0-1.2-.5-1.2-1.2z" fill="#1d2023"/>${faceOf(29, 11, 4.6, 1)}
     </g>
     ${passenger ? `<g><path d="M17 19h7l3 8H15z" fill="#4a6fa5"/>
       <circle cx="20.5" cy="13" r="4.2" fill="#8d5524"/>
-      <path d="M16.3 13a4.2 4.2 0 0 1 8.4 0c0 .6-.4 1-1 1h-6.4c-.6 0-1-.4-1-1z" fill="#2f3337"/></g>` : ''}
+      <path d="M16.3 13a4.2 4.2 0 0 1 8.4 0c0 .6-.4 1-1 1h-6.4c-.6 0-1-.4-1-1z" fill="#2f3337"/>${faceOf(20.5, 13, 4.2, .9)}</g>` : ''}
     ${wheel(13,32,6.2)}${wheel(47,32,6.2)}
   </svg>`;
 }
@@ -2831,7 +2839,7 @@ function heads(cfg){
        <path d="M${cx-6.5} 46 q6.5-7 13 0z" fill="${skin}"/>
        <path d="M${cx-6.5} 46 q6.5-5.4 13 0z" fill="${shirt}"/>
        <circle cx="${cx}" cy="${cy}" r="${r}" fill="${skin}"/>
-       ${hair.front}
+       ${hair.front}${faceOf(cx, cy, r)}
      </g>`;
   };
   return n === 1 ? one(cfg.headX || 60 + (seed % 3) * 5, 3.4, 0) : one(59, 3.4, 0) + one(73, 3, 1);
@@ -2855,7 +2863,7 @@ function barberBoard(x, y, w){
   const step = (w - 8) / 6;
   const row = heads.map((hair, i) => {
     const cx = x + 4 + step * i + step / 2, cy = y + 11;
-    return `<circle cx="${cx}" cy="${cy}" r="3.4" fill="#8d5524"/>${hair(cx, cy)}`;
+    return `<circle cx="${cx}" cy="${cy}" r="3.4" fill="#8d5524"/>${hair(cx, cy)}${faceOf(cx, cy, 3.4)}`;
   }).join('');
   return `<rect x="${x}" y="${y}" width="${w}" height="26" rx="2" fill="#f7f4ea"/>
    <rect x="${x}" y="${y}" width="${w}" height="26" rx="2" fill="none"
@@ -3296,7 +3304,7 @@ function modernShop(cfg){
     <!-- lit menu boards over the counter, and someone serving -->
     ${[0, 1, 2].map(i => `<rect class="neon" x="${51 + i * 13}" y="29.4" width="11.6" height="5.6" rx=".4" fill="${cap}"/>
       <path d="M${52.4 + i * 13} 31h8.6 M${52.4 + i * 13} 33h6" stroke="#fff" stroke-width=".6"/>`).join('')}
-    <circle cx="69" cy="38.8" r="2.5" fill="#6b4226"/>
+    <circle cx="69" cy="38.8" r="2.5" fill="#6b4226"/>${faceOf(69, 38.8, 2.5)}
     <rect x="66.2" y="35.7" width="5.6" height="1.6" rx=".6" fill="${cap}"/>
     <path d="M65 45 v-2 q0-2.2 2.2-2.2 h3.6 q2.2 0 2.2 2.2 v2z" fill="${cap}"/>
     <rect x="48" y="44.4" width="42" height="4.6" fill="#d9d2c0"/>
@@ -3551,7 +3559,7 @@ function broadShop(cfg){
       ${topFace(12, 20, 50, cfg.roof)}<rect x="12" y="20" width="50" height="5" fill="${cfg.roof}"/>
       <rect x="19" y="29" width="36" height="16" fill="#18221c"/>
       <!-- the dealer in the booth: white cap, a wad of notes fanned out -->
-      <circle cx="30" cy="36.4" r="3.4" fill="#6b4423"/><path d="M26.6 35.4a3.4 3.4 0 0 1 6.8 0z" fill="#f4f0e4"/>
+      <circle cx="30" cy="36.4" r="3.4" fill="#6b4423"/>${faceOf(30, 36.4, 3.4)}<path d="M26.6 35.4a3.4 3.4 0 0 1 6.8 0z" fill="#f4f0e4"/>
       <path d="M25 45v-3.2q0-2.4 2.4-2.4h5.2q2.4 0 2.4 2.4v3.2z" fill="#e9e4d4"/>
       <g class="fanNotes"><rect x="37" y="36" width="7" height="3.4" rx=".4" fill="#4f9a5a" transform="rotate(-20 37 39)"/>
         <rect x="37" y="36" width="7" height="3.4" rx=".4" fill="#6fb36f" transform="rotate(-2 37 39)"/>
@@ -3565,7 +3573,7 @@ function broadShop(cfg){
       <rect x="66.4" y="50" width="2.6" height="10" fill="#3a3a3a"/><rect x="70" y="50" width="2.6" height="10" fill="#3a3a3a"/>
       <path d="M64.4 51V41.6q0-3 3-3h3.6q3 0 3 3V51z" fill="#8fb0a0"/>
       <rect x="74" y="45" width="6" height="7" rx="1.2" fill="#151515"/>
-      <rect x="67.6" y="35.4" width="2.6" height="3.2" fill="#4a2e1c"/><circle cx="68.9" cy="33.4" r="2.9" fill="#4a2e1c"/>
+      <rect x="67.6" y="35.4" width="2.6" height="3.2" fill="#4a2e1c"/><circle cx="68.9" cy="33.4" r="2.9" fill="#4a2e1c"/>${faceOf(68.9, 33.4, 2.9)}
       <path d="M66 32.6a2.9 2.9 0 0 1 5.8 0z" fill="#c9a227"/>
       <rect x="61" y="42" width="5" height="2.6" rx=".4" fill="#4f9a5a" transform="rotate(-24 63 43)"/>
       ${board(cfg.sign, 6, 5, 72, cfg.signInk)}
@@ -3585,7 +3593,7 @@ function broadShop(cfg){
       <rect x="60" y="53" width="12" height="2" fill="#8a6b3f"/><rect x="61" y="55" width="1.6" height="5" fill="#6d5230"/><rect x="69.4" y="55" width="1.6" height="5" fill="#6d5230"/>
       <rect x="62" y="48" width="9" height="5" rx="2" fill="#2f4f7a"/>
       <path d="M61 49V41q0-2.6 2.6-2.6h4.8q2.6 0 2.6 2.6v8z" fill="#e8e1cf"/>
-      <rect x="64.4" y="35" width="3" height="3.6" fill="#6b4423"/><circle cx="65.9" cy="33" r="3" fill="#6b4423"/>
+      <rect x="64.4" y="35" width="3" height="3.6" fill="#6b4423"/><circle cx="65.9" cy="33" r="3" fill="#6b4423"/>${faceOf(65.9, 33, 3)}
       <rect x="57" y="39.6" width="9" height="7.4" fill="#f4f2ea" transform="rotate(-8 61 43)"/><rect x="57" y="39.6" width="9" height="1.8" fill="#c1272d" transform="rotate(-8 61 43)"/>
       ${board(cfg.sign, 12, 2, 60, cfg.signInk)}
     </svg>`;
@@ -3597,14 +3605,14 @@ function broadShop(cfg){
       <!-- the client on the bench, one foot up on the box -->
       <rect x="40" y="48" width="22" height="2.4" fill="#8a6b3f"/><rect x="41" y="50.4" width="1.8" height="9.6" fill="#6d5230"/><rect x="59" y="50.4" width="1.8" height="9.6" fill="#6d5230"/>
       <path d="M50 48V38.6q0-2.8 2.8-2.8h3.6q2.8 0 2.8 2.8V48z" fill="#e9e4f5"/>
-      <rect x="53.4" y="32" width="3" height="3.6" fill="#4a2e1c"/><circle cx="54.9" cy="30" r="3" fill="#4a2e1c"/>
+      <rect x="53.4" y="32" width="3" height="3.6" fill="#4a2e1c"/><circle cx="54.9" cy="30" r="3" fill="#4a2e1c"/>${faceOf(54.9, 30, 3)}
       <path d="M50 47.4 L40 50" stroke="#2b2b30" stroke-width="3.4" stroke-linecap="round"/>
       <rect x="34.4" y="48.4" width="7" height="2.6" rx="1" fill="#141414"/>
       <!-- the box and the shiner, brush going -->
       <rect x="28" y="51" width="14" height="9" fill="${cfg.body}"/><rect x="28" y="51" width="14" height="1.4" fill="${tint(cfg.body, 1.3)}"/>
       <rect x="14" y="54" width="9" height="2" fill="#8a6b3f"/>
       <path d="M16 54V46q0-2.4 2.4-2.4h3.4q2.4 0 2.4 2.4v8z" fill="#c14f3e"/>
-      <rect x="18.8" y="40" width="2.6" height="3.4" fill="#6b4423"/><circle cx="20.1" cy="38" r="2.8" fill="#6b4423"/>
+      <rect x="18.8" y="40" width="2.6" height="3.4" fill="#6b4423"/><circle cx="20.1" cy="38" r="2.8" fill="#6b4423"/>${faceOf(20.1, 38, 2.8)}
       <g class="shineBrush"><path d="M23 48 L31 49" stroke="#6b4423" stroke-width="2" stroke-linecap="round"/><rect x="30" y="47.6" width="4.4" height="2.4" rx=".6" fill="#3a2410"/></g>
       ${board(cfg.sign, 8, 4, 60, cfg.signInk)}
     </svg>`;
@@ -3621,7 +3629,7 @@ function broadShop(cfg){
       <!-- the mallam behind it, cap and kaftan -->
       <path d="M22 44V36q0-2.6 2.6-2.6" stroke="none"/>
       <path d="M53 44V35.6q0-2.8 2.8-2.8h3.4q2.8 0 2.8 2.8V44z" fill="#f4f0e4"/>
-      <rect x="56.2" y="29" width="2.6" height="3.4" fill="#8d5524"/><circle cx="57.5" cy="27" r="2.8" fill="#8d5524"/><path d="M54.7 26.2a2.8 2.8 0 0 1 5.6 0z" fill="#1f7a46"/>
+      <rect x="56.2" y="29" width="2.6" height="3.4" fill="#8d5524"/><circle cx="57.5" cy="27" r="2.8" fill="#8d5524"/>${faceOf(57.5, 27, 2.8)}<path d="M54.7 26.2a2.8 2.8 0 0 1 5.6 0z" fill="#1f7a46"/>
       ${board(cfg.sign, 10, 5, 60, cfg.signInk)}
     </svg>`;
   }
@@ -3715,13 +3723,13 @@ function lekkiShop(cfg){
       nails: `<rect x="48" y="27" width="40" height="3" fill="#ffd6e0"/>
         ${[50, 54, 58, 62, 66, 70].map((x, i) => `<rect x="${x}" y="24.6" width="2.2" height="3.6" rx=".6" fill="${['#c9184a', '#ff8fab', '#9d4edd', '#f72585', '#ffb703', '#e5383b'][i]}"/>`).join('')}
         <rect x="52" y="44" width="12" height="9" rx="2" fill="#ff8fab"/><rect x="72" y="44" width="12" height="9" rx="2" fill="#ff8fab"/>
-        <circle cx="58" cy="37" r="3" fill="#6b4423"/><path d="M54 44 v-3 q0 -2.6 4 -2.6 q4 0 4 2.6 v3z" fill="#fff"/>
-        <circle cx="78" cy="37" r="3" fill="#4a2e1c"/><path d="M74 44 v-3 q0 -2.6 4 -2.6 q4 0 4 2.6 v3z" fill="#c9184a"/>
+        <circle cx="58" cy="37" r="3" fill="#6b4423"/>${faceOf(58, 37, 3)}<path d="M54 44 v-3 q0 -2.6 4 -2.6 q4 0 4 2.6 v3z" fill="#fff"/>
+        <circle cx="78" cy="37" r="3" fill="#4a2e1c"/>${faceOf(78, 37, 3)}<path d="M74 44 v-3 q0 -2.6 4 -2.6 q4 0 4 2.6 v3z" fill="#c9184a"/>
         <rect x="64" y="45" width="8" height="2" fill="#f1f1f1"/>`,
       gym: `<rect x="46.4" y="24.4" width="44.2" height="29.2" fill="#3a3c55"/>
         <rect x="48" y="26" width="18" height="12" fill="#4d5070" opacity=".8"/>
         <path d="M52 52 l12 -3 v2 l-12 3z" fill="#111"/><rect x="62" y="40" width="1.6" height="10" fill="#888"/>
-        <circle cx="57" cy="37" r="2.4" fill="#6b4423"/><path d="M55 46 v-5 q0 -2 2 -2 q2 0 2 2 v5z" fill="#ef233c"/>
+        <circle cx="57" cy="37" r="2.4" fill="#6b4423"/>${faceOf(57, 37, 2.4)}<path d="M55 46 v-5 q0 -2 2 -2 q2 0 2 2 v5z" fill="#ef233c"/>
         <path d="M55.6 46 l-2 4 M58.4 46 l2 4" stroke="#222" stroke-width="1.6" stroke-linecap="round"/>
         <rect x="70" y="47" width="18" height="2" fill="#777"/>${[72, 77, 82, 86].map(x => `<rect x="${x}" y="44.6" width="2.4" height="6.6" rx=".6" fill="#1d1d1d"/>`).join('')}
         <path d="M71 30 h6 M71 30 v-2 v4 M77 30 v-2 v4" stroke="#ef233c" stroke-width="1.6"/>`,
@@ -3731,7 +3739,7 @@ function lekkiShop(cfg){
       cowork: `<text class="neon" x="68" y="31" text-anchor="middle" font-size="7" font-weight="900" font-family="monospace" fill="#c77dff">{ }</text>
         <rect x="48" y="44" width="40" height="2" fill="#bfa58a"/>
         ${[51, 66, 79].map(x => `<rect class="neon" x="${x}" y="38.6" width="7" height="5" rx=".5" fill="#9fd0ff"/><rect x="${x - 1}" y="43.4" width="9" height=".8" fill="#555"/>`).join('')}
-        <circle cx="56" cy="36" r="2.4" fill="#4a2e1c"/><path d="M53.6 44 v-4 q0 -2 2.4 -2 q2.4 0 2.4 2 v4z" fill="#5a189a"/>
+        <circle cx="56" cy="36" r="2.4" fill="#4a2e1c"/>${faceOf(56, 36, 2.4)}<path d="M53.6 44 v-4 q0 -2 2.4 -2 q2.4 0 2.4 2 v4z" fill="#5a189a"/>
         <ellipse cx="84" cy="51" rx="5" ry="3" fill="#ffb703"/>`,
       realty: [[48, '3 BED', '₦5M/YR'], [62, 'DUPLEX', '₦12M/YR'], [76, 'STUDIO', '₦2.5M/YR']].map(([x, a, b]) => `<rect x="${x}" y="27" width="12" height="20" rx="1" fill="#fff"/>
         <path d="M${x + 2} 35 l4 -4 l4 4 v4 h-8z" fill="#a8dadc"/><rect x="${x + 4.8}" y="36.4" width="2.4" height="2.6" fill="#1d3557"/>
@@ -3761,12 +3769,12 @@ function lekkiShop(cfg){
       <rect x="6" y="16" width="88" height="44" fill="${cfg.body}"/>
       <rect x="45" y="23" width="47" height="22" fill="#1f2a33"/><rect class="door" x="46.4" y="24.4" width="44.2" height="19.2" fill="#fff4e0"/>
       <rect x="48" y="30" width="40" height="2" fill="#8b5e3c"/>${[51, 57, 63].map(x => `<rect x="${x}" y="26" width="3.4" height="4" rx=".6" fill="#6f4e37"/>`).join('')}
-      <circle cx="78" cy="31" r="2.4" fill="#6b4423"/><path d="M75.4 38 v-3 q0 -2 2.6 -2 q2.6 0 2.6 2 v3z" fill="${cfg.roof}"/>
+      <circle cx="78" cy="31" r="2.4" fill="#6b4423"/>${faceOf(78, 31, 2.4)}<path d="M75.4 38 v-3 q0 -2 2.6 -2 q2.6 0 2.6 2 v3z" fill="${cfg.roof}"/>
       ${glassDoors}
       ${table(58, cfg.roof)}${table(82, '#f4a261')}
       <!-- the couple at the near table, cups up -->
-      <rect x="51" y="52" width="2" height="8" fill="#555"/><path d="M49 52 v-6 q0 -2.4 2.6 -2.4 q2.6 0 2.6 2.4 v6z" fill="#e9c46a"/><circle cx="51.6" cy="41.6" r="2.4" fill="#4a2e1c"/>
-      <rect x="63" y="52" width="2" height="8" fill="#555"/><path d="M61 52 v-6 q0 -2.4 2.6 -2.4 q2.6 0 2.6 2.4 v6z" fill="#264653"/><circle cx="63.6" cy="41.6" r="2.4" fill="#8d5524"/>
+      <rect x="51" y="52" width="2" height="8" fill="#555"/><path d="M49 52 v-6 q0 -2.4 2.6 -2.4 q2.6 0 2.6 2.4 v6z" fill="#e9c46a"/><circle cx="51.6" cy="41.6" r="2.4" fill="#4a2e1c"/>${faceOf(51.6, 41.6, 2.4)}
+      <rect x="63" y="52" width="2" height="8" fill="#555"/><path d="M61 52 v-6 q0 -2.4 2.6 -2.4 q2.6 0 2.6 2.4 v6z" fill="#264653"/><circle cx="63.6" cy="41.6" r="2.4" fill="#8d5524"/>${faceOf(63.6, 41.6, 2.4)}
       <rect x="55.4" y="47.4" width="1.8" height="1.8" fill="#fff"/><rect x="59" y="47.4" width="1.8" height="1.8" fill="#fff"/>
       ${topFace(4, 6, 92, cfg.roof)}${sideWall(96, 6, 18, cfg.roof)}
       <rect x="4" y="6" width="92" height="11" fill="${cfg.roof}"/>
@@ -3782,7 +3790,7 @@ function lekkiShop(cfg){
       <rect x="18" y="29" width="8" height="16" rx="1" fill="#ff7b00" opacity=".55"/>
       <path d="M27 29 L33 29 L32 45 L28 45z" fill="#a0522d"/><path d="M28 32h4M28 36h4M28.4 40h3.2" stroke="#7a3b16" stroke-width=".7"/>
       <rect x="29.6" y="27" width=".8" height="20" fill="#bbb"/>
-      <circle cx="44" cy="34" r="3" fill="#6b4423"/><rect x="41" y="31" width="6" height="1.6" fill="#fff"/>
+      <circle cx="44" cy="34" r="3" fill="#6b4423"/>${faceOf(44, 34, 3)}<rect x="41" y="31" width="6" height="1.6" fill="#fff"/>
       <path d="M40 46 v-6 q0 -3 4 -3 q4 0 4 3 v6z" fill="#fff"/><path d="M38 40 l-4 -1" stroke="#ccc" stroke-width="1"/>
       ${[50, 54].map(x => `<rect x="${x}" y="40" width="3" height="6" rx="1.4" fill="#f3e3c3"/>`).join('')}
       <rect x="12" y="46" width="50" height="3" fill="#d9d2c0"/>
@@ -3849,7 +3857,7 @@ Object.assign(CUSTOMERS, {
 function cvShop(cfg){
   const k = cfg.cv;
   const person = (x, y, skin, shirt, cap) => `<path d="M${x - 3} ${y + 9} v-5 q0 -2.6 3 -2.6 q3 0 3 2.6 v5z" fill="${shirt}"/>
-    <circle cx="${x}" cy="${y}" r="2.6" fill="${skin}"/>${cap ? `<path d="M${x - 2.7} ${y - .6}a2.7 2.7 0 0 1 5.4 0z" fill="${cap}"/>` : ''}`;
+    <circle cx="${x}" cy="${y}" r="2.6" fill="${skin}"/>${faceOf(x, y, 2.6)}${cap ? `<path d="M${x - 2.7} ${y - .6}a2.7 2.7 0 0 1 5.4 0z" fill="${cap}"/>` : ''}`;
   if (k === 'plaza'){                       /* three floors of little units, a sign over every one, the stair up the side */
     const top = -10, C = ['#c1272d', '#1e3a8a', '#1f7a46', '#f3c53d', '#7b2cbf', '#e85d04'];   // low enough to clear the story line
     const unit = (x, y, i) => `<rect x="${x}" y="${y}" width="24" height="16" fill="${tint(cfg.body, .86)}"/>
@@ -3921,7 +3929,7 @@ function cvShop(cfg){
       <!-- the customer waiting, holding the broken phone -->
       <rect x="64" y="50" width="2.4" height="10" fill="#2b2b30"/><rect x="67.6" y="50" width="2.4" height="10" fill="#2b2b30"/>
       <path d="M62.6 51V42q0-2.6 2.6-2.6h3.6q2.6 0 2.6 2.6v9z" fill="#c1272d"/>
-      <rect x="65.6" y="35.6" width="2.6" height="3.4" fill="#8d5524"/><circle cx="66.9" cy="33.6" r="2.8" fill="#8d5524"/>
+      <rect x="65.6" y="35.6" width="2.6" height="3.4" fill="#8d5524"/><circle cx="66.9" cy="33.6" r="2.8" fill="#8d5524"/>${faceOf(66.9, 33.6, 2.8)}
       <rect x="59.6" y="40" width="3" height="4.6" rx=".6" fill="#1d1d1d"/><path d="M60 41 l2 2.6" stroke="#9fd0ff" stroke-width=".5"/>
       ${board(cfg.sign, 8, 2, 68, cfg.signInk)}
     </svg>`;
@@ -3950,7 +3958,7 @@ function cvShop(cfg){
       <path d="M44 46h14l-1.6 8h-10.8z" fill="#5a5a5a"/><ellipse cx="51" cy="46" rx="7" ry="1.6" fill="#c1272d"/>
       <!-- mama: headtie, wrapper, ladle up -->
       <path d="M60 56V44q0-3.4 3.4-3.4h4.4q3.4 0 3.4 3.4v12z" fill="#f3c53d"/><circle cx="62" cy="47" r=".9" fill="#c1272d"/><circle cx="68" cy="51" r=".9" fill="#c1272d"/>
-      <rect x="64.2" y="36" width="3" height="4" fill="#4a2e1c"/><circle cx="65.7" cy="33.8" r="3.2" fill="#4a2e1c"/>
+      <rect x="64.2" y="36" width="3" height="4" fill="#4a2e1c"/><circle cx="65.7" cy="33.8" r="3.2" fill="#4a2e1c"/>${faceOf(65.7, 33.8, 3.2)}
       <path d="M62.2 32.6a3.6 3.6 0 0 1 7.2 0l.6 1.2h-8.4z" fill="#1f8a4c"/><path d="M69 31l3 -1.6l-.8 2.8z" fill="#1f8a4c"/>
       <path d="M60.4 45 L56 40" stroke="#4a2e1c" stroke-width="2" stroke-linecap="round"/><path d="M56 40 l-1 -5" stroke="#888" stroke-width="1"/>
       <rect x="14" y="56" width="22" height="2" fill="#8a6b3f"/>
@@ -4048,7 +4056,7 @@ Object.assign(CUSTOMERS, {
 function ybShop(cfg){
   const k = cfg.yb;
   const person = (x, y, skin, shirt, cap) => `<path d="M${x - 3} ${y + 9} v-5 q0 -2.6 3 -2.6 q3 0 3 2.6 v5z" fill="${shirt}"/>
-    <circle cx="${x}" cy="${y}" r="2.6" fill="${skin}"/>${cap ? `<path d="M${x - 2.7} ${y - .6}a2.7 2.7 0 0 1 5.4 0z" fill="${cap}"/>` : ''}`;
+    <circle cx="${x}" cy="${y}" r="2.6" fill="${skin}"/>${faceOf(x, y, 2.6)}${cap ? `<path d="M${x - 2.7} ${y - .6}a2.7 2.7 0 0 1 5.4 0z" fill="${cap}"/>` : ''}`;
   const legs = (x, y, c = '#2b2b30') => `<rect x="${x - 2.4}" y="${y}" width="2.2" height="${60 - y}" fill="${c}"/><rect x="${x + .2}" y="${y}" width="2.2" height="${60 - y}" fill="${c}"/>`;
   if (k === 'park'){                        /* the motor park: an arch, danfos lined up inside, the conductor calling */
     const bus = (x, y) => `<rect x="${x}" y="${y}" width="26" height="12" rx="2" fill="#f2c413"/><rect x="${x}" y="${y + 6}" width="26" height="1.6" fill="#1c1c1c"/>
@@ -4063,10 +4071,10 @@ function ybShop(cfg){
       ${board(cfg.sign, 16, 0, 68, cfg.signInk)}
       <!-- the ticket booth -->
       <rect x="12" y="36" width="14" height="24" fill="#c1272d"/><rect x="14" y="40" width="10" height="7" fill="#2a2a2a"/>
-      <circle cx="19" cy="43.4" r="2" fill="#6b4423"/><rect x="12" y="34" width="14" height="2.4" fill="#8a1c1c"/>
+      <circle cx="19" cy="43.4" r="2" fill="#6b4423"/>${faceOf(19, 43.4, 2)}<rect x="12" y="34" width="14" height="2.4" fill="#8a1c1c"/>
       <!-- the conductor calling the route, a hand up -->
       ${legs(80, 50, '#3a3a3a')}<path d="M77 50V43q0-2.6 3-2.6t3 2.6v7z" fill="#e9e4d4"/>
-      <rect x="78.8" y="36.6" width="2.4" height="3.2" fill="#4a2e1c"/><circle cx="80" cy="34.6" r="2.7" fill="#4a2e1c"/>
+      <rect x="78.8" y="36.6" width="2.4" height="3.2" fill="#4a2e1c"/><circle cx="80" cy="34.6" r="2.7" fill="#4a2e1c"/>${faceOf(80, 34.6, 2.7)}
       <path d="M83 42 L86 36" stroke="#4a2e1c" stroke-width="1.8" stroke-linecap="round"/>
       <g class="parkCall"><rect x="62" y="20" width="30" height="9" rx="4" fill="#fff" stroke="#2b2b2b" stroke-width=".5"/><path d="M80 29l-1.6 3.4l4 -3.4z" fill="#fff" stroke="#2b2b2b" stroke-width=".5"/>
         <text x="77" y="26.4" text-anchor="middle" font-size="5" font-weight="900" font-family="system-ui,sans-serif" fill="#c1272d" textLength="26" lengthAdjust="spacingAndGlyphs">OSHODI! OSHODI!</text></g>
@@ -4085,10 +4093,10 @@ function ybShop(cfg){
       <rect x="30" y="46" width="20" height="2.6" fill="#8a6b3f"/><rect x="31" y="48.6" width="1.6" height="11.4" fill="#6d5230"/><rect x="47.4" y="48.6" width="1.6" height="11.4" fill="#6d5230"/>
       ${[32, 37, 42].map(x => `<rect x="${x}" y="43" width="4" height="3" rx=".5" fill="#e3f2fd" stroke="#90caf9" stroke-width=".4"/>`).join('')}
       ${person(40, 36, '#6b4423', '#2b6cb0')}
-      ${legs(62, 50)}<path d="M59 50V43q0-2.6 3-2.6t3 2.6v7z" fill="#c1272d"/><rect x="60.8" y="36.6" width="2.4" height="3.2" fill="#4a2e1c"/><circle cx="62" cy="34.6" r="2.7" fill="#4a2e1c"/>
+      ${legs(62, 50)}<path d="M59 50V43q0-2.6 3-2.6t3 2.6v7z" fill="#c1272d"/><rect x="60.8" y="36.6" width="2.4" height="3.2" fill="#4a2e1c"/><circle cx="62" cy="34.6" r="2.7" fill="#4a2e1c"/>${faceOf(62, 34.6, 2.7)}
       <ellipse cx="62" cy="31" rx="6" ry="1.6" fill="#a86a3d"/>${[58.6, 61, 63.4, 65.6].map(x => `<circle cx="${x}" cy="29.6" r="1.3" fill="#f77f00"/>`).join('')}
       <!-- the gala seller, tray of sausage rolls on his head -->
-      ${legs(92, 50)}<path d="M89 50V43q0-2.6 3-2.6t3 2.6v7z" fill="#f4f0e4"/><rect x="90.8" y="36.6" width="2.4" height="3.2" fill="#8d5524"/><circle cx="92" cy="34.6" r="2.7" fill="#8d5524"/>
+      ${legs(92, 50)}<path d="M89 50V43q0-2.6 3-2.6t3 2.6v7z" fill="#f4f0e4"/><rect x="90.8" y="36.6" width="2.4" height="3.2" fill="#8d5524"/><circle cx="92" cy="34.6" r="2.7" fill="#8d5524"/>${faceOf(92, 34.6, 2.7)}
       <rect x="86" y="29.4" width="12" height="2.4" fill="#d6342c"/>${[87.6, 90.6, 93.6].map(x => `<rect x="${x}" y="27.4" width="2.4" height="2" rx=".6" fill="#f3c53d"/>`).join('')}
       ${board(cfg.sign, 28, 20, 44, cfg.signInk)}
     </svg>`;
@@ -4102,10 +4110,10 @@ function ybShop(cfg){
       <text x="50" y="21" text-anchor="middle" font-size="5.6" font-weight="900" font-family="Georgia,serif" fill="#ffd166" textLength="52" lengthAdjust="spacingAndGlyphs">KNOWLEDGE · SERVICE</text>
       <path d="M22 44 h40" stroke="#c1272d" stroke-width="2"/><path d="M26 44h4M34 44h4M42 44h4M50 44h4M58 44h4" stroke="#fff" stroke-width="2"/>
       <rect x="62" y="38" width="10" height="22" fill="#e9e4d4"/><rect x="63" y="40" width="8" height="5" fill="#2e3a42"/>
-      ${legs(68, 52, '#1d3557')}<path d="M65 52V45q0-2.6 3-2.6t3 2.6v7z" fill="#1d3557"/><circle cx="68" cy="38.6" r="2.6" fill="#4a2e1c"/><path d="M65.2 37.6h5.6l-.6-1.8h-4.4z" fill="#1d3557"/>
+      ${legs(68, 52, '#1d3557')}<path d="M65 52V45q0-2.6 3-2.6t3 2.6v7z" fill="#1d3557"/><circle cx="68" cy="38.6" r="2.6" fill="#4a2e1c"/>${faceOf(68, 38.6, 2.6)}<path d="M65.2 37.6h5.6l-.6-1.8h-4.4z" fill="#1d3557"/>
       <!-- students: backpacks, files -->
-      ${legs(30, 52, '#2b2b30')}<path d="M27 52V45q0-2.6 3-2.6t3 2.6v7z" fill="#e9c46a"/><circle cx="30" cy="38.6" r="2.6" fill="#6b4423"/><rect x="32.4" y="44" width="3" height="5" rx="1" fill="#1e3a8a"/>
-      ${legs(40, 52, '#3d405b')}<path d="M37 52V45q0-2.6 3-2.6t3 2.6v7z" fill="#f4a261"/><circle cx="40" cy="38.6" r="2.6" fill="#8d5524"/><rect x="35.6" y="45" width="3" height="4" fill="#f4f2ea"/>
+      ${legs(30, 52, '#2b2b30')}<path d="M27 52V45q0-2.6 3-2.6t3 2.6v7z" fill="#e9c46a"/><circle cx="30" cy="38.6" r="2.6" fill="#6b4423"/>${faceOf(30, 38.6, 2.6)}<rect x="32.4" y="44" width="3" height="5" rx="1" fill="#1e3a8a"/>
+      ${legs(40, 52, '#3d405b')}<path d="M37 52V45q0-2.6 3-2.6t3 2.6v7z" fill="#f4a261"/><circle cx="40" cy="38.6" r="2.6" fill="#8d5524"/>${faceOf(40, 38.6, 2.6)}<rect x="35.6" y="45" width="3" height="4" fill="#f4f2ea"/>
       ${board(cfg.sign, 14, 0, 72, cfg.signInk)}
     </svg>`;
   }
@@ -4167,7 +4175,7 @@ function ybShop(cfg){
       <path d="M3 22h94l-6-8H9z" fill="${cfg.roof}"/>
       ${door(cfg)}
       <rect x="50" y="30" width="36" height="22" fill="#f4f2ea"/><rect x="66" y="31" width="18" height="20" fill="#cfe3ee"/>
-      <circle cx="75" cy="38" r="3" fill="#6b4423"/><path d="M71 51v-6q0-3 4-3t4 3v6z" fill="#1e3a8a"/>
+      <circle cx="75" cy="38" r="3" fill="#6b4423"/>${faceOf(75, 38, 3)}<path d="M71 51v-6q0-3 4-3t4 3v6z" fill="#1e3a8a"/>
       <path d="M58 52 l-3 0 l3 -12 l3 12z" fill="none" stroke="#333" stroke-width=".7"/><rect x="55.6" y="37" width="5" height="3.4" rx=".6" fill="#1d1d1d"/><circle cx="60.4" cy="38.6" r="1" fill="#555"/>
       <path d="M52 34 q4 -6 8 0z" fill="#f4f2ea" stroke="#999" stroke-width=".4"/><path d="M56 34 v6" stroke="#999" stroke-width=".5"/>
       <rect x="50" y="53" width="36" height="5" rx="1" fill="${cfg.roof}"/>
@@ -5469,7 +5477,7 @@ const DANFO_BROKEN = `<svg viewBox="0 0 80 48" aria-hidden="true" overflow="visi
   <!-- windscreen, and the driver behind it: hand to his forehead -->
   <path d="M-55 -18L-47 -44H-39V-18Z" fill="#5d7482"/>
   <path d="M-49 -22q0 -5 5 -5q5 0 5 5z" fill="#2f6b4f"/>
-  <circle cx="-44" cy="-31" r="4.4" fill="#4a2e1c"/>
+  <circle cx="-44" cy="-31" r="4.4" fill="#4a2e1c"/>${faceOf(-44, -31, 4.4)}
   <path d="M-48.4 -32.4a4.4 4.4 0 0 1 8.8 0z" fill="#1c1a18"/>
   <path d="M-41 -22L-38 -30L-42 -34" stroke="#4a2e1c" stroke-width="2.4" fill="none" stroke-linecap="round"/>
   <!-- the front: hatch propped up on its stay, engine dark, smoking -->
@@ -5711,7 +5719,7 @@ const POS_DEFAULT = ['POS', '#1e3a6e', '#fff'];
       <rect x="9" y="38.5" width="7.5" height="2.4" rx="1.2" fill="#c14f3e"/>
       <circle cx="16.4" cy="39.7" r="1.4" fill="#6b4423"/>
       <rect x="6.4" y="30.5" width="3.4" height="5" rx="1.4" fill="#6b4423"/>
-      <circle cx="8.1" cy="28.8" r="3.3" fill="#6b4423"/>
+      <circle cx="8.1" cy="28.8" r="3.3" fill="#6b4423"/>${faceOf(8.1, 28.8, 3.3)}
       <path d="M4.8 28.4q3.3-4.6 6.6 0q-3.3-1.8-6.6 0z" fill="#241c15"/>
     </g>
   </svg>` + /* the customer, standing on the far side of the table, paying */
@@ -5772,7 +5780,7 @@ function kekeCouple(){
       <!-- the keke man: back in his seat, cap down, on his phone, a foot up on the dash -->
       <g transform="translate(0 2.6)">
       <path d="M33 23 v-4.6 q0 -2.4 2.6 -2.4 h2 q2.4 0 2.4 2.4 v4.6z" fill="#f4f0e4"/>
-      <circle cx="36.6" cy="13.6" r="2.6" fill="${SK2}"/><path d="M33.8 13 a2.8 2.8 0 0 1 5.6 0 l2 .4 h-7.6z" fill="#1f6f8b"/>
+      <circle cx="36.6" cy="13.6" r="2.6" fill="${SK2}"/>${faceOf(36.6, 13.6, 2.6)}<path d="M33.8 13 a2.8 2.8 0 0 1 5.6 0 l2 .4 h-7.6z" fill="#1f6f8b"/>
       <path d="M38.4 18.6 l2.4 -2.6" stroke="${SK2}" stroke-width="1.4" stroke-linecap="round"/><rect x="40.2" y="14.4" width="1.6" height="2.4" rx=".3" fill="#111"/>
       <path d="M39 22.6 L46.6 19.6" stroke="#3d405b" stroke-width="1.8" stroke-linecap="round"/><rect x="46" y="18.2" width="2.6" height="1.6" rx=".5" fill="#1d1d1d"/>
       </g>
@@ -6101,7 +6109,7 @@ const NEPA_MAN = `<g class="nepaMan">
     <!-- the arm on the ladder -->
     <path d="M14.2 40.6 L13 44.4 L15.6 45" stroke="#e05a12" stroke-width="1.5" fill="none" stroke-linejoin="round"/>
     <!-- head and yellow helmet -->
-    <circle cx="15.6" cy="36" r="2.3" fill="#6b4226"/>
+    <circle cx="15.6" cy="36" r="2.3" fill="#6b4226"/>${faceOf(15.6, 36, 2.3)}
     <path d="M13 35.4 Q13.2 32 15.8 32 Q18.4 32 18.6 35.4 Z" fill="#ffd23f"/>
     <rect x="12.6" y="35" width="6.6" height=".9" rx=".4" fill="#e6b800"/>
     <!-- the working arm, a spanner at the transformer -->
