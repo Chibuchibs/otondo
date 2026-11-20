@@ -698,12 +698,14 @@
   .oncoming{position:absolute;animation:oncome linear 1 forwards}
   .oncoming > svg{display:block;width:100%;height:auto;transform:scaleX(-1)}
   @keyframes oncome{from{left:118%}to{left:-22%}}
-  /* the wallet an okada passenger drops (WALLET_ON) */
-  .wallet{position:absolute;width:15px;height:11px;pointer-events:none;animation:walletDrop .45s cubic-bezier(.3,1.6,.5,1) both}
-  .wallet svg{display:block;width:100%;height:100%}
-  @keyframes walletDrop{from{transform:translateY(-16px) rotate(-40deg);opacity:0}to{transform:none;opacity:1}}
-  .wallet.gone{transition:transform .5s ease-in,opacity .5s;transform:scale(1.6,.25);opacity:0}
-  .wallet.away{transition:transform .7s ease-in,opacity .7s;transform:translate(-60px,-14px) rotate(-200deg);opacity:0}
+  /* the wallet an okada passenger drops (WALLET_ON): on the floor like the coin */
+  .coin.wallet{width:17px;height:12px;bottom:7px}
+  .coin.wallet .wFall{display:block;width:100%;height:100%;animation:walletFall .7s cubic-bezier(.45,0,.6,1) both}
+  .coin.wallet .wFall svg{display:block;width:100%;height:100%;overflow:visible}
+  @keyframes walletFall{0%{transform:translate(-6px,-58px) rotate(-220deg);opacity:0}12%{opacity:1}
+    78%{transform:translate(0,0) rotate(8deg)}90%{transform:translate(0,-3px) rotate(-2deg)}100%{transform:none}}
+  .coin.wallet .tapTag{bottom:210%}
+  .coin.wallet.flat{transition:transform .5s ease-in,opacity .5s;transform:translateX(-50%) scale(1.6,.2);opacity:0}
   .walletTag{position:absolute;z-index:7;transform:translateX(-50%);cursor:pointer;-webkit-tap-highlight-color:transparent;
     background:#c9a227;color:#1d1a10;font:800 8px/1 system-ui,sans-serif;letter-spacing:.06em;padding:4px 6px;
     border-radius:4px;white-space:nowrap;box-shadow:0 2px 6px rgba(0,0,0,.28);animation:tagBob .8s ease-in-out infinite alternate}
@@ -1981,7 +1983,7 @@
 <script type="module">
 import { newGame, doAction, canDo, unlocked, ACTIONS, phaseOf, nextUnlock, postingOdds, rivalOf,
          computePosting, CHOICES, GOAL, goalStatus,
-         shareText, MAX_DAY } from './game.js?v=20261120153449';
+         shareText, MAX_DAY } from './game.js?v=20261120154302';
 
 /* ---------- scene coordinates ----------
    The scene is scaled by a transform (see the stage), so a native
@@ -2012,11 +2014,11 @@ const TS = (document.getElementById('scene').offsetWidth || 375) / 375;
 const ALLAWEE_NOTE = 'Allawee ₦77,000 — e never enter.';
 import { initNet, joinCamp, syncPlayer, platoonBoard, recentChat, postChat,
          postSuggestion, reportMessage, awardBoard, myAwards, laughChat,
-         setPresence, campRoster, renameMe, setAvatar, online, prizeBoard, myPrize } from './net.js?v=20261120153449';
-import { startMusic, stopMusic, musicOn, audioState, audioSupported, setRain, whenSilenced, wakeAudio, audible, say, sfx, BEAT, BAR } from './audio.js?v=20261120153449';
+         setPresence, campRoster, renameMe, setAvatar, online, prizeBoard, myPrize } from './net.js?v=20261120154302';
+import { startMusic, stopMusic, musicOn, audioState, audioSupported, setRain, whenSilenced, wakeAudio, audible, say, sfx, BEAT, BAR } from './audio.js?v=20261120154302';
 import { playHoop, playPenalty, playQuiz, playRegister, playParade,
          playMami, playHustle, playManOWar, playSaed, playSocial,
-         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261120153449';
+         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261120154302';
 
 /* Every dance animation is expressed in beats, so the steps are on-tempo
    whether or not the sound is playing — and genuinely on the beat when it is. */
@@ -7366,7 +7368,6 @@ sceneEl.addEventListener('click', e => {
   if (wallet && e.target.closest('.walletTag')){
     const b = e.target.closest('button');
     if (b) settleWallet(wallet, b.classList.contains('wReturn'));
-    else chooseWallet(wallet);
     return;
   }
   const at = labelUnder(e.clientX, e.clientY) || e.target;
@@ -7998,82 +7999,68 @@ if (ONCOMING_ON && !calm()) setTimeout(sendOncoming, 7000);
    the okada man's blessing. Pocket am: +N500, and the street saw you, -2
    credibility. Ignored, it gets flattened and nothing happens. At most once
    a minute. WALLET_ON = false and it never drops. */
-const WALLET_ON = true, WALLET_GAP = 60000, WALLET_LIFE = 6500, WALLET_CHOOSE = 6000;
+const WALLET_ON = true, WALLET_GAP = 60000, WALLET_LIFE = 12000, WALLET_CHOOSE = 8000;
 const WALLET_CASH = 500, WALLET_CRED = 2;
-const WALLET_SVG = `<svg viewBox="0 0 11 8" aria-hidden="true"><rect x=".5" y=".8" width="10" height="6.6" rx="1.2" fill="#6b3f1f"/>
+const WALLET_SVG = `<svg viewBox="0 0 11 8" aria-hidden="true"><ellipse cx="5.5" cy="7.8" rx="5.4" ry=".9" fill="rgba(0,0,0,.25)"/><rect x=".5" y=".8" width="10" height="6.6" rx="1.2" fill="#6b3f1f"/>
   <path d="M.5 3.2h10" stroke="#4a2a12" stroke-width=".7"/><rect x="6.6" y="2.6" width="3.4" height="2.2" rx=".6" fill="#8a5a2e"/>
   <circle cx="8.3" cy="3.7" r=".5" fill="#e0c56a"/><rect x="2" y="0" width="4.4" height="1.4" rx=".3" fill="#3f8f4f"/></svg>`;
-let walletAt = -Infinity, wallet = null;
+let walletAt = -Infinity, wallet = null;     // `wallet`: the open choice, once it has been picked up
 function dropWallet(okadaEl){
-  if (!okadaEl.isConnected || wallet || calm() || document.hidden || !s) return;
-  if (jumpTag.style.display !== 'none') return;              // Mr. Pothole's ask comes first; never two at once
-  const box = sceneEl.sceneRect(), r = okadaEl.sceneRect();
-  let x = r.left - box.left + r.width * .55;
-  if (x < box.width * .15 || x > box.width * .85) return;
+  if (!okadaEl.isConnected || calm() || document.hidden || !s) return;
+  if (sceneEl.querySelector('.coin') || wallet || jumpTag.style.display !== 'none') return;   // one thing on the floor, one ask at a time
+  const box = sceneEl.sceneRect(), r = okadaEl.sceneRect(), W = box.width;
+  const x = r.left - box.left + r.width * .5;
+  if (x < W * .2 || x > W * .85 || Math.abs(potX() - x) < 70) return;
   walletAt = performance.now();
   const el = document.createElement('div');
-  el.className = 'wallet';
-  el.innerHTML = WALLET_SVG;
+  el.className = 'coin wallet';
   el.style.left = Math.round(x) + 'px';
-  el.style.bottom = (parseFloat(okadaEl.style.bottom) || 47) + 2 + 'px';
-  okadaEl.parentNode.appendChild(el);                          // on the far lane, behind the main traffic
-  const tag = document.createElement('div');
-  tag.className = 'walletTag';
-  /* the wallet is small and lands behind the traffic, so the label shows it too */
-  tag.innerHTML = `<span class="wIcon">${WALLET_SVG}</span>Wallet fall! Tap am`;
-  sceneEl.appendChild(tag);
-  const w = wallet = { el, tag, choosing: false, done: false };
-  let last = performance.now();
-  const place = () => {
-    tag.style.bottom = (parseFloat(el.style.bottom) + 17) + 'px';
-    pinInside(tag, box, x + 7.5);
-  };
-  place();
-  const step = now => {
-    if (w.done) return;
-    x -= ROAD_SPEED * Math.min(100, now - last) / 1000; last = now;   // it lies on the road, so the road carries it
-    el.style.left = Math.round(x) + 'px';
-    place();
-    if (x < -20){ endWallet(w, 'gone'); return; }
-    requestAnimationFrame(step);
-  };
-  requestAnimationFrame(step);
-  w.timer = setTimeout(() => { if (!w.choosing) endWallet(w, 'gone'); }, WALLET_LIFE);
+  el.dataset.x = String(x);
+  el.innerHTML = `<span class="wFall">${WALLET_SVG}</span><i class="tapTag">Wallet fall! Tap am</i>`;
+  el.setAttribute('role', 'button');
+  el.setAttribute('aria-label', 'A wallet fell off an okada. Tap to pick it up');
+  sceneEl.appendChild(el);
+  /* left lying there, a danfo flattens it */
+  el._gone = setTimeout(() => { if (!el.classList.contains('claimed')){ el.classList.add('flat'); setTimeout(() => el.remove(), 550); } }, WALLET_LIFE);
 }
-function chooseWallet(w){
-  if (w.choosing || w.done) return;
-  w.choosing = true;
-  hintUsed();
-  clearTimeout(w.timer);
-  w.tag.classList.add('choose');
-  w.tag.innerHTML = `<button class="wReturn" type="button">Return am +${WALLET_CRED} cred</button>`
-                  + `<button class="wPocket" type="button">Pocket am +${naira(WALLET_CASH)}</button>`;
-  w.timer = setTimeout(() => endWallet(w, 'gone'), WALLET_CHOOSE);   // no answer: a danfo settles it
+/* In his hand (claimCoin's grab): now the choice. */
+function pickWallet(coin){
+  const box = sceneEl.sceneRect(), x = +coin.dataset.x;
+  coin.classList.add('taken');
+  setTimeout(() => coin.remove(), 250);
+  const tag = document.createElement('div');
+  tag.className = 'walletTag choose';
+  tag.innerHTML = `<button class="wReturn" type="button">Return am +${WALLET_CRED} cred</button>`
+                + `<button class="wPocket" type="button">Pocket am +${naira(WALLET_CASH)}</button>`;
+  tag.style.bottom = '104px';
+  sceneEl.appendChild(tag);
+  pinInside(tag, box, x);
+  tell('You picked up the wallet. Return am, or pocket am?');
+  const w = wallet = { tag, done: false };
+  w.timer = setTimeout(() => { if (!w.done){ tell('You drop the wallet for the owner to find.'); endWallet(w); } }, WALLET_CHOOSE);
 }
 function settleWallet(w, honest){
   if (w.done || !s) return;
   if (honest){
     s.cred = (s.cred || 0) + WALLET_CRED;
     tell(`You return the wallet. Okada man shout "God bless you!" +${WALLET_CRED} credibility`);
-    floatCost(w.el, `+${WALLET_CRED} cred`);
+    floatCost(w.tag, `+${WALLET_CRED} cred`);
     say('welldone');
   } else {
     s.money += WALLET_CASH;
     s.cred = Math.max(0, (s.cred || 0) - WALLET_CRED);
     tell(`You pocket ${naira(WALLET_CASH)}. Your conscience dey shout! -${WALLET_CRED} credibility`);
-    floatCost(w.el, `+${naira(WALLET_CASH)}`);
+    floatCost(w.tag, `+${naira(WALLET_CASH)}`);
     sfx('kaching');
   }
   save(); render();
-  endWallet(w, honest ? 'away' : 'gone');
+  endWallet(w);
 }
-function endWallet(w, how){
+function endWallet(w){
   if (w.done) return;
   w.done = true;
   clearTimeout(w.timer);
   w.tag.remove();
-  w.el.classList.add(how);
-  setTimeout(() => w.el.remove(), 800);
   if (wallet === w) wallet = null;
 }
 
@@ -8209,6 +8196,7 @@ function claimCoin(coin){
   const DRIFT = ROAD_SPEED * 1.2 * 0.35;                // the bend reaches bottom at 35% of 1.2s
   const room = p => at() - centre(p) - p.sceneRect().height * 0.36 - DRIFT;
   const grab = () => {
+    if (coin.classList.contains('wallet')){ pickWallet(coin); return; }   // a wallet: not money yet, a choice
     if (s){ s.money += COIN_VALUE; save(); render(); }
     floatCost(coin, `+₦${COIN_VALUE}`);
     sfx('kaching');                                     // the coin is in his hand
