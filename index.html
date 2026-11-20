@@ -649,6 +649,19 @@
     border:5px solid transparent;border-bottom:0;border-top-color:var(--sb)}
   .toutSay.paid{background:#1f8a4c;--sb:#1f8a4c}
   .toutSay.fine{background:#c1272d;--sb:#c1272d}
+  /* the flood: the barrow boy on the near bank calls; on the far bank once he has pushed you over */
+  .toutSay.floodSay{left:-2%;bottom:62px;background:#2f7fc1;--sb:#2f7fc1}
+  .pothole .barrowDone{display:none}
+  .pothole.crossed .barrowDone{display:inline}
+  .pothole.crossed .barrowWait,.pothole.carrying .barrowWait{display:none}
+  /* riding in the barrow: legs in the tray, arms still, the boy's legs going */
+  .corper.inBarrow .leg,.corper.inBarrow .leg2{visibility:hidden}
+  .corper.inBarrow .arm,.corper.inBarrow .arm2,.corper.inBarrow .torso,
+  .corper.inBarrow .shin,.corper.inBarrow .fore{animation:none}
+  .barrowBoy .bLegA,.barrowBoy .bLegB{transform-box:fill-box;transform-origin:50% 0}
+  .corper .barrowBoy .bLegA{animation:bWalk .4s ease-in-out infinite alternate}
+  .corper .barrowBoy .bLegB{animation:bWalk .4s ease-in-out infinite alternate-reverse}
+  @keyframes bWalk{from{transform:rotate(-14deg)}to{transform:rotate(14deg)}}
   @keyframes toutSayIn{from{transform:translateX(-50%) scale(.6);opacity:0}to{transform:translateX(-50%) scale(1);opacity:1}}
   .cashNote.big{width:15px;height:8px;border-radius:1.5px}
   .corper.bumped{z-index:5}
@@ -670,6 +683,14 @@
   .shop svg,.posStand svg,.streetPost svg,.genSet svg{display:block;width:100%}
   @keyframes shopDrive{from{left:var(--shopFrom,-134%)}to{left:118%}}
   @keyframes drive{from{left:-22%}to{left:118%}}
+  /* Oncoming traffic (2026-11-20, user: "a little traffic going the opposite
+     direction without overcrowding"). Its own lane at the back of the road,
+     in front of the far pavement and behind the main traffic; smaller, since
+     it is further off. ONCOMING_ON in the script turns it off. */
+  .oncomingLane{position:absolute;inset:0;z-index:1;pointer-events:none;overflow:hidden}
+  .oncoming{position:absolute;animation:oncome linear 1 forwards}
+  .oncoming > svg{display:block;width:100%;height:auto;transform:scaleX(-1)}
+  @keyframes oncome{from{left:118%}to{left:-22%}}
   .wheel{animation:spin .5s linear infinite;transform-box:fill-box;
     transform-origin:center}
   @keyframes spin{to{transform:rotate(360deg)}}
@@ -1933,7 +1954,7 @@
 <script type="module">
 import { newGame, doAction, canDo, unlocked, ACTIONS, phaseOf, nextUnlock, postingOdds, rivalOf,
          computePosting, CHOICES, GOAL, goalStatus,
-         shareText, MAX_DAY } from './game.js?v=20261120142832';
+         shareText, MAX_DAY } from './game.js?v=20261120145520';
 
 /* ---------- scene coordinates ----------
    The scene is scaled by a transform (see the stage), so a native
@@ -1964,11 +1985,11 @@ const TS = (document.getElementById('scene').offsetWidth || 375) / 375;
 const ALLAWEE_NOTE = 'Allawee ₦77,000 — e never enter.';
 import { initNet, joinCamp, syncPlayer, platoonBoard, recentChat, postChat,
          postSuggestion, reportMessage, awardBoard, myAwards, laughChat,
-         setPresence, campRoster, renameMe, setAvatar, online, prizeBoard, myPrize } from './net.js?v=20261120142832';
-import { startMusic, stopMusic, musicOn, audioState, audioSupported, setRain, whenSilenced, wakeAudio, audible, say, sfx, BEAT, BAR } from './audio.js?v=20261120142832';
+         setPresence, campRoster, renameMe, setAvatar, online, prizeBoard, myPrize } from './net.js?v=20261120145520';
+import { startMusic, stopMusic, musicOn, audioState, audioSupported, setRain, whenSilenced, wakeAudio, audible, say, sfx, BEAT, BAR } from './audio.js?v=20261120145520';
 import { playHoop, playPenalty, playQuiz, playRegister, playParade,
          playMami, playHustle, playManOWar, playSaed, playSocial,
-         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261120142832';
+         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261120145520';
 
 /* Every dance animation is expressed in beats, so the steps are on-tempo
    whether or not the sound is playing — and genuinely on the beat when it is. */
@@ -5411,6 +5432,59 @@ const PUDDLE_SVG = `<svg viewBox="0 0 80 48" aria-hidden="true" overflow="visibl
     <textPath href="#potArc" startOffset="50%">LAGOS LAGOON</textPath>
   </text>
 </svg>`;
+/* The flood after rain (2026-11-20). Murky water across the walk, a floating
+   nylon and a lost slipper, and a boy in a yellow singlet with a wheelbarrow
+   on the near bank, knee-deep. Same box as the rest (ground y≈46); the water
+   spreads past it on both sides (overflow visible). The boy is drawn first so
+   the water covers his feet and the barrow's wheel. barrowDone is him again
+   on the far bank, shown once he has pushed you over. */
+const barrowBoy = (cls = '') => `<g class="barrowBoy ${cls}">
+    <path class="bLegA" d="M-4.6 30 L-6 44.6" stroke="#6b4423" stroke-width="3.2" stroke-linecap="round"/>
+    <path class="bLegB" d="M-.6 30 L1.4 44.6" stroke="#5e3b1e" stroke-width="3.2" stroke-linecap="round"/>
+    <path d="M-7.4 20.6 h9.4 l.7 9.8 h-4.2 l-1.1-4.8 -1 4.8 h-4.2z" fill="#2e5d8a"/>
+    <path d="M-7.8 6.2 q4.6-2.2 9.6 0 l.6 15 h-10.8z" fill="#e8c547"/>
+    <path d="M-5.8 6.4 q1.2 3.6 0 6.6 M-.4 6.4 q-1.2 3.6 0 6.6" stroke="#c9a52f" stroke-width=".7" fill="none"/>
+    <path d="M-1.4 9.4 q5.6 5.6 8.4 12.8" stroke="#6b4423" stroke-width="2.6" fill="none" stroke-linecap="round"/>
+    <circle cx="-2.6" cy="0" r="5.2" fill="#6b4423"/>
+    <path d="M-7.7 -1.2 q.4-6.6 5.1-6.8 q4.8.1 5.3 6.2 q-2.6-2.4-5.2-2.3 q-2.8 0-5.2 2.9z" fill="#1d1812"/>
+    ${faceOf(-2.6, 0, 5.2)}
+  </g>`;
+const BARROW = (dx = 0) => `<g transform="translate(${dx} 0)">
+    <path d="M5.6 22.4 L12.4 26.2" stroke="#6b4a2a" stroke-width="1.7" stroke-linecap="round"/>
+    <path d="M13.6 33 L12.8 39" stroke="#4d565c" stroke-width="1.6"/>
+    <path d="M10.4 24.2 L30.4 21.6 L27.2 33.2 L13 33.2z" fill="#7d8a93"/>
+    <path d="M10.4 24.2 L30.4 21.6" stroke="#5f6a72" stroke-width="1.5" stroke-linecap="round"/>
+    <circle cx="27" cy="38.2" r="5.2" fill="#2a2b2d"/><circle cx="27" cy="38.2" r="1.6" fill="#8a8f94"/>
+  </g>`;
+const FLOOD_SVG = `<svg viewBox="0 0 80 48" aria-hidden="true" overflow="visible">
+  <defs><path id="potArc" d="M-22 45 Q40 51 102 45" fill="none"/></defs>
+  <g class="barrowWait">${barrowBoy()}${BARROW()}</g>
+  <g class="barrowDone" transform="translate(84 0)">${BARROW(-2)}<g transform="translate(-6 0)">${barrowBoy()}</g></g>
+  <g transform="translate(40 43) scale(1.28 1.2) translate(-40 -43)">
+  <path d="M-16 42.4q4-6.8 25-7.6q16-2.6 34-1.4q27 .6 48 4.8q9 3.2-1 6q-19 3.8-50 3.6q-37 .2-51-2.8q-8-1.4-5-2.6z" fill="#5d5440"/>
+  <path d="M-11 42.2q4-5 21-5.6q15-2 31-.8q24 .6 42 4q6 2-1 4.2q-16 3-45 2.8q-33 .2-44-2.2q-5-1-4-2.4z" fill="#77694c"/>
+  <path class="ripple" d="M-2 41h10M18 43.4h9M38 40.2h11M62 42.6h8M80 40.8h7" stroke="#a89a78" stroke-width=".8" stroke-linecap="round"/>
+  <path d="M47 39.4q2.6-2.4 5.4-.2q.6 1.6-1.4 2q-3 .6-4-1.8z" fill="#eef1f2" opacity=".9"/>
+  <ellipse cx="68" cy="43" rx="3" ry="1.1" fill="#2f6fc1" transform="rotate(-12 68 43)"/>
+  </g>
+  <text class="potName" font-size="8" font-weight="900" letter-spacing="0.55"
+        font-family="system-ui,sans-serif" text-anchor="middle">
+    <textPath href="#potArc" startOffset="50%">ATLANTIC OCEAN</textPath>
+  </text>
+</svg>`;
+/* The same boy and barrow, drawn into the corper's own svg (0 0 46 86, feet at
+   y81) while he rides: the boy behind him, pushing, the tray and wheel in
+   front of his legs, and a band of water over the boy's feet and the wheel. */
+const BARROW_RIDE_BACK = `<g class="barrowRide" transform="translate(-12 38)">${barrowBoy()}</g>`;
+const BARROW_RIDE_FRONT = `<g class="barrowRide">
+    <path d="M-5 60 L4 55" stroke="#6b4a2a" stroke-width="1.9" stroke-linecap="round"/>
+    <path d="M8 69 L7 78" stroke="#4d565c" stroke-width="1.8"/>
+    <path d="M1 53.4 L45 49.6 L40.6 69.4 L6 69.4z" fill="#7d8a93"/>
+    <path d="M1 53.4 L45 49.6" stroke="#5f6a72" stroke-width="1.7" stroke-linecap="round"/>
+    <circle cx="39" cy="76" r="7" fill="#2a2b2d"/><circle cx="39" cy="76" r="2" fill="#8a8f94"/>
+    <path d="M-30 79.6q38-3 82 0v7h-82z" fill="#77694c" opacity=".92"/>
+    <path d="M-20 81.6h8M2 82.6h9M30 81.4h8" stroke="#a89a78" stroke-width=".8" stroke-linecap="round"/>
+  </g>`;
 /* The agbero at the toll (2026-11-16, user's brief): rough and rugged — cap
    on backwards, sleeveless red basketball jersey with 27 on it, gold chain,
    baggy faded jeans sagging over a boxer band, mismatched patches and a torn
@@ -5660,6 +5734,9 @@ const OBSTACLE = {
   bin:     { svg: BIN_SVG, tag: 'Waka round!', cost: 2, miss: 4, start: 62, edge: 58, warn: 480, tagBottom: 92,
              jumped: 'You waka round the dustbin!', fell: 'You jam the dustbin! Tap to waka around.' },
   /* paid in naira, not energy: fee on a tap, fine (double) when he has to stop you */
+  /* paid in naira, on the crossing: the barrow boy pushes you over dry */
+  flood:   { svg: FLOOD_SVG, tag: 'Enter barrow ₦100', fee: 100, miss: 6, start: 70, edge: 64, warn: 480, tagBottom: 96,
+             jumped: 'Barrow boy push you cross. Your shoe dry!', fell: 'You waded the flood. Your shoe don soak! Tap the barrow next time.' },
   tout:    { svg: TOUT_SVG, tag: 'Settle ₦200', fee: 200, fine: 400, start: 58, edge: 52, warn: 520, tagBottom: 100,   /* stops a step short of his hand (user) */
              jumped: 'You settle the agbero ₦200. You fit pass!', fell: 'Agbero hold you! E collect ₦400. Tap to pay next time.' },
 };
@@ -5682,9 +5759,15 @@ const OBSTACLE_TURNS = ['pothole', 'car', 'bin', 'pothole', 'hill', 'car', 'poth
    turns still come round between his visits. */
 const TOUT_FIRST = 60000, TOUT_EVERY = 30000;
 let toutDueAt = performance.now() + TOUT_FIRST, turnN = 0;
+/* The flood comes only while the road is wet: in the rain or the storm and
+   for 25s after. Then one pass in five. FLOOD_ON = false and it never comes. */
+const FLOOD_ON = true;
+let wetUntil = 0, sinceFlood = 3;
+if (FLOOD_ON) setInterval(() => { if (sceneEl.matches('.w-rain, .w-storm')) wetUntil = performance.now() + 25000; }, 1000);
 function nextObstacle(){
   const now = performance.now();
   if (now >= toutDueAt && potKind !== 'tout'){ toutDueAt = now + TOUT_EVERY; return 'tout'; }
+  if (FLOOD_ON && now < wetUntil && ++sinceFlood >= 5 && potKind !== 'flood'){ sinceFlood = 0; return 'flood'; }
   return OBSTACLE_TURNS[turnN++ % OBSTACLE_TURNS.length];
 }
 /* Paid, he walks off: the road is clear for the rest of this pass. */
@@ -5700,7 +5783,7 @@ function toutLeaves(){
   ], { duration: 2600, easing: 'linear', fill: 'forwards' });
 }
 /* The wide ones keep their distance from Mrs. Pothole (HILL_CLEAR). */
-const wideObstacle = k => k === 'hill' || k === 'car' || k === 'tout' || k === 'bin';
+const wideObstacle = k => k === 'hill' || k === 'car' || k === 'tout' || k === 'bin' || k === 'flood';
 function setObstacle(kind){
   potKind = kind;
   /* the car alternates silver and red, so its two turns a round look like two cars */
@@ -5710,7 +5793,7 @@ function setObstacle(kind){
   pothole.innerHTML = danfo ? DANFO_BROKEN : kind === 'car' && (carN++ % 2) ? CAR_RED
                     : kind === 'bin' && (binN++ % 2) ? BIN_FULL_SVG
                     : kind === 'tout' && DISTRICTS_ON ? toutDressed(shownDistrict) : OBSTACLE[kind].svg;
-  pothole.classList.remove('leaving', 'waved');               // a fresh pass: whoever walked off is gone
+  pothole.classList.remove('leaving', 'waved', 'carrying', 'crossed');   // a fresh pass: whoever walked off is gone
   pothole.getAnimations().forEach(a => a.cancel());
   /* The car stands up off the road, so it is drawn in front of everyone on
      the walk: anybody passing it goes behind it, on the road side — which is
@@ -6508,7 +6591,8 @@ function hopPothole(p, paid){
   if (paid) potReadyAt = performance.now() + POT_COOLDOWN;
   p.classList.add('jumping');
   const kind = potKind, ob = OBSTACLE[kind];
-  const took = kind === 'hill' ? climbHill(p) : kind === 'puddle' ? wadePuddle(p)
+  const took = kind === 'flood' ? (paid ? barrowRide(p) : wadeFlood(p, false))
+             : kind === 'hill' ? climbHill(p) : kind === 'puddle' ? wadePuddle(p)
              : kind === 'car' ? goAround(p, pothole.dataset.long ? 3300 : 2800) : kind === 'bin' ? goAround(p, 1900)
              : kind === 'tout' ? payAndPass(p, paid)   // the car is ~200px long, the dustbin with its bags ~110
              : kind === 'gutter' ? hop(p, 1000, 36) : hop(p);
@@ -6522,6 +6606,13 @@ function hopPothole(p, paid){
     delete p.dataset.prepaid;
     handOver(p, 3, true);
     setTimeout(() => toutSay('Correct! Waka pass.', 'paid'), 450);
+    return;
+  }
+  if (paid && s && kind === 'flood'){                // naira, not energy: the boy is paid
+    s.money -= ob.fee;
+    tell(ob.jumped);
+    save(); render();
+    floatCost(p, `-${naira(ob.fee)}`);
     return;
   }
   if (paid && s){
@@ -6538,7 +6629,7 @@ function hopPothole(p, paid){
    rides the road with him and goes when he goes; a new pass replaces the
    box's contents and takes it away. */
 function toutSay(text, tone = 'paid', ms = 2400){
-  if (potKind !== 'tout') return;
+  if (potKind !== 'tout' && potKind !== 'flood') return;      // the agbero, and the barrow boy
   pothole.querySelector('.toutSay')?.remove();
   const b = document.createElement('div');
   b.className = 'toutSay ' + tone;
@@ -6569,8 +6660,58 @@ function handOver(p, n, big = false){
 /* Asked, and not answered, on the hill or in the puddle: he goes over —
    backwards down the hill, face first into the water — lies there a moment
    riding the road with the obstacle, gets up and hurries back to his place. */
+/* Through the flood on foot: under the water to the shin (a bystander) or
+   the thigh (you, who did not take the barrow), a dip each step, splashing. */
+function wadeFlood(p, deep){
+  const D = deep ? 2200 : 1800, cut = deep ? 27 : 15;
+  p.animate([
+    { clipPath: 'inset(0 -40% 0% -40%)' }, { clipPath: `inset(0 -40% ${cut}% -40%)`, offset: .14 },
+    { clipPath: `inset(0 -40% ${cut}% -40%)`, offset: .86 }, { clipPath: 'inset(0 -40% 0% -40%)' },
+  ], { duration: D });
+  p.animate([
+    { transform: 'translateY(0)' }, { transform: `translateY(${deep ? 5 : 3}px)`, offset: .14 },
+    { transform: `translateY(${deep ? 3 : 2}px)`, offset: .3 }, { transform: `translateY(${deep ? 5 : 3}px)`, offset: .5 },
+    { transform: `translateY(${deep ? 3 : 2}px)`, offset: .7 }, { transform: `translateY(${deep ? 5 : 3}px)`, offset: .86 },
+    { transform: 'translateY(0)' },
+  ], { duration: D, composite: 'add' });
+  [0, .35, .7].forEach(t => setTimeout(() => { if (p.isConnected) splash(p, deep ? 1.5 : 1); }, D * t));
+  return D;
+}
+/* In the barrow: the boy on the bank is gone from it and pushing you, drawn
+   into your own figure, until you are over; then he is on the far bank. */
+function barrowRide(p){
+  const D = 2300;
+  pothole.classList.add('carrying');
+  toutSay('Oya, enter!', 'paid floodSay', 1200);
+  const had = p.getAttribute('overflow');
+  p.setAttribute('overflow', 'visible');
+  p.insertAdjacentHTML('afterbegin', BARROW_RIDE_BACK);
+  p.insertAdjacentHTML('beforeend', BARROW_RIDE_FRONT);
+  p.classList.add('inBarrow');
+  p.animate([{ transform: 'translateY(0)' }, { transform: 'translateY(-1.5px)' }, { transform: 'translateY(0)' }],
+            { duration: 400, iterations: D / 400, composite: 'add' });
+  setTimeout(() => {
+    p.querySelectorAll(':scope > .barrowRide').forEach(g => g.remove());
+    p.classList.remove('inBarrow');
+    if (had == null) p.removeAttribute('overflow'); else p.setAttribute('overflow', had);
+    if (potKind === 'flood'){ pothole.classList.remove('carrying'); pothole.classList.add('crossed'); }
+  }, D);
+  return D;
+}
+/* Asked about the barrow and not answered: in up to the thighs, and it costs. */
+function floodSoak(p){
+  const ob = OBSTACLE.flood;
+  p.dataset.hop = String(potLap);
+  potReadyAt = performance.now() + POT_COOLDOWN;
+  tell(ob.fell);
+  p.classList.add('jumping');
+  const D = wadeFlood(p, true);
+  if (s){ s.energy = Math.max(0, s.energy - ob.miss); save(); render(); floatCost(p, `-${ob.miss} energy`); }
+  setTimeout(() => { p.classList.remove('jumping'); p.dataset.grace = String(performance.now() + 3500); }, D);
+}
 function slipOn(p){
   combo = 0;                                       // held up: the run of clean passes ends
+  if (potKind === 'flood') return floodSoak(p);
   /* the agbero holds you 2.5s before he lets you go (user: "pass after 2 or 3 seconds") */
   const kind = potKind, ob = OBSTACLE[kind], DUR = kind === 'tout' ? 2500 : 1500;
   p.dataset.hop = String(potLap);
@@ -7012,6 +7153,7 @@ function offerTick(){
       markTappable(jumpShown);
       jumpTag.textContent = OBSTACLE[potKind].tag;
       jumpTag.style.display = 'block';
+      if (potKind === 'flood' && !pothole.classList.contains('crossed')) toutSay('Oga, I go push you!', 'paid floodSay', 2600);
       replayTag(jumpTag);
       delete jumpTag.dataset.gap0;
     }
@@ -7584,7 +7726,7 @@ function sendHawker(kind){
   el.setAttribute('role', 'button');
   el.setAttribute('aria-label', w.tag.replace('\u2002', ' ') + '. Tap to buy');
   /* Behind every vehicle, in front of the shops and the kerb. */
-  const v = sceneEl.querySelector('.vehicle');
+  const v = sceneEl.querySelector('.oncomingLane, .vehicle');
   if (v) v.before(el); else sceneEl.appendChild(el);
   el.addEventListener('animationend', e => { if (e.target === el) el.remove(); });   // its own drive only: a child's animation (a label's pop-in) bubbles here too
   setTimeout(() => el.remove(), HAWK_LEN * TS * 1000 + 3000);
@@ -7727,6 +7869,49 @@ function sendPasser(){
   setTimeout(sendPasser, PASS_EVERY);
 }
 if (!calm()) setTimeout(sendPasser, PASS_FIRST);
+
+/* ---------- oncoming traffic ----------
+   One vehicle at a time coming the other way, every 15-20s, in a lane of its
+   own at the back of the road: okadas mostly, a keke, now and then a car. No
+   danfos (big, and they would cover the shops). It keeps off the road while
+   the convoy or the goats have it, and while the broken-down danfo is in
+   view. Not for the fire or the chase: those two take turns almost back to
+   back (measured), so holding off for them meant it hardly ever came, and
+   both happen nearer the camera than this lane. ONCOMING_ON = false: gone. */
+const ONCOMING_ON = true;
+const ONCOMING = [
+  () => ({ svg: okada(false), w: 36, bottom: 47, speed: 4.6 }),
+  () => ({ svg: okada(true),  w: 37, bottom: 47, speed: 5.0 }),
+  () => ({ svg: keke(),       w: 40, bottom: 46, speed: 6.2 }),
+  () => ({ svg: okada(false), w: 35, bottom: 48, speed: 4.4 }),
+  () => ({ svg: sedan(['#e6e9ec', '#2b4f7a', '#3d3d3d', '#c9a227'][Math.floor(Math.random() * 4)], '#5d6268', 1), w: 70, bottom: 47, speed: 5.4 }),
+  () => ({ svg: keke(),       w: 40, bottom: 46, speed: 6.0 }),
+];
+let oncomingN = Math.floor(Math.random() * ONCOMING.length);
+function sendOncoming(){
+  setTimeout(sendOncoming, (15 + Math.random() * 5) * 1000);
+  if (document.hidden) return;
+  const W = sceneEl.sceneRect().width;
+  const busy = sceneEl.querySelector('.convoy, .goat, .oncoming')
+    || (pothole.dataset.long && potX() < W + 40 && potX() > -120);
+  if (busy) return;
+  let lane = sceneEl.querySelector('.oncomingLane');
+  if (!lane){
+    lane = document.createElement('div');
+    lane.className = 'oncomingLane';
+    const first = sceneEl.querySelector('.vehicle');
+    if (first) first.before(lane); else sceneEl.appendChild(lane);
+  }
+  const v = ONCOMING[oncomingN++ % ONCOMING.length]();
+  const el = document.createElement('div');
+  el.className = 'oncoming';
+  el.style.cssText = `width:${v.w}px;bottom:${v.bottom}px;animation-duration:${v.speed * TS}s`;
+  el.innerHTML = v.svg;
+  lane.appendChild(el);
+  el.addEventListener('animationend', e => { if (e.target === el) el.remove(); });
+  setTimeout(() => el.remove(), v.speed * TS * 1000 + 3000);
+}
+if (ONCOMING_ON && !calm()) setTimeout(sendOncoming, 7000);
 
 /* The danfo horn: the big loaded danfo (the one with the bags and the
    smoke, svg.fumes) honks as it comes past, never the burning one. Not every
@@ -7932,7 +8117,7 @@ function sendPed(){
     el.innerHTML = civilian(SKINS[Math.floor(Math.random() * SKINS.length)], .38, 1, 0,   // far pavement scale (was .55)
                             typeof shirt === 'number' ? shirt : 0, false, false, false,
                             typeof shirt === 'number' ? null : shirt, PED_LOOKS[+lk]);
-    const v = sceneEl.querySelector('.vehicle');
+    const v = sceneEl.querySelector('.oncomingLane, .vehicle');   // behind the oncoming lane too: on the pavement
     if (v) v.before(el); else sceneEl.appendChild(el);
     el.addEventListener('animationend', e => { if (e.target === el) el.remove(); });   // its own drive only: a child's animation (a label's pop-in) bubbles here too
   }
