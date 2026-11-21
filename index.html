@@ -486,7 +486,10 @@
   .nearCouple{position:absolute;bottom:1px;width:64px;height:92px;z-index:3;pointer-events:none}
   .nearCouple svg{display:block;width:100%;height:100%}
   .nearCouple .coupleHeart{transform-box:fill-box;transform-origin:50% 100%;animation:coupleHeart 1.4s ease-in-out infinite}
-  .nearCouple.wrecked .coupleHeart{animation:heartGone .7s ease-in forwards}
+  .nearCouple.wrecked .coupleHeart{opacity:0;animation:none}   /* heartBurst() takes its place */
+  .heartBurst{position:absolute;z-index:8;width:34px;height:34px;margin:0 0 -17px -17px;pointer-events:none}
+  .heartBurst svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
+  .heartBurst i{position:absolute;left:50%;top:50%;pointer-events:none}
   @keyframes heartGone{0%{transform:none;opacity:1}30%{transform:scale(1.3) rotate(-14deg)}100%{transform:translateY(5px) scale(.3) rotate(30deg);opacity:0}}
   .nearCouple.blessed .coupleHeart{animation:heartBig .5s ease-in-out 4 alternate}
   @keyframes heartBig{to{transform:scale(1.7) translateY(-1px)}}
@@ -2060,7 +2063,7 @@
 <script type="module">
 import { newGame, doAction, canDo, unlocked, ACTIONS, phaseOf, nextUnlock, postingOdds, rivalOf,
          computePosting, CHOICES, GOAL, goalStatus,
-         shareText, MAX_DAY } from './game.js?v=20261121104528';
+         shareText, MAX_DAY } from './game.js?v=20261121111532';
 
 /* ---------- scene coordinates ----------
    The scene is scaled by a transform (see the stage), so a native
@@ -2091,11 +2094,11 @@ const TS = (document.getElementById('scene').offsetWidth || 375) / 375;
 const ALLAWEE_NOTE = 'Allawee ₦77,000 — e never enter.';
 import { initNet, joinCamp, syncPlayer, platoonBoard, recentChat, postChat,
          postSuggestion, reportMessage, awardBoard, myAwards, laughChat,
-         setPresence, campRoster, renameMe, setAvatar, online, prizeBoard, myPrize } from './net.js?v=20261121104528';
-import { startMusic, stopMusic, musicOn, audioState, audioSupported, setRain, whenSilenced, wakeAudio, audible, say, sfx, BEAT, BAR } from './audio.js?v=20261121104528';
+         setPresence, campRoster, renameMe, setAvatar, online, prizeBoard, myPrize } from './net.js?v=20261121111532';
+import { startMusic, stopMusic, musicOn, audioState, audioSupported, setRain, whenSilenced, wakeAudio, audible, say, sfx, BEAT, BAR } from './audio.js?v=20261121111532';
 import { playHoop, playPenalty, playQuiz, playRegister, playParade,
          playMami, playHustle, playManOWar, playSaed, playSocial,
-         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261121104528';
+         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261121111532';
 
 /* Every dance animation is expressed in beats, so the steps are on-tempo
    whether or not the sound is playing — and genuinely on the beat when it is. */
@@ -6176,6 +6179,7 @@ function sendNearCouple(){
    little credibility for minding your business). One ask per couple; walk
    past without answering and it goes. Never on top of another ask. */
 const LOVE_WRECK = 3, LOVE_LEAVE = 1, LOVE_HOLD = 5000;
+const LOVE_NUMBER_ODDS = .35, LOVE_CHASE = 3, LOVE_CHOP_ODDS = .3, LOVE_CHOP = 3;   // the gamble: her number, or her boyfriend; chin-chin for minding your business
 let love = null;
 function loveCheck(el, cx, box){
   if (el.dataset.loveDone) return;
@@ -6214,25 +6218,141 @@ function loveCheck(el, cx, box){
                                             { duration: LOVE_HOLD, fill: 'forwards', composite: 'add' });
   love = { el, tag, who: you, drift, t0: performance.now(), until: performance.now() + LOVE_HOLD };
 }
+/* Wrecked: the heart breaks in public (user, 2026-11-21: "the love sign should
+   burst in dramatic fashion and dissipate"). It swells, a crack runs down it,
+   it snaps into two jagged halves that fly apart and tumble, a pink flash
+   ring and a spray of little hearts and sparks go out, and grey puffs drift
+   up and fade. Its own element over the couple, gone in ~1.5s. */
+function heartBurst(coupleEl){
+  const h = coupleEl.querySelector('.coupleHeart');
+  if (!h || calm()) return;
+  const box = sceneEl.sceneRect(), r = h.sceneRect();
+  const el = document.createElement('div');
+  el.className = 'heartBurst';
+  el.style.left = Math.round(r.left - box.left + r.width / 2) + 'px';
+  el.style.bottom = Math.round(box.bottom - (r.top + r.height / 2)) + 'px';
+  el.innerHTML = `<svg viewBox="0 0 30 30" aria-hidden="true">
+    <circle class="hbRing" cx="15" cy="16" r="4" fill="none" stroke="#ff7aa2" stroke-width="2.2"/>
+    <g class="hbWhole"><path d="M15 26 L5.2 16.4 A5.6 5.6 0 0 1 15 8.6 A5.6 5.6 0 0 1 24.8 16.4 Z" fill="#ff2e63" stroke="#fff" stroke-width="1"/></g>
+    <g class="hbL"><path d="M15 26 L5.2 16.4 A5.6 5.6 0 0 1 15 8.6 L13.4 12.6 L16.2 16.4 L13.8 20.6 Z" fill="#ff2e63" stroke="#fff" stroke-width="1" stroke-linejoin="round"/></g>
+    <g class="hbR"><path d="M15 8.6 A5.6 5.6 0 0 1 24.8 16.4 L15 26 L13.8 20.6 L16.2 16.4 L13.4 12.6 Z" fill="#e8174f" stroke="#fff" stroke-width="1" stroke-linejoin="round"/></g>
+    <path class="hbCrack" d="M15 8.6 L13.4 12.6 L16.2 16.4 L13.8 20.6 L15 26" stroke="#fff" stroke-width="1.3" fill="none" stroke-linejoin="round" opacity="0"/>
+  </svg>`;
+  sceneEl.appendChild(el);
+  const q = s => el.querySelector(s), box2 = { fill: 'forwards' };
+  const sv = q('svg');
+  sv.animate([{ transform: 'scale(1)' }, { transform: 'scale(1.45)', offset: .18 }, { transform: 'scale(1.3)', offset: .3 }, { transform: 'scale(1.3)' }], { duration: 700, easing: 'ease-out', ...box2 });
+  sv.animate([{ transform: 'translateX(0)' }, { transform: 'translateX(-1.2px)', offset: .2 }, { transform: 'translateX(1.2px)', offset: .4 }, { transform: 'translateX(-.8px)', offset: .6 }, { transform: 'translateX(0)' }], { duration: 260, composite: 'add' });
+  q('.hbCrack').animate([{ opacity: 0 }, { opacity: 1, offset: .3 }, { opacity: 1, offset: .7 }, { opacity: 0 }], { duration: 300, delay: 120, ...box2 });
+  q('.hbWhole').animate([{ opacity: 1 }, { opacity: 1, offset: .99 }, { opacity: 0 }], { duration: 300, ...box2 });
+  const fly = (sel, dx, rot) => q(sel).animate([
+    { transform: 'translate(0,0) rotate(0)', opacity: 0 }, { transform: 'translate(0,0) rotate(0)', opacity: 1, offset: .22 },
+    { transform: `translate(${dx * .6}px,-4px) rotate(${rot * .5}deg)`, opacity: 1, offset: .45 },
+    { transform: `translate(${dx}px,16px) rotate(${rot}deg)`, opacity: 0 },
+  ], { duration: 1150, easing: 'cubic-bezier(.3,.1,.5,1)', ...box2 });
+  [['.hbL', -15, -70], ['.hbR', 15, 65]].forEach(([s2, dx, rot]) => { const g = q(s2); g.style.transformBox = 'fill-box'; g.style.transformOrigin = '50% 50%'; fly(s2, dx, rot); });
+  const ring = q('.hbRing');
+  ring.style.transformBox = 'fill-box'; ring.style.transformOrigin = '50% 50%';
+  ring.animate([{ transform: 'scale(1)', opacity: 0 }, { transform: 'scale(1.3)', opacity: .95, offset: .25 }, { transform: 'scale(4.6)', opacity: 0 }], { duration: 560, delay: 200, easing: 'ease-out', ...box2 });   // scale, not r: Safari
+  /* the spray: little hearts and sparks, out and down */
+  for (let i = 0; i < 12; i++){
+    const p = document.createElement('i');
+    const heart = i % 3 !== 2, a = (-160 + i * 30 + Math.random() * 18) * Math.PI / 180, d = 16 + Math.random() * 20;
+    p.innerHTML = heart ? `<svg viewBox="0 0 10 10" width="${4 + Math.random() * 3}" style="display:block;overflow:visible"><path d="M5 9 L1.3 5.3 A2.2 2.2 0 0 1 5 2.4 A2.2 2.2 0 0 1 8.7 5.3 Z" fill="${['#ff2e63', '#ff7aa2', '#e8174f'][i % 3]}"/></svg>` : '';
+    if (!heart){ p.style.width = '3px'; p.style.height = '3px'; p.style.borderRadius = '50%'; p.style.background = '#fff2a8'; p.style.boxShadow = '0 0 4px 1px #ffd34d'; }
+    el.appendChild(p);
+    const dx = Math.cos(a) * d, dy = Math.sin(a) * d;
+    p.animate([
+      { transform: 'translate(-50%,-50%) scale(.4)', opacity: 0 },
+      { transform: 'translate(-50%,-50%) scale(1)', opacity: 1, offset: .12 },
+      { transform: `translate(calc(-50% + ${dx}px),calc(-50% + ${dy}px)) rotate(${(Math.random() * 2 - 1) * 120}deg)`, opacity: 1, offset: .55 },
+      { transform: `translate(calc(-50% + ${dx * 1.25}px),calc(-50% + ${dy + 14}px)) rotate(${(Math.random() * 2 - 1) * 200}deg) scale(.7)`, opacity: 0 },
+    ], { duration: 950 + Math.random() * 300, delay: 220, easing: 'cubic-bezier(.2,.6,.4,1)', ...box2 });
+  }
+  /* and it goes up in smoke */
+  for (let i = 0; i < 3; i++){
+    const sm = document.createElement('i');
+    const sz = 8 + i * 3;
+    sm.style.cssText = `width:${sz}px;height:${sz}px;border-radius:50%;background:rgba(150,140,140,.55)`;
+    el.appendChild(sm);
+    sm.animate([
+      { transform: `translate(calc(-50% + ${(i - 1) * 4}px),-50%) scale(.3)`, opacity: 0 },
+      { transform: `translate(calc(-50% + ${(i - 1) * 6}px),calc(-50% - 6px)) scale(1)`, opacity: .8, offset: .35 },
+      { transform: `translate(calc(-50% + ${(i - 1) * 9}px),calc(-50% - 22px)) scale(1.7)`, opacity: 0 },
+    ], { duration: 1200, delay: 420 + i * 90, easing: 'ease-out', ...box2 });
+  }
+  setTimeout(() => el.remove(), 1900);
+}
 function settleLove(wreck){
   if (!love || !s) return;
   const el = love.el;
   hintUsed();
   el.dataset.loveDone = '1';
   const say2 = (t, tone) => { el.querySelector('.toutSay')?.remove(); const b = document.createElement('div'); b.className = 'toutSay ' + tone; b.textContent = t; el.appendChild(b); setTimeout(() => b.remove(), 2200); };
+  const who = love.who;
+  /* A gamble each way (user, 2026-11-21: "make it most gamified and
+     interesting"). Wreck: she may slip you her number (a friend), or her
+     boyfriend chases you off (energy). Leave am: they may dash you chin-chin. */
   if (wreck){
     s.cred = Math.max(0, (s.cred || 0) - LOVE_WRECK);
+    heartBurst(el);                                  // measured before the heart is hidden
     el.classList.add('wrecked');
-    say2('Ah! Who send you?', 'fine');
-    tell('You wreck their love nwantiti. Na wa for you o!');
+    if (Math.random() < LOVE_NUMBER_ODDS){
+      s.friends = (s.friends || 0) + 1;
+      say2('Call me o!', 'paid');
+      tell('Ehen! She don drop her number for you. Her boyfriend dey vex. +1 friend');
+      setTimeout(() => { if (who.isConnected){ paperTo(el, who); floatCost(who, '+1 friend'); } }, 650);
+    } else {
+      s.energy = Math.max(0, s.energy - LOVE_CHASE);
+      say2('Commot for here!', 'fine');
+      tell('Her boyfriend chase you commot! Na wa for you o!');
+      setTimeout(() => { if (who.isConnected) who.animate([{ transform: 'translateX(0)' }, { transform: 'translateX(26px)', offset: .45 }, { transform: 'translateX(0)' }],
+                                                          { duration: 900, easing: 'ease-out', composite: 'add' }); }, 250);
+    }
   } else {
     s.cred = (s.cred || 0) + LOVE_LEAVE;
     el.classList.add('blessed');
-    say2('Thank you o!', 'paid');
-    tell('You leave them for their love. Respect!');
+    heartsUp(el);
+    if (Math.random() < LOVE_CHOP_ODDS){
+      s.belle = Math.min(100, s.belle + LOVE_CHOP);
+      say2('Thank you o! Take chin-chin', 'paid');
+      tell('They dash you chin-chin for minding your business. Respect!');
+    } else {
+      say2('Thank you o!', 'paid');
+      tell('You leave them for their love. Respect!');
+    }
   }
   save(); render();
   endLove();
+}
+/* her number on a scrap of paper, from her to you */
+function paperTo(fromEl, toEl){
+  const box = sceneEl.sceneRect(), a = fromEl.sceneRect(), b = toEl.sceneRect();
+  const n = document.createElement('i');
+  n.className = 'cashNote';
+  n.style.background = '#fffbe8'; n.style.boxShadow = 'inset 0 0 0 1px #d8cfa8';
+  const ox = a.left - box.left + a.width * .4, oy = a.top - box.top + a.height * .35;
+  n.style.left = ox + 'px'; n.style.top = oy + 'px';
+  sceneEl.appendChild(n);
+  const dx = b.left - box.left + b.width / 2 - ox, dy = b.top - box.top + b.height * .3 - oy;
+  n.animate([{ transform: 'translate(0,0) rotate(0)', opacity: 1 }, { transform: `translate(${dx * .5}px,${dy * .5 - 22}px) rotate(200deg)`, opacity: 1, offset: .5 },
+             { transform: `translate(${dx}px,${dy}px) rotate(380deg)`, opacity: 0 }], { duration: 800, easing: 'ease-in-out', fill: 'forwards' }).onfinish = () => n.remove();
+}
+/* left in peace: little hearts float up off them */
+function heartsUp(coupleEl){
+  if (calm()) return;
+  const box = sceneEl.sceneRect(), r = coupleEl.sceneRect();
+  for (let i = 0; i < 4; i++){
+    const h = document.createElement('i');
+    h.className = 'heartBurst';
+    h.style.width = h.style.height = '10px'; h.style.margin = '0 0 -5px -5px';
+    h.innerHTML = '<svg viewBox="0 0 10 10"><path d="M5 9 L1.3 5.3 A2.2 2.2 0 0 1 5 2.4 A2.2 2.2 0 0 1 8.7 5.3 Z" fill="#ff5d8f"/></svg>';
+    h.style.left = Math.round(r.left - box.left + r.width * (.3 + i * .14)) + 'px';
+    h.style.bottom = Math.round(box.bottom - r.top - 4) + 'px';
+    sceneEl.appendChild(h);
+    h.animate([{ transform: 'translate(0,0) scale(.5)', opacity: 0 }, { transform: 'translate(0,-8px) scale(1)', opacity: 1, offset: .25 },
+               { transform: `translate(${(i % 2 ? 1 : -1) * 6}px,-34px) scale(.8)`, opacity: 0 }], { duration: 1300, delay: i * 140, easing: 'ease-out', fill: 'forwards' }).onfinish = () => h.remove();
+  }
 }
 function endLove(){
   if (!love) return;
