@@ -664,6 +664,10 @@
   .toutSay.fine{background:#c1272d;--sb:#c1272d}
   /* the flood: the barrow boy on the near bank calls; on the far bank once he has pushed you over */
   .toutSay.floodSay{left:-2%;bottom:62px;background:#2f7fc1;--sb:#2f7fc1}
+  /* his call is a button too, and so is he (user: "does not respond when
+     clicked and does not have the finger cursor"): the road layer takes no
+     taps, so these opt back in */
+  .pothole .toutSay.floodSay,.pothole.floodZ:not(.carrying):not(.crossed) .barrowWait{pointer-events:auto;cursor:pointer;-webkit-tap-highlight-color:transparent}
   .pothole .barrowDone{display:none}
   /* Above the traffic (user: "partially covered by vehicle"): he stands on
      your side of the road, so the danfos pass behind him; the water over the
@@ -2050,7 +2054,7 @@
 <script type="module">
 import { newGame, doAction, canDo, unlocked, ACTIONS, phaseOf, nextUnlock, postingOdds, rivalOf,
          computePosting, CHOICES, GOAL, goalStatus,
-         shareText, MAX_DAY } from './game.js?v=20261121103134';
+         shareText, MAX_DAY } from './game.js?v=20261121103518';
 
 /* ---------- scene coordinates ----------
    The scene is scaled by a transform (see the stage), so a native
@@ -2081,11 +2085,11 @@ const TS = (document.getElementById('scene').offsetWidth || 375) / 375;
 const ALLAWEE_NOTE = 'Allawee ₦77,000 — e never enter.';
 import { initNet, joinCamp, syncPlayer, platoonBoard, recentChat, postChat,
          postSuggestion, reportMessage, awardBoard, myAwards, laughChat,
-         setPresence, campRoster, renameMe, setAvatar, online, prizeBoard, myPrize } from './net.js?v=20261121103134';
-import { startMusic, stopMusic, musicOn, audioState, audioSupported, setRain, whenSilenced, wakeAudio, audible, say, sfx, BEAT, BAR } from './audio.js?v=20261121103134';
+         setPresence, campRoster, renameMe, setAvatar, online, prizeBoard, myPrize } from './net.js?v=20261121103518';
+import { startMusic, stopMusic, musicOn, audioState, audioSupported, setRain, whenSilenced, wakeAudio, audible, say, sfx, BEAT, BAR } from './audio.js?v=20261121103518';
 import { playHoop, playPenalty, playQuiz, playRegister, playParade,
          playMami, playHustle, playManOWar, playSaed, playSocial,
-         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261121103134';
+         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261121103518';
 
 /* Every dance animation is expressed in beats, so the steps are on-tempo
    whether or not the sound is playing — and genuinely on the beat when it is. */
@@ -2466,6 +2470,7 @@ function sedan(body, shade, k = 0){
     <rect x="50" y="19.4" width="3.4" height="1" rx=".5" fill="${shade}"/>
     <rect x="83" y="19.8" width="4" height="2.4" rx=".8" fill="#ffd34d"/>
     <rect x="3.6" y="19.8" width="2.4" height="2.6" rx=".6" fill="#d6342c"/>
+    <ellipse cx="45.5" cy="34.5" rx="41" ry="1.6" fill="rgba(0,0,0,.3)"/>
     ${wheel(20,28.4,5.6)}${wheel(70,28.4,5.6)}
   </svg>`;
 }
@@ -7611,6 +7616,8 @@ sceneEl.addEventListener('click', e => {
     else $('adPop').classList.remove('hidden');       // asks first: a stray tap used to open a mail draft
     return;
   }
+  /* the barrow boy's call, or the boy himself (they take taps of their own now) */
+  if (potKind === 'flood' && e.target.closest('.floodSay, .barrowWait') && floodTap(jumpShown)) return;
   /* the barrow boy: by his drawing's box, since the road layer takes no taps */
   if (potKind === 'flood'){
     const g = pothole.querySelector('.barrowWait');
@@ -8563,6 +8570,7 @@ function suv(body = '#141414', flag = true, trim = '#0a0a0a'){
     <circle class="lightR" cx="38" cy="8.5" r="2.6" fill="#ff3b3b"/>
     <circle class="lightB" cx="52" cy="8.5" r="2.6" fill="#3b7bff"/>
     <rect x="84" y="26" width="3" height="2.4" rx=".8" fill="#ffd34d"/>
+    <ellipse cx="45" cy="38.5" rx="41" ry="1.8" fill="rgba(0,0,0,.32)"/><!-- on the road: without it a dark car floats (user, 2026-11-21) -->
     ${wheel(22,32,6)}${wheel(68,32,6)}
   </svg>`;
 }
@@ -8583,6 +8591,7 @@ function pickup(){
     <circle class="lightB" cx="43" cy="9" r="2.4" fill="#3b7bff"/>
     </g>
     <!-- wheels outside the mirror, or they would spin backwards -->
+    <ellipse cx="45" cy="38.5" rx="41" ry="1.8" fill="rgba(0,0,0,.32)"/>
     ${wheel(20,32,6)}${wheel(70,32,6)}
     <rect x="84" y="26" width="3" height="2.4" rx=".8" fill="#ffd34d"/>
     <rect x="3.6" y="22.4" width="2" height="3.6" rx=".6" fill="#d6342c"/>
@@ -8596,8 +8605,8 @@ function convoy(){
   c.innerHTML =
     `<div class="car rider" style="width:40px;bottom:10px;animation-duration:${D};animation-delay:0s">${okada(false)}<i class="lightB"></i></div>` +
     `<div class="car rider" style="width:40px;bottom:14px;animation-duration:${D};animation-delay:${dl(.24)}">${okada(false)}<i class="lightR"></i></div>` +
-    `<div class="car" style="width:98px;bottom:4px;animation-duration:${D};animation-delay:${dl(.56)}">${suv()}</div>` +
-    `<div class="car" style="width:98px;bottom:7px;animation-duration:${D};animation-delay:${dl(.9)}">${suv()}</div>`;
+    `<div class="car" style="width:98px;bottom:2px;animation-duration:${D};animation-delay:${dl(.56)}">${suv()}</div>` +
+    `<div class="car" style="width:98px;bottom:5px;animation-duration:${D};animation-delay:${dl(.9)}">${suv()}</div>`;
   sceneEl.appendChild(c);
   if (shoutSign) shoutSign(['OGA DEY PASS!', '#1d1d1b', '#ffd34d']);
   /* Pim-pim: the escort clearing the road, as the siren riders come in. */
@@ -8616,9 +8625,9 @@ function odogwuConvoy(){
   c.dataset.dash = '5';
   const D = (ODOGWU_DRIVE * TS) + 's', dl = t => (t * TS) + 's';
   c.innerHTML =
-    `<div class="car" style="width:100px;bottom:10px;animation-duration:${D};animation-delay:0s">${pickup()}</div>` +
-    `<div class="car dash" style="width:100px;bottom:4px;animation-duration:${D};animation-delay:${dl(.5)}">${suv('#f3f1e8', false, '#c9c4b6')}<i class="tapTag">Grab the cash!</i></div>` +
-    `<div class="car" style="width:98px;bottom:7px;animation-duration:${D};animation-delay:${dl(.92)}">${suv('#141414', false)}</div>`;
+    `<div class="car" style="width:100px;bottom:8px;animation-duration:${D};animation-delay:0s">${pickup()}</div>` +
+    `<div class="car dash" style="width:100px;bottom:2px;animation-duration:${D};animation-delay:${dl(.5)}">${suv('#f3f1e8', false, '#c9c4b6')}<i class="tapTag">Grab the cash!</i></div>` +
+    `<div class="car" style="width:98px;bottom:5px;animation-duration:${D};animation-delay:${dl(.92)}">${suv('#141414', false)}</div>`;
   c.setAttribute('role', 'button');
   c.setAttribute('aria-label', 'Odogwu passing. Tap for money');
   sceneEl.appendChild(c);
