@@ -2003,7 +2003,7 @@
 <script type="module">
 import { newGame, doAction, canDo, unlocked, ACTIONS, phaseOf, nextUnlock, postingOdds, rivalOf,
          computePosting, CHOICES, GOAL, goalStatus,
-         shareText, MAX_DAY } from './game.js?v=20261120155206';
+         shareText, MAX_DAY } from './game.js?v=20261120161645';
 
 /* ---------- scene coordinates ----------
    The scene is scaled by a transform (see the stage), so a native
@@ -2034,11 +2034,11 @@ const TS = (document.getElementById('scene').offsetWidth || 375) / 375;
 const ALLAWEE_NOTE = 'Allawee ₦77,000 — e never enter.';
 import { initNet, joinCamp, syncPlayer, platoonBoard, recentChat, postChat,
          postSuggestion, reportMessage, awardBoard, myAwards, laughChat,
-         setPresence, campRoster, renameMe, setAvatar, online, prizeBoard, myPrize } from './net.js?v=20261120155206';
-import { startMusic, stopMusic, musicOn, audioState, audioSupported, setRain, whenSilenced, wakeAudio, audible, say, sfx, BEAT, BAR } from './audio.js?v=20261120155206';
+         setPresence, campRoster, renameMe, setAvatar, online, prizeBoard, myPrize } from './net.js?v=20261120161645';
+import { startMusic, stopMusic, musicOn, audioState, audioSupported, setRain, whenSilenced, wakeAudio, audible, say, sfx, BEAT, BAR } from './audio.js?v=20261120161645';
 import { playHoop, playPenalty, playQuiz, playRegister, playParade,
          playMami, playHustle, playManOWar, playSaed, playSocial,
-         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261120155206';
+         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261120161645';
 
 /* Every dance animation is expressed in beats, so the steps are on-tempo
    whether or not the sound is playing — and genuinely on the beat when it is. */
@@ -5146,11 +5146,12 @@ const hello = setInterval(() => {
    walkers shopping on its own, and YOU following those read as your corper
    wandering off untapped. */
 let paidRunner = null;
+let youFig = null;            // the walker under the YOU marker, or null while it is hidden
 function aimPointer(){
   /* Deliberately NOT tied to hintDone. The chip is a tutorial and goes away
      once you have tapped; this marks which figure is yours, which stays true
      for the whole session and is the only thing linking a tap to your wallet. */
-  if (calm()){ pointer.style.opacity = '0'; return; }
+  if (calm()){ pointer.style.opacity = '0'; youFig = null; return; }
   /* Aim at whoever is actually being offered. Pointing at the figure furthest
      along meant the arrow and the label could name two different people. */
   /* Prefer whoever is being offered. When nothing is on offer — during the
@@ -5183,7 +5184,7 @@ function aimPointer(){
     const box0 = sceneEl.sceneRect();
     best = [...sceneEl.querySelectorAll(':scope > .corper')]
       .filter(freeFig).find(p => inFrame(p, box0, 0.05)) || null;
-    if (!best){ pointer.style.opacity = '0'; return; }
+    if (!best){ pointer.style.opacity = '0'; youFig = null; return; }
   }
   const box = sceneEl.sceneRect();
   const r = best.sceneRect();
@@ -5191,8 +5192,9 @@ function aimPointer(){
   /* A figure that has left the frame keeps no marker. Without this the arrow
      followed a departing target straight off the scene — measured at left:393
      on a 375px board, which is the "YOU is pegged off" the player sees. */
-  if (centre < -4 || centre > box.width + 4){ pointer.style.opacity = '0'; return; }
+  if (centre < -4 || centre > box.width + 4){ pointer.style.opacity = '0'; youFig = null; return; }
   pointer.style.opacity = '1';
+  youFig = best;                 // who wears YOU right now (the flood charges only him for wading)
   /* Clamped so the arrow itself can never hang over the bezel, however close
      to the edge its target gets. */
   const half = pointer.offsetWidth / 2 || 20;
@@ -5787,7 +5789,7 @@ const OBSTACLE = {
              jumped: 'You waka round the dustbin!', fell: 'You jam the dustbin! Tap to waka around.' },
   /* paid in naira, not energy: fee on a tap, fine (double) when he has to stop you */
   /* paid in naira, on the crossing: the barrow boy pushes you over dry */
-  flood:   { svg: FLOOD_SVG, tag: 'Enter barrow ₦100', fee: 100, miss: 6, start: 70, edge: 64, warn: 480, tagBottom: 96,
+  flood:   { svg: FLOOD_SVG, tag: 'Enter barrow ₦100', fee: 100, miss: 6, wade: 4, start: 70, edge: 64, warn: 480, tagBottom: 96,
              jumped: 'Barrow boy push you cross. Your shoe dry!', fell: 'You waded the flood. Your shoe don soak! Tap the barrow next time.' },
   tout:    { svg: TOUT_SVG, tag: 'Settle ₦200', fee: 200, fine: 400, start: 58, edge: 52, warn: 520, tagBottom: 100,   /* stops a step short of his hand (user) */
              jumped: 'You settle the agbero ₦200. You fit pass!', fell: 'Agbero hold you! E collect ₦400. Tap to pay next time.' },
@@ -6659,6 +6661,18 @@ function hopPothole(p, paid){
     delete p.dataset.prepaid;
     handOver(p, 3, true);
     setTimeout(() => toutSay('Correct! Waka pass.', 'paid'), 450);
+    return;
+  }
+  /* Through the flood on foot, unasked, while wearing YOU: still your corper,
+     still wet, so it costs energy too (user: "if the player walks through the
+     atlantic ocean without the wheelbarrow, their energy should decrease
+     accordingly" ... "only the corper with YOU").
+     Shin-deep is ob.wade; ignoring the barrow when asked is thigh-deep, ob.miss. */
+  if (!paid && s && kind === 'flood' && p === youFig){   // only YOUR corper, the one under YOU (user); the other walker wades free
+    s.energy = Math.max(0, s.energy - ob.wade);
+    tell(`Your corper waded through the flood. -${ob.wade} energy. The barrow boy dey there for ${naira(ob.fee)}!`);
+    save(); render();
+    floatCost(p, `-${ob.wade} energy`);
     return;
   }
   if (paid && s && kind === 'flood'){                // naira, not energy: the boy is paid
