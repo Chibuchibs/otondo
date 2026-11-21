@@ -495,6 +495,12 @@
   .nearCouple .toutSay{left:50%;bottom:98px}
   /* "Love nwantiti": the choice over the couple (2026-11-21, user) */
   .walletTag.loveTag{flex-direction:column;align-items:center;gap:4px}
+  /* one bubble pointing down at their heart (user, 2026-11-21: "it should be one bubble: wreck or leave am") */
+  .walletTag.choose.loveTag{background:#ff2e63;padding:3px 4px;border-radius:7px;box-shadow:0 2px 6px rgba(0,0,0,.28);animation:tagBob .8s ease-in-out infinite alternate}
+  .walletTag.choose.loveTag::after{display:block;content:'';position:absolute;left:50%;top:100%;margin-left:-4px;border:4px solid transparent;border-top-color:#ff2e63;pointer-events:none}
+  .loveTag .lvOr{color:#fff;font:800 8px/1 system-ui,sans-serif;letter-spacing:.05em;align-self:center;padding:0 1px}
+  .loveTag .lvRow{align-items:center;gap:4px}
+  .walletTag.loveTag button{box-shadow:none;padding:4px 5px}
   .loveTag .lvHead{background:#ff2e63;color:#fff;font:800 8px/1 system-ui,sans-serif;letter-spacing:.06em;padding:4px 7px;border-radius:4px;box-shadow:0 2px 6px rgba(0,0,0,.28);animation:tagBob .8s ease-in-out infinite alternate}
   .loveTag .lvRow{display:flex;gap:5px}
   .walletTag .lvWreck{background:#a8302c}
@@ -2054,7 +2060,7 @@
 <script type="module">
 import { newGame, doAction, canDo, unlocked, ACTIONS, phaseOf, nextUnlock, postingOdds, rivalOf,
          computePosting, CHOICES, GOAL, goalStatus,
-         shareText, MAX_DAY } from './game.js?v=20261121104330';
+         shareText, MAX_DAY } from './game.js?v=20261121104528';
 
 /* ---------- scene coordinates ----------
    The scene is scaled by a transform (see the stage), so a native
@@ -2085,11 +2091,11 @@ const TS = (document.getElementById('scene').offsetWidth || 375) / 375;
 const ALLAWEE_NOTE = 'Allawee ₦77,000 — e never enter.';
 import { initNet, joinCamp, syncPlayer, platoonBoard, recentChat, postChat,
          postSuggestion, reportMessage, awardBoard, myAwards, laughChat,
-         setPresence, campRoster, renameMe, setAvatar, online, prizeBoard, myPrize } from './net.js?v=20261121104330';
-import { startMusic, stopMusic, musicOn, audioState, audioSupported, setRain, whenSilenced, wakeAudio, audible, say, sfx, BEAT, BAR } from './audio.js?v=20261121104330';
+         setPresence, campRoster, renameMe, setAvatar, online, prizeBoard, myPrize } from './net.js?v=20261121104528';
+import { startMusic, stopMusic, musicOn, audioState, audioSupported, setRain, whenSilenced, wakeAudio, audible, say, sfx, BEAT, BAR } from './audio.js?v=20261121104528';
 import { playHoop, playPenalty, playQuiz, playRegister, playParade,
          playMami, playHustle, playManOWar, playSaed, playSocial,
-         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261121104330';
+         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261121104528';
 
 /* Every dance animation is expressed in beats, so the steps are on-tempo
    whether or not the sound is playing — and genuinely on the beat when it is. */
@@ -6193,7 +6199,8 @@ function loveCheck(el, cx, box){
      credibility card's number and nowhere else (user, 2026-11-21: "closer on
      top of the love ... should just read wreck or leave am ... the cred should
      only reflect on the numbers"). */
-  tag.innerHTML = `<span class="lvRow"><button class="lvWreck" type="button">Wreck am</button><button class="lvLeave" type="button">Leave am</button></span>`;
+  /* one bubble, one line: "Wreck or leave am", the two choices tappable in it (user) */
+  tag.innerHTML = `<span class="lvRow"><button class="lvWreck" type="button">Wreck</button><span class="lvOr">or</span><button class="lvLeave" type="button">leave am</button></span>`;
   tag.style.bottom = '96px';                      // just above the heart (the couple are 92px, the heart at their heads)
   sceneEl.appendChild(tag);
   pinInside(tag, box, cx);
