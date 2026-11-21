@@ -2037,7 +2037,7 @@
 <script type="module">
 import { newGame, doAction, canDo, unlocked, ACTIONS, phaseOf, nextUnlock, postingOdds, rivalOf,
          computePosting, CHOICES, GOAL, goalStatus,
-         shareText, MAX_DAY } from './game.js?v=20261120163408';
+         shareText, MAX_DAY } from './game.js?v=20261120181258';
 
 /* ---------- scene coordinates ----------
    The scene is scaled by a transform (see the stage), so a native
@@ -2068,11 +2068,11 @@ const TS = (document.getElementById('scene').offsetWidth || 375) / 375;
 const ALLAWEE_NOTE = 'Allawee ₦77,000 — e never enter.';
 import { initNet, joinCamp, syncPlayer, platoonBoard, recentChat, postChat,
          postSuggestion, reportMessage, awardBoard, myAwards, laughChat,
-         setPresence, campRoster, renameMe, setAvatar, online, prizeBoard, myPrize } from './net.js?v=20261120163408';
-import { startMusic, stopMusic, musicOn, audioState, audioSupported, setRain, whenSilenced, wakeAudio, audible, say, sfx, BEAT, BAR } from './audio.js?v=20261120163408';
+         setPresence, campRoster, renameMe, setAvatar, online, prizeBoard, myPrize } from './net.js?v=20261120181258';
+import { startMusic, stopMusic, musicOn, audioState, audioSupported, setRain, whenSilenced, wakeAudio, audible, say, sfx, BEAT, BAR } from './audio.js?v=20261120181258';
 import { playHoop, playPenalty, playQuiz, playRegister, playParade,
          playMami, playHustle, playManOWar, playSaed, playSocial,
-         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261120163408';
+         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261120181258';
 
 /* Every dance animation is expressed in beats, so the steps are on-tempo
    whether or not the sound is playing — and genuinely on the beat when it is. */
@@ -4968,7 +4968,14 @@ function danceBreak(){
 
 const sceneEl = $('scene');
 const calm = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-const sceneW = () => sceneEl.sceneRect().width;
+/* The scene's width in scene pixels. Cached, because it only changes on a
+   resize, and reading it from the layout every frame (the road loop did,
+   twice) forced the browser to lay the page out again mid-frame: measured at
+   ~3 layouts a frame with getBoundingClientRect the single biggest cost on the
+   main thread (2026-11-20, user: "the game is running slow again"). */
+let SCENE_W = sceneEl.offsetWidth || 375;
+new ResizeObserver(() => { SCENE_W = sceneEl.offsetWidth || SCENE_W; }).observe(sceneEl);
+const sceneW = () => SCENE_W;
 /* One number for "close enough to the edge to still count". The YOU marker
    used 0.08 and the two offers used 0.12, so a figure in that 4% band got the
    marker with no instruction above it — the screen naming someone and then
@@ -5164,6 +5171,11 @@ pointer.innerHTML = `<svg viewBox="0 0 40 46" aria-hidden="true">
   <ellipse cx="12.5" cy="9" rx="3.2" ry="1.8" fill="#fff" opacity=".55" transform="rotate(-35 12.5 9)"/>
 </svg>`;
 sceneEl.appendChild(pointer);
+/* Moved with the `translate` property from a fixed corner: unlike left and
+   bottom it does not invalidate layout, and the pin's bob (on transform) is
+   untouched. */
+pointer.style.left = '0px'; pointer.style.bottom = '0px';
+const pointerOp = v => { if (pointer._op !== v){ pointer._op = v; pointer.style.opacity = v; } };
 
 let lastAimed = 0;
 /* The conductors' call once at the start, the moment the music can actually be
@@ -5185,7 +5197,7 @@ function aimPointer(){
   /* Deliberately NOT tied to hintDone. The chip is a tutorial and goes away
      once you have tapped; this marks which figure is yours, which stays true
      for the whole session and is the only thing linking a tap to your wallet. */
-  if (calm()){ pointer.style.opacity = '0'; youFig = null; return; }
+  if (calm()){ pointerOp('0'); youFig = null; return; }
   /* Aim at whoever is actually being offered. Pointing at the figure furthest
      along meant the arrow and the label could name two different people. */
   /* Prefer whoever is being offered. When nothing is on offer — during the
@@ -5218,7 +5230,7 @@ function aimPointer(){
     const box0 = sceneEl.sceneRect();
     best = [...sceneEl.querySelectorAll(':scope > .corper')]
       .filter(freeFig).find(p => inFrame(p, box0, 0.05)) || null;
-    if (!best){ pointer.style.opacity = '0'; youFig = null; return; }
+    if (!best){ pointerOp('0'); youFig = null; return; }
   }
   const box = sceneEl.sceneRect();
   const r = best.sceneRect();
@@ -5226,15 +5238,15 @@ function aimPointer(){
   /* A figure that has left the frame keeps no marker. Without this the arrow
      followed a departing target straight off the scene — measured at left:393
      on a 375px board, which is the "YOU is pegged off" the player sees. */
-  if (centre < -4 || centre > box.width + 4){ pointer.style.opacity = '0'; youFig = null; return; }
-  pointer.style.opacity = '1';
+  if (centre < -4 || centre > box.width + 4){ pointerOp('0'); youFig = null; return; }
+  pointerOp('1');
   youFig = best;                 // who wears YOU right now (the flood charges only him for wading)
   /* Clamped so the arrow itself can never hang over the bezel, however close
      to the edge its target gets. */
-  const half = pointer.offsetWidth / 2 || 20;
-  pointer.style.left   = Math.round(
-    Math.min(Math.max(centre, half + 2), box.width - half - 2)) + 'px';
-  pointer.style.bottom = Math.round(box.bottom - r.top + 2) + 'px';
+  const half = 17;                                // .tapPoint is 34px wide (reading it each frame forced a layout)
+  const x = Math.round(Math.min(Math.max(centre, half + 2), box.width - half - 2));
+  const y = Math.round(box.bottom - r.top + 2);
+  pointer.style.translate = `${x}px ${-y}px`;
 }
 /* Every frame, not every 120ms. The figures are moved by CSS — the dance
    slides them across the scene on a transition — and a poll that wakes six
@@ -5242,10 +5254,8 @@ function aimPointer(){
    THIEF label learned this first and sat up to 180px adrift until it tracked
    per frame; this one measured 25-36px of lag in ordinary play and 315px
    during a dance. rAF costs nothing here: it is two reads and two writes. */
-if (!calm()){
-  const trackPointer = () => { aimPointer(); requestAnimationFrame(trackPointer); };
-  trackPointer();
-}
+/* (Now called at the end of the road's own frame, after everything on the road
+   has moved: one layout a frame instead of a read forcing one mid-frame.) */
 
 /* ---------- Mr. Pothole ----------
    Sits at a fixed spot on the walking path. Everyone who reaches it hops it;
@@ -6501,10 +6511,10 @@ let potPos = null, mrsPos = null;
    could not be cleared while the hole waited off the right edge. */
 let potLap = 0;
 const hopped = p => p.dataset.hop === String(potLap);
-const potX = () => potPos ?? sceneEl.sceneRect().width * POT_AT;
+const potX = () => potPos ?? sceneW() * POT_AT;
 function placePothole(){
   pothole.style.left = Math.round(potX() - 40) + 'px';   // box is 80 wide now
-  const w = sceneEl.sceneRect().width;
+  const w = sceneW();
   potholeMrs.style.left = Math.round((mrsPos ?? w * MRS_AT) - MRS_W / 2) + 'px';
 }
 placePothole();
@@ -6516,7 +6526,7 @@ if (!calm()){
   const roadTick = now => {
     const dt = Math.min(0.1, (now - last) / 1000); last = now;   // a hidden tab comes back without a jump
     if (!sceneEl.classList.contains('dancing')){
-      const W = sceneEl.sceneRect().width, d = ROAD_SPEED * dt;
+      const W = sceneW(), d = ROAD_SPEED * dt;
       potPos -= d; mrsPos -= d;
       if (potPos < -60){                                              // round again after a gap: a new pass
         /* a longer walk between passes (user, 2026-11-16: more on the road
@@ -6543,6 +6553,7 @@ if (!calm()){
         if (x < -20 && !c.classList.contains('claimed')) c.remove();
       });
     }
+    aimPointer();                    // last: everything has moved, so its reads cost one layout, not another
     requestAnimationFrame(roadTick);
   };
   requestAnimationFrame(roadTick);
