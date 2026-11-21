@@ -486,6 +486,19 @@
   .nearCouple{position:absolute;bottom:1px;width:64px;height:92px;z-index:3;pointer-events:none}
   .nearCouple svg{display:block;width:100%;height:100%}
   .nearCouple .coupleHeart{transform-box:fill-box;transform-origin:50% 100%;animation:coupleHeart 1.4s ease-in-out infinite}
+  .nearCouple.wrecked .coupleHeart{animation:heartGone .7s ease-in forwards}
+  @keyframes heartGone{0%{transform:none;opacity:1}30%{transform:scale(1.3) rotate(-14deg)}100%{transform:translateY(5px) scale(.3) rotate(30deg);opacity:0}}
+  .nearCouple.blessed .coupleHeart{animation:heartBig .5s ease-in-out 4 alternate}
+  @keyframes heartBig{to{transform:scale(1.7) translateY(-1px)}}
+  .nearCouple.wrecked svg{animation:coupleShake .32s ease-in-out 3}
+  @keyframes coupleShake{0%,100%{transform:none}25%{transform:translateX(-1.5px)}75%{transform:translateX(1.5px)}}
+  .nearCouple .toutSay{left:50%;bottom:98px}
+  /* "Love nwantiti": the choice over the couple (2026-11-21, user) */
+  .walletTag.loveTag{flex-direction:column;align-items:center;gap:4px}
+  .loveTag .lvHead{background:#ff2e63;color:#fff;font:800 8px/1 system-ui,sans-serif;letter-spacing:.06em;padding:4px 7px;border-radius:4px;box-shadow:0 2px 6px rgba(0,0,0,.28);animation:tagBob .8s ease-in-out infinite alternate}
+  .loveTag .lvRow{display:flex;gap:5px}
+  .walletTag .lvWreck{background:#a8302c}
+  .walletTag .lvLeave{background:#1f7a46}
   @keyframes coupleHeart{0%,100%{transform:translateY(0) scale(1)}15%{transform:translateY(-.6px) scale(1.22)}30%{transform:translateY(-.8px) scale(1)}45%{transform:translateY(-1px) scale(1.14)}}
   @media (prefers-reduced-motion: reduce){.nearCouple .coupleHeart{animation:none}}
   .kekeCouple .coupleLaugh{animation:coupleLaugh 2.4s ease-in-out infinite}
@@ -2037,7 +2050,7 @@
 <script type="module">
 import { newGame, doAction, canDo, unlocked, ACTIONS, phaseOf, nextUnlock, postingOdds, rivalOf,
          computePosting, CHOICES, GOAL, goalStatus,
-         shareText, MAX_DAY } from './game.js?v=20261121100348';
+         shareText, MAX_DAY } from './game.js?v=20261121103134';
 
 /* ---------- scene coordinates ----------
    The scene is scaled by a transform (see the stage), so a native
@@ -2068,11 +2081,11 @@ const TS = (document.getElementById('scene').offsetWidth || 375) / 375;
 const ALLAWEE_NOTE = 'Allawee ₦77,000 — e never enter.';
 import { initNet, joinCamp, syncPlayer, platoonBoard, recentChat, postChat,
          postSuggestion, reportMessage, awardBoard, myAwards, laughChat,
-         setPresence, campRoster, renameMe, setAvatar, online, prizeBoard, myPrize } from './net.js?v=20261121100348';
-import { startMusic, stopMusic, musicOn, audioState, audioSupported, setRain, whenSilenced, wakeAudio, audible, say, sfx, BEAT, BAR } from './audio.js?v=20261121100348';
+         setPresence, campRoster, renameMe, setAvatar, online, prizeBoard, myPrize } from './net.js?v=20261121103134';
+import { startMusic, stopMusic, musicOn, audioState, audioSupported, setRain, whenSilenced, wakeAudio, audible, say, sfx, BEAT, BAR } from './audio.js?v=20261121103134';
 import { playHoop, playPenalty, playQuiz, playRegister, playParade,
          playMami, playHustle, playManOWar, playSaed, playSocial,
-         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261121100348';
+         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261121103134';
 
 /* Every dance animation is expressed in beats, so the steps are on-tempo
    whether or not the sound is playing — and genuinely on the beat when it is. */
@@ -4999,7 +5012,7 @@ const EDGE = 0.16;
    offer has to skip them rather than suppress itself. */
 const freeFig = p => p && !p.matches(
   '.riding, .hailing, .running, .munching, .shopping, .inRide,'
-  + ' .jumping, .sunk, .gone, .stoop');
+  + ' .jumping, .sunk, .gone, .stoop, .loving');      // .loving: stopped at the couple, deciding
 
 /* Comfortably in frame if anyone is; nearer the edge rather than nothing at
    all. EDGE keeps the marked figure clear of the bezel in the normal case, but
@@ -5860,7 +5873,7 @@ const OBSTACLE = {
              jumped: 'You waka round the dustbin!', fell: 'You jam the dustbin! Tap to waka around.' },
   /* paid in naira, not energy: fee on a tap, fine (double) when he has to stop you */
   /* paid in naira, on the crossing: the barrow boy pushes you over dry */
-  flood:   { svg: FLOOD_SVG, tag: 'Enter barrow ₦100', fee: 100, miss: 6, wade: 4, start: 70, edge: 64, warn: 480, tagBottom: 96,
+  flood:   { svg: FLOOD_SVG, tag: 'Enter barrow ₦100', fee: 100, miss: 6, wade: 4, start: 70, edge: 64, warn: 620, runup: 420, askMin: 240, tagBottom: 96,   /* ~5s to read it and pay (user: "not staying up long enough") */
              jumped: 'Barrow boy push you cross. Your shoe dry!', fell: 'You waded the flood. Your shoe don soak! Tap the barrow next time.' },
   tout:    { svg: TOUT_SVG, tag: 'Settle ₦200', fee: 200, fine: 400, start: 58, edge: 52, warn: 520, tagBottom: 100,   /* stops a step short of his hand (user) */
              jumped: 'You settle the agbero ₦200. You fit pass!', fell: 'Agbero hold you! E collect ₦400. Tap to pay next time.' },
@@ -6136,14 +6149,87 @@ function sendNearCouple(){
   if (first) first.before(el); else sceneEl.appendChild(el);   // behind the walkers: they pass in front
   let last = performance.now();
   const step = now => {
-    if (!el.isConnected) return;
+    if (!el.isConnected){ if (love && love.el === el) endLove(); return; }
     x -= ROAD_SPEED * Math.min(100, now - last) / 1000; last = now;
     el.style.left = Math.round(x) + 'px';
-    if (x < -W - 10){ el.remove(); return; }
+    loveCheck(el, x + W / 2, box);
+    if (x < -W - 10){ el.remove(); if (love && love.el === el) endLove(); return; }
     requestAnimationFrame(step);
   };
   requestAnimationFrame(step);
   again(COUPLE_EVERY);
+}
+/* "Love nwantiti" (2026-11-21, user): as YOUR corper comes up behind them,
+   the choice: wreck their moment (credibility down) or leave them be (a
+   little credibility for minding your business). One ask per couple; walk
+   past without answering and it goes. Never on top of another ask. */
+const LOVE_WRECK = 3, LOVE_LEAVE = 1, LOVE_HOLD = 5000;
+let love = null;
+function loveCheck(el, cx, box){
+  if (el.dataset.loveDone) return;
+  const you = youFig;
+  if (love && love.el === el){
+    /* Held by the corper it was offered to, until HE walks past them. Tied to
+       whoever wore YOU at the moment, it closed in 0.6s whenever the marker
+       hopped to the other walker (measured). */
+    const w = love.who;
+    if (!w.isConnected || w.matches('.gone, .inRide, .riding') || figX(w, box) > cx + 6 || cx < box.width * .04 || performance.now() > love.until){ endLove(); el.dataset.loveDone = '1'; return; }
+    pinInside(love.tag, box, cx);
+    return;
+  }
+  if (love || !you || !s || jumpTag.style.display !== 'none' || wallet) return;
+  const gap = cx - figX(you, box);
+  if (gap < 60 || gap > 340 || cx > box.width * .97 || cx < box.width * .15) return;
+  if (!freeFig(you) || you.matches('.detour, .bumped') || you.style.animationPlayState === 'paused') return;
+  const tag = document.createElement('div');
+  tag.className = 'walletTag choose loveTag';
+  tag.innerHTML = `<span class="lvHead">Love nwantiti ♥</span><span class="lvRow"><button class="lvWreck" type="button">Wreck am -${LOVE_WRECK} cred</button><button class="lvLeave" type="button">Leave am +${LOVE_LEAVE} cred</button></span>`;
+  tag.style.bottom = '142px';                     // above the YOU pin of the corper standing in front of them
+  sceneEl.appendChild(tag);
+  pinInside(tag, box, cx);
+  /* He stops in front of them, hesitating, for up to LOVE_HOLD: on a phone
+     the two close at ~100px/s and the moment was gone in a second (measured).
+     Standing, he rides with the ground, exactly as the couple do, so the gap
+     holds; afterwards rejoinGrid puts him back in his place in the line. */
+  you.classList.add('loving');
+  you.style.animationPlayState = 'paused';
+  const drift = calm() ? null : you.animate([{ transform: 'translateX(0px)' }, { transform: `translateX(${-ROAD_SPEED * LOVE_HOLD / 1000}px)` }],
+                                            { duration: LOVE_HOLD, fill: 'forwards', composite: 'add' });
+  love = { el, tag, who: you, drift, t0: performance.now(), until: performance.now() + LOVE_HOLD };
+}
+function settleLove(wreck){
+  if (!love || !s) return;
+  const el = love.el;
+  hintUsed();
+  el.dataset.loveDone = '1';
+  const say2 = (t, tone) => { el.querySelector('.toutSay')?.remove(); const b = document.createElement('div'); b.className = 'toutSay ' + tone; b.textContent = t; el.appendChild(b); setTimeout(() => b.remove(), 2200); };
+  if (wreck){
+    s.cred = Math.max(0, (s.cred || 0) - LOVE_WRECK);
+    el.classList.add('wrecked');
+    say2('Ah! Who send you?', 'fine');
+    tell(`You wreck their love nwantiti. Na wa for you o! -${LOVE_WRECK} credibility`);
+    floatCost(love.tag, `-${LOVE_WRECK} cred`);
+  } else {
+    s.cred = (s.cred || 0) + LOVE_LEAVE;
+    el.classList.add('blessed');
+    say2('Thank you o!', 'paid');
+    tell(`You leave them for their love. Respect! +${LOVE_LEAVE} credibility`);
+    floatCost(love.tag, `+${LOVE_LEAVE} cred`);
+  }
+  save(); render();
+  endLove();
+}
+function endLove(){
+  if (!love) return;
+  const { who, drift, t0 } = love;
+  love.tag.remove();
+  love = null;
+  drift?.cancel();
+  if (who && who.isConnected){
+    who.classList.remove('loving');
+    who.style.animationPlayState = '';
+    rejoinGrid(who, performance.now() - t0);        // he hurries a few paces back to his place
+  }
 }
 if (!calm()) setTimeout(sendNearCouple, COUPLE_FIRST);
 
@@ -7026,8 +7112,8 @@ let jumpTarget = null;
    on it (often, on a narrow phone) he crosses like a bystander instead, and
    the next free walker with room is asked. Without this the label could be up
    for a fifth of a second and then he walked into it. */
-const ASK_RUNUP = 200;                 // px of closing gap, ~2.4s at ~85px/s: a full run-up
-const ASK_MIN = 110;                   // ~1.3s: short, but still a fair chance
+const ASK_RUNUP_STD = 200;             // px of closing gap, ~2.4s at ~85px/s: a full run-up (an obstacle may set its own: ob.runup)
+const ASK_MIN_STD = 110;               // ~1.3s: short, but still a fair chance (ob.askMin)
 let askDoneLap = -1;                   // one ask a pass: once someone has been asked, no more picking
 function planAsk(box, x, ob){
   if (jumpShown) askDoneLap = potLap;
@@ -7037,6 +7123,7 @@ function planAsk(box, x, ob){
     && !p.matches('.riding, .hailing, .running, .munching, .shopping, .inRide, .gone, .sunk')
     && !(+p.dataset.grace > performance.now()) && x - figX(p, box) > edge);
   const room = p => x - figX(p, box) - edge;
+  const ASK_RUNUP = ob.runup ?? ASK_RUNUP_STD, ASK_MIN = ob.askMin ?? ASK_MIN_STD;   // the barrow asks earlier: a price to read and a choice to make
   if (figs.some(p => p.dataset.askLap === lap && room(p) >= ASK_MIN)) return;        // chosen already
   const cur = [cornTarget, rideTarget].filter(p => p && figs.includes(p) && p.dataset.skipLap !== lap);
   if (cur.some(p => room(p) >= ASK_RUNUP)) return;                                   // yours, with room
@@ -7474,6 +7561,11 @@ function labelUnder(x, y){
   return hits.sort((a, b) => d(a) - d(b))[0].t;
 }
 sceneEl.addEventListener('click', e => {
+  if (e.target.closest('.loveTag')){
+    const b = e.target.closest('button');
+    if (b) settleLove(b.classList.contains('lvWreck'));
+    return;
+  }
   if (wallet && e.target.closest('.walletTag')){
     const b = e.target.closest('button');
     if (b) settleWallet(wallet, b.classList.contains('wReturn'));
