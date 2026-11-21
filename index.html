@@ -2054,7 +2054,7 @@
 <script type="module">
 import { newGame, doAction, canDo, unlocked, ACTIONS, phaseOf, nextUnlock, postingOdds, rivalOf,
          computePosting, CHOICES, GOAL, goalStatus,
-         shareText, MAX_DAY } from './game.js?v=20261121103946';
+         shareText, MAX_DAY } from './game.js?v=20261121104330';
 
 /* ---------- scene coordinates ----------
    The scene is scaled by a transform (see the stage), so a native
@@ -2085,11 +2085,11 @@ const TS = (document.getElementById('scene').offsetWidth || 375) / 375;
 const ALLAWEE_NOTE = 'Allawee ₦77,000 — e never enter.';
 import { initNet, joinCamp, syncPlayer, platoonBoard, recentChat, postChat,
          postSuggestion, reportMessage, awardBoard, myAwards, laughChat,
-         setPresence, campRoster, renameMe, setAvatar, online, prizeBoard, myPrize } from './net.js?v=20261121103946';
-import { startMusic, stopMusic, musicOn, audioState, audioSupported, setRain, whenSilenced, wakeAudio, audible, say, sfx, BEAT, BAR } from './audio.js?v=20261121103946';
+         setPresence, campRoster, renameMe, setAvatar, online, prizeBoard, myPrize } from './net.js?v=20261121104330';
+import { startMusic, stopMusic, musicOn, audioState, audioSupported, setRain, whenSilenced, wakeAudio, audible, say, sfx, BEAT, BAR } from './audio.js?v=20261121104330';
 import { playHoop, playPenalty, playQuiz, playRegister, playParade,
          playMami, playHustle, playManOWar, playSaed, playSocial,
-         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261121103946';
+         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261121104330';
 
 /* Every dance animation is expressed in beats, so the steps are on-tempo
    whether or not the sound is playing — and genuinely on the beat when it is. */
@@ -5235,6 +5235,7 @@ function aimPointer(){
   if (paidRunner && !(paidRunner.isConnected && paidRunner.matches('.running, .munching, .shopping')))
     paidRunner = null;
   let best = paidRunner
+    || (love && love.who && love.who.isConnected ? love.who : null)   // the one stopped at the couple, deciding, is still you
     || sceneEl.querySelector('.corper.wantsJump, .corper.wantsCorn, .corper.wantsRide');
   if (best) lastAimed = performance.now();
   else {
@@ -6184,12 +6185,16 @@ function loveCheck(el, cx, box){
   }
   if (love || !you || !s || jumpTag.style.display !== 'none' || wallet) return;
   const gap = cx - figX(you, box);
-  if (gap < 60 || gap > 340 || cx > box.width * .97 || cx < box.width * .15) return;
+  if (gap < 60 || gap > 340 || cx > box.width * .84 || cx < box.width * .15) return;   // far enough in that the pin sits right over their heart, not squeezed off the edge
   if (!freeFig(you) || you.matches('.detour, .bumped') || you.style.animationPlayState === 'paused') return;
   const tag = document.createElement('div');
   tag.className = 'walletTag choose loveTag';
-  tag.innerHTML = `<span class="lvHead">Love nwantiti ♥</span><span class="lvRow"><button class="lvWreck" type="button">Wreck am -${LOVE_WRECK} cred</button><button class="lvLeave" type="button">Leave am +${LOVE_LEAVE} cred</button></span>`;
-  tag.style.bottom = '142px';                     // above the YOU pin of the corper standing in front of them
+  /* Just the two choices, right over their heart; what it costs shows on the
+     credibility card's number and nowhere else (user, 2026-11-21: "closer on
+     top of the love ... should just read wreck or leave am ... the cred should
+     only reflect on the numbers"). */
+  tag.innerHTML = `<span class="lvRow"><button class="lvWreck" type="button">Wreck am</button><button class="lvLeave" type="button">Leave am</button></span>`;
+  tag.style.bottom = '96px';                      // just above the heart (the couple are 92px, the heart at their heads)
   sceneEl.appendChild(tag);
   pinInside(tag, box, cx);
   /* He stops in front of them, hesitating, for up to LOVE_HOLD: on a phone
@@ -6212,14 +6217,12 @@ function settleLove(wreck){
     s.cred = Math.max(0, (s.cred || 0) - LOVE_WRECK);
     el.classList.add('wrecked');
     say2('Ah! Who send you?', 'fine');
-    tell(`You wreck their love nwantiti. Na wa for you o! -${LOVE_WRECK} credibility`);
-    floatCost(love.tag, `-${LOVE_WRECK} cred`);
+    tell('You wreck their love nwantiti. Na wa for you o!');
   } else {
     s.cred = (s.cred || 0) + LOVE_LEAVE;
     el.classList.add('blessed');
     say2('Thank you o!', 'paid');
-    tell(`You leave them for their love. Respect! +${LOVE_LEAVE} credibility`);
-    floatCost(love.tag, `+${LOVE_LEAVE} cred`);
+    tell('You leave them for their love. Respect!');
   }
   save(); render();
   endLove();
