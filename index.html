@@ -487,6 +487,23 @@
   .nearCouple svg{display:block;width:100%;height:100%}
   .nearCouple .coupleHeart{transform-box:fill-box;transform-origin:50% 100%;animation:coupleHeart 1.4s ease-in-out infinite}
   .nearCouple.wrecked .coupleHeart{opacity:0;animation:none}   /* heartBurst() takes its place */
+  /* wrecked: he clutches his head, she turns and walks off to the left (user, 2026-11-22) */
+  .nearCouple .cHimDespair{display:none}
+  .nearCouple.wrecked .cHimArms,.nearCouple.wrecked .cHimSmile{display:none}
+  .nearCouple.wrecked .cHimDespair{display:inline;animation:himDespair .5s ease-in-out .3s 4 alternate;transform-box:fill-box;transform-origin:50% 100%}
+  @keyframes himDespair{to{transform:translateY(.5px) scaleY(.96)}}
+  .nearCouple .cHer{transform-box:fill-box;transform-origin:50% 100%}
+  .nearCouple.wrecked .cHer{animation:herLeaves 3.4s linear .45s forwards}
+  @keyframes herLeaves{
+    0%{transform:none;opacity:1}
+    6%{transform:scaleX(-1)}
+    14%{transform:translate(-5px,-.7px) scaleX(-1)} 22%{transform:translate(-10px,0) scaleX(-1)}
+    30%{transform:translate(-15px,-.7px) scaleX(-1)} 38%{transform:translate(-20px,0) scaleX(-1)}
+    46%{transform:translate(-25px,-.7px) scaleX(-1)} 54%{transform:translate(-30px,0) scaleX(-1)}
+    62%{transform:translate(-35px,-.7px) scaleX(-1)} 70%{transform:translate(-40px,0) scaleX(-1)}
+    78%{transform:translate(-45px,-.7px) scaleX(-1);opacity:1} 86%{transform:translate(-50px,0) scaleX(-1)}
+    100%{transform:translate(-58px,-.7px) scaleX(-1);opacity:0}}
+  @media (prefers-reduced-motion: reduce){.nearCouple.wrecked .cHer{animation:none;opacity:0}}
   .heartBurst{position:absolute;z-index:8;width:34px;height:34px;margin:0 0 -17px -17px;pointer-events:none}
   .heartBurst svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
   .heartBurst i{position:absolute;left:50%;top:50%;pointer-events:none}
@@ -684,6 +701,19 @@
   .pothole.floodZ{z-index:3}
   .barrowBoy .bArm{transform-box:fill-box;transform-origin:0 0}
   .pothole.boyCall .barrowWait .bArm{animation:bWave .28s ease-in-out 6 alternate}
+  /* waiting in the water, he does not stand still (user, 2026-11-22: "a still
+     marching or some movements while in the atlantic ocean"): marching on the
+     spot, a bob, and a beckon every few seconds */
+  .pothole .barrowWait .bLegA,.pothole .barrowDone .bLegA{animation:bStep .9s ease-in-out infinite}
+  .pothole .barrowWait .bLegB,.pothole .barrowDone .bLegB{animation:bStep .9s ease-in-out -.45s infinite}
+  @keyframes bStep{0%,50%,100%{transform:none}25%{transform:translateY(-2.4px)}}
+  .pothole .barrowWait .barrowBoy,.pothole .barrowDone .barrowBoy{animation:bBob .45s ease-in-out infinite alternate}
+  @keyframes bBob{to{transform:translateY(-.8px)}}
+  .pothole:not(.boyCall) .barrowWait .bArm{animation:bBeckon 3.4s ease-in-out infinite}
+  @keyframes bBeckon{0%,62%,100%{transform:none}70%{transform:rotate(-95deg)}76%{transform:rotate(-70deg)}82%{transform:rotate(-95deg)}88%{transform:rotate(-70deg)}}
+  .pothole .barrowWait{animation:bRock 1.8s ease-in-out infinite alternate}   /* not .barrowDone: its translate(84) lives in a transform attribute an animation would replace */
+  @keyframes bRock{to{transform:translateY(.5px)}}
+  @media (prefers-reduced-motion: reduce){.pothole .barrowWait *,.pothole .barrowDone *,.pothole .barrowWait,.pothole .barrowDone{animation:none!important}}
   @keyframes bWave{to{transform:rotate(-80deg)}}
   .pothole.crossed .barrowDone{display:inline}
   .pothole.crossed .barrowWait,.pothole.carrying .barrowWait{display:none}
@@ -2063,7 +2093,7 @@
 <script type="module">
 import { newGame, doAction, canDo, unlocked, ACTIONS, phaseOf, nextUnlock, postingOdds, rivalOf,
          computePosting, CHOICES, GOAL, goalStatus,
-         shareText, MAX_DAY } from './game.js?v=20261121111532';
+         shareText, MAX_DAY } from './game.js?v=20261122125438';
 
 /* ---------- scene coordinates ----------
    The scene is scaled by a transform (see the stage), so a native
@@ -2094,11 +2124,11 @@ const TS = (document.getElementById('scene').offsetWidth || 375) / 375;
 const ALLAWEE_NOTE = 'Allawee ₦77,000 — e never enter.';
 import { initNet, joinCamp, syncPlayer, platoonBoard, recentChat, postChat,
          postSuggestion, reportMessage, awardBoard, myAwards, laughChat,
-         setPresence, campRoster, renameMe, setAvatar, online, prizeBoard, myPrize } from './net.js?v=20261121111532';
-import { startMusic, stopMusic, musicOn, audioState, audioSupported, setRain, whenSilenced, wakeAudio, audible, say, sfx, BEAT, BAR } from './audio.js?v=20261121111532';
+         setPresence, campRoster, renameMe, setAvatar, online, prizeBoard, myPrize } from './net.js?v=20261122125438';
+import { startMusic, stopMusic, musicOn, audioState, audioSupported, setRain, whenSilenced, wakeAudio, audible, say, sfx, BEAT, BAR } from './audio.js?v=20261122125438';
 import { playHoop, playPenalty, playQuiz, playRegister, playParade,
          playMami, playHustle, playManOWar, playSaed, playSocial,
-         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261121111532';
+         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261122125438';
 
 /* Every dance animation is expressed in beats, so the steps are on-tempo
    whether or not the sound is playing — and genuinely on the beat when it is. */
@@ -6143,7 +6173,22 @@ const COUPLE_FIRST = 60000, COUPLE_EVERY = 120000;   // (user: too often at 48s)
 function nearCoupleSvg(){
   const svg = kekeCouple();
   const figs = svg.slice(svg.indexOf('<!-- the couple at the corner -->'), svg.lastIndexOf('</svg>'));
-  return `<svg viewBox="74 4 28 40.6" aria-hidden="true" overflow="visible">${figs.replace(/<g class="coupleLaugh">[\s\S]*?<\/g>/, '')}
+  /* Her, his arms, his face: separate pieces, so a wreck can play out on
+     them (user, 2026-11-22: "the guy ... hands on head and lady walks away to
+     the left"). */
+  let f = figs.replace(/<g class="coupleLaugh">[\s\S]*?<\/g>/, '');
+  const iHer = f.indexOf('<!-- her:'), iHim = f.indexOf('<!-- him:');
+  f = f.slice(0, iHer) + '<g class="cHer">' + f.slice(iHer, iHim) + '</g>' + f.slice(iHim);
+  const sk = (f.match(/M97 24\.6 L97\.8 31" stroke="([^"]+)"/) || [])[1] || '#6b4423';
+  f = f.replace(/(<path d="M91 23\.4 Q86 21\.6 84\.4 23\.2"[^>]*\/>\s*<path d="M97 24\.6 L97\.8 31"[^>]*\/>)/, '<g class="cHimArms">$1</g>');
+  f = f.replace(/(<path d="M91\.8 18\.4 q\.9 \.9 1\.8 0"[^>]*\/>)/, '<g class="cHimSmile">$1</g>');
+  f += `<g class="cHimDespair">
+      <path d="M90.8 24.2 Q88.4 19.4 91 14.4" stroke="${sk}" stroke-width="1.6" fill="none" stroke-linecap="round"/>
+      <path d="M97.2 24.2 Q99.6 19.4 97 14.4" stroke="${sk}" stroke-width="1.6" fill="none" stroke-linecap="round"/>
+      <circle cx="91.4" cy="14" r=".95" fill="${sk}"/><circle cx="96.6" cy="14" r=".95" fill="${sk}"/>
+      <path d="M91.8 19.1 q.9 -.8 1.8 0" stroke="#3a1f12" stroke-width=".6" fill="none" stroke-linecap="round"/>
+    </g>`;
+  return `<svg viewBox="74 4 28 40.6" aria-hidden="true" overflow="visible">${f}
     <g class="coupleHeart"><path d="M88.8 11.6 l-2.9 -2.8 a1.7 1.7 0 0 1 2.9 -2.4 a1.7 1.7 0 0 1 2.9 2.4 z" fill="#ff2e63" stroke="#fff" stroke-width=".5"/>
       <path d="M86.9 7.6 q.5 -.6 1.1 -.5" stroke="#fff" stroke-width=".45" fill="none" stroke-linecap="round" opacity=".8"/></g></svg>`;
 }
