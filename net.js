@@ -2,7 +2,7 @@
    Every function is failure-tolerant on purpose: if Supabase is unset, slow,
    or down, the game must still be playable. Nothing here throws upward. */
 
-import { SUPABASE_URL, SUPABASE_ANON_KEY } from './config.js?v=20261122215131';
+import { SUPABASE_URL, SUPABASE_ANON_KEY } from './config.js?v=20261122221342';
 
 const TOKEN_KEY = 'otondo:token';
 let sb = null, token = null, channel = null;
@@ -261,6 +261,30 @@ export async function prizeBoard() {
     prizeCache = data; prizeAt = Date.now();
     return data;
   } catch (e) { console.warn('[otondo] prize board failed:', e.message); return prizeCache; }
+}
+/* Platoon War (supabase/platoonwar.sql): this week's platoon totals and last
+   week's winner, cached a minute like the other boards. Null until the SQL
+   has run, so the game only shows the war once the server is counting it. */
+let warCache = null, warAt = 0;
+export async function platoonWar() {
+  if (!sb) return null;
+  if (warCache && Date.now() - warAt < 60000) return warCache;
+  try {
+    const { data, error } = await sb.rpc('platoon_war');
+    if (error) throw error;
+    warCache = data; warAt = Date.now();
+    return data;
+  } catch (e) { console.warn('[otondo] platoon war failed:', e.message); return warCache; }
+}
+/* Last week's winners' bonus: { won, eligible, claimed, platoon, bonus? }.
+   The server pays it once; bonus is only present the first time. */
+export async function claimPlatoonWin() {
+  if (!sb || !token) return null;
+  try {
+    const { data, error } = await sb.rpc('claim_platoon_win', { p_token: token });
+    if (error) throw error;
+    return data;
+  } catch (e) { console.warn('[otondo] platoon claim failed:', e.message); return null; }
 }
 export async function myPrize() {
   if (!sb || !token) return null;

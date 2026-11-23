@@ -1766,6 +1766,25 @@
     padding:4px 9px;border-radius:99px}
 
   .board{width:100%;border-collapse:collapse;font-size:14px}
+  /* Platoon War (2026-11-22) */
+  .warBox{background:#1d1a10;color:#fff;border-radius:14px;padding:14px 14px 12px;margin-bottom:14px;box-shadow:0 3px 12px rgba(0,0,0,.18)}
+  .warBox h3{margin:0;font-size:17px;letter-spacing:.04em}
+  .warBox .wEnds{margin:3px 0 8px;font-size:12px;color:#f2c200;font-weight:700}
+  .warBox .wLast{margin:0 0 10px;font-size:12.5px;color:#e9e3cf}
+  .warBox ol{list-style:none;margin:0 0 10px;padding:0}
+  .warBox li{display:grid;grid-template-columns:22px 1fr auto;align-items:center;gap:6px;padding:5px 6px;border-radius:8px;font-size:13.5px}
+  .warBox li.me{background:rgba(242,194,0,.16);outline:1px solid rgba(242,194,0,.55)}
+  .warBox li .wR{font-weight:900;color:#f2c200}
+  .warBox li .wBar{display:block;height:6px;border-radius:3px;background:#3a3420;margin-top:4px;overflow:hidden}
+  .warBox li .wBar i{display:block;height:100%;background:linear-gradient(90deg,#f2c200,#ff7a00);border-radius:3px}
+  .warBox li .wPts{font-weight:900;font-size:13px;white-space:nowrap}
+  .warBox li em{font-style:normal;color:#bdb59a;font-size:11.5px}
+  .warBox .wMine{margin:0 0 10px;font-size:12.5px;color:#f2c200;font-weight:700}
+  .warBox .wInvite{display:block;width:100%;border:0;border-radius:10px;padding:11px;font:800 14px system-ui,sans-serif;
+    background:#0a7a43;color:#fff;cursor:pointer;box-shadow:0 2px 0 #075c32}
+  .warBox .wInvite:active{transform:translateY(1px);box-shadow:none}
+  .warBox .wHow{margin:7px 0 0;font-size:11.5px;color:#bdb59a;text-align:center}
+  .allTime{margin:4px 0 6px;font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
   .board th{text-align:left;font-size:10px;letter-spacing:.09em;text-transform:uppercase;
     color:var(--muted);padding:0 6px 7px}
   .board td{padding:8px 6px;border-top:1px solid var(--line)}
@@ -2032,6 +2051,8 @@
     </div>
 
     <div id="panelBoard" class="hidden">
+      <div class="warBox hidden" id="warBox"></div>
+      <h4 class="allTime" id="allTimeH">All-time</h4>
       <table class="board"><thead><tr>
         <th>Platoon</th><th>Otondos</th><th>Avg cred.</th><th>Best</th>
       </tr></thead><tbody id="boardBody"></tbody></table>
@@ -2147,7 +2168,7 @@
 <script type="module">
 import { newGame, doAction, canDo, unlocked, ACTIONS, phaseOf, nextUnlock, postingOdds, rivalOf,
          computePosting, CHOICES, GOAL, goalStatus,
-         shareText, MAX_DAY } from './game.js?v=20261122215131';
+         shareText, MAX_DAY } from './game.js?v=20261122221342';
 
 /* ---------- scene coordinates ----------
    The scene is scaled by a transform (see the stage), so a native
@@ -2178,11 +2199,11 @@ const TS = (document.getElementById('scene').offsetWidth || 375) / 375;
 const ALLAWEE_NOTE = 'Allawee ₦77,000 — e never enter.';
 import { initNet, joinCamp, syncPlayer, platoonBoard, recentChat, postChat,
          postSuggestion, reportMessage, awardBoard, myAwards, laughChat,
-         setPresence, campRoster, renameMe, setAvatar, online, prizeBoard, myPrize } from './net.js?v=20261122215131';
-import { startMusic, stopMusic, musicOn, audioState, audioSupported, setRain, whenSilenced, wakeAudio, audible, say, sfx, BEAT, BAR } from './audio.js?v=20261122215131';
+         setPresence, campRoster, renameMe, setAvatar, online, prizeBoard, myPrize, platoonWar, claimPlatoonWin } from './net.js?v=20261122221342';
+import { startMusic, stopMusic, musicOn, audioState, audioSupported, setRain, whenSilenced, wakeAudio, audible, say, sfx, BEAT, BAR } from './audio.js?v=20261122221342';
 import { playHoop, playPenalty, playQuiz, playRegister, playParade,
          playMami, playHustle, playManOWar, playSaed, playSocial,
-         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261122215131';
+         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261122221342';
 
 /* Every dance animation is expressed in beats, so the steps are on-tempo
    whether or not the sound is playing — and genuinely on the beat when it is. */
@@ -9855,6 +9876,15 @@ try {
   if (r) localStorage.setItem(SRC_KEY, r.replace(/[^a-zA-Z0-9_-]/g, '').slice(0, 24));
 } catch {}
 const cameFrom = () => { try { return localStorage.getItem(SRC_KEY); } catch { return null; } };
+/* A Platoon War invite (?p=N, from "Bring your people"): a NEW player lands in
+   that platoon. Kept like the source, for the same reason: people arrive, look
+   around, and start a run on a later visit. */
+const INVITE_KEY = 'otondo:invitePlatoon';
+try {
+  const ip = parseInt(new URLSearchParams(location.search).get('p'), 10);
+  if (ip >= 1 && ip <= 10) localStorage.setItem(INVITE_KEY, String(ip));
+} catch {}
+const invitedPlatoon = () => { try { const v = parseInt(localStorage.getItem(INVITE_KEY), 10); return v >= 1 && v <= 10 ? v : null; } catch { return null; } };
 
 let s = null;
 const SAVE = 'otondo:v1';
@@ -9889,7 +9919,10 @@ async function ensureJoined(){
 }
 
 function enterCamp(){
-  s = newGame(autoName()); save(); render();
+  s = newGame(autoName());
+  const inv = invitedPlatoon();
+  if (inv) s.platoon = inv;            // invited: straight into your friend's platoon
+  save(); render();
   checkStreak();
   mine = [];                       // last run's badges are not this run's
   drawBadges();
@@ -11132,6 +11165,7 @@ $('tabBoard').onclick  = () => tab('board');
 $('tabChat').onclick   = () => tab('chat');
 
 async function drawBoard(){
+  drawWar();
   const rows = await platoonBoard();
   if (!rows || !rows.length){
     $('boardNote').textContent = online()
@@ -11144,6 +11178,78 @@ async function drawBoard(){
     <tr class="${s && r.platoon === s.platoon ? 'me' : ''}">
       <td class="pl">Platoon ${r.platoon}</td><td>${fmt(r.members)}</td>
       <td>${r.avg_cred}</td><td>${r.top_cred}</td></tr>`).join('');
+}
+
+/* ---------- PLATOON WAR (2026-11-22, user) ----------
+   The week's race between platoons: everybody's earned credibility added up,
+   same week and same counting as the airtime race. Shown only once the server
+   answers (supabase/platoonwar.sql), like the prize. */
+const PLATOON_WAR_ON = true;
+async function drawWar(){
+  const box = $('warBox');
+  if (!PLATOON_WAR_ON){ box.classList.add('hidden'); return; }
+  const w = await platoonWar();
+  if (!w){ box.classList.add('hidden'); $('allTimeH').classList.add('hidden'); return; }
+  $('allTimeH').classList.remove('hidden');
+  const st = w.standings || [], lead = st[0], top = lead ? lead.earned : 0;
+  const mine = s ? st.find(r => r.platoon === s.platoon) : null;
+  const myRank = mine ? st.indexOf(mine) + 1 : 0;
+  const last = w.last;
+  let html = `<h3>⚔️ PLATOON WAR</h3><p class="wEnds">Most credibility earned this week wins · ${prizeEndsIn()}</p>`;
+  if (last) html += `<p class="wLast">🏆 Last week: <b>Platoon ${last.platoon}</b> won with +${fmt(last.earned)} cred. Every corper wey fight got +10.</p>`;
+  if (st.length){
+    html += '<ol>' + st.slice(0, 10).map((r, i) => `<li class="${s && r.platoon === s.platoon ? 'me' : ''}">
+        <span class="wR">${i + 1}</span>
+        <span><b>Platoon ${r.platoon}</b>${s && r.platoon === s.platoon ? ' <em>· your platoon</em>' : ''}<span class="wBar"><i style="width:${top ? Math.max(4, Math.round(r.earned / top * 100)) : 0}%"></i></span></span>
+        <span class="wPts">+${fmt(r.earned)} <em>· ${fmt(r.active)} corper${r.active === 1 ? '' : 's'}</em></span></li>`).join('') + '</ol>';
+  } else html += `<p class="wMine">No platoon don score this week. First cred wey you earn put your platoon for top!</p>`;
+  if (s){
+    if (myRank === 1) html += `<p class="wMine">Your Platoon ${s.platoon} dey lead! Hold am till Sunday night.</p>`;
+    else if (mine) html += `<p class="wMine">Your Platoon ${s.platoon} dey number ${myRank}${lead ? `, ${fmt(lead.earned - mine.earned)} cred behind Platoon ${lead.platoon}` : ''}. Bring your people!</p>`;
+    else if (st.length) html += `<p class="wMine">Your Platoon ${s.platoon} never score this week. Earn cred or bring your people!</p>`;
+    html += `<button class="wInvite" type="button" id="warInvite">📲 Bring your people to Platoon ${s.platoon}</button>
+      <p class="wHow">Anybody wey start Otondo from your link go join your platoon, and their cred go add to your score.</p>`;
+  }
+  box.innerHTML = html;
+  box.classList.remove('hidden');
+  const btn = $('warInvite');
+  if (btn) btn.onclick = () => inviteToPlatoon(btn);
+}
+async function inviteToPlatoon(btn){
+  if (!s) return;
+  const url = `https://otondo.ng/?p=${s.platoon}&r=pw`;
+  const text = `I dey Platoon ${s.platoon} for Otondo ⚔️ Join my platoon make we win this week's Platoon War!`;
+  try {
+    if (navigator.share){ await navigator.share({ text, url }); return; }
+  } catch (e){ if (e && e.name === 'AbortError') return; }
+  try { await navigator.clipboard.writeText(`${text} ${url}`); btn.textContent = '✅ Link copied. Send am to your people!'; }
+  catch { btn.textContent = url; }
+  setTimeout(() => { if (btn.isConnected) btn.textContent = `📲 Bring your people to Platoon ${s.platoon}`; }, 3500);
+}
+/* The street sign shouts the race now and then. */
+if (PLATOON_WAR_ON && !calm()) setInterval(async () => {
+  if (!s || !shoutSign || document.hidden) return;
+  const w = await platoonWar();
+  const lead = w && w.standings && w.standings[0];
+  if (!lead) return;
+  shoutSign(lead.platoon === s.platoon ? ['YOUR PLATOON DEY LEAD!', '#0a7a43', '#ffffff'] : [`PLATOON ${lead.platoon} DEY LEAD!`, '#7a2e2e', '#ffffff']);
+}, 150000);
+/* Last week's winners: +10 credibility once, and a party. Waits its turn if
+   the airtime popup is up. */
+async function checkPlatoonWin(){
+  if (!PLATOON_WAR_ON || !s) return;
+  if (!$('prizePop').classList.contains('hidden')){ setTimeout(checkPlatoonWin, 4000); return; }
+  const r = await claimPlatoonWin();
+  if (!r || !r.bonus) return;
+  s.cred = (s.cred || 0) + r.bonus;
+  save(); render();
+  $('prizeCard').innerHTML = `
+    <div class="hoorayBig" id="prizeH">🎖️ Platoon ${r.platoon} win the war!</div>
+    <p>Your platoon earned the most credibility last week. Every corper wey fight gets <b>+${r.bonus} credibility</b>, and you be one of them.</p>
+    <p style="font-size:13.5px">New week don start. Hold the crown: earn cred and bring your people.</p>
+    <button class="primary" type="button" id="prizeClose">Oya, defend am!</button>`;
+  $('prizePop').classList.remove('hidden');
+  $('prizeClose').onclick = () => $('prizePop').classList.add('hidden');
 }
 
 const esc = t => String(t).replace(/[&<>"]/g, c =>
@@ -11469,6 +11575,7 @@ initNet({
   pushPresence();          // a resumed save is already in camp
   drawPrizeHook();
   checkMyPrize();
+  setTimeout(checkPlatoonWin, 1500);      // after the airtime check has had its say
 });
 
 if (freshCampDue()) freshCamp(); else render();
