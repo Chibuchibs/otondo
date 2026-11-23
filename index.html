@@ -2124,7 +2124,7 @@
 <script type="module">
 import { newGame, doAction, canDo, unlocked, ACTIONS, phaseOf, nextUnlock, postingOdds, rivalOf,
          computePosting, CHOICES, GOAL, goalStatus,
-         shareText, MAX_DAY } from './game.js?v=20261122201352';
+         shareText, MAX_DAY } from './game.js?v=20261122201911';
 
 /* ---------- scene coordinates ----------
    The scene is scaled by a transform (see the stage), so a native
@@ -2155,11 +2155,11 @@ const TS = (document.getElementById('scene').offsetWidth || 375) / 375;
 const ALLAWEE_NOTE = 'Allawee ₦77,000 — e never enter.';
 import { initNet, joinCamp, syncPlayer, platoonBoard, recentChat, postChat,
          postSuggestion, reportMessage, awardBoard, myAwards, laughChat,
-         setPresence, campRoster, renameMe, setAvatar, online, prizeBoard, myPrize } from './net.js?v=20261122201352';
-import { startMusic, stopMusic, musicOn, audioState, audioSupported, setRain, whenSilenced, wakeAudio, audible, say, sfx, BEAT, BAR } from './audio.js?v=20261122201352';
+         setPresence, campRoster, renameMe, setAvatar, online, prizeBoard, myPrize } from './net.js?v=20261122201911';
+import { startMusic, stopMusic, musicOn, audioState, audioSupported, setRain, whenSilenced, wakeAudio, audible, say, sfx, BEAT, BAR } from './audio.js?v=20261122201911';
 import { playHoop, playPenalty, playQuiz, playRegister, playParade,
          playMami, playHustle, playManOWar, playSaed, playSocial,
-         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261122201352';
+         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261122201911';
 
 /* Every dance animation is expressed in beats, so the steps are on-tempo
    whether or not the sound is playing — and genuinely on the beat when it is. */
@@ -4036,11 +4036,11 @@ const CV_OWN = [
   { sign: 'PRINT & BIND', w: 104, broad: 'cyber', body: '#e6e2d8', roof: '#c1272d', door: '#c1272d',
     signInk: ['#6b1414', '#ffffff', '#ffb3b3'], errand: 'Print & bind', price: 300, cred: 1 },
   { sign: 'LAPTOP HUB', w: 108, cv: 'laptops', body: '#e3e7ea', roof: '#0f4c81', door: '#0f4c81',
-    signInk: ['#0a3459', '#ffffff', '#9fd0ff'], errand: 'Buy laptop bag', price: 2000, cred: 1 },
+    signInk: ['#0a3459', '#ffffff', '#9fd0ff'], errand: 'Install MS Office', price: 2000, cred: 1 },   // what ₦2,000 really buys at a laptop stand (user, 2026-11-22: the laptop price was not realistic)
   { sign: 'POS & TRANSFER', w: 76, cv: 'desk', body: '#1e3a8a', roof: '#1e3a8a', kerb: true, desk: 'WITHDRAW · TRANSFER',
     signInk: ['#14296b', '#ffffff', '#9fd0ff'], errand: 'Withdraw cash', price: 100, belle: 1 },
   { sign: 'ICT CENTRE', w: 104, body: '#d9c8a9', roof: '#4a4a4a', door: '#2b6cb0', heads: 2,
-    signInk: ['#1d1d1d', '#9fffe0', '#4fe3b7'], errand: 'Learn coding', price: 1000, cred: 3 },
+    signInk: ['#1d1d1d', '#9fffe0', '#4fe3b7'], errand: 'Sort NYSC portal', price: 1000, cred: 3 },   // ₦1,000 at the cyber café: the portal wahala every corper pays to fix (was 'Learn coding')
   { sign: 'TECH PLAZA', w: 116, cv: 'plaza', body: '#f1c0b9', roof: '#7a2e2e', units: ['SCREEN GUARD', 'POWER BANK', 'PHONE HOSPITAL', 'GADGET CITY', 'SIM PLUG', 'BUY ORIGINAL'],
     signInk: ['#4d1414', '#ffe0dc', '#ff9f94'], errand: 'Buy screen guard', price: 500, cred: 1 },
 ];
