@@ -547,9 +547,16 @@
   /* "Love nwantiti": the choice over the couple (2026-11-21, user) */
   .walletTag.loveTag{flex-direction:column;align-items:center;gap:4px}
   /* the danfo haggle (2026-11-22) */
-  .pickup.danfoStop{width:150px;bottom:4px;transition:left 1.1s cubic-bezier(.2,.8,.3,1)}
+  .pickup.danfoStop{width:212px;bottom:4px;transition:left 1.1s cubic-bezier(.2,.8,.3,1)}
+  /* the conductor at the walkers' scale, hanging off the door (user: "the conductor looks significantly smaller than the player") */
+  .pickup.danfoStop .cond{display:none}
+  .danfoStop .condBig{position:absolute;left:59.6%;bottom:18px;width:48px;height:72px;transform:rotate(-10deg);transform-origin:30% 93%;pointer-events:none}
+  .danfoStop .condBig svg{display:block;width:100%;height:100%;overflow:visible}
+  .danfoStop .condBig .wave{animation:flag .55s ease-in-out infinite alternate;transform-box:fill-box;transform-origin:0% 0%}
+  .danfoStop .condBig .condBody{animation:condLean .9s ease-in-out infinite alternate;transform-box:fill-box;transform-origin:50% 100%}
+  @keyframes condLean{to{transform:rotate(-4deg)}}
   .pickup.danfoStop svg{display:block;width:100%;height:auto}
-  .pickup.danfoStop .toutSay{left:72%;bottom:66px}
+  .pickup.danfoStop .toutSay{left:68%;bottom:100px}
   .walletTag.choose.hagTag{background:#f2c200;padding:4px 5px 5px;border-radius:7px;box-shadow:0 2px 6px rgba(0,0,0,.3);
     flex-direction:column;align-items:center;gap:3px;animation:tagBob .8s ease-in-out infinite alternate}
   .walletTag.choose.hagTag::after{display:block;content:'';position:absolute;left:50%;top:100%;margin-left:-4px;border:4px solid transparent;border-top-color:#f2c200;pointer-events:none}
@@ -2140,7 +2147,7 @@
 <script type="module">
 import { newGame, doAction, canDo, unlocked, ACTIONS, phaseOf, nextUnlock, postingOdds, rivalOf,
          computePosting, CHOICES, GOAL, goalStatus,
-         shareText, MAX_DAY } from './game.js?v=20261122213746';
+         shareText, MAX_DAY } from './game.js?v=20261122215131';
 
 /* ---------- scene coordinates ----------
    The scene is scaled by a transform (see the stage), so a native
@@ -2171,11 +2178,11 @@ const TS = (document.getElementById('scene').offsetWidth || 375) / 375;
 const ALLAWEE_NOTE = 'Allawee ₦77,000 — e never enter.';
 import { initNet, joinCamp, syncPlayer, platoonBoard, recentChat, postChat,
          postSuggestion, reportMessage, awardBoard, myAwards, laughChat,
-         setPresence, campRoster, renameMe, setAvatar, online, prizeBoard, myPrize } from './net.js?v=20261122213746';
-import { startMusic, stopMusic, musicOn, audioState, audioSupported, setRain, whenSilenced, wakeAudio, audible, say, sfx, BEAT, BAR } from './audio.js?v=20261122213746';
+         setPresence, campRoster, renameMe, setAvatar, online, prizeBoard, myPrize } from './net.js?v=20261122215131';
+import { startMusic, stopMusic, musicOn, audioState, audioSupported, setRain, whenSilenced, wakeAudio, audible, say, sfx, BEAT, BAR } from './audio.js?v=20261122215131';
 import { playHoop, playPenalty, playQuiz, playRegister, playParade,
          playMami, playHustle, playManOWar, playSaed, playSocial,
-         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261122213746';
+         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261122215131';
 
 /* Every dance animation is expressed in beats, so the steps are on-tempo
    whether or not the sound is playing — and genuinely on the beat when it is. */
@@ -6447,7 +6454,17 @@ function settleLove(wreck){
    saved. Hesitate and he goes. The skill is real Lagos; the win line points
    at HaggleBuddy, which does the same for market prices. */
 const HAGGLE_ON = true, HAGGLE_FIRST = 45000, HAGGLE_EVERY = [80000, 110000], HAGGLE_WAIT = 9000, HAGGLE_REST = 10;
-const HAGGLE_FARE = { CMS: 700, OBALENDE: 600, OJUELEGBA: 500, OSHODI: 800, YABA: 500 };   // by where the bus says it is going
+/* Local routes and fares for each street (user, 2026-11-22: "add the local
+   routes and fares"), painted on the bus; the conductor calls where it is
+   going. DISTRICTS order: Allen Avenue, Broad Street, Admiralty Way,
+   Computer Village, Ojuelegba. Lekki runs dearer, the Island short hops cheap. */
+const HAGGLE_ROUTES = [
+  [['IKEJA – OSHODI', 500], ['ALLEN – OJOTA', 400], ['IKEJA – AGEGE', 400], ['IKEJA – OBALENDE', 900]],
+  [['CMS – OBALENDE', 300], ['MARINA – CMS', 300], ['CMS – OSHODI', 800], ['OBALENDE – AJAH', 1000]],
+  [['LEKKI – AJAH', 900], ['VI – LEKKI', 1000], ['LEKKI – CMS', 1100], ['AJAH – OBALENDE', 1200]],
+  [['IKEJA – OSHODI', 500], ['ALLEN – OJOTA', 400], ['IKEJA – AGEGE', 400], ['IKEJA – OBALENDE', 900]],
+  [['YABA – OJUELEGBA', 400], ['COSTAIN – YABA', 400], ['OJUELEGBA – CMS', 600], ['YABA – OBALENDE', 600]],
+];
 const pickLine = a => a[Math.floor(Math.random() * a.length)];
 let haggle = null;
 function haggleDue(ms){ setTimeout(haggleTry, ms ?? HAGGLE_EVERY[0] + Math.random() * (HAGGLE_EVERY[1] - HAGGLE_EVERY[0])); }
@@ -6458,25 +6475,30 @@ function haggleTry(){
   const p = youFig;
   if (!p || !freeFig(p) || p.matches('.detour, .bumped') || p.style.animationPlayState === 'paused') return haggleDue(4000);
   const box = sceneEl.sceneRect(), x = figX(p, box);
-  if (x < box.width * .1 || x > box.width * .45) return haggleDue(2500);     // room for the bus to stop ahead of him
+  if (x < box.width * .08 || x > box.width * .38) return haggleDue(2500);     // room for the bus to stop ahead of him
+  const ox = potX();
+  if (ox > x - 80 && ox < x + 16 + 212 + 50) return haggleDue(3000);        // not with Mr. Pothole, the agbero or a parked car in the way (user's screenshot)
   startHaggle(p, x);
   haggleDue();
 }
 function startHaggle(p, x){
-  /* he calls the route painted on the side of this bus, not some other one */
-  const svg = danfo(), m = svg.match(/>[A-Z0-9 ]+ \u2013 ([A-Z0-9 ]+)<\/text>/);
-  const to = m ? m[1].trim() : 'CMS';
-  const dest = to.length <= 3 ? to : to[0] + to.slice(1).toLowerCase(), start = HAGGLE_FARE[to] || 700;
+  /* this street's routes: painted on the bus, and he calls where it is going */
+  const routes = HAGGLE_ROUTES[DISTRICTS_ON ? shownDistrict : 0] || HAGGLE_ROUTES[0];
+  const [route, start] = routes[Math.floor(Math.random() * routes.length)];
+  const to = route.split(' – ')[1];
+  const dest = to.length <= 3 ? to : to[0] + to.slice(1).toLowerCase();
+  const seed = Math.floor(Math.random() * 8), n = Math.floor(Math.random() * 12);
+  const svg = danfo(seed).replace(/>[A-Z0-9 ]+ \u2013 [A-Z0-9 ]+<\/text>/, `>${route}</text>`);
   p.classList.add('haggling');
   sceneEl.classList.add('haggleOn');                            // the rest of the street's labels step back
   p.style.animationPlayState = 'paused';                          // he stops for it
   const D = document.createElement('div');
   D.className = 'pickup danfoStop';
   D.style.left = '-170px';
-  D.innerHTML = svg;
+  D.innerHTML = svg + `<div class="condBig"><svg viewBox="-6 -28 20 30" aria-hidden="true"><g class="condBody">${conductor(seed, n)}</g></svg></div>`;
   sceneEl.appendChild(D);                                         // after the walkers: on the near kerb, in front
   /* just ahead of him; if the street runs out first, just behind him */
-  const W = sceneW(), stop = x + 16 + 150 < W - 4 ? x + 16 : Math.max(4, x - 166);
+  const W = sceneW(), stop = x + 16 + 212 < W - 4 ? x + 16 : Math.max(4, x - 228);   // as big as the parked danfo (user)
   requestAnimationFrame(() => { D.style.left = Math.round(stop) + 'px'; });
   sfx('honk');
   haggle = { p, D, dest, start, floor: Math.round(start * .55 / 50) * 50, price: start, n: 0, t0: performance.now() };
@@ -6505,7 +6527,7 @@ function openHaggle(){
   const tag = document.createElement('div');
   tag.className = 'walletTag choose hagTag';
   tag.innerHTML = haggleTagHtml(h);
-  tag.style.bottom = '108px';
+  tag.style.bottom = '116px';                     // above the taller bus
   sceneEl.appendChild(tag);
   const r = h.D.sceneRect();
   pinInside(tag, box, r.left - box.left + r.width / 2);
