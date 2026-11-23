@@ -546,6 +546,22 @@
   .nearCouple .toutSay{left:50%;bottom:98px}
   /* "Love nwantiti": the choice over the couple (2026-11-21, user) */
   .walletTag.loveTag{flex-direction:column;align-items:center;gap:4px}
+  /* the danfo haggle (2026-11-22) */
+  .pickup.danfoStop{width:150px;bottom:4px;transition:left 1.1s cubic-bezier(.2,.8,.3,1)}
+  .pickup.danfoStop svg{display:block;width:100%;height:auto}
+  .pickup.danfoStop .toutSay{left:72%;bottom:66px}
+  .walletTag.choose.hagTag{background:#f2c200;padding:4px 5px 5px;border-radius:7px;box-shadow:0 2px 6px rgba(0,0,0,.3);
+    flex-direction:column;align-items:center;gap:3px;animation:tagBob .8s ease-in-out infinite alternate}
+  .walletTag.choose.hagTag::after{display:block;content:'';position:absolute;left:50%;top:100%;margin-left:-4px;border:4px solid transparent;border-top-color:#f2c200;pointer-events:none}
+  .hagTag .hgPrice{font:900 9.5px/1.15 system-ui,sans-serif;color:#1d1a10;letter-spacing:.02em;white-space:nowrap}
+  #scene.haggleOn .cornTag:not(.jumpTag){visibility:hidden;pointer-events:none}
+  #scene.haggleOn .tapTag,#scene.haggleOn .runnerTag,#scene.haggleOn .walletTag:not(.hagTag){filter:opacity(.22);pointer-events:none;transition:filter .25s}   /* filter, not opacity: the labels' pop-in animation owns their opacity */
+  .hagTag.pop .hgPrice{animation:statPop .45s cubic-bezier(.2,1.4,.4,1)}
+  .hagTag .lvRow{display:flex;gap:4px}
+  .walletTag .hgDown{background:#e85d04}
+  .walletTag .hgEnter{background:#1f7a46}
+  .hagTag .hgPat{display:block;width:100%;height:3px;border-radius:2px;background:rgba(0,0,0,.18);overflow:hidden}
+  .hagTag .hgPat i{display:block;height:100%;width:100%;background:#1f7a46;transition:width .3s ease,background .3s ease}
   /* one bubble pointing down at their heart (user, 2026-11-21: "it should be one bubble: wreck or leave am") */
   .walletTag.choose.loveTag{background:#ff2e63;padding:3px 4px;border-radius:7px;box-shadow:0 2px 6px rgba(0,0,0,.28);animation:tagBob .8s ease-in-out infinite alternate}
   .walletTag.choose.loveTag::after{display:block;content:'';position:absolute;left:50%;top:100%;margin-left:-4px;border:4px solid transparent;border-top-color:#ff2e63;pointer-events:none}
@@ -2124,7 +2140,7 @@
 <script type="module">
 import { newGame, doAction, canDo, unlocked, ACTIONS, phaseOf, nextUnlock, postingOdds, rivalOf,
          computePosting, CHOICES, GOAL, goalStatus,
-         shareText, MAX_DAY } from './game.js?v=20261122203521';
+         shareText, MAX_DAY } from './game.js?v=20261122213746';
 
 /* ---------- scene coordinates ----------
    The scene is scaled by a transform (see the stage), so a native
@@ -2155,11 +2171,11 @@ const TS = (document.getElementById('scene').offsetWidth || 375) / 375;
 const ALLAWEE_NOTE = 'Allawee ₦77,000 — e never enter.';
 import { initNet, joinCamp, syncPlayer, platoonBoard, recentChat, postChat,
          postSuggestion, reportMessage, awardBoard, myAwards, laughChat,
-         setPresence, campRoster, renameMe, setAvatar, online, prizeBoard, myPrize } from './net.js?v=20261122203521';
-import { startMusic, stopMusic, musicOn, audioState, audioSupported, setRain, whenSilenced, wakeAudio, audible, say, sfx, BEAT, BAR } from './audio.js?v=20261122203521';
+         setPresence, campRoster, renameMe, setAvatar, online, prizeBoard, myPrize } from './net.js?v=20261122213746';
+import { startMusic, stopMusic, musicOn, audioState, audioSupported, setRain, whenSilenced, wakeAudio, audible, say, sfx, BEAT, BAR } from './audio.js?v=20261122213746';
 import { playHoop, playPenalty, playQuiz, playRegister, playParade,
          playMami, playHustle, playManOWar, playSaed, playSocial,
-         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261122203521';
+         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261122213746';
 
 /* Every dance animation is expressed in beats, so the steps are on-tempo
    whether or not the sound is playing — and genuinely on the beat when it is. */
@@ -5095,7 +5111,7 @@ const EDGE = 0.16;
    offer has to skip them rather than suppress itself. */
 const freeFig = p => p && !p.matches(
   '.riding, .hailing, .running, .munching, .shopping, .inRide,'
-  + ' .jumping, .sunk, .gone, .stoop, .loving');      // .loving: stopped at the couple, deciding
+  + ' .jumping, .sunk, .gone, .stoop, .loving, .haggling');      // .loving: stopped at the couple, deciding; .haggling: at the danfo
 
 /* Comfortably in frame if anyone is; nearer the edge rather than nothing at
    all. EDGE keeps the marked figure clear of the bezel in the normal case, but
@@ -5314,6 +5330,7 @@ function aimPointer(){
     paidRunner = null;
   let best = paidRunner
     || (love && love.who && love.who.isConnected ? love.who : null)   // the one stopped at the couple, deciding, is still you
+    || (haggle && haggle.p.isConnected && !haggle.p.classList.contains('inRide') ? haggle.p : null)   // and the one haggling at the danfo
     || sceneEl.querySelector('.corper.wantsJump, .corper.wantsCorn, .corper.wantsRide');
   if (best) lastAimed = performance.now();
   else {
@@ -6289,7 +6306,7 @@ function loveCheck(el, cx, box){
     pinInside(love.tag, box, cx);
     return;
   }
-  if (love || !you || !s || jumpTag.style.display !== 'none' || wallet) return;
+  if (love || haggle || !you || !s || jumpTag.style.display !== 'none' || wallet) return;
   const gap = cx - figX(you, box);
   if (gap < 60 || gap > 340 || cx > box.width * .84 || cx < box.width * .15) return;   // far enough in that the pin sits right over their heart, not squeezed off the edge
   if (!freeFig(you) || you.matches('.detour, .bumped') || you.style.animationPlayState === 'paused') return;
@@ -6422,6 +6439,147 @@ function settleLove(wreck){
   save(); render();
   endLove();
 }
+/* ---------- haggle the danfo (2026-11-22, user) ----------
+   A danfo pulls up by YOUR corper. The conductor calls the route and a price.
+   Haggle am: usually he drops N50-150, sometimes he holds, and every haggle
+   drains his patience and raises the chance he zooms off without you. Enter:
+   pay what you got him down to, rest your legs (+energy) and see what you
+   saved. Hesitate and he goes. The skill is real Lagos; the win line points
+   at HaggleBuddy, which does the same for market prices. */
+const HAGGLE_ON = true, HAGGLE_FIRST = 45000, HAGGLE_EVERY = [80000, 110000], HAGGLE_WAIT = 9000, HAGGLE_REST = 10;
+const HAGGLE_FARE = { CMS: 700, OBALENDE: 600, OJUELEGBA: 500, OSHODI: 800, YABA: 500 };   // by where the bus says it is going
+const pickLine = a => a[Math.floor(Math.random() * a.length)];
+let haggle = null;
+function haggleDue(ms){ setTimeout(haggleTry, ms ?? HAGGLE_EVERY[0] + Math.random() * (HAGGLE_EVERY[1] - HAGGLE_EVERY[0])); }
+function haggleTry(){
+  if (!HAGGLE_ON || calm()) return;
+  if (document.hidden || !s || haggle || love || wallet || jumpTag.style.display !== 'none'
+      || sceneEl.classList.contains('dancing') || sceneEl.querySelector('.pickup')) return haggleDue(4000);
+  const p = youFig;
+  if (!p || !freeFig(p) || p.matches('.detour, .bumped') || p.style.animationPlayState === 'paused') return haggleDue(4000);
+  const box = sceneEl.sceneRect(), x = figX(p, box);
+  if (x < box.width * .1 || x > box.width * .45) return haggleDue(2500);     // room for the bus to stop ahead of him
+  startHaggle(p, x);
+  haggleDue();
+}
+function startHaggle(p, x){
+  /* he calls the route painted on the side of this bus, not some other one */
+  const svg = danfo(), m = svg.match(/>[A-Z0-9 ]+ \u2013 ([A-Z0-9 ]+)<\/text>/);
+  const to = m ? m[1].trim() : 'CMS';
+  const dest = to.length <= 3 ? to : to[0] + to.slice(1).toLowerCase(), start = HAGGLE_FARE[to] || 700;
+  p.classList.add('haggling');
+  sceneEl.classList.add('haggleOn');                            // the rest of the street's labels step back
+  p.style.animationPlayState = 'paused';                          // he stops for it
+  const D = document.createElement('div');
+  D.className = 'pickup danfoStop';
+  D.style.left = '-170px';
+  D.innerHTML = svg;
+  sceneEl.appendChild(D);                                         // after the walkers: on the near kerb, in front
+  /* just ahead of him; if the street runs out first, just behind him */
+  const W = sceneW(), stop = x + 16 + 150 < W - 4 ? x + 16 : Math.max(4, x - 166);
+  requestAnimationFrame(() => { D.style.left = Math.round(stop) + 'px'; });
+  sfx('honk');
+  haggle = { p, D, dest, start, floor: Math.round(start * .55 / 50) * 50, price: start, n: 0, t0: performance.now() };
+  setTimeout(() => { if (haggle && haggle.D === D) openHaggle(); }, 1250);
+}
+function hSay(t, tone = 'paid', ms = 2200){
+  const h = haggle; if (!h) return;
+  /* while the haggle is open his words are the bubble's top line: one bubble, not two (user: no crowding) */
+  if (h.tag && h.tag.isConnected){
+    h.line = t;
+    const L = h.tag.querySelector('.hgLine'); if (L) L.textContent = '\u201c' + t + '\u201d';
+    return;
+  }
+  h.D.querySelector('.toutSay')?.remove();
+  const b = document.createElement('div'); b.className = 'toutSay ' + tone; b.textContent = t;
+  h.D.appendChild(b); setTimeout(() => b.remove(), ms);
+}
+function haggleTagHtml(h){
+  return `<span class="hgPrice hgLine">\u201c${h.line || ''}\u201d</span>`
+       + `<span class="lvRow"><button class="hgDown" type="button">Price am</button><button class="hgEnter" type="button">Enter ${naira(h.price)}</button></span>`
+       + `<span class="hgPat"><i></i></span>`;
+}
+function openHaggle(){
+  const h = haggle, box = sceneEl.sceneRect();
+  h.line = `${h.dest}! ${naira(h.start)}, enter!`;
+  const tag = document.createElement('div');
+  tag.className = 'walletTag choose hagTag';
+  tag.innerHTML = haggleTagHtml(h);
+  tag.style.bottom = '108px';
+  sceneEl.appendChild(tag);
+  const r = h.D.sceneRect();
+  pinInside(tag, box, r.left - box.left + r.width / 2);
+  h.tag = tag;
+  h.timer = setTimeout(() => haggleLeave('You no dey enter? Oya!', 'wait'), HAGGLE_WAIT);
+}
+function haggleTap(){
+  const h = haggle; if (!h || h.busy || !h.tag) return;
+  hintUsed();
+  h.n++;
+  clearTimeout(h.timer);
+  h.timer = setTimeout(() => haggleLeave('You no dey enter? Oya!', 'wait'), HAGGLE_WAIT);
+  /* push your luck: the first haggle is free, then he gets touchier */
+  const leave = h.n === 1 ? 0 : .06 + .15 * (h.n - 1) + (h.price <= h.floor ? .3 : 0);
+  if (Math.random() < leave){ haggleLeave(pickLine(['I no carry you again! Commot!', 'Oya waka! Next customer!', 'Na your mate I go carry!', 'You wan enter for free?']), 'snap'); return; }
+  if (h.price > h.floor && Math.random() < .75){
+    h.price = Math.max(h.floor, h.price - pickLine([50, 50, 100, 100, 150]));
+    hSay(pickLine([`Oya ${naira(h.price)}, last price!`, `Haba! ${naira(h.price)} nau!`, `${naira(h.price)}, enter quick!`, `Ehen ${naira(h.price)}, no vex!`]));
+  } else hSay(pickLine(['Na last price be that o!', 'I no fit go down again!', 'Oga, fuel cost o!']), 'fine');
+  h.tag.innerHTML = haggleTagHtml(h);
+  const pat = Math.max(.08, 1 - h.n * .2);
+  const bar = h.tag.querySelector('.hgPat i');
+  bar.style.width = (pat * 100) + '%';
+  bar.style.background = pat > .55 ? '#1f7a46' : pat > .3 ? '#e85d04' : '#c1272d';
+  h.tag.classList.remove('pop'); void h.tag.offsetWidth; h.tag.classList.add('pop');
+}
+function haggleEnter(){
+  const h = haggle; if (!h || h.busy || !h.tag) return;
+  hintUsed();
+  clearTimeout(h.timer);
+  h.busy = true;
+  const paid = h.price, saved = h.start - paid;
+  s.money -= paid;
+  s.energy = Math.min(100, s.energy + HAGGLE_REST);
+  save(); render();
+  floatCost(h.p, `-${naira(paid)}`);
+  if (saved > 0) setTimeout(() => { if (h.D.isConnected) floatCost(h.D, `+${naira(saved)} saved!`); }, 350);
+  tell(saved > 0
+    ? `You haggle am from ${naira(h.start)} to ${naira(paid)}. You saved ${naira(saved)}! Haggle like this for market too: HaggleBuddy dey show you the real price.`
+    : `You enter danfo for ${naira(paid)}. Next time, haggle am! HaggleBuddy go show you the real price.`);
+  h.tag.remove();
+  hSay(saved > 0 ? 'Enter! Shift for back!' : 'Enter, enter!');
+  h.p.classList.add('inRide');                                     // in the bus: he rides off in it
+  setTimeout(() => { h.D.style.transition = 'left 1.5s ease-in'; h.D.style.left = (sceneW() + 70) + 'px'; }, 600);
+  setTimeout(() => { h.D.remove(); finishHaggle(true); }, 2300);
+}
+function haggleLeave(line, why){
+  const h = haggle; if (!h || h.busy) return;
+  clearTimeout(h.timer);
+  h.busy = true;
+  h.tag?.remove();
+  hSay(line, 'fine', 1800);
+  tell(why === 'snap' ? 'You price am too much. The danfo don comot without you!' : 'You no enter. The danfo don go.');
+  setTimeout(() => { h.D.style.transition = 'left 1s ease-in'; h.D.style.left = (sceneW() + 70) + 'px'; }, 650);
+  setTimeout(() => { h.D.remove(); finishHaggle(false); }, 1800);
+}
+function finishHaggle(rode){
+  const h = haggle; haggle = null;
+  sceneEl.classList.remove('haggleOn');
+  if (!h || !h.p.isConnected) return;
+  const p = h.p, ms = performance.now() - h.t0;
+  p.classList.remove('haggling');
+  if (rode){
+    rejoinGrid(p, ms, false);                                      // out of the bus where he would have walked to
+    p.style.animationPlayState = '';
+    p.classList.remove('inRide');
+    p.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 350, easing: 'ease-out' });
+  } else {
+    p.style.animationPlayState = '';
+    rejoinGrid(p, ms);                                              // he hurries a few paces back to his place
+  }
+}
+if (HAGGLE_ON && !calm()) haggleDue(HAGGLE_FIRST);
+
 /* her number on a scrap of paper, from her to you */
 function paperTo(fromEl, toEl){
   const box = sceneEl.sceneRect(), a = fromEl.sceneRect(), b = toEl.sceneRect();
@@ -7629,6 +7787,9 @@ let rideAnchor = null;
    frame produced no label at all, and the YOU marker sat over a figure with
    nothing written above them. */
 function offerTick(){
+  /* At the danfo, the haggle is the only thing asked (user: "make sure the
+     directive will not overcrowd or cover other things"). */
+  if (haggle){ watchPothole(); jumpTarget = null; pothole.classList.remove('jumpable'); clearCorn(); clearRide(); clearJump(); sceneEl.classList.remove('asking'); sweepOffers(); return; }   // the others still hop the hole, unasked
   /* Mr. Pothole first, always. It is the only offer with a deadline — the
      others wait patiently while a shop drifts past, this one is gone the
      moment he reaches the hole — so it has to be able to interrupt them. */
@@ -7793,6 +7954,12 @@ function labelUnder(x, y){
   return hits.sort((a, b) => d(a) - d(b))[0].t;
 }
 sceneEl.addEventListener('click', e => {
+  if (e.target.closest('.hagTag')){
+    const b = e.target.closest('button');
+    if (b && b.classList.contains('hgDown')) haggleTap();
+    else if (b && b.classList.contains('hgEnter')) haggleEnter();
+    return;
+  }
   if (e.target.closest('.loveTag')){
     const b = e.target.closest('button');
     if (b) settleLove(b.classList.contains('lvWreck'));
@@ -8442,7 +8609,7 @@ const WALLET_SVG = `<svg viewBox="0 0 11 8" aria-hidden="true"><ellipse cx="5.5"
 let walletAt = -Infinity, wallet = null;     // `wallet`: the open choice, once it has been picked up
 function dropWallet(okadaEl){
   if (!okadaEl.isConnected || calm() || document.hidden || !s) return;
-  if (sceneEl.querySelector('.coin') || wallet || jumpTag.style.display !== 'none') return;   // one thing on the floor, one ask at a time
+  if (sceneEl.querySelector('.coin') || wallet || haggle || jumpTag.style.display !== 'none') return;   // one thing on the floor, one ask at a time
   const box = sceneEl.sceneRect(), r = okadaEl.sceneRect(), W = box.width;
   const x = r.left - box.left + r.width * .5;
   if (x < W * .2 || x > W * .85 || Math.abs(potX() - x) < 70) return;
