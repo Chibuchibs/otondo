@@ -2124,7 +2124,7 @@
 <script type="module">
 import { newGame, doAction, canDo, unlocked, ACTIONS, phaseOf, nextUnlock, postingOdds, rivalOf,
          computePosting, CHOICES, GOAL, goalStatus,
-         shareText, MAX_DAY } from './game.js?v=20261122201911';
+         shareText, MAX_DAY } from './game.js?v=20261122203521';
 
 /* ---------- scene coordinates ----------
    The scene is scaled by a transform (see the stage), so a native
@@ -2155,11 +2155,11 @@ const TS = (document.getElementById('scene').offsetWidth || 375) / 375;
 const ALLAWEE_NOTE = 'Allawee ₦77,000 — e never enter.';
 import { initNet, joinCamp, syncPlayer, platoonBoard, recentChat, postChat,
          postSuggestion, reportMessage, awardBoard, myAwards, laughChat,
-         setPresence, campRoster, renameMe, setAvatar, online, prizeBoard, myPrize } from './net.js?v=20261122201911';
-import { startMusic, stopMusic, musicOn, audioState, audioSupported, setRain, whenSilenced, wakeAudio, audible, say, sfx, BEAT, BAR } from './audio.js?v=20261122201911';
+         setPresence, campRoster, renameMe, setAvatar, online, prizeBoard, myPrize } from './net.js?v=20261122203521';
+import { startMusic, stopMusic, musicOn, audioState, audioSupported, setRain, whenSilenced, wakeAudio, audible, say, sfx, BEAT, BAR } from './audio.js?v=20261122203521';
 import { playHoop, playPenalty, playQuiz, playRegister, playParade,
          playMami, playHustle, playManOWar, playSaed, playSocial,
-         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261122201911';
+         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261122203521';
 
 /* Every dance animation is expressed in beats, so the steps are on-tempo
    whether or not the sound is playing — and genuinely on the beat when it is. */
@@ -2850,13 +2850,18 @@ function hawker(skin, wares = 'water', look = null){
    the row reaches them after FOOD JOINT, then wraps to the bus stop.
    Invented names on purpose: real chains' names and colours are theirs, and
    these boards are what we would sell to them. */
+/* Errand prices are the game's economy (a corper starts near N20,000), kept
+   as they were; where an action could not really be had for its price (a
+   UK-used phone for N5,000, a pizza for N1,100, opening a bank account,
+   which is free), the ACTION was swapped for a real Lagos thing at that
+   price (user, 2026-11-22: "check the other street prices too"). */
 const BOULEVARD = [
   { sign: 'NAIRA TRUST BANK', w: 112, modern: 'bank', body: '#e7e2d6', roof: '#6b1d2e', door: '#7a8791',
     signInk: ['#4a1220', '#ffe6a3', '#ffc94d'],
     errand: 'Queue for ATM', price: 100, belle: 1 },
   { sign: 'OGA BURGER', w: 108, modern: 'burger', body: '#f6f1e4', roof: '#1e3a8a', door: '#1e3a8a', food: true,
     signInk: ['#14296b', '#ffe066', '#ffcc33'],
-    errand: 'Grab burger', price: 1200, belle: 11 },
+    errand: 'Chop sausage roll', price: 1200, belle: 11 },
   { sign: 'CITY MALL', w: 116, modern: 'mall', body: '#9fc4d6', roof: '#39505f', door: '#5f7f91',
     signInk: ['#22323c', '#ffffff', '#9fe3ff'],
     errand: 'Cool off for AC', price: 300, belle: 4 },
@@ -2870,13 +2875,13 @@ const BOULEVARD = [
     errand: 'Chop suya', price: 1000, belle: 9 },
   { sign: 'PIZZA RUN', w: 108, modern: 'pizza', body: '#f6f1e4', roof: '#15803d', door: '#15803d', food: true,
     signInk: ['#0f5e2d', '#fff4d6', '#ffd98a'],
-    errand: 'Chop pizza', price: 1100, belle: 10 },
+    errand: 'Buy garlic bread', price: 1100, belle: 10 },
   { sign: 'ALERT BANK', w: 112, modern: 'bank', body: '#dfe5e2', roof: '#0f4c4a', door: '#7a8791',
     signInk: ['#0a3735', '#c8ff5a', '#a4f02e'],
     errand: 'Check alert', price: 100, belle: 2 },
   { sign: 'CHICKEN NATION', w: 108, modern: 'chicken', body: '#fbf7ef', roof: '#e8590c', door: '#e8590c', food: true,
     signInk: ['#b8430a', '#fff3c4', '#ffd166'],
-    errand: 'Chop chicken', price: 1400, belle: 12 },
+    errand: 'Chop spicy rice', price: 1400, belle: 12 },
 ];
 
 const SHOPS = [
@@ -2888,9 +2893,9 @@ const SHOPS = [
     errand: 'Chop corn', price: 200,  belle: 5, food: true },
   { sign: 'SUPERMARKET',     w: 112, body: '#0fa3a0', roof: '#0a7d79', door: '#f3c53d', heads: 1, provisions: true, headX: 60,
     signInk: ['#0b3f3d', '#fff36b', '#ffe14d'],
-    errand: 'Buy provisions', price: 450 },
+    errand: 'Buy Milo sachets', price: 450 },
   { sign: 'ELECTRONICS',     w: 110, signInk: ['#10223f', '#7fe8ff', '#33ccff'], body: '#f7b31c', roof: '#c9820d', door: '#2b6cb0', heads: 1, electronics: true,
-    errand: 'Buy charger', price: 500,
+    errand: 'Fix charger', price: 500,
     /* A second errand on the same shop, picked at random each time it is
        offered. Recharge card is the thing anyone actually walks into an
        electronics kiosk for, and it was lost when the charger replaced it. */
@@ -2906,7 +2911,7 @@ const SHOPS = [
   { sign: 'BAKERY',          w: 104, signInk: ['#4a2412', '#ffe9c2', '#ffb35c'], body: '#d98f7e', roof: '#8a4b2a', bakery: true, door: '#1f7a46', heads: 1,
     errand: 'Learn handwork', price: 1000, cred: 2, trade: true },
   { sign: 'BARBING SALON',   w: 116, body: '#ece4cf', roof: '#6d6450', barber: true, door: '#7b3fa0', heads: 2,
-    errand: 'Barb hair', price: 500, belle: 8 },
+    errand: 'Trim beard', price: 500, belle: 8 },
   /* The lounge: dark front, neon board, bulbs along the roof, party light in
      the window and a bouncer at the door. Last in the row, so the POS stand,
      the tree and the generator keep the slots they had between the others.
@@ -3338,7 +3343,10 @@ function shop(cfg){
   </svg>`;
 }
 
-/* A roadside billboard on two posts with spotlights, carrying the HaggleBuddy
+/* (2026-11-22, user: "not sure what those two light circles are": the lamps
+   were glow discs with no fitting; now real floodlights on arms, beaming down
+   onto the face.)
+   A roadside billboard on two posts with spotlights, carrying the HaggleBuddy
    house ad in its own green and gold. The whole board is the tap target. */
 function adBillboard(cfg){
   return `<svg viewBox="0 0 100 60" aria-hidden="true" overflow="visible">
@@ -3355,8 +3363,8 @@ function adBillboard(cfg){
     <rect x="7" y="24" width="86" height="6.4" fill="#facc15"/>
     <text x="50" y="29" text-anchor="middle" font-size="4.6" font-weight="900" font-family="system-ui,sans-serif"
       fill="#14532d" textLength="80" lengthAdjust="spacingAndGlyphs">HaggleBuddy · free on Play Store &amp; App Store ↗</text>
-    <path d="M20 -1.5l3 2.5 M80 -1.5l-3 2.5" stroke="#3f3c37" stroke-width="1.2"/>
-    <circle class="lampGlow" cx="22" cy="2" r="6" fill="#fff6c8" opacity="0"/><circle class="lampGlow" cx="78" cy="2" r="6" fill="#fff6c8" opacity="0"/>
+    <path d="M24 1 L19 -5.4 M76 1 L81 -5.4" stroke="#3f3c37" stroke-width="1.2" stroke-linecap="round"/><g transform="rotate(28 18 -6.4)"><rect x="14.8" y="-8.2" width="6.4" height="3.6" rx="1.1" fill="#2b2a26"/><rect x="15.4" y="-4.9" width="5.2" height="1" rx=".5" fill="#fff4c2"/></g><g transform="rotate(-28 82 -6.4)"><rect x="78.8" y="-8.2" width="6.4" height="3.6" rx="1.1" fill="#2b2a26"/><rect x="79.4" y="-4.9" width="5.2" height="1" rx=".5" fill="#fff4c2"/></g>
+    <defs><linearGradient id="boardBeam" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff6c8" stop-opacity=".95"/><stop offset="1" stop-color="#fff6c8" stop-opacity="0"/></linearGradient></defs><path class="lampGlow" d="M19.4 -3.6 L9 24 L36 24 Z" fill="url(#boardBeam)" opacity="0"/><path class="lampGlow" d="M80.6 -3.6 L91 24 L64 24 Z" fill="url(#boardBeam)" opacity="0"/>
   </svg>`;
 }
 /* The weekly prize board (2026-11-19): gold, the trophy, the prize in naira.
@@ -3381,8 +3389,8 @@ function prizeBillboard(cfg){
     <rect x="7" y="24" width="86" height="6.4" fill="#0a7a43"/>
     <text x="50" y="29" text-anchor="middle" font-size="4.6" font-weight="900" font-family="system-ui,sans-serif"
       fill="#fff" textLength="80" lengthAdjust="spacingAndGlyphs">Every week on Otondo · tap for the rules ↗</text>
-    <path d="M20 -1.5l3 2.5 M80 -1.5l-3 2.5" stroke="#3f3c37" stroke-width="1.2"/>
-    <circle class="lampGlow" cx="22" cy="2" r="6" fill="#fff6c8" opacity="0"/><circle class="lampGlow" cx="78" cy="2" r="6" fill="#fff6c8" opacity="0"/>
+    <path d="M24 1 L19 -5.4 M76 1 L81 -5.4" stroke="#3f3c37" stroke-width="1.2" stroke-linecap="round"/><g transform="rotate(28 18 -6.4)"><rect x="14.8" y="-8.2" width="6.4" height="3.6" rx="1.1" fill="#2b2a26"/><rect x="15.4" y="-4.9" width="5.2" height="1" rx=".5" fill="#fff4c2"/></g><g transform="rotate(-28 82 -6.4)"><rect x="78.8" y="-8.2" width="6.4" height="3.6" rx="1.1" fill="#2b2a26"/><rect x="79.4" y="-4.9" width="5.2" height="1" rx=".5" fill="#fff4c2"/></g>
+    <defs><linearGradient id="boardBeam" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff6c8" stop-opacity=".95"/><stop offset="1" stop-color="#fff6c8" stop-opacity="0"/></linearGradient></defs><path class="lampGlow" d="M19.4 -3.6 L9 24 L36 24 Z" fill="url(#boardBeam)" opacity="0"/><path class="lampGlow" d="M80.6 -3.6 L91 24 L64 24 Z" fill="url(#boardBeam)" opacity="0"/>
   </svg>`;
 }
 /* The solofounderskills.com board: the site's own colours (cream, its orange,
@@ -3411,8 +3419,8 @@ function skillsBillboard(cfg){
     <rect x="7" y="24" width="86" height="6.4" fill="#ff6b35"/>
     <text x="50" y="29" text-anchor="middle" font-size="4.6" font-weight="900" font-family="system-ui,sans-serif"
       fill="#fff" textLength="80" lengthAdjust="spacingAndGlyphs">solofounderskills.com · $${SKILLS_USD} (about ₦${naira}) ↗</text>
-    <path d="M20 -1.5l3 2.5 M80 -1.5l-3 2.5" stroke="#3f3c37" stroke-width="1.2"/>
-    <circle class="lampGlow" cx="22" cy="2" r="6" fill="#fff6c8" opacity="0"/><circle class="lampGlow" cx="78" cy="2" r="6" fill="#fff6c8" opacity="0"/>
+    <path d="M24 1 L19 -5.4 M76 1 L81 -5.4" stroke="#3f3c37" stroke-width="1.2" stroke-linecap="round"/><g transform="rotate(28 18 -6.4)"><rect x="14.8" y="-8.2" width="6.4" height="3.6" rx="1.1" fill="#2b2a26"/><rect x="15.4" y="-4.9" width="5.2" height="1" rx=".5" fill="#fff4c2"/></g><g transform="rotate(-28 82 -6.4)"><rect x="78.8" y="-8.2" width="6.4" height="3.6" rx="1.1" fill="#2b2a26"/><rect x="79.4" y="-4.9" width="5.2" height="1" rx=".5" fill="#fff4c2"/></g>
+    <defs><linearGradient id="boardBeam" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff6c8" stop-opacity=".95"/><stop offset="1" stop-color="#fff6c8" stop-opacity="0"/></linearGradient></defs><path class="lampGlow" d="M19.4 -3.6 L9 24 L36 24 Z" fill="url(#boardBeam)" opacity="0"/><path class="lampGlow" d="M80.6 -3.6 L91 24 L64 24 Z" fill="url(#boardBeam)" opacity="0"/>
   </svg>`;
 }
 /* A Lagos bus stop: a shelter with a bench and people waiting, a yellow
@@ -3615,11 +3623,11 @@ const DISTRICT_Q = new URLSearchParams(location.search).get('streets');
 const DISTRICTS_ON = DISTRICT_Q !== 'off';       // on for everyone (user, 2026-11-18); ?streets=off turns them off
 const BROAD_OWN = [
   { sign: 'ISLAND BANK', w: 116, broad: 'tower', style: 'glass', glass: '#5b8db8', roof: '#1d3557', door: '#1d3557',
-    signInk: ['#8f1d21', '#ffffff', '#ffb3b3'], errand: 'Open account', price: 1000, cred: 2 },
+    signInk: ['#8f1d21', '#ffffff', '#ffb3b3'], errand: 'Collect debit card', price: 1000, cred: 2 },
   { sign: 'MAI SHAI', w: 80, broad: 'tea', body: '#7a5a3a', roof: '#2f6b4f', food: true, kerb: true,
-    signInk: ['#1f4d2b', '#fff4d6', '#ffd98a'], errand: 'Bread and tea', price: 300, belle: 6 },
+    signInk: ['#1f4d2b', '#fff4d6', '#ffd98a'], errand: 'Drink mai shai tea', price: 300, belle: 6 },
   { sign: 'NEWSPAPERS', w: 84, broad: 'papers', body: '#8a6b3f', roof: '#c1272d', kerb: true,
-    signInk: ['#1d1d1d', '#ffffff', '#cccccc'], errand: 'Buy paper', price: 200, cred: 1 },
+    signInk: ['#1d1d1d', '#ffffff', '#cccccc'], errand: 'Read the papers', price: 200, cred: 1 },
   { sign: 'LAW CHAMBERS', w: 112, broad: 'brazil', body: '#e9d27a', roof: '#a4492b', door: '#2f6b4f',
     signInk: ['#2b2116', '#f7e7b0', '#ffd98a'], errand: 'Swear affidavit', price: 800, cred: 2 },
   { sign: 'MAMA PUT', w: 104, signInk: ['#5a1a0e', '#ffd34d', '#ff9a3c'], body: '#c27a4a', roof: '#6d4a2a', door: '#d6342c', heads: 2, buka: true,
@@ -3627,7 +3635,7 @@ const BROAD_OWN = [
   { sign: 'BUREAU DE CHANGE', w: 84, broad: 'bdc', body: '#2f7a4f', roof: '#1f4d33', kerb: true,
     signInk: ['#0f3d24', '#d9ffb0', '#a4f02e'], errand: 'Change dollar', price: 500, cred: 1 },
   { sign: 'MARINA HOUSE', w: 116, broad: 'tower', style: 'bands', glass: '#eceae2', roof: '#3a3f45', door: '#3a3f45',
-    signInk: ['#2a2f35', '#ffffff', '#cfd8e0'], errand: 'Submit CV', price: 100, cred: 1 },
+    signInk: ['#2a2f35', '#ffffff', '#cfd8e0'], errand: 'Buy CV envelope', price: 100, cred: 1 },
   { sign: 'SHOE SHINE', w: 72, broad: 'shine', body: '#5a3c22', roof: '#d6342c', kerb: true,
     signInk: ['#3a2410', '#ffe9c2', '#ffb35c'], errand: 'Shine shoes', price: 150, cred: 1 },
   { sign: 'CITY PHARMACY', w: 108, modern: 'pharmacy', body: '#f3f7f2', roof: '#15803d', door: '#15803d',
@@ -3636,9 +3644,9 @@ const BROAD_OWN = [
   { sign: 'PIE MASTER', w: 108, modern: 'pie', body: '#fbf3e4', roof: '#b45309', door: '#b45309', food: true,
     signInk: ['#7c3a06', '#fff3c4', '#ffd166'], errand: 'Chop meat pie', price: 600, belle: 7 },
   { sign: 'BALOGUN FABRICS', w: 96, broad: 'fabric', body: '#6d4a2a', roof: '#3d6ea8', kerb: true,
-    signInk: ['#3a1c4a', '#ffe0f4', '#ff8ad8'], errand: 'Buy ankara', price: 1500, cred: 2 },
+    signInk: ['#3a1c4a', '#ffe0f4', '#ff8ad8'], errand: 'Buy ankara headband', price: 1500, cred: 2 },
   { sign: 'BOOK HOUSE', w: 116, broad: 'tower', style: 'grid', glass: '#3c4249', roof: '#1f2328', door: '#1f2328',
-    signInk: ['#1f2328', '#ffe9a8', '#ffd166'], errand: 'Buy novel', price: 800, cred: 2 },
+    signInk: ['#1f2328', '#ffe9a8', '#ffd166'], errand: 'Buy jotter & biro', price: 800, cred: 2 },
   { sign: 'BUSINESS CENTRE', w: 104, broad: 'cyber', body: '#dfe6ee', roof: '#1e3a8a', door: '#1e3a8a',
     signInk: ['#14296b', '#ffffff', '#9fd0ff'], errand: 'Print CV', price: 200, cred: 1 },
 ];
@@ -3868,33 +3876,33 @@ function broadShop(cfg){
    behind the window. Invented names on every board, as everywhere else. */
 const LEKKI_OWN = [
   { sign: 'THE GLASS CAFÉ', w: 112, lekki: 'cafe', body: '#f4efe6', roof: '#2d6a4f', door: '#2d6a4f', food: true,
-    signInk: ['#1b4332', '#f1faee', '#b7e4c7'], errand: 'Order cappuccino', price: 2500, energy: 10 },
+    signInk: ['#1b4332', '#f1faee', '#b7e4c7'], errand: 'Order espresso', price: 2500, energy: 10 },
   { sign: 'SHAWARMA HUB', w: 84, lekki: 'shawarma', body: '#3a3a3a', roof: '#e85d04', kerb: true, food: true,
-    signInk: ['#6a2c00', '#fff1e0', '#ffb703'], errand: 'Chop shawarma', price: 2000, belle: 12 },
+    signInk: ['#6a2c00', '#fff1e0', '#ffb703'], errand: 'Chop mini shawarma', price: 2000, belle: 12 },
   { sign: 'LEKKI MOTORS', w: 116, lekki: 'front', inside: 'showroom', body: '#e9ecef', roof: '#212529', door: '#212529',
-    signInk: ['#111111', '#ffffff', '#adb5bd'], errand: 'Test drive', price: 500, cred: 1 },
+    signInk: ['#111111', '#ffffff', '#adb5bd'], errand: 'Buy car freshener', price: 500, cred: 1 },
   { sign: 'NAIL BAR', w: 104, lekki: 'front', inside: 'nails', body: '#fff0f5', roof: '#c9184a', door: '#c9184a',
-    signInk: ['#800f2f', '#ffe5ec', '#ff8fab'], errand: 'Fix nails', price: 2500, belle: 5 },
+    signInk: ['#800f2f', '#ffe5ec', '#ff8fab'], errand: 'Buy nail polish', price: 2500, belle: 5 },
   { sign: 'FIT FAM GYM', w: 108, lekki: 'front', inside: 'gym', body: '#2b2d42', roof: '#ef233c', door: '#ef233c',
-    signInk: ['#1a1b2e', '#ffffff', '#ff6b7a'], errand: 'Hit the gym', price: 1500, cred: 2 },
+    signInk: ['#1a1b2e', '#ffffff', '#ff6b7a'], errand: 'Do aerobics class', price: 1500, cred: 2 },
   { sign: 'MEGA MART', w: 116, modern: 'mall', body: '#fde7c8', roof: '#d62828', door: '#d62828',
-    signInk: ['#7a1414', '#ffffff', '#ffb3b3'], errand: 'Buy groceries', price: 1200, belle: 6 },
+    signInk: ['#7a1414', '#ffffff', '#ffb3b3'], errand: 'Buy Indomie & egg', price: 1200, belle: 6 },
   { sign: 'LEKKI HEIGHTS', w: 116, broad: 'tower', style: 'balcony', glass: '#8ecae6', roof: '#023047', door: '#023047',
-    signInk: ['#023047', '#ffffff', '#8ecae6'], errand: 'View apartment', price: 500, cred: 1 },
+    signInk: ['#023047', '#ffffff', '#8ecae6'], errand: 'Settle estate gate', price: 500, cred: 1 },
   { sign: 'SMOOTHIE BAR', w: 104, modern: 'smoothie', body: '#f1fff4', roof: '#2a9d8f', door: '#2a9d8f', food: true,
-    signInk: ['#1d6d63', '#ffffff', '#a8f0e4'], errand: 'Drink smoothie', price: 1500, energy: 12 },
+    signInk: ['#1d6d63', '#ffffff', '#a8f0e4'], errand: 'Drink tiger nut milk', price: 1500, energy: 12 },
   { sign: 'THE BOUTIQUE', w: 108, lekki: 'front', inside: 'boutique', body: '#f8f4ec', roof: '#3d2b1f', door: '#3d2b1f',
-    signInk: ['#2a1d14', '#f5e6c8', '#d4a373'], errand: 'Buy outfit', price: 4000, cred: 2 },
+    signInk: ['#2a1d14', '#f5e6c8', '#d4a373'], errand: 'Buy designer belt', price: 4000, cred: 2 },
   { sign: 'CO-WORK HUB', w: 112, lekki: 'front', inside: 'cowork', body: '#e7ecef', roof: '#5a189a', door: '#5a189a',
-    signInk: ['#3c096c', '#ffffff', '#c77dff'], errand: 'Pitch startup', price: 1000, cred: 3 },
+    signInk: ['#3c096c', '#ffffff', '#c77dff'], errand: 'Print pitch deck', price: 1000, cred: 3 },
   { sign: 'GELATO', w: 96, modern: 'icecream', body: '#fffaf0', roof: '#f28482', door: '#f28482', food: true,
     signInk: ['#9d3c3a', '#ffffff', '#ffd6d5'], errand: 'Lick ice cream', price: 1000, belle: 5 },
   { sign: 'LEKKI BANK', w: 112, modern: 'bank', body: '#eef2f5', roof: '#0b3954', door: '#7a8791',
     signInk: ['#082a3e', '#9fffe0', '#4fe3b7'], errand: 'Withdraw cash', price: 100, belle: 1 },
   { sign: 'ISLAND GRILL', w: 108, modern: 'grill', body: '#fbf3ea', roof: '#9c2c2c', door: '#9c2c2c', food: true,
-    signInk: ['#5e1414', '#ffe8d6', '#ffb88a'], errand: 'Chop small chops', price: 1800, belle: 10 },
+    signInk: ['#5e1414', '#ffe8d6', '#ffb88a'], errand: 'Chop samosa & spring roll', price: 1800, belle: 10 },
   { sign: 'PRIME REALTY', w: 104, lekki: 'front', inside: 'realty', body: '#f2efe9', roof: '#1d3557', door: '#1d3557',
-    signInk: ['#14253d', '#ffffff', '#a8dadc'], errand: 'Ask for rent', price: 200, cred: 1 },
+    signInk: ['#14253d', '#ffffff', '#a8dadc'], errand: 'Photocopy rent form', price: 200, cred: 1 },
 ];
 const LEKKI_SHOPS = [...LEKKI_OWN, ...SHOPS.slice(LEKKI_OWN.length)];   // the paid boards keep their places
 Object.assign(CUSTOMERS, {
@@ -4016,17 +4024,17 @@ function lekkiShop(cfg){
    Telecom masts on the skyline. Invented names on every board. */
 const CV_OWN = [
   { sign: 'GADGET PLAZA', w: 116, cv: 'plaza', body: '#e9d8a6', roof: '#94461c', units: ['PHONE DOC', 'SIM ZONE', 'LAPI WORLD', 'CHARGER KING', 'MEGA PHONES', 'GADGET PLUG'],
-    signInk: ['#5c2a0c', '#ffe8a8', '#ffc14d'], errand: 'Buy phone case', price: 800, cred: 1 },
+    signInk: ['#5c2a0c', '#ffe8a8', '#ffc14d'], errand: 'Buy phone pouch', price: 800, cred: 1 },
   { sign: 'PHONE REPAIRS', w: 84, cv: 'repair', body: '#5a4632', roof: '#2b6cb0', kerb: true,
-    signInk: ['#123a66', '#ffffff', '#9fd0ff'], errand: 'Fix cracked screen', price: 3000, cred: 1 },
+    signInk: ['#123a66', '#ffffff', '#9fd0ff'], errand: 'Fix charging port', price: 3000, cred: 1 },
   { sign: 'CHARGING POINT', w: 80, cv: 'charge', body: '#3a3a3a', roof: '#f3c53d', kerb: true,
     signInk: ['#3a2c00', '#fff3c4', '#ffd166'], errand: 'Charge phone', price: 200, energy: 5 },
   { sign: 'MAMA CHOPS', w: 84, cv: 'mama', body: '#8a6b3f', roof: '#c1272d', kerb: true, food: true,
     signInk: ['#5a1010', '#ffe6c2', '#ffb35c'], errand: 'Chop rice & stew', price: 800, belle: 10 },
   { sign: 'UK USED PHONES', w: 84, cv: 'used', body: '#2f4858', roof: '#86bbd8', kerb: true,
-    signInk: ['#1b2a33', '#ffffff', '#86bbd8'], errand: 'Buy UK used', price: 5000, cred: 2 },
+    signInk: ['#1b2a33', '#ffffff', '#86bbd8'], errand: 'Buy UK-used charger', price: 5000, cred: 2 },
   { sign: 'COMPUTER PLAZA', w: 116, cv: 'plaza', body: '#cfd8dc', roof: '#37474f', units: ['TECH BABA', 'FIX AM FAST', 'LAPTOP KING', 'PRINT PLUG', 'IPHONE PLUG', 'SOFTWARE'],
-    signInk: ['#263238', '#ffffff', '#b0bec5'], errand: 'Buy flash drive', price: 1500, cred: 1 },
+    signInk: ['#263238', '#ffffff', '#b0bec5'], errand: 'Buy OTG adapter', price: 1500, cred: 1 },
   { sign: 'SIM REG', w: 76, cv: 'desk', body: '#1f7a46', roof: '#1f7a46', kerb: true, desk: 'NIN · SIM · ₦500',
     signInk: ['#0f3d24', '#ffffff', '#b7f5c8'], errand: 'Register SIM', price: 500, cred: 2 },
   { sign: 'GAMING ZONE', w: 108, cv: 'gaming', body: '#1b1b2f', roof: '#7b2cbf', door: '#7b2cbf',
@@ -4034,7 +4042,7 @@ const CV_OWN = [
   { sign: 'ACCESSORIES', w: 80, cv: 'rack', body: '#6d4a2a', roof: '#e85d04', kerb: true,
     signInk: ['#6a2c00', '#fff1e0', '#ffb703'], errand: 'Buy earpiece', price: 700, belle: 3 },
   { sign: 'PRINT & BIND', w: 104, broad: 'cyber', body: '#e6e2d8', roof: '#c1272d', door: '#c1272d',
-    signInk: ['#6b1414', '#ffffff', '#ffb3b3'], errand: 'Print & bind', price: 300, cred: 1 },
+    signInk: ['#6b1414', '#ffffff', '#ffb3b3'], errand: 'Print & staple', price: 300, cred: 1 },
   { sign: 'LAPTOP HUB', w: 108, cv: 'laptops', body: '#e3e7ea', roof: '#0f4c81', door: '#0f4c81',
     signInk: ['#0a3459', '#ffffff', '#9fd0ff'], errand: 'Install MS Office', price: 2000, cred: 1 },   // what ₦2,000 really buys at a laptop stand (user, 2026-11-22: the laptop price was not realistic)
   { sign: 'POS & TRANSFER', w: 76, cv: 'desk', body: '#1e3a8a', roof: '#1e3a8a', kerb: true, desk: 'WITHDRAW · TRANSFER',
@@ -4227,11 +4235,11 @@ const YABA_OWN = [
   { sign: 'UNDER BRIDGE', w: 116, yb: 'bridge', body: '#a8a29a', roof: '#7a746c', kerb: true, food: true,
     signInk: ['#2b2b2b', '#ffffff', '#cccccc'], errand: 'Buy gala', price: 200, belle: 4 },
   { sign: 'UNIVERSITY GATE', w: 116, yb: 'gate', body: '#e8dcc2', roof: '#1e3a8a', kerb: true,
-    signInk: ['#14296b', '#ffffff', '#ffd166'], errand: 'Buy course form', price: 1000, cred: 3 },
+    signInk: ['#14296b', '#ffffff', '#ffd166'], errand: 'Buy past questions', price: 1000, cred: 3 },
   { sign: 'BOOKS & STATIONERY', w: 84, yb: 'books', body: '#8a6b3f', roof: '#1f7a46', kerb: true,
-    signInk: ['#0f3d24', '#ffffff', '#b7f5c8'], errand: 'Buy textbook', price: 1500, cred: 2 },
+    signInk: ['#0f3d24', '#ffffff', '#b7f5c8'], errand: 'Buy lecturer\'s handout', price: 1500, cred: 2 },
   { sign: 'YABACON HUB', w: 112, lekki: 'front', inside: 'cowork', body: '#f2e9dc', roof: '#ff5400', door: '#ff5400',
-    signInk: ['#6b2300', '#ffffff', '#ffb38a'], errand: 'Pitch your idea', price: 500, cred: 3 },
+    signInk: ['#6b2300', '#ffffff', '#ffb38a'], errand: 'Use hub Wi-Fi', price: 500, cred: 3 },
   { sign: 'STUDENTS CYBER', w: 104, broad: 'cyber', body: '#e3eaf2', roof: '#3a0ca3', door: '#3a0ca3',
     signInk: ['#240046', '#ffffff', '#c7b3ff'], errand: 'Check JAMB result', price: 200, cred: 1 },
   { sign: 'MALLAM SUYA', w: 80, suya: true, call: 'suya', body: '#3a332c', roof: '#7a3b16', food: true,
@@ -4245,7 +4253,7 @@ const YABA_OWN = [
   { sign: 'MAINLAND PHARMACY', w: 108, modern: 'pharmacy', body: '#f3f7f2', roof: '#2a9d8f', door: '#2a9d8f',
     signInk: ['#1d6d63', '#ffffff', '#a8f0e4'], errand: 'Buy Panadol', price: 200, energy: 8 },
   { sign: 'MAINLAND BITES', w: 108, modern: 'chicken', body: '#fbf7ef', roof: '#d00000', door: '#d00000', food: true,
-    signInk: ['#7a0000', '#fff3c4', '#ffd166'], errand: 'Chop jollof & chicken', price: 1500, belle: 12 },
+    signInk: ['#7a0000', '#fff3c4', '#ffd166'], errand: 'Chop jollof & plantain', price: 1500, belle: 12 },
 ];
 const YABA_SHOPS = [...YABA_OWN, ...SHOPS.slice(YABA_OWN.length)];   // the paid boards keep their places
 Object.assign(CUSTOMERS, {
