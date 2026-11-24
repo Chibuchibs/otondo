@@ -1707,6 +1707,53 @@
     color:#8a3d06;-webkit-text-fill-color:#8a3d06;border-radius:99px;padding:8px 14px 8px 11px;
     font-size:14px;font-weight:800;white-space:nowrap;cursor:pointer}
   .streakChip b{font-size:17px;font-weight:900}
+  /* Daily Wahala + Street Cards (2026-11-23) */
+  .questbar{display:flex;gap:8px;margin:-4px 0 12px}
+  .questbar.hidden{display:none}
+  .wahChip{flex:1;position:relative;display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:8px;text-align:left;
+    background:#1d1a10;color:#fff;-webkit-text-fill-color:#fff;border:0;border-radius:14px;padding:9px 12px 12px;cursor:pointer;overflow:hidden}
+  .wahChip.done{background:#0a7a43}
+  .wahChip .wahIco{font-size:20px}
+  .wahChip .wahTxt{display:flex;flex-direction:column;min-width:0}
+  .wahChip .wahTxt b{font-size:9.5px;letter-spacing:.12em;color:#f2c200;-webkit-text-fill-color:#f2c200}
+  .wahChip.done .wahTxt b{color:#c8f7d8;-webkit-text-fill-color:#c8f7d8}
+  .wahChip #wahDesc{font-size:13.5px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .wahChip .wahN{font-weight:900;font-size:15px}
+  .wahChip .wahBar{position:absolute;left:0;right:0;bottom:0;height:4px;background:rgba(255,255,255,.12)}
+  .wahChip .wahBar i{display:block;height:100%;width:0;background:linear-gradient(90deg,#f2c200,#ff7a00);transition:width .5s ease}
+  .wahChip.done .wahBar i{background:#c8f7d8}
+  .wahChip.bump{animation:statUp .9s ease-out}
+  .cardsChip{background:#fff;border:1.5px solid var(--line);border-radius:14px;padding:8px 12px;font-size:14px;font-weight:800;cursor:pointer;white-space:nowrap}
+  .cardsChip b{font-size:17px}
+  .cardsChip.bump{animation:statUp .9s ease-out}
+  .cardsBox{background:#14203a;color:#fff;border-radius:14px;padding:14px;margin-bottom:14px}
+  .cardsBox h3{margin:0 0 2px;font-size:16px;letter-spacing:.05em}
+  .cardsBox .cbSub{margin:0 0 10px;font-size:12px;color:#b8c4e0}
+  .cardsBox .cbBar{height:6px;border-radius:3px;background:rgba(255,255,255,.12);overflow:hidden;margin-bottom:12px}
+  .cardsBox .cbBar i{display:block;height:100%;background:linear-gradient(90deg,#4fe3b7,#f2c200)}
+  .cardsGrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(92px,1fr));gap:8px}
+  .sCard{position:relative;border-radius:10px;padding:8px 6px 7px;text-align:center;min-height:112px;display:flex;flex-direction:column;align-items:center;gap:3px;
+    background:linear-gradient(160deg,#2a7a4e,#18523a);box-shadow:inset 0 0 0 2px rgba(255,255,255,.18)}
+  .sCard.rare{background:linear-gradient(160deg,#2b5fae,#1a3a73);box-shadow:inset 0 0 0 2px #8fb7ee}
+  .sCard.legendary{background:linear-gradient(160deg,#c9a227,#8a6a10);box-shadow:inset 0 0 0 2px #ffe58a,0 0 10px rgba(242,194,0,.45)}
+  .sCard .scIco{font-size:30px;line-height:1.1;margin-top:2px}
+  .sCard .scName{font-size:11.5px;font-weight:900;line-height:1.15}
+  .sCard .scLine{font-size:9.5px;color:rgba(255,255,255,.85);line-height:1.2;font-style:italic}
+  .sCard .scRar{position:absolute;top:4px;right:5px;font-size:7.5px;font-weight:900;letter-spacing:.08em;opacity:.85}
+  .sCard.locked{background:#22283a;box-shadow:inset 0 0 0 2px rgba(255,255,255,.08)}
+  .sCard.locked .scIco{filter:grayscale(1) brightness(.2);opacity:.6}
+  .sCard.locked .scName{color:#7c86a3}
+  .sCard.locked .scLine{color:#7c86a3;font-style:normal}
+  /* the flip-in when a new card drops */
+  .cardDrop{position:absolute;left:10px;top:44px;z-index:11;width:104px;pointer-events:auto;cursor:pointer;perspective:400px}
+  .cardDrop .sCard{transform-origin:50% 50%;animation:cardFlip .7s cubic-bezier(.2,1.3,.4,1) both;box-shadow:0 6px 18px rgba(0,0,0,.45)}
+  .cardDrop .cdNew{position:absolute;left:50%;top:-12px;transform:translateX(-50%);z-index:2;background:#c1272d;color:#fff;font:900 8px/1 system-ui,sans-serif;
+    letter-spacing:.1em;padding:3px 6px;border-radius:4px;white-space:nowrap}
+  @keyframes cardFlip{0%{transform:rotateY(90deg) scale(.6);opacity:0}60%{transform:rotateY(-12deg) scale(1.08);opacity:1}100%{transform:none}}
+  .cardDrop.legendary .sCard{animation:cardFlip .7s cubic-bezier(.2,1.3,.4,1) both,legendGlow 1.2s ease-in-out .7s infinite alternate}
+  @keyframes legendGlow{to{box-shadow:0 6px 18px rgba(0,0,0,.45),0 0 22px 6px rgba(242,194,0,.75)}}
+  .wahTick{position:absolute;left:50%;top:48px;z-index:10;transform:translateX(-50%);pointer-events:none;white-space:nowrap;
+    background:#1d1a10;color:#f2c200;font:900 11px/1 system-ui,sans-serif;padding:6px 10px;border-radius:9px;box-shadow:0 2px 6px rgba(0,0,0,.35)}
   .shareCard{flex:1;background:var(--green);color:#fff;-webkit-text-fill-color:#fff;border:0;border-radius:99px;
     padding:9px 14px;font-size:15px;font-weight:800;letter-spacing:.02em;cursor:pointer}
   .streakBall{width:96px;height:96px;margin:0 auto 12px;border-radius:50%;display:flex;flex-direction:column;
@@ -2068,6 +2115,10 @@
       <button class="streakChip" id="streakChip" type="button" aria-label="Your daily streak">🔥 <b id="streakN">1</b><span id="streakWord">day streak</span></button>
       <button class="shareCard" id="shareCard" type="button">📸 Share my card</button>
     </div>
+    <div class="questbar hidden" id="questbar">
+      <button class="wahChip" id="wahChip" type="button" aria-label="Today's wahala"><span class="wahIco">⚡</span><span class="wahTxt"><b>TODAY'S WAHALA</b><span id="wahDesc">…</span></span><span class="wahN" id="wahN">0/3</span><i class="wahBar"><i id="wahFill"></i></i></button>
+      <button class="cardsChip" id="cardsChip" type="button" aria-label="Your street cards">📒 <b id="cardsN">0</b><span>/15</span></button>
+    </div>
     <p class="liteNote hidden" id="liteNote">🪶 Lite mode is on: fewer effects, so the game runs smoother on this device.
       <button type="button" id="liteOff">Turn off</button></p>
     <div class="live" id="live" role="button" tabindex="0"
@@ -2099,6 +2150,7 @@
     </div>
 
     <div id="panelAwards" class="hidden">
+      <div class="cardsBox hidden" id="cardsBox"></div>
       <div class="prizeBox hidden" id="prizeBox"></div>
       <ul class="awards" id="awardList"></ul>
       <p class="note" id="awardNote">Loading the notice board…</p>
@@ -2222,7 +2274,7 @@
 <script type="module">
 import { newGame, doAction, canDo, unlocked, ACTIONS, phaseOf, nextUnlock, postingOdds, rivalOf,
          computePosting, CHOICES, GOAL, goalStatus,
-         shareText, MAX_DAY } from './game.js?v=20261123191928';
+         shareText, MAX_DAY } from './game.js?v=20261123193651';
 
 /* ---------- scene coordinates ----------
    The scene is scaled by a transform (see the stage), so a native
@@ -2253,11 +2305,11 @@ const TS = (document.getElementById('scene').offsetWidth || 375) / 375;
 const ALLAWEE_NOTE = 'Allawee ₦77,000 — e never enter.';
 import { initNet, joinCamp, syncPlayer, platoonBoard, recentChat, postChat,
          postSuggestion, reportMessage, awardBoard, myAwards, laughChat,
-         setPresence, campRoster, renameMe, setAvatar, online, prizeBoard, myPrize, platoonWar, claimPlatoonWin } from './net.js?v=20261123191928';
-import { startMusic, stopMusic, musicOn, audioState, audioSupported, setRain, whenSilenced, wakeAudio, audible, say, sfx, BEAT, BAR } from './audio.js?v=20261123191928';
+         setPresence, campRoster, renameMe, setAvatar, online, prizeBoard, myPrize, platoonWar, claimPlatoonWin } from './net.js?v=20261123193651';
+import { startMusic, stopMusic, musicOn, audioState, audioSupported, setRain, whenSilenced, wakeAudio, audible, say, sfx, BEAT, BAR } from './audio.js?v=20261123193651';
 import { playHoop, playPenalty, playQuiz, playRegister, playParade,
          playMami, playHustle, playManOWar, playSaed, playSocial,
-         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261123191928';
+         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261123193651';
 
 /* Every dance animation is expressed in beats, so the steps are on-tempo
    whether or not the sound is playing — and genuinely on the beat when it is. */
@@ -6495,6 +6547,7 @@ function settleLove(wreck){
     el.classList.add('wrecked');
     if (Math.random() < LOVE_NUMBER_ODDS){
       s.friends = (s.friends || 0) + 1;
+      track('number');
       say2('Call me o!', 'paid');
       tell('Ehen! She don drop her number for you. Her boyfriend dey vex. +1 friend');
       setTimeout(() => { if (who.isConnected){ paperTo(el, who); floatCost(who, '+1 friend'); } }, 650);
@@ -6519,6 +6572,7 @@ function settleLove(wreck){
     }
   }
   if (wreck) setTimeout(() => { if (el.isConnected) say2('Baby wait o!', 'fine'); }, 2300);   // he goes after her
+  track('lovers'); if (!wreck) track('leave');
   save(); render();
   endLove();
 }
@@ -6636,6 +6690,7 @@ function haggleEnter(){
   clearTimeout(h.timer);
   h.busy = true;
   const paid = h.price, saved = h.start - paid;
+  track('danfo'); if (saved > 0) track('saved', saved); if (paid <= h.floor) track('lastprice');
   s.money -= paid;
   s.energy = Math.min(100, s.energy + HAGGLE_REST);
   save(); render();
@@ -6677,6 +6732,196 @@ function finishHaggle(rode){
   }
 }
 if (HAGGLE_ON && !calm()) haggleDue(HAGGLE_FIRST);
+
+/* ---------- LAGOS STREET CARDS + DAILY WAHALA (2026-11-23, user) ----------
+   One tracker, track(evt, n), called wherever the street pays out. It drops a
+   card the first time you deal with a character, and moves today's wahala. */
+const CARDS_ON = true, WAHALA_ON = true;
+const CARDS = [
+  { id: 'mrpothole', evt: 'jump',      r: 'common',    ico: '🕳️', name: 'Mr. Pothole',     line: 'Him don swallow better corpers.',  hint: 'Jump Mr. Pothole' },
+  { id: 'conductor', evt: 'danfo',     r: 'common',    ico: '🚌', name: 'Danfo Conductor', line: 'Shift for back! Change dey.',       hint: 'Enter a danfo' },
+  { id: 'barrow',    evt: 'barrow',    r: 'common',    ico: '🛒', name: 'Barrow Boy',      line: 'Atlantic Ocean na im office.',      hint: 'Ride the barrow across the flood' },
+  { id: 'agbero',    evt: 'agbero',    r: 'common',    ico: '💪', name: 'Agbero',          line: 'Na my road. Settle!',               hint: 'Settle the agbero' },
+  { id: 'officer',   evt: 'checkpoint',r: 'common',    ico: '👮', name: 'The Officer',     line: 'Corper! Where your ID?',            hint: 'Face a police checkpoint' },
+  { id: 'lovers',    evt: 'lovers',    r: 'common',    ico: '💕', name: 'Love Nwantiti',   line: 'Dem no dey see anybody.',           hint: 'Meet the couple on the walk' },
+  { id: 'hawker',    evt: 'hawker',    r: 'common',    ico: '🥤', name: 'Kunu Seller',     line: 'Cold kunu! Cold kunu!',             hint: 'Buy from a hawker' },
+  { id: 'thief',     evt: 'thief',     r: 'rare',      ico: '🏃', name: 'Phone Thief',     line: 'E run, but e no fit hide.',         hint: 'Catch the thief' },
+  { id: 'fire',      evt: 'fire',      r: 'rare',      ico: '🔥', name: 'Danfo Wey Burn',  line: 'Water! Bring water!',               hint: 'Quench a burning danfo' },
+  { id: 'okada',     evt: 'walletReturn', r: 'rare',   ico: '🛵', name: 'Okada Passenger', line: 'God bless you, honest corper.',     hint: 'Return a dropped wallet' },
+  { id: 'odogwu',    evt: 'spray',     r: 'rare',      ico: '💸', name: 'Odogwu',          line: 'Spray money, no dey count am.',     hint: 'Catch Odogwu’s spray money' },
+  { id: 'convoy',    evt: 'dash',      r: 'rare',      ico: '🚙', name: 'Odogwu Convoy',   line: 'Siren, sunroof, cash.',             hint: 'Grab cash from Odogwu’s convoy' },
+  { id: 'lastprice', evt: 'lastprice', r: 'legendary', ico: '👑', name: 'Last Price King', line: 'Conductor don surrender.',          hint: 'Haggle a danfo all the way to its last price' },
+  { id: 'magnet',    evt: 'spray3k',   r: 'legendary', ico: '🧲', name: 'Money Magnet',    line: 'Odogwu money dey follow you.',      hint: 'Pack ₦3,000 in one Odogwu spray' },
+  { id: 'callme',    evt: 'number',    r: 'legendary', ico: '📞', name: 'Call Me O!',      line: 'Her boyfriend still dey vex.',      hint: 'Wreck a love, and get her number' },
+];
+const CARD_PAY = { common: { money: 200 }, rare: { cred: 2 }, legendary: { cred: 5, money: 1000 } };
+const CARD_SET_BONUS = { cred: 25, money: 5000 };
+const CARDS_KEY = 'otondo:cards';
+let cards = {};
+try { cards = JSON.parse(localStorage.getItem(CARDS_KEY) || '{}') || {}; } catch {}
+const cardsHave = () => CARDS.filter(c => cards[c.id]).length;
+function saveCards(){ try { localStorage.setItem(CARDS_KEY, JSON.stringify(cards)); } catch {} }
+function cardHtml(c, locked){
+  return `<div class="sCard ${c.r}${locked ? ' locked' : ''}"><span class="scRar">${c.r === 'common' ? '' : c.r.toUpperCase()}</span>
+    <span class="scIco">${c.ico}</span><span class="scName">${locked ? '???' : c.name}</span><span class="scLine">${locked ? c.hint : '“' + c.line + '”'}</span></div>`;
+}
+function earnCard(c){
+  if (!CARDS_ON || !s || cards[c.id]) return;
+  cards[c.id] = new Date().toISOString().slice(0, 10);
+  saveCards();
+  const pay = CARD_PAY[c.r];
+  if (pay.money) s.money += pay.money;
+  if (pay.cred) s.cred = (s.cred || 0) + pay.cred;
+  const n = cardsHave(), full = n === CARDS.length;
+  if (full && !cards.__set){ cards.__set = 1; saveCards(); s.money += CARD_SET_BONUS.money; s.cred = (s.cred || 0) + CARD_SET_BONUS.cred; }
+  save(); render(); drawQuest();
+  $('cardsChip').classList.remove('bump'); void $('cardsChip').offsetWidth; $('cardsChip').classList.add('bump');
+  /* the flip-in, top left of the street */
+  sceneEl.querySelector('.cardDrop')?.remove();
+  const d = document.createElement('div');
+  d.className = 'cardDrop ' + c.r;
+  d.innerHTML = `<span class="cdNew">NEW CARD · ${n}/${CARDS.length}</span>` + cardHtml(c, false);
+  sceneEl.appendChild(d);
+  d.onclick = () => { d.remove(); openCards(); };
+  setTimeout(() => d.isConnected && d.animate([{ opacity: 1 }, { opacity: 0, transform: 'translateY(-10px)' }], { duration: 400, fill: 'forwards' }).finished.then(() => d.remove()), 3200);
+  sfx('kaching');
+  const prize = [pay.money ? `+${naira(pay.money)}` : '', pay.cred ? `+${pay.cred} cred` : ''].filter(Boolean).join(' ');
+  tell(`New street card: ${c.name}! ${prize}${full ? ` — YOU DON COLLECT THEM ALL! +${naira(CARD_SET_BONUS.money)} +${CARD_SET_BONUS.cred} cred` : ''}`);
+  if (c.r === 'legendary' || full) setTimeout(() => popQuest(full
+    ? `<div class="hoorayBig" id="prizeH">📒 You don collect all ${CARDS.length}!</div><p>Every character for Lagos street dey your album. Set bonus: <b>+${naira(CARD_SET_BONUS.money)}</b> and <b>+${CARD_SET_BONUS.cred} credibility</b>.</p>`
+    : `<div class="hoorayBig" id="prizeH">✨ LEGENDARY CARD!</div><div style="width:130px;margin:6px auto 10px">${cardHtml(c, false)}</div><p>Only few corpers get <b>${c.name}</b>. +${naira(pay.money)} +${pay.cred} credibility.</p>`,
+    `I pulled a LEGENDARY card for Otondo: ${c.ico} ${c.name}! ${n}/${CARDS.length} Lagos street cards. Fit beat am?`), 900);
+}
+/* a popup in the shared card slot, never on top of another one; with a brag button */
+function popQuest(html, brag){
+  if (!$('prizePop').classList.contains('hidden') || !$('hooray').classList.contains('hidden')){ setTimeout(() => popQuest(html, brag), 2500); return; }
+  $('prizeCard').innerHTML = html + (brag ? `<button class="primary" type="button" id="questShare">📲 Show your people</button>` : '')
+    + `<button class="primary${brag ? ' ghost' : ''}" type="button" id="prizeClose"${brag ? ' style="margin-top:8px"' : ''}>Oya, continue</button>`;
+  $('prizePop').classList.remove('hidden');
+  $('prizeClose').onclick = () => $('prizePop').classList.add('hidden');
+  if (brag) $('questShare').onclick = async () => {
+    const url = 'https://otondo.ng/?r=quest';
+    try { if (navigator.share){ await navigator.share({ text: brag, url }); return; } } catch (e){ if (e && e.name === 'AbortError') return; }
+    try { await navigator.clipboard.writeText(`${brag} ${url}`); $('questShare').textContent = '✅ Copied. Send am!'; } catch { $('questShare').textContent = url; }
+  };
+}
+function drawCardsBox(){
+  const box = $('cardsBox');
+  if (!CARDS_ON){ box.classList.add('hidden'); return; }
+  const n = cardsHave();
+  box.innerHTML = `<h3>📒 LAGOS STREET CARDS · ${n}/${CARDS.length}</h3>
+    <p class="cbSub">Deal with the street to collect them. Rare + legendary cards pay credibility. Collect all ${CARDS.length}: <b>+${naira(CARD_SET_BONUS.money)} +${CARD_SET_BONUS.cred} cred</b>.</p>
+    <div class="cbBar"><i style="width:${Math.round(n / CARDS.length * 100)}%"></i></div>
+    <div class="cardsGrid">${CARDS.map(c => cardHtml(c, !cards[c.id])).join('')}</div>`;
+  box.classList.remove('hidden');
+}
+function openCards(){ $('tabAwards').click(); setTimeout(() => $('cardsBox').scrollIntoView({ behavior: 'smooth', block: 'start' }), 120); }
+
+/* ---- the daily wahala: one challenge a day, the same for everybody that day ---- */
+const WAHALAS = [
+  { id: 'jump3',   evt: 'jump',       n: 3,    text: 'Jump Mr. Pothole 3 times' },
+  { id: 'danfo2',  evt: 'danfo',      n: 2,    text: 'Enter 2 danfos' },
+  { id: 'save300', evt: 'saved',      n: 300,  text: 'Haggle ₦300 off danfo fares', money: true },
+  { id: 'spray',   evt: 'spray',      n: 1500, text: 'Pack ₦1,500 when Odogwu spray', money: true },
+  { id: 'wallet',  evt: 'walletReturn', n: 1,  text: 'Return a dropped wallet' },
+  { id: 'id2',     evt: 'showid',     n: 2,    text: 'Show your ID at 2 checkpoints' },
+  { id: 'hawk3',   evt: 'hawker',     n: 3,    text: 'Buy from hawkers 3 times' },
+  { id: 'thief2',  evt: 'thief',      n: 2,    text: 'Catch 2 thieves' },
+  { id: 'fire5',   evt: 'fire',       n: 5,    text: 'Quench 5 flames' },
+  { id: 'dash3',   evt: 'dash',       n: 3,    text: 'Grab Odogwu convoy cash 3 times' },
+  { id: 'leave',   evt: 'leave',      n: 1,    text: 'Leave the lovers in peace' },
+];
+const WAH_KEY = 'otondo:wahala';
+const lagosDay = () => new Date(Date.now() + 3600e3).toISOString().slice(0, 10);   // Lagos is UTC+1
+let wah = { day: '', id: '', got: 0, done: false, streak: 0, lastDone: '' };
+try { wah = { ...wah, ...JSON.parse(localStorage.getItem(WAH_KEY) || '{}') }; } catch {}
+function saveWah(){ try { localStorage.setItem(WAH_KEY, JSON.stringify(wah)); } catch {} }
+const todayWahala = () => {
+  const d = lagosDay(); let h = 0; for (const ch of d) h = (h * 31 + ch.charCodeAt(0)) >>> 0;
+  return WAHALAS[h % WAHALAS.length];
+};
+function rollWahala(){
+  const d = lagosDay();
+  if (wah.day === d) return;
+  wah.day = d; wah.id = todayWahala().id; wah.got = 0; wah.done = false;
+  saveWah();
+}
+/* the reward climbs with the wahala streak: days in a row you finished it */
+const wahPay = st => ({ money: 1000 * Math.min(Math.max(st, 1), 5), cred: 3 + Math.min(Math.max(st, 1), 5) });
+function drawQuest(){
+  const on = !!s && (CARDS_ON || WAHALA_ON);
+  $('questbar').classList.toggle('hidden', !on);
+  if (!on) return;
+  $('cardsN').textContent = cardsHave();
+  $('cardsChip').classList.toggle('hidden', !CARDS_ON);
+  $('wahChip').classList.toggle('hidden', !WAHALA_ON);
+  if (!WAHALA_ON) return;
+  rollWahala();
+  const w = WAHALAS.find(x => x.id === wah.id) || todayWahala();
+  const shown = w.money ? `${naira(Math.min(wah.got, w.n))}/${naira(w.n)}` : `${Math.min(wah.got, w.n)}/${w.n}`;
+  $('wahDesc').textContent = wah.done ? `${w.text} ✔` : w.text;
+  $('wahN').textContent = wah.done ? '✅' : (w.money ? `${Math.round(Math.min(wah.got, w.n) / w.n * 100)}%` : shown);
+  $('wahFill').style.width = Math.round(Math.min(1, wah.got / w.n) * 100) + '%';
+  $('wahChip').classList.toggle('done', wah.done);
+}
+function wahTick(w){
+  sceneEl.querySelector('.wahTick')?.remove();
+  const t = document.createElement('div');
+  t.className = 'wahTick';
+  t.textContent = w.money ? `⚡ ${w.text}: ${naira(Math.min(wah.got, w.n))}/${naira(w.n)}` : `⚡ ${w.text}: ${Math.min(wah.got, w.n)}/${w.n}`;
+  sceneEl.appendChild(t);
+  t.animate([{ opacity: 0, transform: 'translateX(-50%) translateY(6px)' }, { opacity: 1, transform: 'translateX(-50%)', offset: .15 }, { opacity: 1, offset: .8 }, { opacity: 0 }],
+            { duration: 2200, fill: 'forwards' }).onfinish = () => t.remove();
+}
+function wahalaDone(w){
+  const y = new Date(Date.now() + 3600e3 - 864e5).toISOString().slice(0, 10);
+  wah.streak = wah.lastDone === y ? wah.streak + 1 : 1;
+  wah.lastDone = wah.day; wah.done = true;
+  saveWah();
+  const pay = wahPay(wah.streak);
+  s.money += pay.money; s.cred = (s.cred || 0) + pay.cred;
+  save(); render();
+  sfx('kaching');
+  if (shoutSign) shoutSign(['WAHALA DON FINISH! 🎉', '#0a7a43', '#ffffff']);
+  tell(`Today's wahala don finish! +${naira(pay.money)} +${pay.cred} cred`);
+  const next = wahPay(wah.streak + 1);
+  setTimeout(() => popQuest(`<div class="hoorayBig" id="prizeH">⚡ Wahala don finish!</div>
+    <p><b>${w.text}</b> ✔</p>
+    <p>You get <b>+${naira(pay.money)}</b> and <b>+${pay.cred} credibility</b>.${wah.streak > 1 ? ` 🔥 <b>${wah.streak}-day wahala streak!</b>` : ''}</p>
+    <p style="font-size:13.5px">Come back tomorrow for a new wahala: finish am again and the pay go climb to <b>${naira(next.money)}</b>.</p>`,
+    `I don finish today's wahala for Otondo ⚡ ${w.text}${wah.streak > 1 ? ` (${wah.streak} days running)` : ''}. Your own nko?`), 700);
+}
+function track(evt, n = 1){
+  if (!s) return;
+  if (CARDS_ON) CARDS.filter(c => c.evt === evt).forEach(earnCard);
+  if (!WAHALA_ON) return;
+  rollWahala();
+  const w = WAHALAS.find(x => x.id === wah.id);
+  if (!w || wah.done || w.evt !== evt || n <= 0) return;
+  wah.got += n;
+  saveWah();
+  $('wahChip').classList.remove('bump'); void $('wahChip').offsetWidth; $('wahChip').classList.add('bump');
+  if (wah.got >= w.n) wahalaDone(w);
+  else wahTick(w);
+  drawQuest();
+}
+$('wahChip').onclick = () => {
+  rollWahala();
+  const w = WAHALAS.find(x => x.id === wah.id) || todayWahala(), pay = wahPay(wah.done ? wah.streak : wah.streak + (wah.lastDone === new Date(Date.now() + 3600e3 - 864e5).toISOString().slice(0, 10) ? 1 : 0) || 1);
+  const left = (() => { const now = new Date(Date.now() + 3600e3); const h = 23 - now.getUTCHours(), m = 59 - now.getUTCMinutes(); return `${h}h ${m}m`; })();
+  popQuest(`<div class="hoorayBig" id="prizeH">⚡ Today's wahala</div>
+    <p style="font-size:18px"><b>${w.text}</b></p>
+    <p>${wah.done ? '✅ You don finish am today. New one tomorrow.' : `Progress: <b>${w.money ? `${naira(Math.min(wah.got, w.n))} of ${naira(w.n)}` : `${Math.min(wah.got, w.n)} of ${w.n}`}</b> · ${left} left`}</p>
+    <p style="font-size:13.5px">Pay: <b>+${naira(pay.money)} +${pay.cred} cred</b>. Finish am every day and the pay go climb, up to ${naira(5000)}.${wah.streak > 0 ? ` 🔥 Wahala streak: ${wah.streak}` : ''}</p>`);
+};
+$('cardsChip').onclick = openCards;
+/* the signboard announces it, once a session, soon after you start */
+if (WAHALA_ON && !calm()) setTimeout(() => {
+  if (!s || !shoutSign) return;
+  rollWahala();
+  const w = WAHALAS.find(x => x.id === wah.id);
+  if (w && !wah.done) shoutSign([`TODAY'S WAHALA: ${w.text.toUpperCase()}`, '#1d1a10', '#f2c200']);
+}, 12000);
 
 /* ---------- police checkpoint (2026-11-23, user) ----------
    The officer stops YOUR corper: "Corper! Where your ID?" Show ID is the
@@ -6791,6 +7036,7 @@ function checkResolve(how){
   }
   chkSay(line);
   tell(msg);
+  track('checkpoint'); if (how === 'id') track('showid');
   save(); render();
   setTimeout(() => endCheck(), hold + 1500);
 }
@@ -6941,7 +7187,7 @@ function catchNote(el){
   const v = +el.dataset.v, bonus = 50 * Math.min(sp.combo - 1, SPRAY_COMBO_MAX);   // the streak tops out at +N200 a note
   const got = Math.max(0, Math.min(v + bonus, SPRAY_CAP - sp.total));
   sp.total += got; sp.caught++;
-  if (s && got){ s.money += got; save(); render(); }
+  if (s && got){ s.money += got; save(); render(); track('spray', got); }
   sp.tally.textContent = `💸 ${naira(sp.total)}`;
   if (got) floatCost(el, `+${naira(got)}`);
   if (sp.total >= SPRAY_CAP && !sp.capped){                  // his pocket is empty
@@ -7004,6 +7250,7 @@ function endSpray(){
   setTimeout(() => { sp.car.style.transition = 'left 1.3s ease-in'; sp.car.style.left = (sceneW() + 60) + 'px'; }, 450);
   setTimeout(() => sp.car.remove(), 1900);
   if (!s) return;
+  if (sp.total >= 3000) track('spray3k');
   if (!sp.total){ tell('Odogwu spray finish. You no catch anything, area boys pack am all!'); return; }
   tell(`You packed ${naira(sp.total)} from Odogwu! ${sp.caught} note${sp.caught === 1 ? '' : 's'}${sp.best >= 2 ? `, best combo x${sp.best}` : ''}.`);
   setTimeout(() => sprayTallyPop(sp), 700);
@@ -7661,6 +7908,7 @@ function hopPothole(p, paid){
     }
     delete p.dataset.prepaid;
     handOver(p, 3, true);
+    track('agbero');
     setTimeout(() => toutSay('Correct! Waka pass.', 'paid'), 450);
     return;
   }
@@ -7678,6 +7926,7 @@ function hopPothole(p, paid){
   }
   if (paid && s && kind === 'flood'){                // naira, not energy: the boy is paid
     if (p.dataset.prepaid !== String(potLap)){ s.money -= ob.fee; floatCost(p, `-${naira(ob.fee)}`); }   // (paid on the tap, normally)
+    track('barrow');
     delete p.dataset.prepaid;
     tell(ob.jumped);
     save(); render();
@@ -7686,7 +7935,7 @@ function hopPothole(p, paid){
   if (paid && s){
     const cost = ob.cost ?? JUMP_COST;
     s.energy = Math.max(0, s.energy - cost);
-    if (kind === 'pothole') s.jumped = (s.jumped || 0) + 1;   // the tally is Mr. Pothole's
+    if (kind === 'pothole'){ s.jumped = (s.jumped || 0) + 1; track('jump'); }   // the tally is Mr. Pothole's
     tell(ob.jumped);
     save(); render();
     floatCost(p, `-${cost} energy`);
@@ -7841,6 +8090,7 @@ function slipOn(p){
     save(); render();
     floatCost(p, `-${naira(ob.fine)}`);
     toutSay(`Bring ${naira(ob.fine)} jare!`, 'fine', DUR);
+    track('agbero');
     setTimeout(() => { if (p.isConnected) handOver(p, 4, true); }, DUR * .35);
   } else if (s){
     s.energy = Math.max(0, s.energy - ob.miss);
@@ -8605,6 +8855,7 @@ function catchThief(run){
        street scuffle. */
     s.cred = (s.cred || 0) + 1;
     s.thieves = (s.thieves || 0) + 1;
+    track('thief');
     tell('You caught the thief. The whole street saw it.');
     render();
     floatCost(fig, `+₦${back.toLocaleString()}  +1 CRED`);
@@ -8790,6 +9041,7 @@ function douse(v){
   if (s){
     s.cred = (s.cred || 0) + 1;
     s.fires = (s.fires || 0) + 1;
+    track('fire');
     render();
     floatCost(v, '+1 CRED');
     titleCheck();
@@ -9103,6 +9355,7 @@ function settleWallet(w, honest){
   if (w.done || !s) return;
   if (honest){
     s.cred = (s.cred || 0) + WALLET_CRED;
+    track('walletReturn');
     tell(`You return the wallet. Okada man shout "God bless you!" +${WALLET_CRED} credibility`);
     floatCost(w.tag, `+${WALLET_CRED} cred`);
     say('welldone');
@@ -9478,7 +9731,7 @@ function odogwuConvoy(){
   const D = (ODOGWU_DRIVE * TS) + 's', dl = t => (t * TS) + 's';
   c.innerHTML =
     `<div class="car" style="width:100px;bottom:8px;animation-duration:${D};animation-delay:0s">${pickup()}</div>` +
-    `<div class="car dash" style="width:100px;bottom:2px;animation-duration:${D};animation-delay:${dl(.5)}">${suv('#f3f1e8', false, '#c9c4b6')}<div class="odgRoof">${odgBust()}</div><i class="tapTag">Grab the cash!</i></div>` +
+    `<div class="car dash" style="width:100px;bottom:2px;animation-duration:${D};animation-delay:${dl(.5)}">${suv('#f3f1e8', false, '#c9c4b6')}<div class="odgRoof">${odgBust()}</div><i class="tapTag">Tap to grab cash</i></div>` +
     `<div class="car" style="width:98px;bottom:5px;animation-duration:${D};animation-delay:${dl(.92)}">${suv('#141414', false)}</div>`;
   c.setAttribute('role', 'button');
   c.setAttribute('aria-label', 'Odogwu passing. Tap for money');
@@ -9536,6 +9789,7 @@ function dashMoney(c, x, y){
     const got = 300 + Math.floor(Math.random() * 6) * 100;     // ₦300–800
     s.money += got;
     render();
+    track('dash');
     floatCost(car, `+₦${got.toLocaleString()}`);
     sfx('kaching');                                   // money in: the till rings
   }
@@ -9992,6 +10246,7 @@ function buy(shopEl, who){
   const cred  = +shopEl.dataset.cred  || 0;
   const energy = +shopEl.dataset.energy || 0;     // pure water, so far
   if (!s || !cost) return;
+  if (shopEl.classList && shopEl.classList.contains('hawker')) track('hawker');
   /* The full price, every time, below zero if that is where it lands. The old
      cap made everything free once you hit ₦0 — a player could keep tapping
      errands and watch the balance sit at zero, which is the opposite of a
@@ -10526,6 +10781,7 @@ const allaweeFor = n => ALLAWEE_STEP * Math.min(Math.max(n, 1), ALLAWEE_DAYS);
 const dayWord = n => n === 1 ? 'day' : 'days';
 function drawStreak(){
   $('cardbar').classList.toggle('hidden', !s);
+  if (typeof drawQuest === 'function') drawQuest();
   $('streakN').textContent = streak.days || 1;
   $('streakWord').textContent = `${dayWord(streak.days || 1)} streak`;
 }
@@ -11570,6 +11826,7 @@ function tab(which){
   $('panelChat').classList.toggle('hidden',   which !== 'chat');
   if (which === 'chat')   gateChat();
   if (which === 'awards') drawAwards();
+  if (which === 'awards') drawCardsBox();
   if (which === 'board')  drawBoard();
   if (which === 'chat')   loadChat();
   if (which === 'chat')   seenChat();
