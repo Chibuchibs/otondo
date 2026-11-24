@@ -2274,7 +2274,7 @@
 <script type="module">
 import { newGame, doAction, canDo, unlocked, ACTIONS, phaseOf, nextUnlock, postingOdds, rivalOf,
          computePosting, CHOICES, GOAL, goalStatus,
-         shareText, MAX_DAY } from './game.js?v=20261123193651';
+         shareText, MAX_DAY } from './game.js?v=20261123194817';
 
 /* ---------- scene coordinates ----------
    The scene is scaled by a transform (see the stage), so a native
@@ -2305,11 +2305,11 @@ const TS = (document.getElementById('scene').offsetWidth || 375) / 375;
 const ALLAWEE_NOTE = 'Allawee ₦77,000 — e never enter.';
 import { initNet, joinCamp, syncPlayer, platoonBoard, recentChat, postChat,
          postSuggestion, reportMessage, awardBoard, myAwards, laughChat,
-         setPresence, campRoster, renameMe, setAvatar, online, prizeBoard, myPrize, platoonWar, claimPlatoonWin } from './net.js?v=20261123193651';
-import { startMusic, stopMusic, musicOn, audioState, audioSupported, setRain, whenSilenced, wakeAudio, audible, say, sfx, BEAT, BAR } from './audio.js?v=20261123193651';
+         setPresence, campRoster, renameMe, setAvatar, online, prizeBoard, myPrize, platoonWar, claimPlatoonWin } from './net.js?v=20261123194817';
+import { startMusic, stopMusic, musicOn, audioState, audioSupported, setRain, whenSilenced, wakeAudio, audible, say, sfx, BEAT, BAR } from './audio.js?v=20261123194817';
 import { playHoop, playPenalty, playQuiz, playRegister, playParade,
          playMami, playHustle, playManOWar, playSaed, playSocial,
-         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261123193651';
+         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261123194817';
 
 /* Every dance animation is expressed in beats, so the steps are on-tempo
    whether or not the sound is playing — and genuinely on the beat when it is. */
@@ -5829,7 +5829,19 @@ const BARROW = (dx = 0, L = BARROW_LOOKS[0]) => `<g transform="translate(${dx} 0
     <path d="M10.4 24.2 L30.4 21.6" stroke="${L.rim}" stroke-width="1.5" stroke-linecap="round"/>
     <circle cx="27" cy="38.2" r="5.2" fill="#2a2b2d"/><circle cx="27" cy="38.2" r="1.6" fill="#8a8f94"/>
   </g>`;
-const floodSvg = (n = 0) => { const L = BARROW_LOOKS[n] || BARROW_LOOKS[0]; return `<svg viewBox="0 0 80 48" aria-hidden="true" overflow="visible">
+/* Nigeria's rivers on the flood, each street its own (user, 2026-11-23, was
+   ATLANTIC OCEAN), in DISTRICTS order; a street's floods take its rivers in turn. */
+const FLOOD_RIVERS = [
+  ['OGUN RIVER', 'OSUN RIVER'],                        // Allen Avenue: the south-west's own
+  ['NIGER RIVER', 'BENUE RIVER'],                      // Broad Street: the big two
+  ['CROSS RIVER', 'IMO RIVER'],                        // Admiralty Way
+  ['KADUNA RIVER', 'SOKOTO RIVER', 'ZAMFARA RIVER'],   // Computer Village
+  ['ANAMBRA RIVER', 'GONGOLA RIVER', 'YOBE RIVER'],    // Ojuelegba
+];
+const riverTurn = [-1, -1, -1, -1, -1];
+const floodSvg = (n = 0) => { const L = BARROW_LOOKS[n] || BARROW_LOOKS[0];
+  const pool = FLOOD_RIVERS[n] || FLOOD_RIVERS[0], river = pool[riverTurn[n] = ((riverTurn[n] ?? -1) + 1) % pool.length];
+  return `<svg viewBox="0 0 80 48" aria-hidden="true" overflow="visible">
   <defs><path id="floodArc" d="M-22 45 Q40 51 102 45" fill="none"/></defs>
   <g class="barrowWait">${barrowBoy('', L)}${BARROW(0, L)}</g>
   <g class="barrowDone" transform="translate(84 0)">${BARROW(-2, L)}<g transform="translate(-6 0)">${barrowBoy('', L)}</g></g>
@@ -5842,10 +5854,10 @@ const floodSvg = (n = 0) => { const L = BARROW_LOOKS[n] || BARROW_LOOKS[0]; retu
   </g>
   <text class="potName" font-size="8" font-weight="900" letter-spacing="0.55"
         font-family="system-ui,sans-serif" text-anchor="middle">
-    <textPath href="#floodArc" startOffset="50%">ATLANTIC OCEAN</textPath>
+    <textPath href="#floodArc" startOffset="50%">${river}</textPath>
   </text>
 </svg>`; };
-const FLOOD_SVG = floodSvg(0);
+const FLOOD_SVG = floodSvg(0); riverTurn[0] = -1;   // the default drawing does not use up Allen Avenue's first river
 /* The same man and barrow, drawn into the corper's own svg (0 0 46 86, feet at
    y81) while he rides: the man behind him, pushing, the tray and wheel in
    front of his legs, and a band of water over the man's feet and the wheel. */
@@ -6740,7 +6752,7 @@ const CARDS_ON = true, WAHALA_ON = true;
 const CARDS = [
   { id: 'mrpothole', evt: 'jump',      r: 'common',    ico: '🕳️', name: 'Mr. Pothole',     line: 'Him don swallow better corpers.',  hint: 'Jump Mr. Pothole' },
   { id: 'conductor', evt: 'danfo',     r: 'common',    ico: '🚌', name: 'Danfo Conductor', line: 'Shift for back! Change dey.',       hint: 'Enter a danfo' },
-  { id: 'barrow',    evt: 'barrow',    r: 'common',    ico: '🛒', name: 'Barrow Boy',      line: 'Atlantic Ocean na im office.',      hint: 'Ride the barrow across the flood' },
+  { id: 'barrow',    evt: 'barrow',    r: 'common',    ico: '🛒', name: 'Barrow Boy',      line: 'Flood water na im office.',      hint: 'Ride the barrow across the flood' },
   { id: 'agbero',    evt: 'agbero',    r: 'common',    ico: '💪', name: 'Agbero',          line: 'Na my road. Settle!',               hint: 'Settle the agbero' },
   { id: 'officer',   evt: 'checkpoint',r: 'common',    ico: '👮', name: 'The Officer',     line: 'Corper! Where your ID?',            hint: 'Face a police checkpoint' },
   { id: 'lovers',    evt: 'lovers',    r: 'common',    ico: '💕', name: 'Love Nwantiti',   line: 'Dem no dey see anybody.',           hint: 'Meet the couple on the walk' },
