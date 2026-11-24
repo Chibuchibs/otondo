@@ -566,7 +566,26 @@
     flex-direction:column;align-items:center;gap:3px;animation:tagBob .8s ease-in-out infinite alternate}
   .walletTag.choose.hagTag::after{display:block;content:'';position:absolute;left:50%;top:100%;margin-left:-4px;border:4px solid transparent;border-top-color:#f2c200;pointer-events:none}
   .hagTag .hgPrice{font:900 9.5px/1.15 system-ui,sans-serif;color:#1d1a10;letter-spacing:.02em;white-space:nowrap}
-  #scene.haggleOn .cornTag:not(.jumpTag),#scene.sprayOn .cornTag{visibility:hidden;pointer-events:none}
+  /* the police checkpoint (2026-11-23) */
+  .chkCop{position:absolute;bottom:3px;width:48px;height:94px;z-index:3;pointer-events:none;opacity:0;transform:translateY(5px);transition:opacity .35s,transform .35s}
+  .chkCop.on{opacity:1;transform:none}
+  .chkCop svg{display:block;width:100%;height:100%;overflow:visible}
+  .chkCop .copHand{transform-box:fill-box;transform-origin:50% 100%;animation:copStop .7s ease-in-out infinite alternate}
+  @keyframes copStop{to{transform:rotate(-10deg)}}
+  .chkBar{position:absolute;bottom:3px;width:74px;height:34px;z-index:2;pointer-events:none;opacity:0;transition:opacity .35s}
+  .chkBar.on{opacity:1}
+  .chkBar svg{display:block;width:100%;height:100%;overflow:visible}
+  .walletTag.choose.chkTag{background:#1e3a8a;padding:4px 5px 5px;border-radius:7px;box-shadow:0 2px 6px rgba(0,0,0,.3);
+    flex-direction:column;align-items:center;gap:3px;animation:tagBob .8s ease-in-out infinite alternate}
+  .walletTag.choose.chkTag::after{display:block;content:'';position:absolute;left:50%;top:100%;margin-left:-4px;border:4px solid transparent;border-top-color:#1e3a8a;pointer-events:none}
+  .chkTag .chkLine{font:900 9.5px/1.15 system-ui,sans-serif;color:#fff;letter-spacing:.02em;white-space:nowrap}
+  .chkTag .lvRow{display:flex;gap:4px}
+  .walletTag .chkId{background:#1f7a46}
+  .walletTag .chkPay{background:#a8302c}
+  .chkTag .hgPat{display:block;width:100%;height:3px;border-radius:2px;background:rgba(255,255,255,.2);overflow:hidden}
+  .chkTag .hgPat i{display:block;height:100%;width:100%;background:#f2c200;transform-origin:left}
+  #scene.haggleOn .cornTag:not(.jumpTag),#scene.sprayOn .cornTag,#scene.checkOn .cornTag:not(.jumpTag){visibility:hidden;pointer-events:none}
+  #scene.checkOn .tapTag,#scene.checkOn .runnerTag,#scene.checkOn .walletTag:not(.chkTag){filter:opacity(.22);pointer-events:none}
   #scene.sprayOn .tapTag,#scene.sprayOn .runnerTag,#scene.sprayOn .walletTag{filter:opacity(.22);pointer-events:none}   /* not the YOU pin: your own marker never fades (user, 2026-11-23) */
   /* Odogwu's money spray (2026-11-22) */
   .pickup.odgCar{width:122px;bottom:5px;transition:left 1.2s cubic-bezier(.2,.8,.3,1)}
@@ -2203,7 +2222,7 @@
 <script type="module">
 import { newGame, doAction, canDo, unlocked, ACTIONS, phaseOf, nextUnlock, postingOdds, rivalOf,
          computePosting, CHOICES, GOAL, goalStatus,
-         shareText, MAX_DAY } from './game.js?v=20261123191403';
+         shareText, MAX_DAY } from './game.js?v=20261123191928';
 
 /* ---------- scene coordinates ----------
    The scene is scaled by a transform (see the stage), so a native
@@ -2234,11 +2253,11 @@ const TS = (document.getElementById('scene').offsetWidth || 375) / 375;
 const ALLAWEE_NOTE = 'Allawee ₦77,000 — e never enter.';
 import { initNet, joinCamp, syncPlayer, platoonBoard, recentChat, postChat,
          postSuggestion, reportMessage, awardBoard, myAwards, laughChat,
-         setPresence, campRoster, renameMe, setAvatar, online, prizeBoard, myPrize, platoonWar, claimPlatoonWin } from './net.js?v=20261123191403';
-import { startMusic, stopMusic, musicOn, audioState, audioSupported, setRain, whenSilenced, wakeAudio, audible, say, sfx, BEAT, BAR } from './audio.js?v=20261123191403';
+         setPresence, campRoster, renameMe, setAvatar, online, prizeBoard, myPrize, platoonWar, claimPlatoonWin } from './net.js?v=20261123191928';
+import { startMusic, stopMusic, musicOn, audioState, audioSupported, setRain, whenSilenced, wakeAudio, audible, say, sfx, BEAT, BAR } from './audio.js?v=20261123191928';
 import { playHoop, playPenalty, playQuiz, playRegister, playParade,
          playMami, playHustle, playManOWar, playSaed, playSocial,
-         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261123191403';
+         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261123191928';
 
 /* Every dance animation is expressed in beats, so the steps are on-tempo
    whether or not the sound is playing — and genuinely on the beat when it is. */
@@ -5174,7 +5193,7 @@ const EDGE = 0.16;
    offer has to skip them rather than suppress itself. */
 const freeFig = p => p && !p.matches(
   '.riding, .hailing, .running, .munching, .shopping, .inRide,'
-  + ' .jumping, .sunk, .gone, .stoop, .loving, .haggling');      // .loving: stopped at the couple, deciding; .haggling: at the danfo
+  + ' .jumping, .sunk, .gone, .stoop, .loving, .haggling, .checked');      // .loving: stopped at the couple, deciding; .haggling: at the danfo
 
 /* Comfortably in frame if anyone is; nearer the edge rather than nothing at
    all. EDGE keeps the marked figure clear of the bezel in the normal case, but
@@ -5394,6 +5413,7 @@ function aimPointer(){
   let best = paidRunner
     || (love && love.who && love.who.isConnected ? love.who : null)   // the one stopped at the couple, deciding, is still you
     || (haggle && haggle.p.isConnected && !haggle.p.classList.contains('inRide') ? haggle.p : null)   // and the one haggling at the danfo
+    || (check && check.p.isConnected ? check.p : null)                // and the one stopped at the checkpoint
     || sceneEl.querySelector('.corper.wantsJump, .corper.wantsCorn, .corper.wantsRide');
   if (best) lastAimed = performance.now();
   else {
@@ -6369,7 +6389,7 @@ function loveCheck(el, cx, box){
     pinInside(love.tag, box, cx);
     return;
   }
-  if (love || haggle || spray || !you || !s || jumpTag.style.display !== 'none' || wallet) return;
+  if (love || haggle || spray || check || !you || !s || jumpTag.style.display !== 'none' || wallet) return;
   const gap = cx - figX(you, box);
   if (gap < 60 || gap > 340 || cx > box.width * .84 || cx < box.width * .15) return;   // far enough in that the pin sits right over their heart, not squeezed off the edge
   if (!freeFig(you) || you.matches('.detour, .bumped') || you.style.animationPlayState === 'paused') return;
@@ -6526,7 +6546,7 @@ let haggle = null;
 function haggleDue(ms){ setTimeout(haggleTry, ms ?? HAGGLE_EVERY[0] + Math.random() * (HAGGLE_EVERY[1] - HAGGLE_EVERY[0])); }
 function haggleTry(){
   if (!HAGGLE_ON || calm()) return;
-  if (document.hidden || !s || haggle || spray || love || wallet || jumpTag.style.display !== 'none'
+  if (document.hidden || !s || haggle || spray || check || love || wallet || jumpTag.style.display !== 'none'
       || sceneEl.classList.contains('dancing') || sceneEl.querySelector('.pickup')) return haggleDue(4000);
   const p = youFig;
   if (!p || !freeFig(p) || p.matches('.detour, .bumped') || p.style.animationPlayState === 'paused') return haggleDue(4000);
@@ -6658,6 +6678,138 @@ function finishHaggle(rode){
 }
 if (HAGGLE_ON && !calm()) haggleDue(HAGGLE_FIRST);
 
+/* ---------- police checkpoint (2026-11-23, user) ----------
+   The officer stops YOUR corper: "Corper! Where your ID?" Show ID is the
+   honest gamble (usually waved through with a little credibility; sometimes a
+   bag search eats time and energy; now and then a strict one wants N300).
+   Settle N200 is quick but it is a bribe: credibility down, and on
+   anti-bribe week it is a sting. Ignore him and he holds you and fines N400. */
+const CHECKPOINT_ON = true, CHK_FIRST = 100000, CHK_EVERY = [190000, 250000], CHK_WAIT = 8000;
+let check = null;
+const copSvg = mopol => {
+  const shirt = mopol ? '#4a5a3a' : '#22222a', beret = mopol ? '#a8302c' : '#14203a';
+  return `<svg viewBox="0 0 46 90" aria-hidden="true">
+  <ellipse cx="23" cy="88.6" rx="13" ry="1.6" fill="rgba(0,0,0,.22)"/>
+  <ellipse cx="18" cy="87" rx="3.6" ry="1.6" fill="#0d0d0d"/><ellipse cx="28" cy="87" rx="3.6" ry="1.6" fill="#0d0d0d"/>
+  <rect x="15" y="52" width="6" height="34" rx="1.4" fill="#1b1b22"/><rect x="25" y="52" width="6" height="34" rx="1.4" fill="#1b1b22"/>
+  <path d="M13.4 30.6 q9.6-4 19.2 0 l1 23.4 h-21.2z" fill="${shirt}"/>
+  ${mopol ? `<g fill="#2f3b25" opacity=".85"><circle cx="17" cy="36" r="2.2"/><circle cx="27" cy="40" r="2.6"/><circle cx="20" cy="46" r="2"/><circle cx="29" cy="33" r="1.6"/><circle cx="16" cy="50" r="1.8"/></g>
+    <path d="M14.4 31.2 l3.4 22.6 M31.6 31.2 l-3.4 22.6" stroke="#2a3320" stroke-width="2.4"/>` : `<rect x="16" y="36" width="5" height="4" rx=".6" fill="#2e2e38"/><rect x="25" y="36" width="5" height="4" rx=".6" fill="#2e2e38"/>`}
+  <rect x="13" y="50.6" width="20.4" height="2.6" fill="#3a3a3a"/><rect x="21.4" y="50.4" width="3.4" height="3" rx=".5" fill="#c9a227"/>
+  <path d="M12.6 31.4 h5 M28.4 31.4 h5" stroke="#c9a227" stroke-width="1.2"/>
+  <circle cx="29" cy="35.4" r="1.3" fill="#c9a227"/>
+  <path d="M8 70 L30.6 31.4" stroke="#2b2b2b" stroke-width="3" stroke-linecap="round"/><path d="M10.4 66.2 l-2.6 -1.6" stroke="#5a4630" stroke-width="3.4" stroke-linecap="round"/>
+  <path d="M14 33 Q9 44 14 52" stroke="${shirt}" stroke-width="4.2" fill="none" stroke-linecap="round"/><circle cx="14.4" cy="52.6" r="2.1" fill="#5c3317"/>
+  <g class="copHand"><path d="M32 33 Q38.6 26 39 15.4" stroke="${shirt}" stroke-width="4.2" fill="none" stroke-linecap="round"/>
+    <rect x="36.4" y="9" width="5.4" height="6.6" rx="2" fill="#5c3317"/><path d="M37.4 9.4 v-1.8 M38.9 9 v-2.2 M40.4 9.4 v-1.8" stroke="#5c3317" stroke-width="1" stroke-linecap="round"/></g>
+  <rect x="20.6" y="25.8" width="4.8" height="5" fill="#5c3317"/>
+  <circle cx="23" cy="19" r="7.2" fill="#5c3317"/>
+  <path d="M15.2 15.6 Q16 8 25 8.6 Q32.2 9.6 31.4 14 Q24 11.6 15.2 15.6z" fill="${beret}"/><circle cx="18.6" cy="13.2" r="1.3" fill="#c9a227"/>
+  ${faceOf(23, 19, 7.2)}
+  <path d="M19.6 22.6 q3.4 -1.2 6.8 0" stroke="#1d1812" stroke-width="1.1" fill="none" stroke-linecap="round"/>
+  </svg>`;
+};
+const CHK_BAR = `<svg viewBox="0 0 74 34" aria-hidden="true">
+  <ellipse cx="37" cy="32.6" rx="34" ry="1.6" fill="rgba(0,0,0,.2)"/>
+  <ellipse cx="10" cy="28" rx="8" ry="4.6" fill="#1d1d1d"/><ellipse cx="10" cy="22.6" rx="8" ry="4.6" fill="#2a2a2a"/><ellipse cx="10" cy="22.6" rx="3.4" ry="1.8" fill="#111"/>
+  <ellipse cx="64" cy="28" rx="8" ry="4.6" fill="#1d1d1d"/><ellipse cx="64" cy="22.6" rx="8" ry="4.6" fill="#2a2a2a"/><ellipse cx="64" cy="22.6" rx="3.4" ry="1.8" fill="#111"/>
+  <rect x="2" y="9" width="70" height="9" rx="1.2" fill="#f4f1e8"/>
+  <path d="M8 9 l-6 9 M20 9 l-6 9 M32 9 l-6 9 M44 9 l-6 9 M56 9 l-6 9 M68 9 l-6 9" stroke="#e85d04" stroke-width="4"/>
+  <rect x="22" y="1.4" width="30" height="7.6" rx="1" fill="#1e3a8a"/>
+  <text x="37" y="7.2" text-anchor="middle" font-size="5" font-weight="900" font-family="system-ui,sans-serif" fill="#fff" letter-spacing=".4">POLICE</text>
+  </svg>`;
+function checkDue(ms){ setTimeout(checkTry, ms ?? CHK_EVERY[0] + Math.random() * (CHK_EVERY[1] - CHK_EVERY[0])); }
+function checkTry(){
+  if (!CHECKPOINT_ON || calm()) return;
+  if (document.hidden || !s || check || haggle || spray || love || wallet || jumpTag.style.display !== 'none'
+      || sceneEl.classList.contains('dancing') || sceneEl.querySelector('.pickup')) return checkDue(4000);
+  const p = youFig;
+  if (!p || !freeFig(p) || p.matches('.detour, .bumped') || p.style.animationPlayState === 'paused') return checkDue(4000);
+  const box = sceneEl.sceneRect(), x = figX(p, box);
+  if (x < box.width * .08 || x > box.width * .5) return checkDue(2500);
+  const ox = potX();
+  if (ox > x - 80 && ox < x + 150) return checkDue(3000);                 // never with the agbero or the hole in the way
+  startCheck(p, x);
+  checkDue();
+}
+function startCheck(p, x){
+  const W = sceneW(), mopol = DISTRICTS_ON && shownDistrict === 2;          // Admiralty Way: the mobile police
+  p.classList.add('checked');
+  p.style.animationPlayState = 'paused';
+  sceneEl.classList.add('checkOn');
+  const copX = Math.min(W - 60, x + 26), barX = Math.min(W - 78, copX + 34);
+  const cop = document.createElement('div'); cop.className = 'chkCop'; cop.innerHTML = copSvg(mopol); cop.style.left = Math.round(copX) + 'px';
+  const bar = document.createElement('div'); bar.className = 'chkBar'; bar.innerHTML = CHK_BAR; bar.style.left = Math.round(barX) + 'px';
+  sceneEl.appendChild(bar); sceneEl.appendChild(cop);
+  requestAnimationFrame(() => { cop.classList.add('on'); bar.classList.add('on'); });
+  check = { p, cop, bar, t0: performance.now(), hold: 0 };
+  setTimeout(() => { if (check && check.cop === cop) openCheck(); }, 700);
+}
+function openCheck(){
+  const c = check, box = sceneEl.sceneRect();
+  const tag = document.createElement('div');
+  tag.className = 'walletTag choose chkTag';
+  tag.innerHTML = `<span class="chkLine">“Corper! Where your ID?”</span>`
+    + `<span class="lvRow"><button class="chkId" type="button">Show ID</button><button class="chkPay" type="button">Settle ${naira(200)}</button></span>`
+    + `<span class="hgPat"><i></i></span>`;
+  tag.style.bottom = '104px';
+  sceneEl.appendChild(tag);
+  const r = c.cop.sceneRect();
+  pinInside(tag, box, r.left - box.left + r.width / 2);
+  c.tag = tag;
+  tag.querySelector('.hgPat i').animate([{ transform: 'scaleX(1)' }, { transform: 'scaleX(0)' }], { duration: CHK_WAIT, easing: 'linear', fill: 'forwards' });
+  c.timer = setTimeout(() => checkResolve('ignore'), CHK_WAIT);
+}
+function chkSay(line, ms = 1900){
+  const c = check; if (!c) return;
+  if (c.tag && c.tag.isConnected){
+    c.tag.innerHTML = `<span class="chkLine">“${line}”</span>`;
+    c.tag.classList.remove('pop'); void c.tag.offsetWidth; c.tag.classList.add('pop');
+  }
+}
+function checkResolve(how){
+  const c = check; if (!c || c.busy) return;
+  hintUsed();
+  clearTimeout(c.timer);
+  c.busy = true;
+  let hold = 1300, line, msg;
+  if (how === 'id'){
+    const r = Math.random();
+    if (r < .6){ line = 'Ah corper! Pass, serve your country.'; s.cred = (s.cred || 0) + 1; msg = 'You showed your ID. Officer wave you pass. +1 credibility'; }
+    else if (r < .85){ line = 'Open your bag make I check.'; hold = 3200; s.energy = Math.max(0, s.energy - 3); msg = 'He search your bag. Time don go, energy too, but you no pay.'; floatCost(c.p, '-3 energy'); }
+    else { line = 'This ID don expire? Pay ₦300!'; s.money -= 300; s.energy = Math.max(0, s.energy - 2); msg = 'Strict officer! Your ID cost you ₦300 today.'; floatCost(c.p, `-${naira(300)}`); }
+  } else if (how === 'pay'){
+    s.money -= 200;
+    floatCost(c.p, `-${naira(200)}`);
+    if (Math.random() < .15){ line = 'You wan bribe officer?! Na anti-bribe week!'; hold = 2600; s.cred = Math.max(0, (s.cred || 0) - 5); msg = 'Sting operation! You settle, and they catch you. -5 credibility'; }
+    else { line = 'Oya go, no tell anybody.'; s.cred = Math.max(0, (s.cred || 0) - 2); msg = 'You settle police ₦200. E fast, but e no fine. -2 credibility'; }
+  } else {
+    line = 'You dey deaf? Oya come!'; hold = 3000;
+    s.money -= 400; s.energy = Math.max(0, s.energy - 3);
+    msg = 'You ignore the officer. He hold you and collect ₦400.';
+    floatCost(c.p, `-${naira(400)}`);
+  }
+  chkSay(line);
+  tell(msg);
+  save(); render();
+  setTimeout(() => endCheck(), hold + 1500);
+}
+function endCheck(){
+  const c = check; check = null;
+  sceneEl.classList.remove('checkOn');
+  if (!c) return;
+  c.tag?.remove();
+  c.cop.classList.remove('on'); c.bar.classList.remove('on');
+  setTimeout(() => { c.cop.remove(); c.bar.remove(); }, 400);
+  const p = c.p;
+  if (p.isConnected){
+    p.classList.remove('checked');
+    p.style.animationPlayState = '';
+    rejoinGrid(p, performance.now() - c.t0);            // hurries back to his place in line
+  }
+}
+if (CHECKPOINT_ON && !calm()) checkDue(CHK_FIRST);
+
 /* ---------- Odogwu dey spray (2026-11-22, user) ----------
    His white SUV pulls up, he steps out and sprays naira for ~8s. Tap the
    notes as they fall: N100 mostly, N200, N500 rare, N1000 very rare. Quick
@@ -6695,7 +6847,7 @@ let spray = null, sprayLastSfx = 0;
 function sprayDue(ms){ setTimeout(sprayTry, ms ?? SPRAY_EVERY[0] + Math.random() * (SPRAY_EVERY[1] - SPRAY_EVERY[0])); }
 function sprayTry(){
   if (!SPRAY_ON || calm()) return;
-  if (document.hidden || !s || spray || haggle || love || wallet || jumpTag.style.display !== 'none'
+  if (document.hidden || !s || spray || haggle || check || love || wallet || jumpTag.style.display !== 'none'
       || sceneEl.classList.contains('dancing') || sceneEl.querySelector('.pickup, .convoy, .goat')) return sprayDue(5000);
   startSpray();
   sprayDue();
@@ -8088,7 +8240,7 @@ let rideAnchor = null;
 function offerTick(){
   /* At the danfo, the haggle is the only thing asked (user: "make sure the
      directive will not overcrowd or cover other things"). */
-  if (haggle || spray){ watchPothole(); jumpTarget = null; pothole.classList.remove('jumpable'); clearCorn(); clearRide(); clearJump(); sceneEl.classList.remove('asking'); sweepOffers(); return; }   // the others still hop the hole, unasked
+  if (haggle || spray || check){ watchPothole(); jumpTarget = null; pothole.classList.remove('jumpable'); clearCorn(); clearRide(); clearJump(); sceneEl.classList.remove('asking'); sweepOffers(); return; }   // the others still hop the hole, unasked
   /* Mr. Pothole first, always. It is the only offer with a deadline — the
      others wait patiently while a shop drifts past, this one is gone the
      moment he reaches the hole — so it has to be able to interrupt them. */
@@ -8254,6 +8406,12 @@ function labelUnder(x, y){
 }
 sceneEl.addEventListener('click', e => {
   if (spray) return;                               // during the spray, a tap is for the money only (pointerdown)
+  if (e.target.closest('.chkTag')){
+    const b = e.target.closest('button');
+    if (b && b.classList.contains('chkId')) checkResolve('id');
+    else if (b && b.classList.contains('chkPay')) checkResolve('pay');
+    return;
+  }
   if (e.target.closest('.hagTag')){
     const b = e.target.closest('button');
     if (b && b.classList.contains('hgDown')) haggleTap();
@@ -8909,7 +9067,7 @@ const WALLET_SVG = `<svg viewBox="0 0 11 8" aria-hidden="true"><ellipse cx="5.5"
 let walletAt = -Infinity, wallet = null;     // `wallet`: the open choice, once it has been picked up
 function dropWallet(okadaEl){
   if (!okadaEl.isConnected || calm() || document.hidden || !s) return;
-  if (sceneEl.querySelector('.coin') || wallet || haggle || spray || jumpTag.style.display !== 'none') return;   // one thing on the floor, one ask at a time
+  if (sceneEl.querySelector('.coin') || wallet || haggle || spray || check || jumpTag.style.display !== 'none') return;   // one thing on the floor, one ask at a time
   const box = sceneEl.sceneRect(), r = okadaEl.sceneRect(), W = box.width;
   const x = r.left - box.left + r.width * .5;
   if (x < W * .2 || x > W * .85 || Math.abs(potX() - x) < 70) return;
