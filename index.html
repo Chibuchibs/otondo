@@ -407,13 +407,13 @@
   /* ---------- rare events ----------
      Variable reward: the fixed cycle is learned in two minutes, and these are
      what make somebody say "did you see the…" to the next person. */
-  .convoy{position:absolute;left:0;right:0;bottom:30px;height:64px;z-index:1;pointer-events:none}
+  .convoy{position:absolute;left:0;right:0;bottom:20px;height:80px;z-index:1;pointer-events:none}   /* a lane nearer: the big men's cars to scale (user, 2026-11-23) */
   .convoy .car{position:absolute;animation:drive linear both}
   /* Only the Odogwu's cars take a tap — the strip itself stays inert so a
      finger between the cars still reaches the street. */
   .convoy.odogwu .car{pointer-events:auto;cursor:pointer;-webkit-tap-highlight-color:transparent}
   .convoy.odogwu .car::after{content:'';position:absolute;inset:-10px -8px}
-  .convoy.odogwu .tapTag{background:#c9a227;color:#1d1a10;bottom:210%}   /* above Odogwu in his sunroof, not over him */
+  .convoy.odogwu .tapTag{background:#c9a227;color:#1d1a10;bottom:128%}   /* just above Odogwu's head in his sunroof */
   /* Odogwu himself, up through his sunroof, waving the money (user: "when the billboard shows odogwu passing, there is no odogwu") */
   .convoy .odgRoof{position:absolute;left:30%;bottom:62%;width:36px;height:34px;overflow:hidden;pointer-events:none}
   .convoy .odgRoof svg{display:block;width:100%;height:auto;overflow:visible}
@@ -2274,7 +2274,7 @@
 <script type="module">
 import { newGame, doAction, canDo, unlocked, ACTIONS, phaseOf, nextUnlock, postingOdds, rivalOf,
          computePosting, CHOICES, GOAL, goalStatus,
-         shareText, MAX_DAY } from './game.js?v=20261123204159';
+         shareText, MAX_DAY } from './game.js?v=20261123210251';
 
 /* ---------- scene coordinates ----------
    The scene is scaled by a transform (see the stage), so a native
@@ -2305,11 +2305,11 @@ const TS = (document.getElementById('scene').offsetWidth || 375) / 375;
 const ALLAWEE_NOTE = 'Allawee ₦77,000 — e never enter.';
 import { initNet, joinCamp, syncPlayer, platoonBoard, recentChat, postChat,
          postSuggestion, reportMessage, awardBoard, myAwards, laughChat,
-         setPresence, campRoster, renameMe, setAvatar, online, prizeBoard, myPrize, platoonWar, claimPlatoonWin } from './net.js?v=20261123204159';
-import { startMusic, stopMusic, musicOn, audioState, audioSupported, setRain, whenSilenced, wakeAudio, audible, say, sfx, BEAT, BAR } from './audio.js?v=20261123204159';
+         setPresence, campRoster, renameMe, setAvatar, online, prizeBoard, myPrize, platoonWar, claimPlatoonWin } from './net.js?v=20261123210251';
+import { startMusic, stopMusic, musicOn, audioState, audioSupported, setRain, whenSilenced, wakeAudio, audible, say, sfx, BEAT, BAR } from './audio.js?v=20261123210251';
 import { playHoop, playPenalty, playQuiz, playRegister, playParade,
          playMami, playHustle, playManOWar, playSaed, playSocial,
-         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261123204159';
+         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261123210251';
 
 /* Every dance animation is expressed in beats, so the steps are on-tempo
    whether or not the sound is playing — and genuinely on the beat when it is. */
@@ -9669,7 +9669,7 @@ const TRIP_ODDS  = 0.125;    // one chase in eight, the thief trips on Mr. Potho
 /* Each convoy pass — the oga's or the Odogwu's — is on screen this long. */
 /* The Odogwu cruises — slower than the politician, and on screen long enough
    to be tapped five times, because that is the whole point of him. */
-const CONVOY_PASS = 5600 * TS, ODOGWU_PASS = 9800 * TS, ODOGWU_DRIVE = 8, GOAT_LEN = (3400 + 3200) * TS + 3800 + 400;
+const CONVOY_PASS = 4600 * TS + 3000, ODOGWU_PASS = 8000 * TS + 5400,   /* the drive plus the last car's start */ ODOGWU_DRIVE = 8, GOAT_LEN = (3400 + 3200) * TS + 3800 + 400;
 
 /* An oga's convoy: two outriders, two black SUVs with the flag on the bonnet,
    strobes going, straight through the far lane at twice traffic speed. "Oga"
@@ -9720,10 +9720,11 @@ function convoy(){
   c.className = 'convoy';
   const D = (4.6 * TS) + 's', dl = t => (t * TS) + 's';
   c.innerHTML =
-    `<div class="car rider" style="width:40px;bottom:10px;animation-duration:${D};animation-delay:0s">${okada(false)}<i class="lightB"></i></div>` +
-    `<div class="car rider" style="width:40px;bottom:14px;animation-duration:${D};animation-delay:${dl(.24)}">${okada(false)}<i class="lightR"></i></div>` +
-    `<div class="car" style="width:98px;bottom:2px;animation-duration:${D};animation-delay:${dl(.56)}">${suv()}</div>` +
-    `<div class="car" style="width:98px;bottom:5px;animation-duration:${D};animation-delay:${dl(.9)}">${suv()}</div>`;
+    /* the gaps are in real seconds: cars move at the same px/s on every screen, so this is ~14px between bumpers, phone or laptop */
+    `<div class="car rider" style="width:54px;bottom:12px;animation-duration:${D};animation-delay:0s">${okada(false)}<i class="lightB"></i></div>` +
+    `<div class="car rider" style="width:54px;bottom:16px;animation-duration:${D};animation-delay:.6s">${okada(false)}<i class="lightR"></i></div>` +
+    `<div class="car" style="width:150px;bottom:1px;animation-duration:${D};animation-delay:1.22s">${suv()}</div>` +
+    `<div class="car" style="width:150px;bottom:4px;animation-duration:${D};animation-delay:2.66s">${suv()}</div>`;
   sceneEl.appendChild(c);
   if (shoutSign) shoutSign(['OGA DEY PASS!', '#1d1d1b', '#ffd34d']);
   /* Pim-pim: the escort clearing the road, as the siren riders come in. */
@@ -9742,9 +9743,10 @@ function odogwuConvoy(){
   c.dataset.dash = '5';
   const D = (ODOGWU_DRIVE * TS) + 's', dl = t => (t * TS) + 's';
   c.innerHTML =
-    `<div class="car" style="width:100px;bottom:8px;animation-duration:${D};animation-delay:0s">${pickup()}</div>` +
-    `<div class="car dash" style="width:100px;bottom:2px;animation-duration:${D};animation-delay:${dl(.5)}">${suv('#f3f1e8', false, '#c9c4b6')}<div class="odgRoof">${odgBust()}</div><i class="tapTag">Tap to grab cash</i></div>` +
-    `<div class="car" style="width:98px;bottom:5px;animation-duration:${D};animation-delay:${dl(.92)}">${suv('#141414', false)}</div>`;
+    /* ~14px between bumpers on every screen (65.6 px/s): 164px apart = 2.5s */
+    `<div class="car" style="width:150px;bottom:7px;animation-duration:${D};animation-delay:0s">${pickup()}</div>` +
+    `<div class="car dash" style="width:152px;bottom:1px;animation-duration:${D};animation-delay:2.5s">${suv('#f3f1e8', false, '#c9c4b6')}<div class="odgRoof">${odgBust()}</div><i class="tapTag">Tap to grab cash</i></div>` +
+    `<div class="car" style="width:150px;bottom:4px;animation-duration:${D};animation-delay:5.02s">${suv('#141414', false)}</div>`;
   c.setAttribute('role', 'button');
   c.setAttribute('aria-label', 'Odogwu passing. Tap for money');
   sceneEl.appendChild(c);
