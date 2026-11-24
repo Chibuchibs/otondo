@@ -619,6 +619,42 @@
     font:900 12px/1 system-ui,sans-serif;padding:6px 9px;border-radius:9px;box-shadow:0 2px 6px rgba(0,0,0,.35)}
   .areaBoy{position:absolute;bottom:4px;width:46px;z-index:3;pointer-events:none}
   .areaBoy .corper{position:static!important;animation:none!important}
+  /* street kit + spray am (2026-11-24) */
+  .kitChip{padding:8px 10px}
+  .kitChip.hidden{display:none}
+  .kitChip #kitHave{font-size:13px;margin-left:3px;letter-spacing:-.02em}
+  .kitList{margin:6px 0 10px;text-align:left}
+  .kitRow{display:grid;grid-template-columns:30px 1fr auto;gap:9px;align-items:center;padding:9px 0;border-top:1px solid var(--line)}
+  .kitRow .ki{font-size:25px;text-align:center}
+  .kitRow b{display:block;font-size:14px;line-height:1.2}
+  .kitRow em{display:block;font-style:normal;font-size:11.5px;color:#6b5000;font-weight:800;margin:1px 0 2px}
+  .kitRow small{display:block;font-size:12px;line-height:1.3}
+  .kitBuy{background:var(--green);color:#fff;-webkit-text-fill-color:#fff;border:0;border-radius:10px;padding:9px 10px;font-weight:900;font-size:13px;cursor:pointer;white-space:nowrap}
+  .kitBuy.own{background:#0a7a43;opacity:.75;cursor:default;font-size:12px}
+  .kitRow.shake{animation:kitShake .4s}
+  @keyframes kitShake{25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+  .kitSpray{font-size:13px;background:#fff6c8;border-radius:10px;padding:8px 10px;text-align:left}
+  .sprayMe{display:block;width:100%;margin-top:6px;background:linear-gradient(180deg,#ffd23f,#c9a227);color:#1d1a10;-webkit-text-fill-color:#1d1a10;
+    border:0;border-radius:10px;padding:7px 6px;font:900 13px/1 system-ui,sans-serif;cursor:pointer;box-shadow:0 2px 6px rgba(201,162,39,.5);
+    animation:sprayMeGlow .9s ease-in-out infinite alternate}
+  .sprayMe.hidden{display:none}
+  @keyframes sprayMeGlow{to{transform:scale(1.05);box-shadow:0 2px 14px rgba(242,194,0,.95)}}
+  .kitOkada{position:absolute;bottom:1px;width:96px;z-index:6;pointer-events:none}   /* life-size next to an 86px corper */
+  .kitOkada svg{display:block;width:100%}
+  .kitUmb{transform-box:fill-box;transform-origin:62% 100%;animation:umbSway 1.4s ease-in-out infinite alternate;pointer-events:none}
+  @keyframes umbSway{from{transform:rotate(-6deg)}to{transform:rotate(5deg)}}
+  .scene:not(.w-rain):not(.w-storm) .kitUmb{display:none}
+  #scene.mySprayOn .tapTag,#scene.mySprayOn .runnerTag,#scene.mySprayOn .walletTag,#scene.mySprayOn .cornTag{filter:opacity(0);pointer-events:none}
+  .myPad{position:absolute;inset:0;z-index:11;cursor:pointer;-webkit-tap-highlight-color:transparent;touch-action:manipulation}
+  .sprayNote.mine{pointer-events:none;cursor:default}
+  .myHype{position:absolute;left:50%;top:48px;transform:translateX(-50%);z-index:12;width:min(64%,250px);pointer-events:none;
+    background:#1d1a10;border-radius:8px;padding:4px 7px 6px;box-shadow:0 2px 8px rgba(0,0,0,.35)}
+  .myHype b{display:flex;justify-content:space-between;font:900 8px/1 system-ui,sans-serif;color:#f2c200;letter-spacing:.06em;margin-bottom:4px}
+  .myHype > i{display:block;height:6px;border-radius:3px;background:rgba(255,255,255,.15);overflow:hidden}
+  .myHype > i > i{display:block;height:100%;width:0;background:linear-gradient(90deg,#f2c200,#ff7a00);transition:width .15s}
+  .myHype.pop{animation:statPop .45s cubic-bezier(.2,1.4,.4,1)}
+  .myShout{position:absolute;z-index:10;transform:translateX(-50%);pointer-events:none;background:#fff;color:#1d1a10;
+    font:900 10px/1 system-ui,sans-serif;padding:4px 7px;border-radius:9px;white-space:nowrap;box-shadow:0 1px 4px rgba(0,0,0,.3)}
   #scene.haggleOn .tapTag,#scene.haggleOn .runnerTag,#scene.haggleOn .walletTag:not(.hagTag){filter:opacity(.22);pointer-events:none;transition:filter .25s}   /* filter, not opacity: the labels' pop-in animation owns their opacity */
   .hagTag.pop .hgPrice{animation:statPop .45s cubic-bezier(.2,1.4,.4,1)}
   .hagTag .lvRow{display:flex;gap:4px}
@@ -2109,7 +2145,8 @@
         <small class="goalLine" id="gBelle"></small></div>
       <div class="stat money"><b>Your money</b><span id="sMoney"></span><i class="mood" id="mMoney" aria-hidden="true"></i>
         <small class="tip">Broke. Tap Odogwu when he pass, or hustle for mami market.</small>
-        <small class="goalLine" id="gMoney"></small></div>
+        <small class="goalLine" id="gMoney"></small>
+        <button class="sprayMe hidden" id="sprayMe" type="button">💸 Spray am!</button></div>
       <div class="stat cred"><b>Credibility</b><span id="sCred"></span><i class="mood" id="mCred" aria-hidden="true"></i>
         <small class="tip">Earn it: put out fires, catch the thief, learn a trade at the bakery, or fall in for parade and Man O War.</small>
         <small class="goalLine" id="gCred"></small></div>
@@ -2121,6 +2158,7 @@
     <div class="questbar hidden" id="questbar">
       <button class="wahChip" id="wahChip" type="button" aria-label="Today's wahala"><span class="wahIco">⚡</span><span class="wahTxt"><b>TODAY'S WAHALA</b><span id="wahDesc">…</span></span><span class="wahN" id="wahN">0/3</span><i class="wahBar"><i id="wahFill"></i></i></button>
       <button class="cardsChip" id="cardsChip" type="button" aria-label="Your street cards">📒 <b id="cardsN">0</b><span>/15</span></button>
+      <button class="cardsChip kitChip hidden" id="kitChip" type="button" aria-label="Street kit shop">🛒 <b>Kit</b><span id="kitHave"></span></button>
     </div>
     <p class="liteNote hidden" id="liteNote">🪶 Lite mode is on: fewer effects, so the game runs smoother on this device.
       <button type="button" id="liteOff">Turn off</button></p>
@@ -2277,7 +2315,7 @@
 <script type="module">
 import { newGame, doAction, canDo, unlocked, ACTIONS, phaseOf, nextUnlock, postingOdds, rivalOf,
          computePosting, CHOICES, GOAL, goalStatus,
-         shareText, MAX_DAY } from './game.js?v=20261124150623';
+         shareText, MAX_DAY } from './game.js?v=20261124155131';
 
 /* ---------- scene coordinates ----------
    The scene is scaled by a transform (see the stage), so a native
@@ -2308,11 +2346,11 @@ const TS = (document.getElementById('scene').offsetWidth || 375) / 375;
 const ALLAWEE_NOTE = 'Allawee ₦77,000 — e never enter.';
 import { initNet, joinCamp, syncPlayer, platoonBoard, recentChat, postChat,
          postSuggestion, reportMessage, awardBoard, myAwards, laughChat,
-         setPresence, campRoster, renameMe, setAvatar, online, prizeBoard, myPrize, platoonWar, claimPlatoonWin } from './net.js?v=20261124150623';
-import { startMusic, stopMusic, musicOn, audioState, audioSupported, setRain, whenSilenced, wakeAudio, audible, say, sfx, BEAT, BAR } from './audio.js?v=20261124150623';
+         setPresence, campRoster, renameMe, setAvatar, online, prizeBoard, myPrize, platoonWar, claimPlatoonWin } from './net.js?v=20261124155131';
+import { startMusic, stopMusic, musicOn, audioState, audioSupported, setRain, whenSilenced, wakeAudio, audible, say, sfx, BEAT, BAR } from './audio.js?v=20261124155131';
 import { playHoop, playPenalty, playQuiz, playRegister, playParade,
          playMami, playHustle, playManOWar, playSaed, playSocial,
-         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261124150623';
+         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261124155131';
 
 /* Every dance animation is expressed in beats, so the steps are on-tempo
    whether or not the sound is playing — and genuinely on the beat when it is. */
@@ -5255,7 +5293,7 @@ const EDGE = 0.16;
    offer has to skip them rather than suppress itself. */
 const freeFig = p => p && !p.matches(
   '.riding, .hailing, .running, .munching, .shopping, .inRide,'
-  + ' .jumping, .sunk, .gone, .stoop, .loving, .haggling, .checked');      // .loving: stopped at the couple, deciding; .haggling: at the danfo
+  + ' .jumping, .sunk, .gone, .stoop, .loving, .haggling, .checked, .spraying');      // .loving: stopped at the couple, deciding; .haggling: at the danfo
 
 /* Comfortably in frame if anyone is; nearer the edge rather than nothing at
    all. EDGE keeps the marked figure clear of the bezel in the normal case, but
@@ -5473,6 +5511,8 @@ function aimPointer(){
   if (paidRunner && !(paidRunner.isConnected && paidRunner.matches('.running, .munching, .shopping')))
     paidRunner = null;
   let best = paidRunner
+    || (okadaRider && okadaRider.isConnected ? okadaRider : null)          // on the okada (street kit): still you, riding past
+    || (mineSpray && mineSpray.p.isConnected ? mineSpray.p : null)          // spraying the street: very much you
     || (love && love.who && love.who.isConnected ? love.who : null)   // the one stopped at the couple, deciding, is still you
     || (haggle && haggle.p.isConnected && !haggle.p.classList.contains('inRide') ? haggle.p : null)   // and the one haggling at the danfo
     || (check && check.p.isConnected ? check.p : null)                // and the one stopped at the checkpoint
@@ -5504,7 +5544,8 @@ function aimPointer(){
      to the edge its target gets. */
   const half = 17;                                // .tapPoint is 34px wide (reading it each frame forced a layout)
   const x = Math.round(Math.min(Math.max(centre, half + 2), box.width - half - 2));
-  const y = Math.round(box.bottom - r.top + 2);
+  const umb = best.lastElementChild && best.lastElementChild.classList.contains('kitUmb') && sceneEl.matches('.w-rain, .w-storm');
+  const y = Math.round(box.bottom - r.top + 2 + (umb ? 13 : 0));   // over the umbrella, not on it
   pointer.style.translate = `${x}px ${-y}px`;
 }
 /* Every frame, not every 120ms. The figures are moved by CSS — the dance
@@ -6945,6 +6986,316 @@ if (WAHALA_ON && !calm()) setTimeout(() => {
   if (w && !wah.done) shoutSign(["⚡ TODAY'S WAHALA", '#1d1a10', '#f2c200', adSub(w.sign)]);
 }, 12000);
 
+/* ---------- STREET KIT + SPRAY AM (2026-11-24, user) ----------
+   The problem (user): "player is accumulating alot of money and has no
+   incentive to spend". Money came in from Odogwu, the convoys, coins, wallets
+   and the wahala, and nothing worth having cost more than a plate of jollof.
+   1. STREET KIT: four buys that last the whole camp, each one making the race
+      for credibility easier, so there is something to save up for.
+   2. SPRAY AM: with ₦10,000+, once a Lagos day, YOU are the Odogwu. The street
+      stops and dances, you tap to throw ₦500 notes, the hype climbs through
+      BIG MAN / ODOGWU / BILLIONAIRE, and the money comes back as credibility.
+   Everything here is `var` or a function on purpose: render() runs before this
+   part of the script on a cold start, and a `let`/`const` read then would be a
+   TDZ error (the `joined` bug, 2026-11-24). KIT_ON / MYSPRAY_ON = false turns
+   either off. */
+var KIT_ON = true;
+var KIT = [
+  { id: 'okada', ico: '🛵', name: 'Okada rides', price: 1500, max: 3, seller: 'Okada man', say: 'Oga, I go carry you pass!',
+    does: 'Miss a tap? An okada carries your corper past the pothole, flood or agbero. No energy, no fine. Up to 3 rides.' },
+  { id: 'boots', ico: '🥾', name: 'Original jungle boots', price: 4000, seller: 'Yaba market', say: 'Original! No be Aba made.',
+    does: 'Every jump, climb and fall costs half the energy.' },
+  { id: 'nylon', ico: '☂️', name: 'Umbrella + nylon for leg', price: 2000, seller: 'Mama Bisi', say: 'Rain no fit touch you, flood no fit soak you.',
+    does: 'Floods cost you no energy, even without the barrow. Your corper opens it when rain fall.' },
+  { id: 'bag', ico: '🎒', name: 'Ghana Must Go bag', price: 3000, seller: 'Balogun trader', say: 'Big bag for big money!',
+    does: 'Odogwu spray lasts 3 seconds longer, and convoy cash pays ₦200 more a grab.' },
+];
+function kit(){ if (!s) return {}; if (!s.kit || typeof s.kit !== 'object') s.kit = { okada: 0 }; return s.kit; }
+function kitHas(id){ return !!(KIT_ON && s && s.kit && s.kit[id]); }
+function kitCut(n){ return kitHas('boots') ? Math.ceil(n / 2) : n; }
+function floodCost(n){ return kitHas('nylon') ? 0 : kitCut(n); }
+function sprayLen(){ return SPRAY_LEN + (kitHas('bag') ? 3000 : 0); }
+
+function drawKit(){
+  const chip = $('kitChip');
+  if (chip){
+    chip.classList.toggle('hidden', !(KIT_ON && s));
+    if (KIT_ON && s){
+      const k = s.kit || {};
+      $('kitHave').textContent = KIT.filter(it => k[it.id]).map(it => it.ico + (it.max ? k[it.id] : '')).join('');
+    }
+  }
+  const b = $('sprayMe');
+  if (b) b.classList.toggle('hidden', !mySprayReady());
+}
+function openKit(){
+  if (!s || !KIT_ON) return;
+  const k = kit();
+  const rows = KIT.map(it => {
+    const n = k[it.id] || 0, full = it.max ? n >= it.max : !!n;
+    const btn = full ? `<button class="kitBuy own" type="button" disabled>${it.max ? `✅ ${n}/${it.max}` : '✅ Yours'}</button>`
+                     : `<button class="kitBuy" type="button" data-kit="${it.id}">${naira(it.price)}</button>`;
+    return `<div class="kitRow" id="kitRow-${it.id}"><span class="ki">${it.ico}</span>
+      <span><b>${it.name}${it.max && n ? ` · ${n} ride${n === 1 ? '' : 's'}` : ''}</b><em>${it.seller}: "${it.say}"</em><small>${it.does}</small></span>${btn}</div>`;
+  }).join('');
+  const sprayLine = !MYSPRAY_ON ? ''
+    : mySprayReady() ? `💸 <b>You fit spray today!</b> Tap <b>Spray am!</b> on your money card: the street go dance, your credibility go climb.`
+    : myDay() === myLagosDay() ? `💸 You don spray today. Come back tomorrow and spray again.`
+    : `💸 <b>Reach ${naira(MYSPRAY_MIN)}</b> and you fit spray money for the street once a day, for credibility.`;
+  $('prizeCard').innerHTML = `<div class="hoorayBig" id="prizeH">🛒 Street kit</div>
+    <p style="margin-bottom:2px">Your money: <b>${naira(s.money)}</b>. Buy am once, e dey with you till passing out.</p>
+    <div class="kitList">${rows}</div>
+    ${sprayLine ? `<p class="kitSpray">${sprayLine}</p>` : ''}
+    <button class="primary" type="button" id="prizeClose">Oya, continue</button>`;
+  $('prizePop').classList.remove('hidden');
+  $('prizeClose').onclick = () => $('prizePop').classList.add('hidden');
+  $('prizeCard').querySelectorAll('[data-kit]').forEach(b => { b.onclick = () => buyKit(b.dataset.kit); });
+}
+function buyKit(id){
+  const it = KIT.find(x => x.id === id);
+  if (!it || !s) return;
+  const k = kit();
+  if (it.max ? (k[id] || 0) >= it.max : k[id]) return;
+  if (s.money < it.price){
+    const row = $('kitRow-' + id);
+    if (row){ row.classList.remove('shake'); void row.offsetWidth; row.classList.add('shake'); }
+    tell(`You no get reach ${naira(it.price)} for the ${it.name}. Pack money when Odogwu pass!`);
+    return;
+  }
+  s.money -= it.price;
+  if (it.max) k[id] = Math.min(it.max, (k[id] || 0) + 1); else k[id] = true;
+  save(); render();
+  sfx('kaching');
+  tell(`${it.ico} You buy the ${it.name}! ${it.seller}: "${it.say}"`);
+  const chip = $('kitChip'); chip.classList.remove('bump'); void chip.offsetWidth; chip.classList.add('bump');
+  track('kit');
+  openKit();
+}
+$('kitChip').onclick = openKit;
+
+/* ---- okada: a tap you missed, carried past on a bike ----
+   Only ever the walker you were asked about (fallIn is only for him). The bike
+   rides along with him while he is hidden, hops the obstacle as it slides under,
+   drops him where he would have been, and roars off. */
+var okadaRider = null;          // the walker on the bike: the YOU marker stays on him (aimPointer)
+function okadaSave(p){
+  if (!KIT_ON || !s || calm() || !(s.kit && s.kit.okada > 0) || !p.isConnected) return false;
+  s.kit.okada--;
+  p.dataset.hop = String(potLap);
+  potReadyAt = performance.now() + POT_COOLDOWN;
+  if (p === jumpShown) clearJump();
+  save(); render();
+  const left = s.kit.okada;
+  tell(`🛵 Okada carry your corper pass! No energy, no wahala. ${left ? `${left} ride${left === 1 ? '' : 's'} left.` : 'That na your last ride: buy more for 🛒 Kit.'}`);
+  sfx('honk');
+  const D = 1500, t0 = performance.now();
+  okadaRider = p;
+  const bike = document.createElement('div');
+  bike.className = 'kitOkada';
+  bike.innerHTML = okada(true).replace('#4a6fa5', '#f3f1e8');      // the passenger in corper white
+  sceneEl.appendChild(bike);
+  p.animate([{ opacity: 1 }, { opacity: 0, offset: .1 }, { opacity: 0, offset: .9 }, { opacity: 1 }], { duration: D });
+  const step = now => {
+    if (!bike.isConnected) return;
+    const k = Math.min(1, (now - t0) / D), box = sceneEl.sceneRect();
+    const x = p.isConnected ? figX(p, box) : sceneW() / 2;
+    const hop = Math.sin(Math.min(1, Math.max(0, (k - .2) / .55)) * Math.PI) * 15;   // up and over
+    bike.style.left = Math.round(x - 34) + 'px';   // the passenger seat over where he walks
+    bike.style.transform = `translateY(${(-hop).toFixed(1)}px) rotate(${(-hop * .45).toFixed(1)}deg)`;
+    if (k < 1){ requestAnimationFrame(step); return; }
+    if (okadaRider === p) okadaRider = null;
+    bike.style.transform = '';
+    bike.style.transition = 'left .9s ease-in';
+    requestAnimationFrame(() => { bike.style.left = (sceneW() + 80) + 'px'; });
+    setTimeout(() => bike.remove(), 950);
+  };
+  requestAnimationFrame(step);
+  floatCost(p, '🛵 Free pass!');
+  track('okada');
+  return true;
+}
+
+/* ---- umbrella: opened over YOUR corper whenever it rains ---- */
+var UMB_G = `<path d="M33 2 V46 q0 3 -3 3 q-2.4 0 -2.4 -2.4" fill="none" stroke="#2b2b2b" stroke-width="1.5" stroke-linecap="round"/>
+  <path d="M12 3 Q31 -21 50 3 Q45.2 -.6 40.5 3 Q35.7 -.6 31 3 Q26.2 -.6 21.5 3 Q16.7 -.6 12 3Z" fill="#c1272d"/>
+  <path d="M21.5 3 Q24.6 -9.6 31 -10 Q37.4 -9.6 40.5 3" fill="none" stroke="rgba(0,0,0,.2)" stroke-width=".9"/>
+  <path d="M31 -10 V-12.6" stroke="#2b2b2b" stroke-width="1.3" stroke-linecap="round"/>`;   // drawn INSIDE the walker's own svg (46x86 box): an HTML element in an svg never shows
+setInterval(() => {
+  if (!KIT_ON) return;
+  const want = kitHas('nylon') && youFig && youFig.isConnected && sceneEl.matches('.w-rain, .w-storm') ? youFig : null;
+  sceneEl.querySelectorAll(':scope > .corper > .kitUmb').forEach(u => { if (u.parentNode !== want) u.remove(); });
+  if (want && !want.querySelector(':scope > .kitUmb')){
+    const u = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+    u.setAttribute('class', 'kitUmb');
+    u.innerHTML = UMB_G;
+    want.appendChild(u);
+  }
+}, 600);
+
+/* ---- SPRAY AM: you are the Odogwu ---- */
+var MYSPRAY_ON = true, MYSPRAY_MIN = 25000, MYSPRAY_KEEP = 1000, MYSPRAY_NOTE = 500,   // 25k: every camp starts on 20k, so the bar has to be EARNED
+    MYSPRAY_LEN = 8000, MYSPRAY_MAX = 60, MYSPRAY_KEY = 'otondo:myspray';
+var MY_TIERS = [[5000, 'BIG MAN!', 3], [10000, 'ODOGWU!', 5], [20000, 'BILLIONAIRE!', 10]];   // [sprayed, shout, bonus cred]
+var MY_SHOUTS = ['Odogwu! 🙌', 'Spray am!', 'Baba God bless you!', 'Who get money pass you?', 'Chairman!', 'Owo ni koko!',
+                 'E don do!', 'Correct person!', 'Ride on!', 'Na you biko!', 'Big boy!', 'Ah! See money!'];
+var mineSpray = null;
+function myLagosDay(){ return new Date(Date.now() + 3600e3).toISOString().slice(0, 10); }
+function myDay(){ try { return localStorage.getItem(MYSPRAY_KEY) || ''; } catch { return ''; } }
+function mySprayReady(){
+  return !!(MYSPRAY_ON && s && s.phase === 'day' && s.money >= MYSPRAY_MIN && !mineSpray && myDay() !== myLagosDay());
+}
+function sprayMeTap(){
+  if (!mySprayReady()){ drawKit(); return; }
+  if (calm()){ tell('Spray am needs the street moving: your phone has reduced motion on.'); return; }
+  $('scene').scrollIntoView({ behavior: 'smooth', block: 'center' });
+  const busy = spray || haggle || check || love || wallet || sceneEl.classList.contains('dancing')
+            || sceneEl.querySelector('.convoy, .pickup, .goat');
+  const p = youFig && freeFig(youFig) ? youFig : pickFigure(sceneEl.sceneRect());
+  if (busy || !p){ tell('Wait small, the street dey busy. Tap Spray am again now now.'); return; }
+  setTimeout(() => startMySpray(p), 400);
+}
+function startMySpray(p){
+  if (mineSpray || !s || !p.isConnected) return;
+  try { localStorage.setItem(MYSPRAY_KEY, myLagosDay()); } catch {}
+  clearCorn(); clearRide();
+  if (jumpShown) clearJump();
+  sceneEl.classList.add('dancing', 'mySprayOn');                  // the road stops, the street dances for you
+  p.classList.add('spraying');
+  const pad = document.createElement('div');
+  pad.className = 'myPad';
+  pad.setAttribute('aria-label', 'Tap to spray money');
+  const pick = document.createElement('div');
+  pick.className = 'sprayPick';
+  pick.innerHTML = `Spray am! 💸<small>Tap fast · ${naira(MYSPRAY_NOTE)} a note</small><i></i>`;
+  const hype = document.createElement('div');
+  hype.className = 'myHype';
+  hype.innerHTML = `<b><span>🔥 HYPE</span><span class="myNext">NEXT: BIG MAN · ${naira(MY_TIERS[0][0])}</span></b><i><i></i></i>`;
+  const tally = document.createElement('div');
+  tally.className = 'sprayTally';
+  tally.textContent = '💸 ₦0 sprayed';
+  sceneEl.append(pad, pick, hype, tally);
+  pick.querySelector('i').animate([{ transform: 'scaleX(1)' }, { transform: 'scaleX(0)' }], { duration: MYSPRAY_LEN, easing: 'linear', fill: 'forwards' });
+  mineSpray = { p, pad, pick, hype, tally, total: 0, notes: 0, tier: 0, bonus: 0, lastSfx: 0 };
+  const stop = e => { e.preventDefault(); e.stopPropagation(); };
+  pad.addEventListener('pointerdown', e => { stop(e); myThrow(); });
+  pad.addEventListener('click', stop);
+  if (shoutSign) shoutSign(['YOU DEY SPRAY!', '#c9a227', '#1d1a10', adSub('THE WHOLE STREET DEY WATCH')]);
+  mineSpray.timer = setTimeout(endMySpray, MYSPRAY_LEN);
+  render();
+}
+function myThrow(){
+  const m = mineSpray;
+  if (!m || !s) return;
+  if (m.notes >= MYSPRAY_MAX) return;
+  if (s.money - MYSPRAY_NOTE < MYSPRAY_KEEP){ tell(`Abeg, leave transport money! The spray don finish at ${naira(s.money)}.`); endMySpray(); return; }
+  s.money -= MYSPRAY_NOTE; m.total += MYSPRAY_NOTE; m.notes++;
+  render();
+  m.tally.textContent = `💸 ${naira(m.total)} sprayed`;
+  /* the note: up out of his hand, then fluttering down over the street */
+  const box = sceneEl.sceneRect(), r = m.p.sceneRect(), W = sceneW();
+  const hx = r.left - box.left + r.width * .6, hy = box.bottom - (r.top + r.height * .1);
+  const el = document.createElement('div');
+  el.className = 'sprayNote mine n' + (Math.random() < .25 ? 1000 : 500);
+  el.style.left = Math.round(hx) + 'px';
+  el.style.bottom = Math.round(hy) + 'px';
+  sceneEl.appendChild(el);
+  const endX = Math.min(W - 10, Math.max(10, hx - 170 + Math.random() * 340)) - hx;
+  const peak = 40 + Math.random() * 55, drop = hy - (6 + Math.random() * 28), rot = (Math.random() * 2 - 1) * 620, sway = 8 + Math.random() * 12;
+  el.animate([
+    { transform: 'translate(0,0) rotate(0deg)' },
+    { transform: `translate(${endX * .3}px,${-peak}px) rotate(${rot * .2}deg)`, offset: .2 },
+    { transform: `translate(${endX * .55 + sway}px,${-peak * .4}px) rotate(${rot * .5}deg)`, offset: .45 },
+    { transform: `translate(${endX * .8 - sway}px,${drop * .55}px) rotate(${rot * .8}deg)`, offset: .75 },
+    { transform: `translate(${endX}px,${drop}px) rotate(${rot}deg)`, opacity: 1, offset: .93 },
+    { transform: `translate(${endX}px,${drop}px) rotate(${rot}deg)`, opacity: 0 },
+  ], { duration: 1700 + Math.random() * 600, easing: 'linear', fill: 'forwards' }).onfinish = () => el.remove();
+  m.p.animate([{ transform: 'translateY(0)' }, { transform: 'translateY(-6px) rotate(-5deg)', offset: .4 }, { transform: 'translateY(0)' }],
+              { duration: 300, composite: 'add' });
+  const now = performance.now();
+  if (now - m.lastSfx > 200){ sfx('kaching'); m.lastSfx = now; }
+  if (m.notes % 4 === 1) myShout();
+  const t = MY_TIERS[m.tier];
+  if (t && m.total >= t[0]){ m.tier++; m.bonus += t[2]; myTier(t); }
+  const nx = MY_TIERS[m.tier];
+  m.hype.querySelector('i > i').style.width = Math.min(100, m.total / MY_TIERS[MY_TIERS.length - 1][0] * 100) + '%';
+  m.hype.querySelector('.myNext').textContent = nx ? `NEXT: ${nx[1].replace('!', '')} · ${naira(nx[0])}` : '👑 BILLIONAIRE!';
+  if (m.notes >= MYSPRAY_MAX) tell('Your hand don tire! That na the maximum spray.');
+}
+function myShout(){
+  const m = mineSpray; if (!m) return;
+  const box = sceneEl.sceneRect();
+  const crowd = [...sceneEl.querySelectorAll(':scope > .corper')].filter(q => q !== m.p && inFrame(q, box, 0));
+  const q = crowd[Math.floor(Math.random() * crowd.length)];
+  const el = document.createElement('div');
+  el.className = 'myShout';
+  el.textContent = MY_SHOUTS[Math.floor(Math.random() * MY_SHOUTS.length)];
+  if (q){ const r = q.sceneRect(); el.style.bottom = Math.round(box.bottom - r.top + 6) + 'px'; el.style.left = Math.round(r.left - box.left + r.width / 2) + 'px'; }
+  else { el.style.bottom = Math.round(90 + Math.random() * 40) + 'px'; el.style.left = Math.round(box.width * (.15 + Math.random() * .7)) + 'px'; }
+  sceneEl.appendChild(el);
+  if (q) pinInside(el, box, parseFloat(el.style.left));
+  el.animate([{ opacity: 0, transform: 'translateX(-50%) translateY(6px) scale(.7)' }, { opacity: 1, transform: 'translateX(-50%) scale(1.08)', offset: .2 },
+              { opacity: 1, transform: 'translateX(-50%) translateY(-10px)', offset: .8 }, { opacity: 0, transform: 'translateX(-50%) translateY(-16px)' }],
+             { duration: 1300, fill: 'forwards' }).onfinish = () => el.remove();
+}
+function myTier(t){
+  sceneEl.querySelector('.sprayCombo')?.remove();
+  const c = document.createElement('div');
+  c.className = 'sprayCombo';
+  c.textContent = `${t[1]} +${t[2]} CRED`;
+  sceneEl.appendChild(c);
+  c.animate([{ transform: 'translateX(-50%) scale(.5)', opacity: 0 }, { transform: 'translateX(-50%) scale(1.35)', opacity: 1, offset: .25 },
+             { transform: 'translateX(-50%) scale(1)', opacity: 1, offset: .75 }, { opacity: 0 }], { duration: 1500, fill: 'forwards' }).onfinish = () => c.remove();
+  const h = mineSpray && mineSpray.hype;
+  if (h){ h.classList.remove('pop'); void h.offsetWidth; h.classList.add('pop'); }
+  /* the crowd jumps for it */
+  sceneEl.querySelectorAll(':scope > .corper').forEach((q, i) => q.animate(
+    [{ transform: 'translateY(0)' }, { transform: 'translateY(-14px)', offset: .4 }, { transform: 'translateY(0)' }],
+    { duration: 520, delay: i * 70, composite: 'add' }));
+  sfx('kaching');
+  if (t[0] === 10000 && shoutSign) shoutSign(['NEW ODOGWU FOR STREET!', '#c9a227', '#1d1a10', adSub(`${naira(t[0])} DON FLY`)]);
+  if (t[0] === 20000 && shoutSign) shoutSign(['BILLIONAIRE DEY STREET!', '#1d1a10', '#f2c200', adSub('LAGOS NEVER SEE THIS ONE')]);
+}
+function endMySpray(){
+  const m = mineSpray; if (!m) return;
+  mineSpray = null;
+  clearTimeout(m.timer);
+  [m.pad, m.pick, m.hype, m.tally].forEach(e => e.remove());
+  sceneEl.classList.remove('mySprayOn');
+  m.p.classList.remove('spraying');
+  backToTrekking();
+  if (!s) return;
+  if (!m.total){
+    try { localStorage.removeItem(MYSPRAY_KEY); } catch {}                 // nothing thrown: today's spray is still yours
+    tell('You no spray anything. The button still dey for you today.');
+    render();
+    return;
+  }
+  const gain = Math.floor(m.total / 1000) + m.bonus;
+  s.cred = (s.cred || 0) + gain;
+  save(); render();
+  floatCost(m.p, `+${gain} cred`);
+  track('myspray', m.total);
+  const title = m.tier >= 3 ? 'Billionaire' : m.tier >= 2 ? 'Odogwu' : m.tier >= 1 ? 'Big Man' : 'Small Odogwu';
+  tell(`You sprayed ${naira(m.total)}! Lagos dey hail you, ${title}! +${gain} credibility`);
+  const nx = MY_TIERS[m.tier];
+  setTimeout(() => popQuest(`<div class="hoorayBig" id="prizeH">💸 ${title.toUpperCase()}!</div>
+    <p>You sprayed <b>${naira(m.total)}</b> for the street: <b>${m.notes} note${m.notes === 1 ? '' : 's'}</b>, and everybody dance.</p>
+    <p>Credibility <b>+${gain}</b>${m.bonus ? ` (with a <b>+${m.bonus}</b> hype bonus)` : ''}. Come back tomorrow and spray again.</p>
+    ${nx ? `<p style="font-size:13.5px">Next time: reach <b>${nx[1].replace('!', '')}</b> at ${naira(nx[0])} for +${nx[2]} more. Tap faster!</p>` : ''}`,
+    `I spray ${naira(m.total)} for Lagos street for Otondo 💸 Dem don dey call me ${title}! Your own nko?`), 900);
+}
+$('sprayMe').onclick = sprayMeTap;
+
+/* the signboard tells you, once a session each, when there is something to spend on */
+var kitNudged = false, myNudged = false;
+setInterval(() => {
+  if (!s || calm() || !shoutSign || document.hidden || s.phase !== 'day' || spray || mineSpray) return;
+  if (!myNudged && mySprayReady()){ myNudged = true; shoutSign(['YOU FIT SPRAY NOW!', '#c9a227', '#1d1a10', adSub('TAP 💸 SPRAY AM · MONEY CARD')]); return; }
+  if (!kitNudged && KIT_ON && KIT.some(it => s.money >= it.price + 1000 && !(it.max ? ((s.kit || {})[it.id] || 0) >= it.max : (s.kit || {})[it.id]))){
+    kitNudged = true; shoutSign(['STREET KIT DEY!', '#1d1a10', '#f2c200', adSub('TAP 🛒 KIT · OKADA, BOOTS, BAG')]);
+  }
+}, 20000);
+
 /* ---------- police checkpoint (2026-11-23, user) ----------
    The officer stops YOUR corper: "Corper! Where your ID?" Show ID is the
    honest gamble (usually waved through with a little credibility; sometimes a
@@ -7160,14 +7511,14 @@ function startSpray(){
     pick.innerHTML = 'Pick! 💸<small>Tap the money before e land</small><i></i>';
     sceneEl.appendChild(pick);
     spray.pick = pick;
-    pick.querySelector('i').animate([{ transform: 'scaleX(1)' }, { transform: 'scaleX(0)' }], { duration: SPRAY_LEN + 1400, easing: 'linear', fill: 'forwards' });
+    pick.querySelector('i').animate([{ transform: 'scaleX(1)' }, { transform: 'scaleX(0)' }], { duration: sprayLen() + 1400, easing: 'linear', fill: 'forwards' });
   }, 1300);
-  setTimeout(() => areaBoyRun(), 1300 + SPRAY_LEN - 600);
-  setTimeout(endSpray, 1300 + SPRAY_LEN + 3200);
+  setTimeout(() => areaBoyRun(), 1300 + sprayLen() - 600);
+  setTimeout(endSpray, 1300 + sprayLen() + 3200);
 }
 /* a handful every ~1.1s, in time with his arm */
 function throwRound(i){
-  if (!spray || spray.capped || i * 1100 > SPRAY_LEN) { spray && spray.odg.classList.remove('throwing'); return; }
+  if (!spray || spray.capped || i * 1100 > sprayLen()) { spray && spray.odg.classList.remove('throwing'); return; }
   const n = 3 + (Math.random() < .5 ? 1 : 0);
   for (let k = 0; k < n; k++) setTimeout(() => throwNote(), 380 + k * 70);
   setTimeout(() => throwRound(i + 1), 1100);
@@ -7940,10 +8291,12 @@ function hopPothole(p, paid){
      accordingly" ... "only the corper with YOU").
      Shin-deep is ob.wade; ignoring the barrow when asked is thigh-deep, ob.miss. */
   if (!paid && s && kind === 'flood' && p === youFig){   // only YOUR corper, the one under YOU (user); the other walker wades free
-    s.energy = Math.max(0, s.energy - ob.wade);
-    tell(`Your corper waded through the flood. -${ob.wade} energy. The barrow boy dey there for ${naira(ob.fee)}!`);
+    const wade = floodCost(ob.wade);              // umbrella + nylon: free; boots: half
+    s.energy = Math.max(0, s.energy - wade);
+    tell(wade ? `Your corper waded through the flood. -${wade} energy. The barrow boy dey there for ${naira(ob.fee)}!`
+              : 'Nylon for leg, umbrella for head: your corper cross the flood dry! ☂️ No energy.');
     save(); render();
-    floatCost(p, `-${ob.wade} energy`);
+    floatCost(p, wade ? `-${wade} energy` : '☂️ Dry!');
     return;
   }
   if (paid && s && kind === 'flood'){                // naira, not energy: the boy is paid
@@ -7955,7 +8308,7 @@ function hopPothole(p, paid){
     return;
   }
   if (paid && s){
-    const cost = ob.cost ?? JUMP_COST;
+    const cost = kitCut(ob.cost ?? JUMP_COST);   // jungle boots: half
     s.energy = Math.max(0, s.energy - cost);
     if (kind === 'pothole'){ s.jumped = (s.jumped || 0) + 1; track('jump'); }   // the tally is Mr. Pothole's
     tell(ob.jumped);
@@ -8075,7 +8428,7 @@ function floodSoak(p){
   tell(ob.fell);
   p.classList.add('jumping');
   const D = wadeFlood(p, true);
-  if (s){ s.energy = Math.max(0, s.energy - ob.miss); save(); render(); floatCost(p, `-${ob.miss} energy`); }
+  if (s){ const m = floodCost(ob.miss); s.energy = Math.max(0, s.energy - m); save(); render(); floatCost(p, m ? `-${m} energy` : '☂️ Dry!'); }
   setTimeout(() => { p.classList.remove('jumping'); p.dataset.grace = String(performance.now() + 3500); }, D);
 }
 function slipOn(p){
@@ -8115,9 +8468,10 @@ function slipOn(p){
     track('agbero');
     setTimeout(() => { if (p.isConnected) handOver(p, 4, true); }, DUR * .35);
   } else if (s){
-    s.energy = Math.max(0, s.energy - ob.miss);
+    const miss = kitCut(ob.miss);                  // jungle boots: half
+    s.energy = Math.max(0, s.energy - miss);
     save(); render();
-    floatCost(p, `-${ob.miss} energy`);
+    floatCost(p, `-${miss} energy`);
   }
   setTimeout(() => {
     drift?.cancel();
@@ -8137,12 +8491,13 @@ function slipOn(p){
 
 function fallIn(p){
   if (hopped(p)) return;
+  if (okadaSave(p)) return;                       // street kit: an okada ride carries him past (combo kept)
   combo = 0;
   if (potKind !== 'pothole' && potKind !== 'gutter') return slipOn(p);
   p.dataset.hop = String(potLap);
   potReadyAt = performance.now() + POT_COOLDOWN;
   if (s && potKind === 'pothole'){ s.fell = (s.fell || 0) + 1; save(); drawTally(); }   // the tally is Mr. Pothole's
-  const fallCost = OBSTACLE[potKind].miss ?? FALL_COST;
+  const fallCost = kitCut(OBSTACLE[potKind].miss ?? FALL_COST);   // jungle boots: half
   tell(OBSTACLE[potKind].fell);
   p.classList.add('sunk');
   /* Stop walking the moment he goes in. Left running, he covered 27px during
@@ -9777,16 +10132,17 @@ function odogwuConvoy(){
    danfo can push them back (makeRoom) when it has already given way once. The chase is on the near pavement and does not
    count as a clash. The queue already holds back while a convoy is out. */
 const OGA_FIRST = 50000, ODOGWU_LAG = 25000, CONVOY_EVERY = 50000, CONVOY_MAX_WAIT = 15000;
+const ODOGWU_EVERY = 80000;   // (2026-11-24, user: "the odogwu is passing too often, maybe slightly less"): was every 50s with the oga
 const convoyClash = () => !!sceneEl.querySelector('.vehicle.ablaze, .goat, .convoy');
 const convoyNext = [];               // the due time of each schedule, for the queue
-function onSchedule(at, run){
+function onSchedule(at, run, every = CONVOY_EVERY){
   const slot = convoyNext.push(at) - 1;
   const due = () => {
     const now = performance.now(), at = convoyNext[slot];
     if (now < at - 50){ setTimeout(due, at - now); return; }   // pushed back by makeRoom
     if (convoyClash() && now - at < CONVOY_MAX_WAIT){ setTimeout(due, 1000); return; }
     if (!convoyClash()) run();
-    convoyNext[slot] = at + CONVOY_EVERY;
+    convoyNext[slot] = at + every;
     setTimeout(due, Math.max(0, convoyNext[slot] - performance.now()));
   };
   setTimeout(due, Math.max(0, at - performance.now()));
@@ -9804,7 +10160,7 @@ const convoySoon = ms => convoyNext.some(at => at - performance.now() < ms + 100
 if (!calm()){
   const t0 = performance.now();
   onSchedule(t0 + OGA_FIRST, convoy);
-  onSchedule(t0 + OGA_FIRST + ODOGWU_LAG, odogwuConvoy);
+  onSchedule(t0 + OGA_FIRST + ODOGWU_LAG, odogwuConvoy, ODOGWU_EVERY);
 }
 
 /* A tap on the Odogwu: notes fly out of the window, and some land on you. */
@@ -9815,7 +10171,7 @@ function dashMoney(c, x, y){
   if (left === 0){ c.querySelector('.tapTag')?.remove(); c.removeAttribute('aria-label'); }
   const car = c.querySelector('.car.dash') || c;
   if (s){
-    const got = 300 + Math.floor(Math.random() * 6) * 100;     // ₦300–800
+    const got = 300 + Math.floor(Math.random() * 6) * 100 + (kitHas('bag') ? 200 : 0);     // ₦300–800 (+₦200 with the Ghana Must Go bag)
     s.money += got;
     render();
     track('dash');
@@ -11242,6 +11598,7 @@ function render(){
   $('scene').classList.toggle('hidden', over);
   $('dayLbl').textContent = s ? (over ? 'Camp over' : `Day ${s.day}/${MAX_DAY}`) : 'Not yet mobilised';
   if (intro) return;
+  drawKit();                                   // street kit chip + the Spray am button
 
   if (over){
     /* Once per run: the passing-out burst, naming the posting. */
