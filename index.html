@@ -580,6 +580,14 @@
   .sprayNote.n100{background:#c8506a}.sprayNote.n200{background:#9a6a3a}.sprayNote.n500{background:#2f8f5b}.sprayNote.n1000{background:#c9a227}
   .sprayCombo{position:absolute;left:50%;top:22%;z-index:10;transform:translateX(-50%);pointer-events:none;
     font:900 15px/1 system-ui,sans-serif;color:#fff;letter-spacing:.04em;text-shadow:0 2px 0 #b8860b,0 3px 8px rgba(0,0,0,.45);white-space:nowrap}
+  .odgName{position:absolute;z-index:8;transform:translateX(-50%);white-space:nowrap;pointer-events:none;opacity:0;transition:opacity .4s;
+    background:#1d1a10;color:#f2c200;font:900 7.5px/1 system-ui,sans-serif;letter-spacing:.12em;padding:3px 5px;border-radius:4px;box-shadow:0 1px 3px rgba(0,0,0,.35)}
+  .odgName.on{opacity:1}
+  .sprayPick{position:absolute;left:50%;top:9px;transform:translateX(-50%);z-index:10;pointer-events:none;background:#1f7a46;color:#fff;
+    font:900 13px/1 system-ui,sans-serif;letter-spacing:.06em;padding:6px 12px 8px;border-radius:9px;box-shadow:0 2px 8px rgba(0,0,0,.35);text-align:center;
+    animation:tagBob .5s ease-in-out infinite alternate}
+  .sprayPick small{display:block;font-size:8px;letter-spacing:.04em;font-weight:800;opacity:.9;margin-top:2px}
+  .sprayPick i{display:block;height:3px;margin-top:4px;border-radius:2px;background:#f2c200;transform-origin:left;width:100%}
   .sprayTally{position:absolute;right:8px;top:8px;z-index:10;pointer-events:none;background:#1d1a10;color:#f2c200;
     font:900 12px/1 system-ui,sans-serif;padding:6px 9px;border-radius:9px;box-shadow:0 2px 6px rgba(0,0,0,.35)}
   .areaBoy{position:absolute;bottom:4px;width:46px;z-index:3;pointer-events:none}
@@ -2190,7 +2198,7 @@
 <script type="module">
 import { newGame, doAction, canDo, unlocked, ACTIONS, phaseOf, nextUnlock, postingOdds, rivalOf,
          computePosting, CHOICES, GOAL, goalStatus,
-         shareText, MAX_DAY } from './game.js?v=20261123184529';
+         shareText, MAX_DAY } from './game.js?v=20261123185856';
 
 /* ---------- scene coordinates ----------
    The scene is scaled by a transform (see the stage), so a native
@@ -2221,11 +2229,11 @@ const TS = (document.getElementById('scene').offsetWidth || 375) / 375;
 const ALLAWEE_NOTE = 'Allawee ₦77,000 — e never enter.';
 import { initNet, joinCamp, syncPlayer, platoonBoard, recentChat, postChat,
          postSuggestion, reportMessage, awardBoard, myAwards, laughChat,
-         setPresence, campRoster, renameMe, setAvatar, online, prizeBoard, myPrize, platoonWar, claimPlatoonWin } from './net.js?v=20261123184529';
-import { startMusic, stopMusic, musicOn, audioState, audioSupported, setRain, whenSilenced, wakeAudio, audible, say, sfx, BEAT, BAR } from './audio.js?v=20261123184529';
+         setPresence, campRoster, renameMe, setAvatar, online, prizeBoard, myPrize, platoonWar, claimPlatoonWin } from './net.js?v=20261123185856';
+import { startMusic, stopMusic, musicOn, audioState, audioSupported, setRain, whenSilenced, wakeAudio, audible, say, sfx, BEAT, BAR } from './audio.js?v=20261123185856';
 import { playHoop, playPenalty, playQuiz, playRegister, playParade,
          playMami, playHustle, playManOWar, playSaed, playSocial,
-         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261123184529';
+         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261123185856';
 
 /* Every dance animation is expressed in beats, so the steps are on-tempo
    whether or not the sound is playing — and genuinely on the beat when it is. */
@@ -6651,7 +6659,7 @@ if (HAGGLE_ON && !calm()) haggleDue(HAGGLE_FIRST);
    catches build a combo (a bonus on every catch); a note that lands can still
    be grabbed until the area boy runs through and packs it. Your corper dances
    on each catch. A tally and a brag to share at the end. */
-const SPRAY_ON = true, SPRAY_FIRST = 150000, SPRAY_EVERY = [200000, 260000], SPRAY_LEN = 8000, SPRAY_CAP = 2500, SPRAY_COMBO_MAX = 4;   // a bot could pack N5,000 at x27: capped (tested)
+const SPRAY_ON = true, SPRAY_FIRST = 150000, SPRAY_EVERY = [200000, 260000], SPRAY_LEN = 8000, SPRAY_CAP = Infinity, SPRAY_COMBO_MAX = 4;   // no cap: pick as much as the time allows (user, 2026-11-23); the combo bonus still tops out at +N200
 /* his agbada and fila for each street (DISTRICTS order) */
 const ODG_LOOKS = [['#f3f1e8', '#c1272d'], ['#1e3a8a', '#c9a227'], ['#e8e2d0', '#1e3a8a'], ['#6d3f8c', '#c9a227'], ['#0f8a4a', '#c1272d']];
 const odogwuSvg = (gown, fila) => `<svg viewBox="0 0 50 92" aria-hidden="true">
@@ -6700,13 +6708,32 @@ function startSpray(){
   odg.innerHTML = odogwuSvg(look[0], look[1]);
   odg.style.left = Math.round(carX - 30) + 'px';                 // at the kerb, by his door
   sceneEl.appendChild(odg);
+  /* his name tag, right over his fila, on the top layer: on his own layer the
+     shop signs covered it (user: "just the name tag is left") */
+  const tag = document.createElement('div');
+  tag.className = 'odgName';
+  tag.textContent = 'ODOGWU';
+  tag.style.left = Math.round(carX - 30 + 27) + 'px';            // his head is at the middle of his 54px
+  tag.style.bottom = '93px';                                      // just over his fila (the cap's top is ~91px up)
+  sceneEl.appendChild(tag);
   const tally = document.createElement('div');
   tally.className = 'sprayTally';
   tally.textContent = '💸 ₦0';
   sceneEl.appendChild(tally);
   sceneEl.classList.add('sprayOn');
-  spray = { car, odg, tally, total: 0, caught: 0, combo: 0, best: 0, last: 0, notes: [], t0: performance.now() };
-  setTimeout(() => { if (!spray) return; odg.classList.add('out', 'throwing'); throwRound(0); }, 1300);
+  spray = { car, odg, tag, tally, total: 0, caught: 0, combo: 0, best: 0, last: 0, notes: [], t0: performance.now() };
+  setTimeout(() => {
+    if (!spray) return;
+    odg.classList.add('out', 'throwing'); throwRound(0);
+    spray.tag.classList.add('on');
+    /* the directive: Pick! and how long you have (the time is the only limit) */
+    const pick = document.createElement('div');
+    pick.className = 'sprayPick';
+    pick.innerHTML = 'Pick! 💸<small>Tap the money before e land</small><i></i>';
+    sceneEl.appendChild(pick);
+    spray.pick = pick;
+    pick.querySelector('i').animate([{ transform: 'scaleX(1)' }, { transform: 'scaleX(0)' }], { duration: SPRAY_LEN + 1400, easing: 'linear', fill: 'forwards' });
+  }, 1300);
   setTimeout(() => areaBoyRun(), 1300 + SPRAY_LEN - 600);
   setTimeout(endSpray, 1300 + SPRAY_LEN + 3200);
 }
@@ -6809,6 +6836,8 @@ function endSpray(){
   sceneEl.classList.remove('sprayOn');
   sp.notes.forEach(n => n.isConnected && n.remove());
   sp.tally.remove();
+  sp.pick?.remove();
+  sp.tag.remove();
   sp.boy?.remove();
   sp.odg.classList.remove('out');
   setTimeout(() => sp.odg.remove(), 450);
