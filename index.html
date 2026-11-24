@@ -588,7 +588,7 @@
   #scene.checkOn .tapTag,#scene.checkOn .runnerTag,#scene.checkOn .walletTag:not(.chkTag){filter:opacity(.22);pointer-events:none}
   #scene.sprayOn .tapTag,#scene.sprayOn .runnerTag,#scene.sprayOn .walletTag{filter:opacity(.22);pointer-events:none}   /* not the YOU pin: your own marker never fades (user, 2026-11-23) */
   /* Odogwu's money spray (2026-11-22) */
-  .pickup.odgCar{width:122px;bottom:5px;transition:left 1.2s cubic-bezier(.2,.8,.3,1)}
+  .pickup.odgCar{width:190px;bottom:3px;transition:left 1.2s cubic-bezier(.2,.8,.3,1)}
   .pickup.odgCar svg{display:block;width:100%;height:auto}
   .odgMan{position:absolute;bottom:2px;width:54px;height:100px;z-index:3;pointer-events:none;opacity:0;transform:translateY(6px);transition:opacity .4s,transform .4s}
   .odgMan.out{opacity:1;transform:none}
@@ -2274,7 +2274,7 @@
 <script type="module">
 import { newGame, doAction, canDo, unlocked, ACTIONS, phaseOf, nextUnlock, postingOdds, rivalOf,
          computePosting, CHOICES, GOAL, goalStatus,
-         shareText, MAX_DAY } from './game.js?v=20261123194817';
+         shareText, MAX_DAY } from './game.js?v=20261123204159';
 
 /* ---------- scene coordinates ----------
    The scene is scaled by a transform (see the stage), so a native
@@ -2305,11 +2305,11 @@ const TS = (document.getElementById('scene').offsetWidth || 375) / 375;
 const ALLAWEE_NOTE = 'Allawee ₦77,000 — e never enter.';
 import { initNet, joinCamp, syncPlayer, platoonBoard, recentChat, postChat,
          postSuggestion, reportMessage, awardBoard, myAwards, laughChat,
-         setPresence, campRoster, renameMe, setAvatar, online, prizeBoard, myPrize, platoonWar, claimPlatoonWin } from './net.js?v=20261123194817';
-import { startMusic, stopMusic, musicOn, audioState, audioSupported, setRain, whenSilenced, wakeAudio, audible, say, sfx, BEAT, BAR } from './audio.js?v=20261123194817';
+         setPresence, campRoster, renameMe, setAvatar, online, prizeBoard, myPrize, platoonWar, claimPlatoonWin } from './net.js?v=20261123204159';
+import { startMusic, stopMusic, musicOn, audioState, audioSupported, setRain, whenSilenced, wakeAudio, audible, say, sfx, BEAT, BAR } from './audio.js?v=20261123204159';
 import { playHoop, playPenalty, playQuiz, playRegister, playParade,
          playMami, playHustle, playManOWar, playSaed, playSocial,
-         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261123194817';
+         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261123204159';
 
 /* Every dance animation is expressed in beats, so the steps are on-tempo
    whether or not the sound is playing — and genuinely on the beat when it is. */
@@ -7112,10 +7112,10 @@ function sprayTry(){
 }
 function startSpray(){
   const W = sceneW(), look = ODG_LOOKS[DISTRICTS_ON ? shownDistrict : 0] || ODG_LOOKS[0];
-  const carX = Math.round(W * .56);
+  const carX = Math.round(Math.min(W * .56, W - 196));            // the whole 190px SUV on screen, phone included
   const car = document.createElement('div');
   car.className = 'pickup odgCar';
-  car.style.left = '-140px';
+  car.style.left = '-210px';
   car.innerHTML = suv('#f3f1e8', false, '#c9c4b6');
   sceneEl.appendChild(car);
   requestAnimationFrame(() => { car.style.left = carX + 'px'; });
