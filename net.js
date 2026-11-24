@@ -2,7 +2,7 @@
    Every function is failure-tolerant on purpose: if Supabase is unset, slow,
    or down, the game must still be playable. Nothing here throws upward. */
 
-import { SUPABASE_URL, SUPABASE_ANON_KEY } from './config.js?v=20261124150027';
+import { SUPABASE_URL, SUPABASE_ANON_KEY } from './config.js?v=20261124150623';
 
 const TOKEN_KEY = 'otondo:token';
 let sb = null, token = null, channel = null;
@@ -256,7 +256,7 @@ export async function postSuggestion(body) {
   } catch (e) { console.warn('[otondo] suggestion failed:', e.message); return false; }
 }
 
-/* The weekly ₦5,000 airtime race (supabase/prize.sql). The board is cached for
+/* The weekly ₦10,000 airtime race (supabase/prize.sql). The board is cached for
    a minute like the others; your own standing is asked for by token, so a
    claim code only ever reaches the device that earned it. Before prize.sql is
    run these return null and the game simply shows no race. */

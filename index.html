@@ -2089,7 +2089,7 @@
        market. Build credibility, keep your belle full, make the money last.
        Then find out where dem post you.</p>
     <button class="prizeHook hidden" id="prizeHook" type="button">
-      <span class="pzT">🏆 Top the board this week, win <b>₦5,000 airtime</b></span>
+      <span class="pzT">🏆 Top the board this week, win <b>₦10,000 airtime</b></span>
       <span class="pzS"><span id="prizeLead">New race every Monday. Free to play.</span> <u>Rules</u></span>
     </button>
     <button class="primary" id="start">Enter camp</button>
@@ -2277,7 +2277,7 @@
 <script type="module">
 import { newGame, doAction, canDo, unlocked, ACTIONS, phaseOf, nextUnlock, postingOdds, rivalOf,
          computePosting, CHOICES, GOAL, goalStatus,
-         shareText, MAX_DAY } from './game.js?v=20261124150027';
+         shareText, MAX_DAY } from './game.js?v=20261124150623';
 
 /* ---------- scene coordinates ----------
    The scene is scaled by a transform (see the stage), so a native
@@ -2308,11 +2308,11 @@ const TS = (document.getElementById('scene').offsetWidth || 375) / 375;
 const ALLAWEE_NOTE = 'Allawee ₦77,000 — e never enter.';
 import { initNet, joinCamp, syncPlayer, platoonBoard, recentChat, postChat,
          postSuggestion, reportMessage, awardBoard, myAwards, laughChat,
-         setPresence, campRoster, renameMe, setAvatar, online, prizeBoard, myPrize, platoonWar, claimPlatoonWin } from './net.js?v=20261124150027';
-import { startMusic, stopMusic, musicOn, audioState, audioSupported, setRain, whenSilenced, wakeAudio, audible, say, sfx, BEAT, BAR } from './audio.js?v=20261124150027';
+         setPresence, campRoster, renameMe, setAvatar, online, prizeBoard, myPrize, platoonWar, claimPlatoonWin } from './net.js?v=20261124150623';
+import { startMusic, stopMusic, musicOn, audioState, audioSupported, setRain, whenSilenced, wakeAudio, audible, say, sfx, BEAT, BAR } from './audio.js?v=20261124150623';
 import { playHoop, playPenalty, playQuiz, playRegister, playParade,
          playMami, playHustle, playManOWar, playSaed, playSocial,
-         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261124150027';
+         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261124150623';
 
 /* Every dance animation is expressed in beats, so the steps are on-tempo
    whether or not the sound is playing — and genuinely on the beat when it is. */
@@ -3538,7 +3538,7 @@ function prizeBillboard(cfg){
     <text x="56" y="12" text-anchor="middle" font-size="6.6" font-weight="900" font-family="system-ui,sans-serif"
       fill="#3d2b00" textLength="60" lengthAdjust="spacingAndGlyphs">TOP THE BOARD</text>
     <text x="56" y="21" text-anchor="middle" font-size="7.4" font-weight="900" font-family="system-ui,sans-serif"
-      fill="#b3261e" textLength="66" lengthAdjust="spacingAndGlyphs">WIN ₦5,000 AIRTIME</text>
+      fill="#b3261e" textLength="68" lengthAdjust="spacingAndGlyphs">WIN ₦10,000 AIRTIME</text>
     <rect x="7" y="24" width="86" height="6.4" fill="#0a7a43"/>
     <text x="50" y="29" text-anchor="middle" font-size="4.6" font-weight="900" font-family="system-ui,sans-serif"
       fill="#fff" textLength="80" lengthAdjust="spacingAndGlyphs">Every week on Otondo · tap for the rules ↗</text>
@@ -4709,7 +4709,7 @@ const YABA_TOWERS = [
   { name: 'SABO',     w: 36, h: 80,  body: '#a8b4c4', win: '#e2e9f1' },
 ];
 DISTRICTS.push({ name: 'OJUELEGBA', area: 'YABA', shops: YABA_SHOPS, towers: YABA_TOWERS });
-/* The weekly ₦5,000 airtime race (2026-11-19, user). Every week until Sunday
+/* The weekly ₦10,000 airtime race (2026-11-19, user; doubled from ₦5,000 on 2026-11-24). Every week until Sunday
    10 January 2027 (supabase/prize.sql's prize_last() says the same; extend
    both together). Its board takes the Skills board's slot on Allen Avenue,
    Admiralty Way and Ojuelegba, so a first visit sees it; Broad Street and
@@ -12040,7 +12040,7 @@ async function drawAwards(){
   drawPrizeBox();
 }
 
-/* ---------- the weekly ₦5,000 race ----------
+/* ---------- the weekly ₦10,000 race ----------
    Weeks are Lagos weeks (UTC+1 all year): Monday 00:00 to Sunday 23:59. */
 const PRIZE_MAIL = 'hello@otondo.ng';
 function prizeEndsIn(){
@@ -12067,14 +12067,14 @@ function showPrize(){
     const body = `Claim code: ${w.code}\nPhone number: \nNetwork (MTN, Airtel, Glo, 9mobile): \n`;
     $('prizeCard').innerHTML = `
       <div class="hoorayBig" id="prizeH">You top the board! 🏆</div>
-      <p>The <b>${esc(String(w.cred))} credibility</b> you earned won the week. Your ₦5,000 airtime dey wait.</p>
+      <p>The <b>${esc(String(w.cred))} credibility</b> you earned won the week. Your ₦10,000 airtime dey wait.</p>
       <div class="pzCode">${esc(w.code)}</div>
       <p style="font-size:13.5px">Email this code with your phone number and network to <b>${PRIZE_MAIL}</b> by ${prizeDay(w.deadline)}.</p>
       <a class="primary" style="display:block;text-decoration:none" href="mailto:${PRIZE_MAIL}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}">Email my claim</a>
       <button class="primary ghost" type="button" id="prizeClose" style="margin-top:8px">Later</button>`;
   } else {
     $('prizeCard').innerHTML = `
-      <div class="hoorayBig" id="prizeH">₦5,000 airtime, every week</div>
+      <div class="hoorayBig" id="prizeH">₦10,000 airtime, every week</div>
       <p style="margin-bottom:0">Top the board and the airtime na your own. This week's race ${prizeEndsIn()}.</p>
       ${PRIZE_RULES}
       <button class="primary" type="button" id="prizeClose">${s ? 'Oya, continue' : 'Enter camp'}</button>`;
@@ -12105,12 +12105,12 @@ async function drawPrizeBox(){
   if (!b && !w){ box.classList.add('hidden'); return; }
   if (!PRIZE_ON && !w){ box.classList.add('hidden'); return; }
   let html;
-  if (w) html = `<h3>🎉 You won ₦5,000 airtime!</h3>
+  if (w) html = `<h3>🎉 You won ₦10,000 airtime!</h3>
       <p class="pzMe">Claim code <b>${esc(w.code)}</b>. Email it with your phone number to ${PRIZE_MAIL} by ${prizeDay(w.deadline)}.</p>
       <button type="button" data-pz="1">How to claim</button>`;
   else {
     const top = (b && b.top) || [];
-    html = `<h3>🏆 This week: ₦5,000 airtime</h3><p class="pzEnds">Most credibility earned this week wins · ${prizeEndsIn()}</p>`
+    html = `<h3>🏆 This week: ₦10,000 airtime</h3><p class="pzEnds">Most credibility earned this week wins · ${prizeEndsIn()}</p>`
       + (top.length ? `<ol>${top.map(t => `<li><b>${esc(t.nickname)}</b> <em>P${t.platoon}</em> · +${t.cred} cred</li>`).join('')}</ol>`
                     : `<p class="pzMe">Nobody on the board yet this week. E fit be you.</p>`)
       + (prizeMine && prizeMine.best ? `<p class="pzMe">You: <b>#${prizeMine.rank}</b> with +${prizeMine.best} cred this week.</p>`
