@@ -561,7 +561,29 @@
     flex-direction:column;align-items:center;gap:3px;animation:tagBob .8s ease-in-out infinite alternate}
   .walletTag.choose.hagTag::after{display:block;content:'';position:absolute;left:50%;top:100%;margin-left:-4px;border:4px solid transparent;border-top-color:#f2c200;pointer-events:none}
   .hagTag .hgPrice{font:900 9.5px/1.15 system-ui,sans-serif;color:#1d1a10;letter-spacing:.02em;white-space:nowrap}
-  #scene.haggleOn .cornTag:not(.jumpTag){visibility:hidden;pointer-events:none}
+  #scene.haggleOn .cornTag:not(.jumpTag),#scene.sprayOn .cornTag{visibility:hidden;pointer-events:none}
+  #scene.sprayOn .tapTag,#scene.sprayOn .runnerTag,#scene.sprayOn .walletTag,#scene.sprayOn .tapPoint{filter:opacity(.22);pointer-events:none}
+  /* Odogwu's money spray (2026-11-22) */
+  .pickup.odgCar{width:122px;bottom:5px;transition:left 1.2s cubic-bezier(.2,.8,.3,1)}
+  .pickup.odgCar svg{display:block;width:100%;height:auto}
+  .odogwu{position:absolute;bottom:2px;width:54px;height:100px;z-index:3;pointer-events:none;opacity:0;transform:translateY(6px);transition:opacity .4s,transform .4s}
+  .odogwu.out{opacity:1;transform:none}
+  .odogwu svg{display:block;width:100%;height:100%;overflow:visible}
+  .odogwu .odgBody{transform-box:fill-box;transform-origin:50% 100%;animation:odgBounce .55s ease-in-out infinite alternate}
+  @keyframes odgBounce{to{transform:translateY(-1.5px) scaleY(1.01)}}
+  .odogwu.throwing .odgArm{transform-box:fill-box;transform-origin:15% 90%;animation:odgThrow 1.1s ease-in-out infinite}
+  @keyframes odgThrow{0%,100%{transform:rotate(25deg)}35%{transform:rotate(-35deg)}45%{transform:rotate(-40deg)}}
+  .sprayNote{position:absolute;width:15px;height:8px;margin-left:-7px;z-index:9;border-radius:1.5px;cursor:pointer;
+    box-shadow:inset 0 0 0 1px rgba(255,255,255,.45),0 1px 2px rgba(0,0,0,.35);-webkit-tap-highlight-color:transparent}
+  .sprayNote::before{content:'';position:absolute;inset:-11px -9px}
+  .sprayNote::after{content:'';position:absolute;left:5px;top:2px;width:5px;height:4px;border-radius:50%;background:rgba(255,255,255,.35)}
+  .sprayNote.n100{background:#c8506a}.sprayNote.n200{background:#9a6a3a}.sprayNote.n500{background:#2f8f5b}.sprayNote.n1000{background:#c9a227}
+  .sprayCombo{position:absolute;left:50%;top:22%;z-index:10;transform:translateX(-50%);pointer-events:none;
+    font:900 15px/1 system-ui,sans-serif;color:#fff;letter-spacing:.04em;text-shadow:0 2px 0 #b8860b,0 3px 8px rgba(0,0,0,.45);white-space:nowrap}
+  .sprayTally{position:absolute;right:8px;top:8px;z-index:10;pointer-events:none;background:#1d1a10;color:#f2c200;
+    font:900 12px/1 system-ui,sans-serif;padding:6px 9px;border-radius:9px;box-shadow:0 2px 6px rgba(0,0,0,.35)}
+  .areaBoy{position:absolute;bottom:4px;width:46px;z-index:3;pointer-events:none}
+  .areaBoy .corper{position:static!important;animation:none!important}
   #scene.haggleOn .tapTag,#scene.haggleOn .runnerTag,#scene.haggleOn .walletTag:not(.hagTag){filter:opacity(.22);pointer-events:none;transition:filter .25s}   /* filter, not opacity: the labels' pop-in animation owns their opacity */
   .hagTag.pop .hgPrice{animation:statPop .45s cubic-bezier(.2,1.4,.4,1)}
   .hagTag .lvRow{display:flex;gap:4px}
@@ -2168,7 +2190,7 @@
 <script type="module">
 import { newGame, doAction, canDo, unlocked, ACTIONS, phaseOf, nextUnlock, postingOdds, rivalOf,
          computePosting, CHOICES, GOAL, goalStatus,
-         shareText, MAX_DAY } from './game.js?v=20261122221342';
+         shareText, MAX_DAY } from './game.js?v=20261123184529';
 
 /* ---------- scene coordinates ----------
    The scene is scaled by a transform (see the stage), so a native
@@ -2199,11 +2221,11 @@ const TS = (document.getElementById('scene').offsetWidth || 375) / 375;
 const ALLAWEE_NOTE = 'Allawee ₦77,000 — e never enter.';
 import { initNet, joinCamp, syncPlayer, platoonBoard, recentChat, postChat,
          postSuggestion, reportMessage, awardBoard, myAwards, laughChat,
-         setPresence, campRoster, renameMe, setAvatar, online, prizeBoard, myPrize, platoonWar, claimPlatoonWin } from './net.js?v=20261122221342';
-import { startMusic, stopMusic, musicOn, audioState, audioSupported, setRain, whenSilenced, wakeAudio, audible, say, sfx, BEAT, BAR } from './audio.js?v=20261122221342';
+         setPresence, campRoster, renameMe, setAvatar, online, prizeBoard, myPrize, platoonWar, claimPlatoonWin } from './net.js?v=20261123184529';
+import { startMusic, stopMusic, musicOn, audioState, audioSupported, setRain, whenSilenced, wakeAudio, audible, say, sfx, BEAT, BAR } from './audio.js?v=20261123184529';
 import { playHoop, playPenalty, playQuiz, playRegister, playParade,
          playMami, playHustle, playManOWar, playSaed, playSocial,
-         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261122221342';
+         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261123184529';
 
 /* Every dance animation is expressed in beats, so the steps are on-tempo
    whether or not the sound is playing — and genuinely on the beat when it is. */
@@ -6334,7 +6356,7 @@ function loveCheck(el, cx, box){
     pinInside(love.tag, box, cx);
     return;
   }
-  if (love || haggle || !you || !s || jumpTag.style.display !== 'none' || wallet) return;
+  if (love || haggle || spray || !you || !s || jumpTag.style.display !== 'none' || wallet) return;
   const gap = cx - figX(you, box);
   if (gap < 60 || gap > 340 || cx > box.width * .84 || cx < box.width * .15) return;   // far enough in that the pin sits right over their heart, not squeezed off the edge
   if (!freeFig(you) || you.matches('.detour, .bumped') || you.style.animationPlayState === 'paused') return;
@@ -6491,7 +6513,7 @@ let haggle = null;
 function haggleDue(ms){ setTimeout(haggleTry, ms ?? HAGGLE_EVERY[0] + Math.random() * (HAGGLE_EVERY[1] - HAGGLE_EVERY[0])); }
 function haggleTry(){
   if (!HAGGLE_ON || calm()) return;
-  if (document.hidden || !s || haggle || love || wallet || jumpTag.style.display !== 'none'
+  if (document.hidden || !s || haggle || spray || love || wallet || jumpTag.style.display !== 'none'
       || sceneEl.classList.contains('dancing') || sceneEl.querySelector('.pickup')) return haggleDue(4000);
   const p = youFig;
   if (!p || !freeFig(p) || p.matches('.detour, .bumped') || p.style.animationPlayState === 'paused') return haggleDue(4000);
@@ -6622,6 +6644,203 @@ function finishHaggle(rode){
   }
 }
 if (HAGGLE_ON && !calm()) haggleDue(HAGGLE_FIRST);
+
+/* ---------- Odogwu dey spray (2026-11-22, user) ----------
+   His white SUV pulls up, he steps out and sprays naira for ~8s. Tap the
+   notes as they fall: N100 mostly, N200, N500 rare, N1000 very rare. Quick
+   catches build a combo (a bonus on every catch); a note that lands can still
+   be grabbed until the area boy runs through and packs it. Your corper dances
+   on each catch. A tally and a brag to share at the end. */
+const SPRAY_ON = true, SPRAY_FIRST = 150000, SPRAY_EVERY = [200000, 260000], SPRAY_LEN = 8000, SPRAY_CAP = 2500, SPRAY_COMBO_MAX = 4;   // a bot could pack N5,000 at x27: capped (tested)
+/* his agbada and fila for each street (DISTRICTS order) */
+const ODG_LOOKS = [['#f3f1e8', '#c1272d'], ['#1e3a8a', '#c9a227'], ['#e8e2d0', '#1e3a8a'], ['#6d3f8c', '#c9a227'], ['#0f8a4a', '#c1272d']];
+const odogwuSvg = (gown, fila) => `<svg viewBox="0 0 50 92" aria-hidden="true">
+  <ellipse cx="25" cy="90.4" rx="17" ry="1.8" fill="rgba(0,0,0,.22)"/>
+  <g class="odgBody">
+    <ellipse cx="19" cy="88.6" rx="4" ry="1.7" fill="#111"/><ellipse cx="31" cy="88.6" rx="4" ry="1.7" fill="#111"/>
+    <rect x="16.4" y="78" width="5" height="10" fill="#2b2b2b"/><rect x="28.6" y="78" width="5" height="10" fill="#2b2b2b"/>
+    <path d="M11 37 Q25 30.5 39 37 L47.5 83 Q25 89.5 2.5 83 Z" fill="${gown}" stroke="rgba(0,0,0,.12)" stroke-width=".6"/>
+    <path d="M18.6 33.4 L25 46 L31.4 33.4" fill="none" stroke="#d4a017" stroke-width="1.6"/>
+    <path d="M20.4 40 q4.6 3.6 9.2 0 M19.2 48 q5.8 4 11.6 0 M22 54.6 q3 2.2 6 0" fill="none" stroke="#d4a017" stroke-width=".9"/>
+    <path d="M17.6 35.6 Q25 44 32.4 35.6" fill="none" stroke="#f2c200" stroke-width="1"/>
+    <path d="M12.6 40 Q5.4 50 9 57.6 L15.6 55.4 Q14 48 17.4 42 Z" fill="${gown}" stroke="rgba(0,0,0,.12)" stroke-width=".6"/>
+    <circle cx="11.6" cy="57" r="2.4" fill="#4a2c16"/>
+    <g transform="translate(9.6 54.4) rotate(-20)"><rect x="-3" y="-6.4" width="6" height="3.4" rx=".6" fill="#2f8f5b"/><rect x="-2.6" y="-7.6" width="6" height="3.4" rx=".6" fill="#c8506a"/><rect x="-2.2" y="-8.8" width="6" height="3.4" rx=".6" fill="#9a6a3a"/></g>
+    <g class="odgArm"><path d="M36.6 39 Q45 33 47 22 L41.4 20.4 Q39.6 30 33.4 34.4 Z" fill="${gown}" stroke="rgba(0,0,0,.12)" stroke-width=".6"/>
+      <circle cx="44.6" cy="19.4" r="2.4" fill="#4a2c16"/><rect x="42" y="13.6" width="5.6" height="3.2" rx=".6" fill="#c8506a" transform="rotate(18 44.8 15.2)"/></g>
+    <rect x="22.6" y="27.4" width="4.8" height="4.2" fill="#4a2c16"/>
+    <circle cx="25" cy="22" r="7.4" fill="#4a2c16"/>
+    <path d="M17.2 18.4 Q17.6 8.6 26 9.4 Q33.4 10.6 33 18.2 Z" fill="${fila}"/><path d="M17.2 18.4 h15.8" stroke="rgba(0,0,0,.25)" stroke-width="1"/>
+    <rect x="18.6" y="19.6" width="12.8" height="3.4" rx="1.5" fill="#111"/><path class="glint" d="M20.2 20.4 h2" stroke="#fff" stroke-width=".7" stroke-linecap="round"/>
+    <path d="M21 25.6 q4 3 8 0 z" fill="#1d1812"/><path d="M21.6 25.9 h6.8" stroke="#fff" stroke-width=".8"/>
+    <path d="M19.6 26.4 q5.4 5.4 10.8 0" fill="none" stroke="#2a1a10" stroke-width="1.1" opacity=".7"/>
+  </g></svg>`;
+let spray = null, sprayLastSfx = 0;
+function sprayDue(ms){ setTimeout(sprayTry, ms ?? SPRAY_EVERY[0] + Math.random() * (SPRAY_EVERY[1] - SPRAY_EVERY[0])); }
+function sprayTry(){
+  if (!SPRAY_ON || calm()) return;
+  if (document.hidden || !s || spray || haggle || love || wallet || jumpTag.style.display !== 'none'
+      || sceneEl.classList.contains('dancing') || sceneEl.querySelector('.pickup, .convoy, .goat')) return sprayDue(5000);
+  startSpray();
+  sprayDue();
+}
+function startSpray(){
+  const W = sceneW(), look = ODG_LOOKS[DISTRICTS_ON ? shownDistrict : 0] || ODG_LOOKS[0];
+  const carX = Math.round(W * .56);
+  const car = document.createElement('div');
+  car.className = 'pickup odgCar';
+  car.style.left = '-140px';
+  car.innerHTML = suv('#f3f1e8', false, '#c9c4b6');
+  sceneEl.appendChild(car);
+  requestAnimationFrame(() => { car.style.left = carX + 'px'; });
+  sfx('honk');
+  if (shoutSign) shoutSign(['ODOGWU DEY SPRAY! TAP THE MONEY', '#c9a227', '#1d1a10']);
+  const odg = document.createElement('div');
+  odg.className = 'odogwu';
+  odg.innerHTML = odogwuSvg(look[0], look[1]);
+  odg.style.left = Math.round(carX - 30) + 'px';                 // at the kerb, by his door
+  sceneEl.appendChild(odg);
+  const tally = document.createElement('div');
+  tally.className = 'sprayTally';
+  tally.textContent = '💸 ₦0';
+  sceneEl.appendChild(tally);
+  sceneEl.classList.add('sprayOn');
+  spray = { car, odg, tally, total: 0, caught: 0, combo: 0, best: 0, last: 0, notes: [], t0: performance.now() };
+  setTimeout(() => { if (!spray) return; odg.classList.add('out', 'throwing'); throwRound(0); }, 1300);
+  setTimeout(() => areaBoyRun(), 1300 + SPRAY_LEN - 600);
+  setTimeout(endSpray, 1300 + SPRAY_LEN + 3200);
+}
+/* a handful every ~1.1s, in time with his arm */
+function throwRound(i){
+  if (!spray || spray.capped || i * 1100 > SPRAY_LEN) { spray && spray.odg.classList.remove('throwing'); return; }
+  const n = 3 + (Math.random() < .5 ? 1 : 0);
+  for (let k = 0; k < n; k++) setTimeout(() => throwNote(), 380 + k * 70);
+  setTimeout(() => throwRound(i + 1), 1100);
+}
+function throwNote(){
+  const sp = spray; if (!sp) return;
+  const W = sceneW(), box = sceneEl.sceneRect(), o = sp.odg.sceneRect();
+  const hx = o.left - box.left + o.width * .88, hy = box.bottom - (o.top + o.height * .18);   // his raised hand
+  const r = Math.random(), v = r < .05 ? 1000 : r < .2 ? 500 : r < .5 ? 200 : 100;
+  const el = document.createElement('div');
+  el.className = 'sprayNote n' + v;
+  el.dataset.v = String(v);
+  el.style.left = Math.round(hx) + 'px';
+  el.style.bottom = Math.round(hy) + 'px';
+  sceneEl.appendChild(el);
+  const endX = Math.min(W - 12, Math.max(12, hx + (-200 + Math.random() * 250)));
+  const dx = endX - hx, peak = 34 + Math.random() * 50, ground = hy - (6 + Math.random() * 12), sway = 10 + Math.random() * 14;
+  const rot = (Math.random() * 2 - 1) * 540;
+  const a = el.animate([
+    { transform: 'translate(0,0) rotate(0deg)' },
+    { transform: `translate(${dx * .3}px,${-peak}px) rotate(${rot * .2}deg)`, offset: .18 },
+    { transform: `translate(${dx * .5 + sway}px,${-peak * .55}px) rotate(${rot * .45}deg)`, offset: .38 },
+    { transform: `translate(${dx * .68 - sway}px,${ground * .3}px) rotate(${rot * .65}deg)`, offset: .6 },
+    { transform: `translate(${dx * .86 + sway * .6}px,${ground * .72}px) rotate(${rot * .85}deg)`, offset: .82 },
+    { transform: `translate(${dx}px,${ground}px) rotate(${rot}deg)` },
+  ], { duration: 2600 + Math.random() * 900, easing: 'linear', fill: 'forwards' });
+  el._fall = a;
+  el._x = endX;
+  a.onfinish = () => { el.classList.add('landed'); };
+  sp.notes.push(el);
+}
+function catchNote(el){
+  const sp = spray; if (!sp || el.dataset.got) return;
+  el.dataset.got = '1';
+  hintUsed();
+  const now = performance.now();
+  sp.combo = now - sp.last < 1000 ? sp.combo + 1 : 1;
+  sp.last = now; sp.best = Math.max(sp.best, sp.combo);
+  const v = +el.dataset.v, bonus = 50 * Math.min(sp.combo - 1, SPRAY_COMBO_MAX);   // the streak tops out at +N200 a note
+  const got = Math.max(0, Math.min(v + bonus, SPRAY_CAP - sp.total));
+  sp.total += got; sp.caught++;
+  if (s && got){ s.money += got; save(); render(); }
+  sp.tally.textContent = `💸 ${naira(sp.total)}`;
+  if (got) floatCost(el, `+${naira(got)}`);
+  if (sp.total >= SPRAY_CAP && !sp.capped){                  // his pocket is empty
+    sp.capped = true;
+    sp.tally.textContent = `💸 ${naira(sp.total)} · MAX!`;
+    sp.odg.classList.remove('throwing');
+    tell('Odogwu don empty im pocket! You pack the maximum.');
+  }
+  if (now - sprayLastSfx > 220){ sfx('kaching'); sprayLastSfx = now; }
+  if (sp.combo >= 2){
+    sceneEl.querySelector('.sprayCombo')?.remove();
+    const c = document.createElement('div'); c.className = 'sprayCombo'; c.textContent = `COMBO x${sp.combo}!`;
+    sceneEl.appendChild(c);
+    c.animate([{ transform: 'translateX(-50%) scale(.5)', opacity: 0 }, { transform: 'translateX(-50%) scale(1.25)', opacity: 1, offset: .3 }, { transform: 'translateX(-50%) scale(1)', opacity: 1, offset: .7 }, { opacity: 0 }],
+              { duration: 900, fill: 'forwards' }).onfinish = () => c.remove();
+  }
+  /* your corper dances */
+  const p = youFig;
+  if (p && freeFig(p)) p.animate([{ transform: 'translateY(0)' }, { transform: 'translateY(-7px) rotate(-4deg)', offset: .4 }, { transform: 'translateY(0)' }],
+                                 { duration: 340, composite: 'add' });
+  el._fall?.pause();
+  el.animate([{ opacity: 1, scale: 1 }, { opacity: 0, scale: 1.8 }], { duration: 260, fill: 'forwards', composite: 'add' }).onfinish = () => el.remove();
+}
+/* the area boy: through the street at the end, packing whatever is on the ground */
+function areaBoyRun(){
+  const sp = spray; if (!sp) return;
+  const W = sceneW();
+  const b = document.createElement('div');
+  b.className = 'areaBoy';
+  b.innerHTML = civilian(SKINS[2], 1, 9, 0, 0, true);
+  b.style.left = '-50px';
+  sceneEl.appendChild(b);
+  sp.boy = b;
+  const t0 = performance.now(), D = 2400;
+  const step = now => {
+    if (!b.isConnected) return;
+    const k = Math.min(1, (now - t0) / D), x = -50 + (W + 100) * k;
+    b.style.left = Math.round(x) + 'px';
+    sp.notes.forEach(n => {
+      if (n.isConnected && !n.dataset.got && n.classList.contains('landed') && Math.abs(n._x - (x + 23)) < 18){
+        n.dataset.got = 'boy';
+        n.animate([{ opacity: 1 }, { opacity: 0, transform: n.style.transform }], { duration: 160, fill: 'forwards' }).onfinish = () => n.remove();
+      }
+    });
+    if (k < 1) requestAnimationFrame(step); else b.remove();
+  };
+  requestAnimationFrame(step);
+}
+function endSpray(){
+  const sp = spray; if (!sp) return;
+  spray = null;
+  sceneEl.classList.remove('sprayOn');
+  sp.notes.forEach(n => n.isConnected && n.remove());
+  sp.tally.remove();
+  sp.boy?.remove();
+  sp.odg.classList.remove('out');
+  setTimeout(() => sp.odg.remove(), 450);
+  setTimeout(() => { sp.car.style.transition = 'left 1.3s ease-in'; sp.car.style.left = (sceneW() + 60) + 'px'; }, 450);
+  setTimeout(() => sp.car.remove(), 1900);
+  if (!s) return;
+  if (!sp.total){ tell('Odogwu spray finish. You no catch anything, area boys pack am all!'); return; }
+  tell(`You packed ${naira(sp.total)} from Odogwu! ${sp.caught} note${sp.caught === 1 ? '' : 's'}${sp.best >= 2 ? `, best combo x${sp.best}` : ''}.`);
+  setTimeout(() => sprayTallyPop(sp), 700);
+}
+function sprayTallyPop(sp){
+  if (!$('prizePop').classList.contains('hidden')) return;           // never on top of another popup
+  $('prizeCard').innerHTML = `
+    <div class="hoorayBig" id="prizeH">💸 You packed ${naira(sp.total)}!</div>
+    <p>Odogwu spray, you catch <b>${sp.caught} note${sp.caught === 1 ? '' : 's'}</b>${sp.best >= 2 ? ` with a best combo of <b>x${sp.best}</b>` : ''}. The money don enter your pocket.</p>
+    <button class="primary" type="button" id="sprayShare">📲 Show your people</button>
+    <button class="primary ghost" type="button" id="prizeClose" style="margin-top:8px">Oya, continue</button>`;
+  $('prizePop').classList.remove('hidden');
+  $('prizeClose').onclick = () => $('prizePop').classList.add('hidden');
+  $('sprayShare').onclick = async () => {
+    const text = `I packed ${naira(sp.total)} when Odogwu spray money for Otondo 💸 Come catch your own!`, url = 'https://otondo.ng/?r=spray';
+    try { if (navigator.share){ await navigator.share({ text, url }); return; } } catch (e){ if (e && e.name === 'AbortError') return; }
+    try { await navigator.clipboard.writeText(`${text} ${url}`); $('sprayShare').textContent = '✅ Copied. Send am!'; } catch { $('sprayShare').textContent = url; }
+  };
+}
+/* a finger on a falling note: pointerdown, not click, because the note moves */
+sceneEl.addEventListener('pointerdown', e => {
+  if (!spray) return;
+  const n = e.target.closest('.sprayNote');
+  if (n){ e.preventDefault(); catchNote(n); }
+});
+if (SPRAY_ON && !calm()) sprayDue(SPRAY_FIRST);
 
 /* her number on a scrap of paper, from her to you */
 function paperTo(fromEl, toEl){
@@ -7832,7 +8051,7 @@ let rideAnchor = null;
 function offerTick(){
   /* At the danfo, the haggle is the only thing asked (user: "make sure the
      directive will not overcrowd or cover other things"). */
-  if (haggle){ watchPothole(); jumpTarget = null; pothole.classList.remove('jumpable'); clearCorn(); clearRide(); clearJump(); sceneEl.classList.remove('asking'); sweepOffers(); return; }   // the others still hop the hole, unasked
+  if (haggle || spray){ watchPothole(); jumpTarget = null; pothole.classList.remove('jumpable'); clearCorn(); clearRide(); clearJump(); sceneEl.classList.remove('asking'); sweepOffers(); return; }   // the others still hop the hole, unasked
   /* Mr. Pothole first, always. It is the only offer with a deadline — the
      others wait patiently while a shop drifts past, this one is gone the
      moment he reaches the hole — so it has to be able to interrupt them. */
@@ -7997,6 +8216,7 @@ function labelUnder(x, y){
   return hits.sort((a, b) => d(a) - d(b))[0].t;
 }
 sceneEl.addEventListener('click', e => {
+  if (spray) return;                               // during the spray, a tap is for the money only (pointerdown)
   if (e.target.closest('.hagTag')){
     const b = e.target.closest('button');
     if (b && b.classList.contains('hgDown')) haggleTap();
@@ -8652,7 +8872,7 @@ const WALLET_SVG = `<svg viewBox="0 0 11 8" aria-hidden="true"><ellipse cx="5.5"
 let walletAt = -Infinity, wallet = null;     // `wallet`: the open choice, once it has been picked up
 function dropWallet(okadaEl){
   if (!okadaEl.isConnected || calm() || document.hidden || !s) return;
-  if (sceneEl.querySelector('.coin') || wallet || haggle || jumpTag.style.display !== 'none') return;   // one thing on the floor, one ask at a time
+  if (sceneEl.querySelector('.coin') || wallet || haggle || spray || jumpTag.style.display !== 'none') return;   // one thing on the floor, one ask at a time
   const box = sceneEl.sceneRect(), r = okadaEl.sceneRect(), W = box.width;
   const x = r.left - box.left + r.width * .5;
   if (x < W * .2 || x > W * .85 || Math.abs(potX() - x) < 70) return;
