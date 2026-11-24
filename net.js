@@ -2,7 +2,7 @@
    Every function is failure-tolerant on purpose: if Supabase is unset, slow,
    or down, the game must still be playable. Nothing here throws upward. */
 
-import { SUPABASE_URL, SUPABASE_ANON_KEY } from './config.js?v=20261124111629';
+import { SUPABASE_URL, SUPABASE_ANON_KEY } from './config.js?v=20261124150027';
 
 const TOKEN_KEY = 'otondo:token';
 let sb = null, token = null, channel = null;
@@ -99,8 +99,8 @@ export async function renameMe(nickname) {
     const { data, error } = await sb.rpc('rename_player',
       { p_token: token, p_nickname: nickname });
     if (error) throw error;
-    return data === true;
-  } catch (e) { console.warn('[otondo] rename failed:', e.message); return false; }
+    return data === true;      // false: the server refused the name (names.sql)
+  } catch (e) { console.warn('[otondo] rename failed:', e.message); return null; }   // null: could not ask
 }
 
 /* The face you picked (avatars.sql). Past messages are updated server-side.

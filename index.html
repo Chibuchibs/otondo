@@ -230,7 +230,10 @@
   /* while the ad is up the board is a link (pointer, the arrow in its words)
      and two lines: the name over what it does */
   .sign b.ad{cursor:pointer;flex-direction:column;gap:1px;line-height:1.15;padding:4px 9px}
-  .sign b.ad small,.sign b.vote small{font-size:6.6px;letter-spacing:.07em;font-weight:700;opacity:.92}
+  .sign b.ad small,.sign b.vote small,.sign b.two small{font-size:6.6px;letter-spacing:.07em;font-weight:700;opacity:.92}
+  /* a two-line shout that is not a link: a short headline over a small line */
+  .sign b.two{flex-direction:column;gap:1px;line-height:1.15;padding:4px 9px}
+  .sign b{transform-origin:100% 100%}
   /* VOTE O! keeps its words and ballot boxes on one row and the PVC line
      under them. A grid, not a wrapping flex row: a wrapping row is sized as if
      everything sat on one line, which made the board twice as wide as its
@@ -2274,7 +2277,7 @@
 <script type="module">
 import { newGame, doAction, canDo, unlocked, ACTIONS, phaseOf, nextUnlock, postingOdds, rivalOf,
          computePosting, CHOICES, GOAL, goalStatus,
-         shareText, MAX_DAY } from './game.js?v=20261124111629';
+         shareText, MAX_DAY } from './game.js?v=20261124150027';
 
 /* ---------- scene coordinates ----------
    The scene is scaled by a transform (see the stage), so a native
@@ -2305,11 +2308,11 @@ const TS = (document.getElementById('scene').offsetWidth || 375) / 375;
 const ALLAWEE_NOTE = 'Allawee ₦77,000 — e never enter.';
 import { initNet, joinCamp, syncPlayer, platoonBoard, recentChat, postChat,
          postSuggestion, reportMessage, awardBoard, myAwards, laughChat,
-         setPresence, campRoster, renameMe, setAvatar, online, prizeBoard, myPrize, platoonWar, claimPlatoonWin } from './net.js?v=20261124111629';
-import { startMusic, stopMusic, musicOn, audioState, audioSupported, setRain, whenSilenced, wakeAudio, audible, say, sfx, BEAT, BAR } from './audio.js?v=20261124111629';
+         setPresence, campRoster, renameMe, setAvatar, online, prizeBoard, myPrize, platoonWar, claimPlatoonWin } from './net.js?v=20261124150027';
+import { startMusic, stopMusic, musicOn, audioState, audioSupported, setRain, whenSilenced, wakeAudio, audible, say, sfx, BEAT, BAR } from './audio.js?v=20261124150027';
 import { playHoop, playPenalty, playQuiz, playRegister, playParade,
          playMami, playHustle, playManOWar, playSaed, playSocial,
-         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261124111629';
+         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261124150027';
 
 /* Every dance animation is expressed in beats, so the steps are on-tempo
    whether or not the sound is playing — and genuinely on the beat when it is. */
@@ -5003,6 +5006,13 @@ let shoutSign = null;
     paintSign(board, entry);
     board.classList.toggle('ad', sponsors.includes(entry));
     board.classList.toggle('vote', entry === VOTE_LINE);
+    board.classList.toggle('two', !!entry[3] && !sponsors.includes(entry) && entry !== VOTE_LINE);
+    /* Never wider than two-thirds of the street: a long shout ran off a phone
+       and over the jump tally (user's screenshot, 2026-11-24). Shrunk from its
+       right edge, where the sign stands. */
+    board.style.transform = '';
+    const max = ($('scene').offsetWidth || 375) * .66, w = board.offsetWidth;
+    if (w > max) board.style.transform = `scale(${(max / w).toFixed(3)})`;
   };
   show(SIGN_LINES[i]);
   /* A link only while one of those is on it. Stopped here so the street's
@@ -6831,17 +6841,17 @@ function openCards(){ $('tabAwards').click(); setTimeout(() => $('cardsBox').scr
 
 /* ---- the daily wahala: one challenge a day, the same for everybody that day ---- */
 const WAHALAS = [
-  { id: 'jump3',   evt: 'jump',       n: 3,    text: 'Jump Mr. Pothole 3 times' },
-  { id: 'danfo2',  evt: 'danfo',      n: 2,    text: 'Enter 2 danfos' },
-  { id: 'save300', evt: 'saved',      n: 300,  text: 'Haggle ₦300 off danfo fares', money: true },
-  { id: 'spray',   evt: 'spray',      n: 1500, text: 'Pack ₦1,500 when Odogwu spray', money: true },
-  { id: 'wallet',  evt: 'walletReturn', n: 1,  text: 'Return a dropped wallet' },
-  { id: 'id2',     evt: 'showid',     n: 2,    text: 'Show your ID at 2 checkpoints' },
-  { id: 'hawk3',   evt: 'hawker',     n: 3,    text: 'Buy from hawkers 3 times' },
-  { id: 'thief2',  evt: 'thief',      n: 2,    text: 'Catch 2 thieves' },
-  { id: 'fire5',   evt: 'fire',       n: 5,    text: 'Quench 5 flames' },
-  { id: 'dash3',   evt: 'dash',       n: 3,    text: 'Grab Odogwu convoy cash 3 times' },
-  { id: 'leave',   evt: 'leave',      n: 1,    text: 'Leave the lovers in peace' },
+  { id: 'jump3', sign: 'JUMP MR. POTHOLE ×3',   evt: 'jump',       n: 3,    text: 'Jump Mr. Pothole 3 times' },
+  { id: 'danfo2', sign: 'ENTER 2 DANFOS',  evt: 'danfo',      n: 2,    text: 'Enter 2 danfos' },
+  { id: 'save300', sign: 'HAGGLE ₦300 OFF FARES', evt: 'saved',      n: 300,  text: 'Haggle ₦300 off danfo fares', money: true },
+  { id: 'spray', sign: 'PACK ₦1,500 FROM ODOGWU',   evt: 'spray',      n: 1500, text: 'Pack ₦1,500 when Odogwu spray', money: true },
+  { id: 'wallet', sign: 'RETURN A WALLET',  evt: 'walletReturn', n: 1,  text: 'Return a dropped wallet' },
+  { id: 'id2', sign: 'SHOW YOUR ID ×2',     evt: 'showid',     n: 2,    text: 'Show your ID at 2 checkpoints' },
+  { id: 'hawk3', sign: 'BUY FROM HAWKERS ×3',   evt: 'hawker',     n: 3,    text: 'Buy from hawkers 3 times' },
+  { id: 'thief2', sign: 'CATCH 2 THIEVES',  evt: 'thief',      n: 2,    text: 'Catch 2 thieves' },
+  { id: 'fire5', sign: 'QUENCH 5 FLAMES',   evt: 'fire',       n: 5,    text: 'Quench 5 flames' },
+  { id: 'dash3', sign: 'GRAB CONVOY CASH ×3',   evt: 'dash',       n: 3,    text: 'Grab Odogwu convoy cash 3 times' },
+  { id: 'leave', sign: 'LEAVE THE LOVERS ALONE',   evt: 'leave',      n: 1,    text: 'Leave the lovers in peace' },
 ];
 const WAH_KEY = 'otondo:wahala';
 const lagosDay = () => new Date(Date.now() + 3600e3).toISOString().slice(0, 10);   // Lagos is UTC+1
@@ -6894,7 +6904,7 @@ function wahalaDone(w){
   s.money += pay.money; s.cred = (s.cred || 0) + pay.cred;
   save(); render();
   sfx('kaching');
-  if (shoutSign) shoutSign(['WAHALA DON FINISH! 🎉', '#0a7a43', '#ffffff']);
+  if (shoutSign) shoutSign(['WAHALA DON FINISH!', '#0a7a43', '#ffffff', adSub(w.sign + ' ✓')]);
   tell(`Today's wahala don finish! +${naira(pay.money)} +${pay.cred} cred`);
   const next = wahPay(wah.streak + 1);
   setTimeout(() => popQuest(`<div class="hoorayBig" id="prizeH">⚡ Wahala don finish!</div>
@@ -6932,7 +6942,7 @@ if (WAHALA_ON && !calm()) setTimeout(() => {
   if (!s || !shoutSign) return;
   rollWahala();
   const w = WAHALAS.find(x => x.id === wah.id);
-  if (w && !wah.done) shoutSign([`TODAY'S WAHALA: ${w.text.toUpperCase()}`, '#1d1a10', '#f2c200']);
+  if (w && !wah.done) shoutSign(["⚡ TODAY'S WAHALA", '#1d1a10', '#f2c200', adSub(w.sign)]);
 }, 12000);
 
 /* ---------- police checkpoint (2026-11-23, user) ----------
@@ -7120,7 +7130,7 @@ function startSpray(){
   sceneEl.appendChild(car);
   requestAnimationFrame(() => { car.style.left = carX + 'px'; });
   sfx('honk');
-  if (shoutSign) shoutSign(['ODOGWU DEY SPRAY! TAP THE MONEY', '#c9a227', '#1d1a10']);
+  if (shoutSign) shoutSign(['ODOGWU DEY SPRAY!', '#c9a227', '#1d1a10', adSub('TAP THE MONEY')]);
   const odg = document.createElement('div');
   odg.className = 'odgMan';                                      // NOT 'odogwu': that is the convoy's class, and this one starts invisible (it hid the convoy, 2026-11-23)
   odg.innerHTML = odogwuSvg(look[0], look[1]);
@@ -11603,12 +11613,20 @@ function startRename(host){
   const commit = async () => {
     const v = input.value.trim().replace(/\s+/g, ' ').slice(0, 16);
     if (v.length < 2) { drawWhoami(true); if (el !== $('whoami')) gateChat(); return; }
+    const was = s.name;
     s.name = v; save();
     drawWhoami(true);
     if (el !== $('whoami')) gateChat();       // redraw whichever host opened it
     /* If they have not played an action yet there is no row to rename — the
        name they chose will simply be the one they join with. */
-    await renameMe(v);
+    const ok = await renameMe(v);
+    /* The server refused it (a link, a phone number, a blocked word): keep the
+       old name and say why, instead of showing a name nobody else sees. */
+    if (ok === false && joined){
+      s.name = was; save(); drawWhoami(true);
+      if (el !== $('whoami')) gateChat();
+      tell('That name no fit for Otondo (no links, phone numbers or bad words). Pick another one.');
+    }
     pushPresence();
     if (!$('panelChat').classList.contains('hidden')) gateChat();
     loadChat(true);
@@ -11923,7 +11941,7 @@ if (PLATOON_WAR_ON && !calm()) setInterval(async () => {
   const w = await platoonWar();
   const lead = w && w.standings && w.standings[0];
   if (!lead) return;
-  shoutSign(lead.platoon === s.platoon ? ['YOUR PLATOON DEY LEAD!', '#0a7a43', '#ffffff'] : [`PLATOON ${lead.platoon} DEY LEAD!`, '#7a2e2e', '#ffffff']);
+  shoutSign(lead.platoon === s.platoon ? ['YOUR PLATOON', '#0a7a43', '#ffffff', adSub('DEY LEAD THE WAR!')] : [`PLATOON ${lead.platoon}`, '#7a2e2e', '#ffffff', adSub('DEY LEAD THE WAR!')]);
 }, 150000);
 /* Last week's winners: +10 credibility once, and a party. Waits its turn if
    the airtime popup is up. */
