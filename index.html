@@ -2274,7 +2274,7 @@
 <script type="module">
 import { newGame, doAction, canDo, unlocked, ACTIONS, phaseOf, nextUnlock, postingOdds, rivalOf,
          computePosting, CHOICES, GOAL, goalStatus,
-         shareText, MAX_DAY } from './game.js?v=20261123210533';
+         shareText, MAX_DAY } from './game.js?v=20261124111629';
 
 /* ---------- scene coordinates ----------
    The scene is scaled by a transform (see the stage), so a native
@@ -2305,11 +2305,11 @@ const TS = (document.getElementById('scene').offsetWidth || 375) / 375;
 const ALLAWEE_NOTE = 'Allawee ₦77,000 — e never enter.';
 import { initNet, joinCamp, syncPlayer, platoonBoard, recentChat, postChat,
          postSuggestion, reportMessage, awardBoard, myAwards, laughChat,
-         setPresence, campRoster, renameMe, setAvatar, online, prizeBoard, myPrize, platoonWar, claimPlatoonWin } from './net.js?v=20261123210533';
-import { startMusic, stopMusic, musicOn, audioState, audioSupported, setRain, whenSilenced, wakeAudio, audible, say, sfx, BEAT, BAR } from './audio.js?v=20261123210533';
+         setPresence, campRoster, renameMe, setAvatar, online, prizeBoard, myPrize, platoonWar, claimPlatoonWin } from './net.js?v=20261124111629';
+import { startMusic, stopMusic, musicOn, audioState, audioSupported, setRain, whenSilenced, wakeAudio, audible, say, sfx, BEAT, BAR } from './audio.js?v=20261124111629';
 import { playHoop, playPenalty, playQuiz, playRegister, playParade,
          playMami, playHustle, playManOWar, playSaed, playSocial,
-         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261123210533';
+         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261124111629';
 
 /* Every dance animation is expressed in beats, so the steps are on-tempo
    whether or not the sound is playing — and genuinely on the beat when it is. */
@@ -8583,6 +8583,11 @@ if (!calm()){ setInterval(offerTick, 150); setInterval(flipTurn, 10000); }
    starts before that point, and a `let` read early throws. */
 var hintDone = false;
 function hintUsed(){
+  /* A tap on the street is a real person playing: put them on the server now.
+     Only the camp actions did that before, so a player who only played the
+     street was never counted, never in the airtime race or Platoon War (found
+     2026-11-24 while setting the billboard baseline: 0 new players in 10 days). */
+  if (s && !joined) ensureJoined().then(() => syncPlayer(s));
   if (hintDone) return;
   hintDone = true;
   sceneEl.classList.add('played');
@@ -10573,7 +10578,7 @@ const invitedPlatoon = () => { try { const v = parseInt(localStorage.getItem(INV
 let s = null;
 const SAVE = 'otondo:v1';
 try { const raw = localStorage.getItem(SAVE); if (raw) s = JSON.parse(raw); } catch {}
-function save(){ try { localStorage.setItem(SAVE, JSON.stringify(s)); } catch {} }
+function save(){ try { localStorage.setItem(SAVE, JSON.stringify(s)); } catch {} if (joined && s) syncPlayer(s); }   // street cred and money reach the server too (net.js throttles to one sync in 30s)
 
 /* No name is asked for at the door. Four in five arrivals were leaving before
    day 5 and the rate did not move when the mini-games landed — the form was
@@ -10591,7 +10596,7 @@ const isAutoName = n => /^(Fresh )?Otondo \d{3,4}$/.test(n || '');
 /* The server row is created on the first COMPLETED action, not on page load.
    Creating it on arrival would turn `players` from "someone who played" into
    "someone who loaded the page", bots included, and wreck every metric. */
-let joined = false;
+var joined = false;               // var, not let: save() and hintUsed() read it, and both can run before this line
 async function ensureJoined(){
   if (joined || !s) return;
   joined = true;

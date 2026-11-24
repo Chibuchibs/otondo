@@ -2,7 +2,7 @@
    Every function is failure-tolerant on purpose: if Supabase is unset, slow,
    or down, the game must still be playable. Nothing here throws upward. */
 
-import { SUPABASE_URL, SUPABASE_ANON_KEY } from './config.js?v=20261123210533';
+import { SUPABASE_URL, SUPABASE_ANON_KEY } from './config.js?v=20261124111629';
 
 const TOKEN_KEY = 'otondo:token';
 let sb = null, token = null, channel = null;
@@ -77,8 +77,17 @@ export function campRoster() {
     return Object.values(channel.presenceState())
       .filter(metas => metas && metas.length)
       .map(metas => metas[metas.length - 1])
-      .map(p => ({ nick: p.nick || null, platoon: p.platoon || null, day: p.day || null,
-                   av: Number.isInteger(p.av) ? p.av : null }));
+      /* Presence is whatever each OTHER browser says about itself, so nothing
+         in it is trusted: numbers are made numbers and the name a short string
+         (the page escapes it too). A tampered client sending markup as its
+         "platoon" would otherwise have run on everyone's screen (2026-11-24). */
+      .map(p => {
+        const n = v => { const x = Math.floor(Number(v)); return Number.isFinite(x) ? x : null; };
+        const pl = n(p.platoon), dy = n(p.day), av = n(p.av);
+        return { nick: typeof p.nick === 'string' ? p.nick.slice(0, 16) : null,
+                 platoon: pl >= 1 && pl <= 10 ? pl : null, day: dy >= 1 && dy <= 21 ? dy : null,
+                 av: av >= 0 && av < 12 ? av : null };   // AV_N faces in index.html
+      });
   } catch { return []; }
 }
 
