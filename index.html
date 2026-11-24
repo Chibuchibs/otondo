@@ -2274,7 +2274,7 @@
 <script type="module">
 import { newGame, doAction, canDo, unlocked, ACTIONS, phaseOf, nextUnlock, postingOdds, rivalOf,
          computePosting, CHOICES, GOAL, goalStatus,
-         shareText, MAX_DAY } from './game.js?v=20261123210251';
+         shareText, MAX_DAY } from './game.js?v=20261123210533';
 
 /* ---------- scene coordinates ----------
    The scene is scaled by a transform (see the stage), so a native
@@ -2305,11 +2305,11 @@ const TS = (document.getElementById('scene').offsetWidth || 375) / 375;
 const ALLAWEE_NOTE = 'Allawee ₦77,000 — e never enter.';
 import { initNet, joinCamp, syncPlayer, platoonBoard, recentChat, postChat,
          postSuggestion, reportMessage, awardBoard, myAwards, laughChat,
-         setPresence, campRoster, renameMe, setAvatar, online, prizeBoard, myPrize, platoonWar, claimPlatoonWin } from './net.js?v=20261123210251';
-import { startMusic, stopMusic, musicOn, audioState, audioSupported, setRain, whenSilenced, wakeAudio, audible, say, sfx, BEAT, BAR } from './audio.js?v=20261123210251';
+         setPresence, campRoster, renameMe, setAvatar, online, prizeBoard, myPrize, platoonWar, claimPlatoonWin } from './net.js?v=20261123210533';
+import { startMusic, stopMusic, musicOn, audioState, audioSupported, setRain, whenSilenced, wakeAudio, audible, say, sfx, BEAT, BAR } from './audio.js?v=20261123210533';
 import { playHoop, playPenalty, playQuiz, playRegister, playParade,
          playMami, playHustle, playManOWar, playSaed, playSocial,
-         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261123210251';
+         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261123210533';
 
 /* Every dance animation is expressed in beats, so the steps are on-tempo
    whether or not the sound is playing — and genuinely on the beat when it is. */
@@ -5834,7 +5834,7 @@ const BARROW = (dx = 0, L = BARROW_LOOKS[0]) => `<g transform="translate(${dx} 0
 const FLOOD_RIVERS = [
   ['OGUN RIVER', 'OSUN RIVER'],                        // Allen Avenue: the south-west's own
   ['NIGER RIVER', 'BENUE RIVER'],                      // Broad Street: the big two
-  ['CROSS RIVER', 'IMO RIVER'],                        // Admiralty Way
+  ['ETHIOPE RIVER', 'IMO RIVER'],                      // Admiralty Way (not CROSS RIVER: that reads as the state, user)
   ['KADUNA RIVER', 'SOKOTO RIVER', 'ZAMFARA RIVER'],   // Computer Village
   ['ANAMBRA RIVER', 'GONGOLA RIVER', 'YOBE RIVER'],    // Ojuelegba
 ];
