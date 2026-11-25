@@ -427,6 +427,10 @@
   .cashNote{position:absolute;z-index:8;width:9px;height:5px;border-radius:1px;background:#2f8f5b;
     box-shadow:inset 0 0 0 1px rgba(255,255,255,.35);pointer-events:none}
   .convoy .car svg{width:100%;display:block}
+  .bling{opacity:0;transform-box:fill-box;transform-origin:center;animation:bling 1.8s ease-in-out infinite}   /* Odogwu's paint twinkles */
+  .rimGlint{animation:rimGlint .7s ease-in-out infinite alternate}   /* the spinners catch the light */
+  @keyframes rimGlint{from{opacity:.25}to{opacity:1}}
+  @keyframes bling{0%,100%{opacity:0;transform:scale(.2) rotate(0)}40%{opacity:1;transform:scale(1.2) rotate(45deg)}70%{opacity:.15;transform:scale(.5) rotate(90deg)}}
   @keyframes strobe{0%,49%{opacity:1}50%,100%{opacity:.12}}
   .convoy .lightR,.convoy .lightB{animation:strobe .22s steps(1) infinite}
   .convoy .lightB{animation-delay:.11s}
@@ -2316,7 +2320,7 @@
 <script type="module">
 import { newGame, doAction, canDo, unlocked, ACTIONS, phaseOf, nextUnlock, postingOdds, rivalOf,
          computePosting, CHOICES, GOAL, goalStatus,
-         shareText, MAX_DAY, STAT_MAX } from './game.js?v=20261124162056';
+         shareText, MAX_DAY, STAT_MAX } from './game.js?v=20261124163706';
 
 /* ---------- scene coordinates ----------
    The scene is scaled by a transform (see the stage), so a native
@@ -2347,11 +2351,11 @@ const TS = (document.getElementById('scene').offsetWidth || 375) / 375;
 const ALLAWEE_NOTE = 'Allawee ₦77,000 — e never enter.';
 import { initNet, joinCamp, syncPlayer, platoonBoard, recentChat, postChat,
          postSuggestion, reportMessage, awardBoard, myAwards, laughChat,
-         setPresence, campRoster, renameMe, setAvatar, online, prizeBoard, myPrize, platoonWar, claimPlatoonWin } from './net.js?v=20261124162056';
-import { startMusic, stopMusic, musicOn, audioState, audioSupported, setRain, whenSilenced, wakeAudio, audible, say, sfx, BEAT, BAR } from './audio.js?v=20261124162056';
+         setPresence, campRoster, renameMe, setAvatar, online, prizeBoard, myPrize, platoonWar, claimPlatoonWin } from './net.js?v=20261124163706';
+import { startMusic, stopMusic, musicOn, audioState, audioSupported, setRain, whenSilenced, wakeAudio, audible, say, sfx, BEAT, BAR } from './audio.js?v=20261124163706';
 import { playHoop, playPenalty, playQuiz, playRegister, playParade,
          playMami, playHustle, playManOWar, playSaed, playSocial,
-         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261124162056';
+         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261124163706';
 
 /* Every dance animation is expressed in beats, so the steps are on-tempo
    whether or not the sound is playing — and genuinely on the beat when it is. */
@@ -7438,28 +7442,43 @@ if (CHECKPOINT_ON && !calm()) checkDue(CHK_FIRST);
    on each catch. A tally and a brag to share at the end. */
 const SPRAY_ON = true, SPRAY_FIRST = 150000, SPRAY_EVERY = [200000, 260000], SPRAY_LEN = 8000, SPRAY_CAP = Infinity, SPRAY_COMBO_MAX = 4;   // no cap: pick as much as the time allows (user, 2026-11-23); the combo bonus still tops out at +N200
 /* his agbada and fila for each street (DISTRICTS order) */
-const ODG_LOOKS = [['#f3f1e8', '#c1272d'], ['#1e3a8a', '#c9a227'], ['#e8e2d0', '#1e3a8a'], ['#6d3f8c', '#c9a227'], ['#0f8a4a', '#c1272d']];
-const odogwuSvg = (gown, fila) => `<svg viewBox="0 0 50 92" aria-hidden="true">
-  <ellipse cx="25" cy="90.4" rx="17" ry="1.8" fill="rgba(0,0,0,.22)"/>
+const ODG_LOOKS = [['#7a1f2b', '#c9a227'], ['#1e3a8a', '#c9a227'], ['#c9b48a', '#1e3a8a'], ['#6d3f8c', '#c9a227'], ['#0f6b4a', '#c1272d']];   // (2026-11-24) no white: it read as a priest's robe
+/* (2026-11-24, user: "that odogwu white cloths looks like a priest cloth. lets make it
+   more fashionable" ... "less wide" ... "the one standing") A fitted senator kaftan to the
+   knee over matching trousers, instead of the wide flared robe: gold placket and cuffs,
+   side slits, a heavy gold chain and medallion, a gold watch, buckled loafers, the
+   shades and a fila worn tilted. Head and raised arm where they were (the convoy's
+   sunroof crops this same drawing: odgBust). */
+const odogwuSvg = (gown, fila) => { const dk = shadeOf(gown, .78), G = '#e2b33a', GL = '#fff0a8';
+  return `<svg viewBox="0 0 50 92" aria-hidden="true">
+  <ellipse cx="25" cy="90.4" rx="12" ry="1.6" fill="rgba(0,0,0,.22)"/>
   <g class="odgBody">
-    <ellipse cx="19" cy="88.6" rx="4" ry="1.7" fill="#111"/><ellipse cx="31" cy="88.6" rx="4" ry="1.7" fill="#111"/>
-    <rect x="16.4" y="78" width="5" height="10" fill="#2b2b2b"/><rect x="28.6" y="78" width="5" height="10" fill="#2b2b2b"/>
-    <path d="M11 37 Q25 30.5 39 37 L47.5 83 Q25 89.5 2.5 83 Z" fill="${gown}" stroke="rgba(0,0,0,.12)" stroke-width=".6"/>
-    <path d="M18.6 33.4 L25 46 L31.4 33.4" fill="none" stroke="#d4a017" stroke-width="1.6"/>
-    <path d="M20.4 40 q4.6 3.6 9.2 0 M19.2 48 q5.8 4 11.6 0 M22 54.6 q3 2.2 6 0" fill="none" stroke="#d4a017" stroke-width=".9"/>
-    <path d="M17.6 35.6 Q25 44 32.4 35.6" fill="none" stroke="#f2c200" stroke-width="1"/>
-    <path d="M12.6 40 Q5.4 50 9 57.6 L15.6 55.4 Q14 48 17.4 42 Z" fill="${gown}" stroke="rgba(0,0,0,.12)" stroke-width=".6"/>
-    <circle cx="11.6" cy="57" r="2.4" fill="#4a2c16"/>
-    <g transform="translate(9.6 54.4) rotate(-20)"><rect x="-3" y="-6.4" width="6" height="3.4" rx=".6" fill="#2f8f5b"/><rect x="-2.6" y="-7.6" width="6" height="3.4" rx=".6" fill="#c8506a"/><rect x="-2.2" y="-8.8" width="6" height="3.4" rx=".6" fill="#9a6a3a"/></g>
-    <g class="odgArm"><path d="M36.6 39 Q45 33 47 22 L41.4 20.4 Q39.6 30 33.4 34.4 Z" fill="${gown}" stroke="rgba(0,0,0,.12)" stroke-width=".6"/>
+    <rect x="17.4" y="66" width="6" height="21.4" rx="1.6" fill="${dk}"/><rect x="26.6" y="66" width="6" height="21.4" rx="1.6" fill="${dk}"/>
+    <path d="M15.6 86.6 h8.4 q.8 2.6 -1.4 2.6 h-7.6 q-1.6 0 -1.6 -1.3z" fill="#141414"/><path d="M26 86.6 h8.4 q1.6 0 1.6 1.3 q0 1.3 -1.6 1.3 h-7.6 q-2 0 -.8 -2.6z" fill="#141414"/>
+    <rect x="19" y="86.8" width="2.4" height="1.2" rx=".4" fill="${G}"/><rect x="29" y="86.8" width="2.4" height="1.2" rx=".4" fill="${G}"/>
+    <path d="M15.2 33.6 Q25 29.4 34.8 33.6 L36.4 70.4 Q25 72.6 13.6 70.4 Z" fill="${gown}" stroke="rgba(0,0,0,.14)" stroke-width=".5"/>
+    <path d="M14.2 63 L15.6 70.6 M35.8 63 L34.4 70.6" stroke="${dk}" stroke-width=".9"/>
+    <path d="M25 31.6 V71.4" stroke="${G}" stroke-width="1.5"/>
+    <path d="M23.6 36 l-1.4 1.6 l1.4 1.6 l-1.4 1.6 l1.4 1.6 l-1.4 1.6 l1.4 1.6 l-1.4 1.6 l1.4 1.6" fill="none" stroke="${G}" stroke-width=".55"/>
+    <path d="M13.8 69.6 Q25 72 36.2 69.6" fill="none" stroke="${G}" stroke-width=".9"/>
+    <path d="M19.4 32.4 Q25 37.6 30.6 32.4" fill="none" stroke="${G}" stroke-width="1.1"/>
+    <path d="M18.2 33 Q25 47 31.8 33" fill="none" stroke="${G}" stroke-width="1.1"/>
+    <circle cx="25" cy="45.6" r="2.6" fill="${G}" stroke="${GL}" stroke-width=".6"/><path d="M25 43.9 l1.5 1.7 l-1.5 1.7 l-1.5 -1.7z" fill="#fffbe6" stroke="#9a6b12" stroke-width=".35"/>
+    <path d="M16 36.4 Q10.6 46 12 56 L16.4 55.6 Q15.6 47.4 18.6 40.4 Z" fill="${gown}" stroke="rgba(0,0,0,.14)" stroke-width=".5"/>
+    <path d="M12 54.4 L16.3 54" stroke="${G}" stroke-width="1.2"/>
+    <circle cx="13.6" cy="57.4" r="2.3" fill="#4a2c16"/>
+    <g transform="translate(11.8 55) rotate(-20)"><rect x="-3" y="-6.4" width="6" height="3.4" rx=".6" fill="#2f8f5b"/><rect x="-2.6" y="-7.6" width="6" height="3.4" rx=".6" fill="#c8506a"/><rect x="-2.2" y="-8.8" width="6" height="3.4" rx=".6" fill="#c9a227"/></g>
+    <g class="odgArm"><path d="M33.6 35.4 Q42.4 31.4 45.6 22 L41.8 20.6 Q39.4 28.8 32.4 32Z" fill="${gown}" stroke="rgba(0,0,0,.14)" stroke-width=".5"/>
+      <path d="M41.6 21.4 L45.4 22.8" stroke="${G}" stroke-width="1.3"/><rect x="40.6" y="22.6" width="3" height="1.6" rx=".5" fill="${G}" transform="rotate(20 42 23.4)"/>
       <circle cx="44.6" cy="19.4" r="2.4" fill="#4a2c16"/><rect x="42" y="13.6" width="5.6" height="3.2" rx=".6" fill="#c8506a" transform="rotate(18 44.8 15.2)"/></g>
     <rect x="22.6" y="27.4" width="4.8" height="4.2" fill="#4a2c16"/>
     <circle cx="25" cy="22" r="7.4" fill="#4a2c16"/>
-    <path d="M17.2 18.4 Q17.6 8.6 26 9.4 Q33.4 10.6 33 18.2 Z" fill="${fila}"/><path d="M17.2 18.4 h15.8" stroke="rgba(0,0,0,.25)" stroke-width="1"/>
+    <path d="M17.4 17.8 Q17.4 9.4 25.4 9.2 Q33.6 9.6 33.2 17.4 L32.4 18.6 Q24 15.6 17.4 17.8Z" fill="${fila}" transform="rotate(-8 25 14)"/>
+    <path d="M18 17.4 Q25 14.8 32.6 17.4" fill="none" stroke="rgba(0,0,0,.25)" stroke-width=".9" transform="rotate(-8 25 14)"/>
     <rect x="18.6" y="19.6" width="12.8" height="3.4" rx="1.5" fill="#111"/><path class="glint" d="M20.2 20.4 h2" stroke="#fff" stroke-width=".7" stroke-linecap="round"/>
     <path d="M21 25.6 q4 3 8 0 z" fill="#1d1812"/><path d="M21.6 25.9 h6.8" stroke="#fff" stroke-width=".8"/>
     <path d="M19.6 26.4 q5.4 5.4 10.8 0" fill="none" stroke="#2a1a10" stroke-width="1.1" opacity=".7"/>
-  </g></svg>`;
+  </g></svg>`; };
 /* Odogwu from the waist up, for his sunroof in the convoy: the same man, his street's agbada */
 const odgBust = () => { const L = ODG_LOOKS[DISTRICTS_ON ? shownDistrict : 0] || ODG_LOOKS[0];
   return odogwuSvg(L[0], L[1]).replace('viewBox="0 0 50 92"', 'viewBox="3 3 47 44"'); };
@@ -7478,7 +7497,7 @@ function startSpray(){
   const car = document.createElement('div');
   car.className = 'pickup odgCar';
   car.style.left = '-210px';
-  car.innerHTML = suv('#f3f1e8', false, '#c9c4b6');
+  car.innerHTML = odgSuv();
   sceneEl.appendChild(car);
   requestAnimationFrame(() => { car.style.left = carX + 'px'; });
   sfx('honk');
@@ -9456,10 +9475,16 @@ function douse(v){
    from the cooler. Pure water alone at +5 could not keep up with drills and a
    pothole, so the meter sat at zero; kunu is the big top-up and costs more. */
 const WARES = {
-  water: { tag: 'Drink water\u2002₦100', price: 100, energy: 8,  belle: 0, skin: '#6b4423' },
-  akara: { tag: 'Chop akara\u2002₦200',      price: 200, energy: 0,  belle: 8, skin: '#8d5524' },
-  kunu:  { tag: 'Drink kunu\u2002₦100',       price: 100, energy: 18, belle: 2, skin: '#4a2e1c' },
+  water: { tag: 'Drink water\u2002₦200', price: 200, energy: 8,  belle: 0, skin: '#6b4423' },   // (2026-11-24, user: "akara and kunu price should be raised abit ... also water")
+  akara: { tag: 'Chop akara\u2002₦300',      price: 300, energy: 0,  belle: 8, skin: '#8d5524' },   // were 100 / 200 / 100
+  kunu:  { tag: 'Drink kunu\u2002₦300',       price: 300, energy: 18, belle: 2, skin: '#4a2e1c' },
 };
+/* The recorded SALE lines say the old prices (Jolaolu's "Akara, 200 naira"; the
+   kunu take says 100), so since the 2026-11-24 rise they stay quiet at the sale.
+   The walk-in calls still play. New takes with the new prices: drop them in
+   sfx/ and take the kind out of this set. */
+const SALE_QUIET = new Set(['akara', 'kunu']);
+const saleSay = kind => { if (!SALE_QUIET.has(kind)) say(kind, { queue: true }); };
 /* Kunu walks the same way as pure water, once water has gone and while akara
    is still crossing, so the far pavement always has someone on it. */
 const HAWK_FIRST = 20000, HAWK_LEN = 26, AKARA_AT = 20, KUNU_AT = 33, HAWK_REST = 30000;
@@ -9607,20 +9632,160 @@ function buyWares(hw){
     }
     if (++tries < 10 && hw.isConnected){ setTimeout(go, 250); return; }
     buy(hw, hw); done();
-    say(hw.dataset.kind, { queue: true });       // sold where she stands, still with her call
+    saleSay(hw.dataset.kind);                     // sold where she stands, still with her call (not a line with an old price)
   };
   go();
 }
 if (!calm()) setTimeout(hawkerCycle, HAWK_FIRST);
 
+/* ---------- Lagos traffic, with variety (2026-11-24, user: "the ordinary
+   cars on the road alot more variety in design") ----------
+   Seven kinds of vehicle in a dozen colours, each built at random: saloon,
+   hatchback, family SUV (spare tyre on the back), Sienna, Hilux with a load
+   (yams, cement, plantain or jerrycans), yellow Lagos taxi, and a church or
+   school Coaster bus. Saloons, hatches and SUVs sometimes come "rough" (one
+   door a different colour), with a load tied to the roof, tinted, or on
+   alloys. All drawn front-right (they drive left to right; the far lane
+   mirrors them). Every kind declares its viewBox and where its tyres touch
+   the road, so each one sits on the same road line whatever its height.
+   civCar(near) gives { svg, w, bottom, speed } for sendPasser / sendOncoming. */
+const CAR_COLS = ['#b9bec4', '#7a1f2b', '#1f2a44', '#e6e9ec', '#2b4f7a', '#3d3d3d', '#1e6b45', '#8a5a2b',
+                  '#d9d4c7', '#9c1c1c', '#5b6b75', '#0f0f12', '#c46a1d', '#6d3f8c', '#f0efe8', '#2f6f73'];
+const shadeOf = (hex, k = .72) => '#' + [1, 3, 5].map(i => Math.round(parseInt(hex.slice(i, i + 2), 16) * k).toString(16).padStart(2, '0')).join('');
+const pickOf = a => a[Math.floor(Math.random() * a.length)];
+const carDriver = (x, y, k) => `<circle cx="${x}" cy="${y}" r="2.2" fill="${BUS_SKIN[k % 4]}"/>${faceOf(x, y, 2.2)}`
+  + `<path d="M${x - 2.4} ${y + 2.8} q2.4-2.4 4.8 0z" fill="${BUS_WEAR[k % 5]}"/>`;
+/* alloys: a bright rim with five spokes, still a .wheel so it spins */
+function wheelA(cx, cy, r, rim = '#d5d9dd', hub = '#8d939a'){
+  const sp = [0, 72, 144, 216, 288].map(a => `<rect x="${cx - r * .07}" y="${cy - r * .62}" width="${r * .14}" height="${r * .62}" fill="${hub}" transform="rotate(${a} ${cx} ${cy})"/>`).join('');
+  return `<g class="wheel"><circle cx="${cx}" cy="${cy}" r="${r}" fill="${TYRE}"/><circle cx="${cx}" cy="${cy}" r="${r * .66}" fill="${rim}"/>${sp}<circle cx="${cx}" cy="${cy}" r="${r * .16}" fill="${hub}"/></g>`;
+}
+const roofLoad = (x, y, w) => Math.random() < .5
+  ? `<rect x="${x}" y="${y - 3.6}" width="${w}" height="3.6" rx="1" fill="#e8e2d0"/><path d="M${x} ${y - 2.4} h${w} M${x} ${y - 1.2} h${w}" stroke="#3b6fb6" stroke-width=".5"/>`   // a mattress
+    + `<path d="M${x + w * .25} ${y - 3.8} V${y} M${x + w * .75} ${y - 3.8} V${y}" stroke="#5a3d22" stroke-width=".7"/>`
+  : `<rect x="${x}" y="${y - 4.4}" width="${w}" height="4.4" rx="1.4" fill="${pickOf(['#3b6fb6', '#c1272d', '#2f6b4f'])}"/>`                                          // a Ghana Must Go bag
+    + `<path d="M${x} ${y - 3} h${w} M${x} ${y - 1.6} h${w}" stroke="rgba(255,255,255,.55)" stroke-width=".5"/><path d="M${x + w * .3} ${y - 4.6} V${y} M${x + w * .7} ${y - 4.6} V${y}" stroke="#5a3d22" stroke-width=".7"/>`;
+function carSvg(vb, inner){ return `<svg viewBox="0 0 ${vb[0]} ${vb[1]}" aria-hidden="true">${inner}</svg>`; }
+const CAR_KINDS = {
+  sedan: { vb: [90, 36], tb: 34, w: 92, odds: 26, build(o){
+    const { body, shade, k, glass } = o;
+    return `<path d="M4 28 V22.4 q0-3.4 4-3.9 L17 17 l8-7.4 q2-1.8 5-1.8 H50 q3 0 5 2 l8.6 7.2 L83 18.5 q4 .5 4 4.5 V28z" fill="${body}"/>`
+      + (o.patch ? `<path d="M41 17.2 H59 L62 19.4 V25 H41z" fill="${o.patch}"/>` : '')
+      + `<path d="M4 24.6 H87 V28 H4z" fill="${shade}"/>`
+      + `<path d="M27.6 10.6 H40 V17 H20.6z" fill="${glass}"/><path d="M42 10.6 h8.4 q1.6 0 2.6 1 L59 17 H42z" fill="${glass}"/>`
+      + carDriver(49, 14.2, k)
+      + `<path d="M41 17 V26" stroke="${shade}" stroke-width=".8"/><rect x="33" y="19.4" width="3.4" height="1" rx=".5" fill="${shade}"/><rect x="50" y="19.4" width="3.4" height="1" rx=".5" fill="${shade}"/>`
+      + (o.taxi ? `<rect x="35" y="3.6" width="13" height="4.4" rx="1" fill="#1d1d1b"/><text x="41.5" y="7" text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-size="3.4" font-weight="900" fill="#f2c413">TAXI</text>`
+                  + `<path d="M6 22.6 H86" stroke="#1d1d1b" stroke-width="1.2" stroke-dasharray="2.4 1.6"/>` : '')
+      + (o.load ? roofLoad(28, 7.8, 24) : '')
+      + `<rect x="83" y="19.8" width="4" height="2.4" rx=".8" fill="#ffd34d"/><rect x="3.6" y="19.8" width="2.4" height="2.6" rx=".6" fill="#d6342c"/>`
+      + `<ellipse cx="45.5" cy="34.5" rx="41" ry="1.6" fill="rgba(0,0,0,.3)"/>` + o.wheel(20, 28.4, 5.6) + o.wheel(70, 28.4, 5.6);
+  } },
+  hatch: { vb: [80, 36], tb: 33.8, w: 80, odds: 16, build(o){
+    const { body, shade, k, glass } = o;
+    return `<path d="M5 28 V20 q0-2.6 2.6-3.2 L10 9.6 q.6-2 2.8-2 H44 q2.6 0 4.4 1.8 l8 7.6 L70 18 q5 .8 5 4.6 V28z" fill="${body}"/>`
+      + (o.patch ? `<path d="M29 16.6 H52 L56 18.2 V24.6 H29z" fill="${o.patch}"/>` : '')
+      + `<path d="M5 24.4 H75 V28 H5z" fill="${shade}"/>`
+      + `<path d="M12.4 9.6 H27 V16 H11z" fill="${glass}"/><path d="M29 9.6 h14 q1.6 0 2.8 1.2 L51.6 16 H29z" fill="${glass}"/>`
+      + carDriver(38, 13.4, k)
+      + `<path d="M28 16 V25" stroke="${shade}" stroke-width=".8"/><rect x="37" y="18.4" width="3.2" height="1" rx=".5" fill="${shade}"/>`
+      + `<path d="M8.6 7.6 h9 l-1 1.8 h-7.4z" fill="${shade}"/>`                                    // the little roof spoiler
+      + (o.load ? roofLoad(16, 7.6, 22) : '')
+      + `<rect x="71.4" y="19.4" width="3.8" height="2.4" rx=".8" fill="#ffd34d"/><rect x="4.6" y="18.6" width="2.2" height="3" rx=".6" fill="#d6342c"/>`
+      + `<ellipse cx="40" cy="34.4" rx="36" ry="1.6" fill="rgba(0,0,0,.3)"/>` + o.wheel(18, 28.4, 5.4) + o.wheel(62, 28.4, 5.4);
+  } },
+  suv: { vb: [90, 40], tb: 38, w: 96, odds: 16, build(o){
+    const { body, shade, k, glass } = o;
+    return `<path d="M6 31 h78 v-9 a5 5 0 0 0 -5 -5 h-9 l-9 -9 h-33 l-8 9 h-9 a5 5 0 0 0 -5 5z" fill="${body}"/>`
+      + (o.patch ? `<path d="M46 17.4 H66 V26 H46z" fill="${o.patch}"/>` : '')
+      + `<path d="M6 26 H84 V31 H6z" fill="${shade}"/>`
+      + `<path d="M29 17 l6 -7 h11 v7z" fill="${glass}"/><path d="M48 10 h12 l7 7 h-19z" fill="${glass}"/>`
+      + carDriver(56, 13.6, k)
+      + `<path d="M47 17 V27" stroke="${shade}" stroke-width=".8"/><rect x="38" y="19.4" width="3.4" height="1" rx=".5" fill="${shade}"/><rect x="56" y="19.4" width="3.4" height="1" rx=".5" fill="${shade}"/>`
+      + `<rect x="31" y="6.6" width="30" height="1.4" rx=".6" fill="#9aa0a6"/>`                     // roof rails
+      + (o.load ? roofLoad(32, 6.6, 26) : '')
+      + `<circle cx="4.6" cy="22.6" r="5" fill="${TYRE}"/><circle cx="4.6" cy="22.6" r="3.4" fill="${o.spare}"/>`   // the spare on the back door
+      + `<rect x="83" y="20.4" width="3.6" height="2.6" rx=".8" fill="#ffd34d"/>`
+      + `<ellipse cx="45" cy="38.5" rx="41" ry="1.8" fill="rgba(0,0,0,.32)"/>` + o.wheel(22, 32, 6) + o.wheel(68, 32, 6);
+  } },
+  sienna: { vb: [90, 38], tb: 36.2, w: 98, odds: 12, build(o){
+    const { body, shade, k, glass } = o;
+    return `<path d="M4 30 V15 q0-4.6 4.6-6 L13 7.6 q2-.6 4.4-.6 H58 q3.6 0 6 2.4 l9.6 8.6 L83 19.4 q4 .6 4 4.6 V30z" fill="${body}"/>`
+      + `<path d="M4 26.4 H87 V30 H4z" fill="${shade}"/>`
+      + `<path d="M10 9.4 H26 V16.6 H8.6z" fill="${glass}"/><path d="M28 9.4 H44 V16.6 H28z" fill="${glass}"/><path d="M46 9.4 h11.6 q2 0 3.4 1.4 L66.6 16.6 H46z" fill="${glass}"/>`
+      + carDriver(57, 13.4, k) + (Math.random() < .6 ? carDriver(36, 13.4, k + 1) : '') + (Math.random() < .4 ? carDriver(17, 13.4, k + 2) : '')
+      + `<path d="M45 17 V27 M27 17 V27" stroke="${shade}" stroke-width=".8"/><path d="M28 18.6 H44" stroke="${shade}" stroke-width=".7"/>`
+      + `<rect x="18" y="5.6" width="38" height="1.4" rx=".6" fill="#9aa0a6"/>`
+      + `<rect x="83" y="20.4" width="4" height="2.4" rx=".8" fill="#ffd34d"/><rect x="3.6" y="18" width="2.2" height="4" rx=".6" fill="#d6342c"/>`
+      + `<ellipse cx="45.5" cy="36.6" rx="41" ry="1.6" fill="rgba(0,0,0,.3)"/>` + o.wheel(20, 30.4, 5.8) + o.wheel(70, 30.4, 5.8);
+  } },
+  hilux: { vb: [92, 38], tb: 36.2, w: 100, odds: 12, build(o){
+    const { body, shade, k, glass } = o;
+    const load = pickOf([
+      /* yams */ [0, 1, 2, 3, 4, 5, 6].map(i => `<ellipse cx="${8 + i * 5.2}" cy="${15.6 - (i % 2) * 1.6}" rx="3.6" ry="1.9" fill="${i % 3 ? '#8a5a3b' : '#a0703f'}" transform="rotate(${(i % 2 ? -14 : 12)} ${8 + i * 5.2} ${15.6 - (i % 2) * 1.6})"/>`).join('')
+        + [0, 1, 2, 3, 4].map(i => `<ellipse cx="${11 + i * 6.4}" cy="12.6" rx="3.4" ry="1.8" fill="#7a4e30" transform="rotate(${i % 2 ? 10 : -10} ${11 + i * 6.4} 12.6)"/>`).join(''),
+      /* cement */ [0, 1, 2, 3].map(i => `<rect x="${6 + i * 9.4}" y="${i % 2 ? 11.4 : 12.4}" width="8.6" height="5.8" rx="1.6" fill="#c9c6bd" stroke="#a09c90" stroke-width=".5"/><rect x="${7.6 + i * 9.4}" y="${i % 2 ? 13.4 : 14.4}" width="5.4" height="1.4" fill="#c1272d"/>`).join(''),
+      /* plantain */ [0, 1, 2, 3].map(i => `<path d="M${6 + i * 9.6} 17.6 q4.6-8 9-3.2 q-4.4-1.6-9 3.2z M${7 + i * 9.6} 17.4 q4.4-6.4 8.6-1.4" fill="#5b8a2a" stroke="#3f6b1c" stroke-width=".5"/>`).join(''),
+      /* jerrycans */ [0, 1, 2, 3, 4].map(i => `<rect x="${6 + i * 7.4}" y="${i % 2 ? 9.6 : 10.6}" width="6.4" height="7.8" rx="1.2" fill="#f2c200" stroke="#c99a00" stroke-width=".5"/><rect x="${9.2 + i * 7.4}" y="${i % 2 ? 8.4 : 9.4}" width="2" height="1.4" fill="#2b4f7a"/>`).join(''),
+    ]);
+    return load
+      + `<path d="M4 30 V18 H44 V12 q0-2.6 2.6-3.6 L52 6.6 q1.6-.6 3.4-.6 H64 q2.4 0 4 1.6 l7 9 L85 17.6 q4 .6 4 4.4 V30z" fill="${body}"/>`
+      + `<rect x="4" y="18" width="40" height="1.6" fill="${shade}"/><path d="M4 26.4 H89 V30 H4z" fill="${shade}"/>`
+      + `<path d="M47.6 9 H56 V16.4 H46.4z" fill="${glass}"/><path d="M58 9 h5.6 q1.6 0 2.6 1.2 l5 6.2 H58z" fill="${glass}"/>`
+      + carDriver(62, 13.4, k)
+      + `<path d="M57 17 V26" stroke="${shade}" stroke-width=".8"/>`
+      + `<rect x="85" y="19.6" width="4" height="2.4" rx=".8" fill="#ffd34d"/><rect x="3.6" y="19.6" width="2.2" height="4" rx=".6" fill="#d6342c"/>`
+      + `<ellipse cx="46" cy="36.6" rx="42" ry="1.6" fill="rgba(0,0,0,.3)"/>` + o.wheel(20, 30.4, 5.8) + o.wheel(72, 30.4, 5.8);
+  } },
+  taxi: { vb: [90, 36], tb: 34, w: 92, odds: 10, build(o){ return CAR_KINDS.sedan.build({ ...o, body: '#f2c413', shade: '#1d1d1b', patch: null, load: false, taxi: true }); } },
+  bus: { vb: [120, 44], tb: 43, w: 128, odds: 8, far: false, build(o){
+    const { k, glass } = o;
+    const [paint, stripe, ink, name] = pickOf([
+      ['#f4f2ea', '#1e3a8a', '#1e3a8a', 'GRACE CHAPEL INT\'L'],
+      ['#f4f2ea', '#c1272d', '#7a1f2b', 'MOUNTAIN OF BLESSING'],
+      ['#f2b705', '#1d1d1b', '#1d1d1b', 'BRIGHT FUTURE SCHOOLS'],
+      ['#2f6f73', '#f2c200', '#ffffff', 'ROYAL STAFF BUS'],
+    ]);
+    const win = [0, 1, 2, 3, 4, 5, 6].map(i => `<rect x="${9 + i * 12.4}" y="10" width="10.6" height="9" rx="1" fill="${glass}"/>`
+      + (Math.random() < .7 ? carDriver(14.3 + i * 12.4, 14.4, k + i) : '')).join('');
+    return `<path d="M3 37 V10 q0-4 4-4 H98 q4 0 7 3.6 l8 11 L116 22 q2.6 .8 2.6 3.6 V37z" fill="${paint}"/>`
+      + `<rect x="3" y="21.4" width="113" height="3" fill="${stripe}"/><path d="M3 33.4 H118.6 V37 H3z" fill="${shadeOf(paint, .8)}"/>`
+      + win + `<path d="M100.6 9.6 l7.6 10.6 H100.6z" fill="${glass}"/>` + carDriver(104, 15.4, k)
+      + `<text x="59" y="30.4" text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-size="4.8" font-weight="900" fill="${ink}" textLength="56" lengthAdjust="spacingAndGlyphs">${name}</text>`
+      + `<rect x="114.4" y="25" width="4" height="2.8" rx=".8" fill="#ffd34d"/><rect x="2.6" y="24" width="2.2" height="4.6" rx=".6" fill="#d6342c"/>`
+      + `<ellipse cx="60" cy="42.6" rx="56" ry="1.6" fill="rgba(0,0,0,.3)"/>` + wheel(22, 36.6, 6.4) + wheel(96, 36.6, 6.4);
+  } },
+};
+let lastKind = '';
+function civCar(near = true){
+  const kinds = Object.entries(CAR_KINDS).filter(([n, d]) => n !== lastKind && (near || d.far !== false));
+  let r = Math.random() * kinds.reduce((a, [, d]) => a + d.odds, 0), name = kinds[0][0];
+  for (const [n, d] of kinds){ r -= d.odds; if (r <= 0){ name = n; break; } }
+  lastKind = name;
+  const d = CAR_KINDS[name], body = pickOf(CAR_COLS), k = Math.floor(Math.random() * 20);
+  const o = {
+    body, shade: shadeOf(body), k,
+    glass: Math.random() < .3 ? '#1c232b' : '#3a4a5c',                         // tinted, or not
+    patch: Math.random() < .18 ? (Math.random() < .5 ? '#9a9d95' : pickOf(CAR_COLS.filter(c => c !== body))) : null,   // "rough": one door from another car
+    load: Math.random() < .15,
+    spare: shadeOf(body, .9),
+    wheel: Math.random() < .4 ? wheelA : wheel,
+  };
+  const scale = near ? 1 : .76, w = Math.round(d.w * scale);
+  const ground = near ? 39 + Math.random() * 2 : 48.6;                      // where the tyres meet the road, in px
+  return { svg: carSvg(d.vb, d.build(o)), w, bottom: Math.round((ground - (d.vb[1] - d.tb) * (w / d.vb[0])) * 10) / 10,
+           speed: (near ? 5.4 : 5.2) + Math.random() * 1.2 + (name === 'bus' ? 1.2 : 0) };
+}
+
 /* The rest of the road: the police Hilux and two ordinary saloons, one at a
    time and taking turns, so each is something you notice going by rather than
    more of the loop. Held back while a fire, a convoy or the goats have the
    road. */
-const PASSERS = [
-  () => ({ svg: sedan('#b9bec4', '#8f959c', 0), w: 92, bottom: 37, speed: 6.2 }),   // as long as a danfo, lower
+const PASSERS = [                                    // (2026-11-24) any of seven kinds, built fresh each time: civCar()
+  () => civCar(true),
+  () => civCar(true),
   () => ({ svg: policeHilux(), w: 104, bottom: 33, speed: 7.6, cls: 'police' }),
-  () => ({ svg: sedan('#7a1f2b', '#5a1520', 2), w: 92, bottom: 39, speed: 5.6 }),
+  () => civCar(true),
 ];
 const PASS_FIRST = 9000, PASS_EVERY = 16000;
 let passN = 0;
@@ -9655,8 +9820,9 @@ const ONCOMING = [
   () => ({ svg: okada(true),  w: 37, bottom: 47, speed: 5.0, drop: true }),   // a passenger: the one who can drop a wallet
   () => ({ svg: keke(),       w: 40, bottom: 46, speed: 6.2 }),
   () => ({ svg: okada(true),  w: 36, bottom: 48, speed: 4.6, drop: true }),
-  () => ({ svg: sedan(['#e6e9ec', '#2b4f7a', '#3d3d3d', '#c9a227'][Math.floor(Math.random() * 4)], '#5d6268', 1), w: 70, bottom: 47, speed: 5.4 }),
+  () => civCar(false),                                 // (2026-11-24) the far lane gets the variety too
   () => ({ svg: keke(),       w: 40, bottom: 46, speed: 6.0 }),
+  () => civCar(false),
 ];
 let oncomingN = Math.floor(Math.random() * ONCOMING.length);
 function sendOncoming(){
@@ -10045,12 +10211,49 @@ const CONVOY_PASS = 4600 * TS + 3000, ODOGWU_PASS = 8000 * TS + 5400,   /* the d
 /* An oga's convoy: two outriders, two black SUVs with the flag on the bonnet,
    strobes going, straight through the far lane at twice traffic speed. "Oga"
    on purpose — a big man is passing, and whose big man is nobody's business. */
-function suv(body = '#141414', flag = true, trim = '#0a0a0a'){
-  return `<svg viewBox="0 0 90 40" aria-hidden="true">
+const GOLD_DEFS = `<defs><linearGradient id="odgGold" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff3b0"/><stop offset=".45" stop-color="#e2b33a"/><stop offset="1" stop-color="#9a6b12"/></linearGradient></defs>`;
+/* Odogwu's rims (user: "flashy tire rims"): spinners. Chrome lip, gold dish, eight
+   bright spokes and a gold cap that turn with the wheel, and a glint of light
+   that stays put and flashes as they spin. */
+function goldWheel(cx, cy, r){
+  const sp = [0, 45, 90, 135, 180, 225, 270, 315].map(a =>
+    `<path d="M${cx} ${cy} L${cx - r * .1} ${cy - r * .64} L${cx + r * .1} ${cy - r * .64}Z" fill="${a % 90 ? '#fff3b0' : '#ffffff'}" transform="rotate(${a} ${cx} ${cy})"/>`).join('');
+  return `<g class="wheel"><circle cx="${cx}" cy="${cy}" r="${r}" fill="${TYRE}"/>`
+    + `<circle cx="${cx}" cy="${cy}" r="${r * .8}" fill="#eef1f4"/><circle cx="${cx}" cy="${cy}" r="${r * .72}" fill="url(#odgGold)"/>${sp}`
+    + `<circle cx="${cx}" cy="${cy}" r="${r * .22}" fill="#9a6b12"/><circle cx="${cx}" cy="${cy}" r="${r * .12}" fill="#fff3b0"/></g>`
+    + `<path class="rimGlint" d="M${cx - r * .56} ${cy - r * .18} A${r * .6} ${r * .6} 0 0 1 ${cx - r * .12} ${cy - r * .58}" fill="none" stroke="#fff" stroke-width="${r * .14}" stroke-linecap="round"/>`;
+}
+/* Odogwu's own SUV (2026-11-24, user: "more flashy, maybe some gold trims to show
+   extravagance"): pearl white, gold trim, rails, sill, handles, grille, window
+   frames, a crest on the door, gold rims, and a twinkle of bling on the paint. */
+function odgSuv(){
+  const G = 'url(#odgGold)';
+  const star = (x, y, k, d) => `<path class="bling" style="animation-delay:${d}s" d="M${x} ${y - 3 * k} L${x + .7 * k} ${y - .7 * k} L${x + 3 * k} ${y} L${x + .7 * k} ${y + .7 * k} L${x} ${y + 3 * k} L${x - .7 * k} ${y + .7 * k} L${x - 3 * k} ${y} L${x - .7 * k} ${y - .7 * k}Z" fill="#fffbe6"/>`;
+  return `<svg viewBox="0 0 90 40" aria-hidden="true" overflow="visible">${GOLD_DEFS}
+    <path d="M6 31 h78 v-9 a5 5 0 0 0 -5 -5 h-9 l-9 -9 h-33 l-8 9 h-9 a5 5 0 0 0 -5 5z" fill="#f7f4ec"/>
+    <path d="M8.4 21.4 a4 4 0 0 1 3.8 -3.4 h66 a4 4 0 0 1 3.8 3.4z" fill="#fff" opacity=".6"/>
+    <rect x="30" y="6.2" width="32" height="1.6" rx=".7" fill="${G}"/><rect x="33" y="7" width="1.2" height="1.6" fill="${G}"/><rect x="58" y="7" width="1.2" height="1.6" fill="${G}"/>
+    <path d="M29 17 l6 -7 h25 l7 7z" fill="#17202b" stroke="${G}" stroke-width="1.1" stroke-linejoin="round"/>
+    <path d="M31 17 l5 -5 h9 v5z M47 12 h11 l5 5 h-16z" fill="#4a6078" opacity=".4"/>
+    <path d="M46 10 V17" stroke="${G}" stroke-width="1"/>
+    <rect x="6" y="23.4" width="78" height="2.6" fill="${G}"/>
+    <rect x="14" y="28.8" width="62" height="1.4" rx=".6" fill="${G}"/>
+    <rect x="38" y="19" width="4.2" height="1.3" rx=".6" fill="${G}"/><rect x="55" y="19" width="4.2" height="1.3" rx=".6" fill="${G}"/>
+    <circle cx="27.6" cy="20.4" r="2.5" fill="${G}"/><text x="27.6" y="21.7" text-anchor="middle" font-family="Georgia,serif" font-size="3.6" font-weight="900" fill="#7a5200">O</text>
+    <rect x="83.4" y="19.4" width="3.4" height="2.6" rx=".8" fill="#fff6c8" stroke="${G}" stroke-width=".7"/>
+    <path d="M84.6 26.6 V30.4 M86.2 26.6 V30.4" stroke="${G}" stroke-width=".8"/>
+    <rect x="5.2" y="19.4" width="2" height="3" rx=".6" fill="#d6342c"/>
+    <ellipse cx="45" cy="38.5" rx="41" ry="1.8" fill="rgba(0,0,0,.32)"/>
+    ${star(36, 8.2, .95, 0)}${star(72, 21.6, .8, .6)}${star(15, 23.2, .7, 1.1)}${star(52, 25, .75, 1.5)}
+    ${goldWheel(22, 32, 6)}${goldWheel(68, 32, 6)}
+  </svg>`;
+}
+function suv(body = '#141414', flag = true, trim = '#0a0a0a', gold = false){
+  return `<svg viewBox="0 0 90 40" aria-hidden="true">${gold ? GOLD_DEFS : ''}
     <path d="M6 31 h78 v-9 a5 5 0 0 0 -5 -5 h-9 l-9 -9 h-33 l-8 9 h-9 a5 5 0 0 0 -5 5z" fill="${body}"/>
     <path d="M29 17 l6 -7 h25 l7 7z" fill="#2e3b4a"/>
     <path d="M31 17 l5 -5 h9 v5z M47 12 h11 l5 5 h-16z" fill="#4a6078" opacity=".55"/>
-    <rect x="6" y="24" width="78" height="2" fill="${trim}"/>
+    <rect x="6" y="24" width="78" height="2" fill="${gold ? 'url(#odgGold)' : trim}"/>${gold ? `<path d="M29 17 l6 -7 h25 l7 7z" fill="none" stroke="url(#odgGold)" stroke-width=".9"/><rect x="14" y="28.8" width="62" height="1.2" rx=".5" fill="url(#odgGold)"/>` : ''}
     ${flag ? `<rect x="80" y="10" width="1.4" height="12" fill="#2a2a2a"/>
     <rect x="81.4" y="10" width="2.4" height="5.4" fill="#1d6b3a"/>
     <rect x="83.8" y="10" width="2.4" height="5.4" fill="#f3f1e8"/>
@@ -10059,7 +10262,7 @@ function suv(body = '#141414', flag = true, trim = '#0a0a0a'){
     <circle class="lightB" cx="52" cy="8.5" r="2.6" fill="#3b7bff"/>
     <rect x="84" y="26" width="3" height="2.4" rx=".8" fill="#ffd34d"/>
     <ellipse cx="45" cy="38.5" rx="41" ry="1.8" fill="rgba(0,0,0,.32)"/><!-- on the road: without it a dark car floats (user, 2026-11-21) -->
-    ${wheel(22,32,6)}${wheel(68,32,6)}
+    ${gold ? goldWheel(22, 32, 6) + goldWheel(68, 32, 6) : wheel(22,32,6) + wheel(68,32,6)}
   </svg>`;
 }
 /* The escort pickup that runs ahead of a rich man's SUVs: dark blue, a
@@ -10116,8 +10319,8 @@ function odogwuConvoy(){
   c.innerHTML =
     /* ~14px between bumpers on every screen (65.6 px/s): 164px apart = 2.5s */
     `<div class="car" style="width:150px;bottom:7px;animation-duration:${D};animation-delay:0s">${pickup()}</div>` +
-    `<div class="car dash" style="width:152px;bottom:1px;animation-duration:${D};animation-delay:2.5s">${suv('#f3f1e8', false, '#c9c4b6')}<div class="odgRoof">${odgBust()}</div><i class="tapTag">Tap to grab cash</i></div>` +
-    `<div class="car" style="width:150px;bottom:4px;animation-duration:${D};animation-delay:5.02s">${suv('#141414', false)}</div>`;
+    `<div class="car dash" style="width:152px;bottom:1px;animation-duration:${D};animation-delay:2.5s">${odgSuv()}<div class="odgRoof">${odgBust()}</div><i class="tapTag">Tap to grab cash</i></div>` +
+    `<div class="car" style="width:150px;bottom:4px;animation-duration:${D};animation-delay:5.02s">${suv('#141414', false, '#0a0a0a', true)}</div>`;
   c.setAttribute('role', 'button');
   c.setAttribute('aria-label', 'Odogwu passing. Tap for money');
   sceneEl.appendChild(c);
@@ -10552,7 +10755,7 @@ function snackRun(preferred, target, paid){
     who.classList.replace('running', stall.el.dataset.food ? 'munching' : 'shopping');
     if (paid) buy(stall.el, who);      // only a tap costs money
     /* Every seller names her price as he reaches her. */
-    if (paid && hawk) say(stall.el.dataset.kind, { queue: true });
+    if (paid && hawk) saleSay(stall.el.dataset.kind);
     /* Jollof and roasted corn, the two food shops, get "Haha, e enter!":
        pidgin for "that satisfies". Said as he reaches the stall and eats. */
     if (paid && !hawk && stall.el.dataset.food) say('enter', { queue: true });
