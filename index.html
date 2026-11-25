@@ -1433,6 +1433,7 @@
   .stat span{font-size:19px;font-weight:800}
   .bar{height:6px;background:var(--line);border-radius:3px;margin-top:6px;overflow:hidden}
   .bar i{display:block;height:100%;background:var(--stat-bar,var(--green));transition:width .25s}
+  .bar.over i{background:linear-gradient(90deg,var(--stat-bar,var(--green)) 0 var(--gold,66%),#f2c200 var(--gold,66%) 100%);box-shadow:0 0 6px rgba(242,194,0,.7)}   /* past 100 (STAT_MAX 150) */
   .bar.low i{background:var(--red)}
 
   .tag{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;
@@ -2315,7 +2316,7 @@
 <script type="module">
 import { newGame, doAction, canDo, unlocked, ACTIONS, phaseOf, nextUnlock, postingOdds, rivalOf,
          computePosting, CHOICES, GOAL, goalStatus,
-         shareText, MAX_DAY } from './game.js?v=20261124155131';
+         shareText, MAX_DAY, STAT_MAX } from './game.js?v=20261124162056';
 
 /* ---------- scene coordinates ----------
    The scene is scaled by a transform (see the stage), so a native
@@ -2346,11 +2347,11 @@ const TS = (document.getElementById('scene').offsetWidth || 375) / 375;
 const ALLAWEE_NOTE = 'Allawee ₦77,000 — e never enter.';
 import { initNet, joinCamp, syncPlayer, platoonBoard, recentChat, postChat,
          postSuggestion, reportMessage, awardBoard, myAwards, laughChat,
-         setPresence, campRoster, renameMe, setAvatar, online, prizeBoard, myPrize, platoonWar, claimPlatoonWin } from './net.js?v=20261124155131';
-import { startMusic, stopMusic, musicOn, audioState, audioSupported, setRain, whenSilenced, wakeAudio, audible, say, sfx, BEAT, BAR } from './audio.js?v=20261124155131';
+         setPresence, campRoster, renameMe, setAvatar, online, prizeBoard, myPrize, platoonWar, claimPlatoonWin } from './net.js?v=20261124162056';
+import { startMusic, stopMusic, musicOn, audioState, audioSupported, setRain, whenSilenced, wakeAudio, audible, say, sfx, BEAT, BAR } from './audio.js?v=20261124162056';
 import { playHoop, playPenalty, playQuiz, playRegister, playParade,
          playMami, playHustle, playManOWar, playSaed, playSocial,
-         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261124155131';
+         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261124162056';
 
 /* Every dance animation is expressed in beats, so the steps are on-tempo
    whether or not the sound is playing — and genuinely on the beat when it is. */
@@ -6626,7 +6627,7 @@ function settleLove(wreck){
     el.classList.add('blessed');
     heartsUp(el);
     if (Math.random() < LOVE_CHOP_ODDS){
-      s.belle = Math.min(100, s.belle + LOVE_CHOP);
+      s.belle = Math.min(STAT_MAX, s.belle + LOVE_CHOP);
       say2('Thank you o! Take chin-chin', 'paid');
       tell('They dash you chin-chin for minding your business. Respect!');
     } else {
@@ -6755,7 +6756,7 @@ function haggleEnter(){
   const paid = h.price, saved = h.start - paid;
   track('danfo'); if (saved > 0) track('saved', saved); if (paid <= h.floor) track('lastprice');
   s.money -= paid;
-  s.energy = Math.min(100, s.energy + HAGGLE_REST);
+  s.energy = Math.min(STAT_MAX, s.energy + HAGGLE_REST);
   save(); render();
   floatCost(h.p, `-${naira(paid)}`);
   if (saved > 0) setTimeout(() => { if (h.D.isConnected) floatCost(h.D, `+${naira(saved)} saved!`); }, 350);
@@ -10637,8 +10638,8 @@ function buy(shopEl, who){
      errands and watch the balance sit at zero, which is the opposite of a
      lesson about money. Debt shows in red. */
   s.money -= cost;
-  if (belle)  s.belle  = Math.min(100, s.belle + belle);
-  if (energy) s.energy = Math.min(100, (s.energy || 0) + energy);
+  if (belle)  s.belle  = Math.min(STAT_MAX, s.belle + belle);
+  if (energy) s.energy = Math.min(STAT_MAX, (s.energy || 0) + energy);
   if (cred)   s.cred   = (s.cred || 0) + cred;
   if (shopEl.dataset.trade) s.tradeDay = s.day;
   save();                       // a purchase that a refresh undoes is no purchase
@@ -11367,7 +11368,9 @@ $('cardGo').onclick = async () => {
 };
 
 function bar(el, v){
-  el.firstElementChild.style.width = Math.max(0, Math.min(100, v)) + '%';
+  el.firstElementChild.style.width = Math.max(0, Math.min(100, v / STAT_MAX * 100)) + '%';   // out of STAT_MAX (game.js)
+  el.classList.toggle('over', v > 100);                       // past the old top: gold
+  if (v > 100) el.firstElementChild.style.setProperty('--gold', (100 / v * 100).toFixed(1) + '%');   // gold from the 100 mark on
   el.classList.toggle('low', v < 25);
 }
 

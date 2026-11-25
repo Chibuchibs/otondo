@@ -215,8 +215,8 @@ function spend(s, amount) {
 const naira = n => (n < 0 ? '-' : '') + '₦' + Math.abs(n).toLocaleString();
 
 function apply(s, d) {
-  if (d.energy) s.energy = clamp(s.energy + d.energy);
-  if (d.belle) s.belle = clamp(s.belle + d.belle);
+  if (d.energy) s.energy = clamp(s.energy + d.energy, 0, STAT_MAX);
+  if (d.belle) s.belle = clamp(s.belle + d.belle, 0, STAT_MAX);
   if (d.cred) s.cred = clamp(s.cred + d.cred, 0, 999);
 }
 
@@ -300,7 +300,12 @@ const POSTINGS = {
    posting letter on day 21 is then their choice, as long as credibility is
    still at the target. Without a match it is the usual weighted roll. */
 export const CHOICES = POSTINGS.soft;
-export const GOAL = { cred: 150, energy: 40, belle: 40, money: 0 };
+/* energy and belle 100+ (2026-11-24, user: "100+ to hit the goal"); were 40. Back to 40 (and
+   STAT_MAX to 100) to undo. Harder on purpose: staying fed and rested now costs money. */
+export const GOAL = { cred: 150, energy: 100, belle: 100, money: 0 };
+/* The top of energy and belle (2026-11-24, user: "energy and belle should be set at 100+ ...
+   make it reversible"). Was 100. Set it back to 100 to undo: everything reads it. */
+export const STAT_MAX = 150;
 export function goalStatus(s) {
   const g = {
     energy: s.energy >= GOAL.energy,
