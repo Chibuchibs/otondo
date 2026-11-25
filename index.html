@@ -1791,7 +1791,7 @@
   .sCard.locked .scName{color:#7c86a3}
   .sCard.locked .scLine{color:#7c86a3;font-style:normal}
   /* the flip-in when a new card drops */
-  .cardDrop{position:absolute;left:10px;top:44px;z-index:11;width:104px;pointer-events:auto;cursor:pointer;perspective:400px}
+  .cardDrop{position:absolute;left:10px;top:44px;z-index:11;width:104px;pointer-events:none;perspective:400px}   /* display only (2026-11-24) */
   .cardDrop .sCard{transform-origin:50% 50%;animation:cardFlip .7s cubic-bezier(.2,1.3,.4,1) both;box-shadow:0 6px 18px rgba(0,0,0,.45)}
   .cardDrop .cdNew{position:absolute;left:50%;top:-12px;transform:translateX(-50%);z-index:2;background:#c1272d;color:#fff;font:900 8px/1 system-ui,sans-serif;
     letter-spacing:.1em;padding:3px 6px;border-radius:4px;white-space:nowrap}
@@ -2322,7 +2322,7 @@
 <script type="module">
 import { newGame, doAction, canDo, unlocked, ACTIONS, phaseOf, nextUnlock, postingOdds, rivalOf,
          computePosting, CHOICES, GOAL, goalStatus,
-         shareText, MAX_DAY, STAT_MAX } from './game.js?v=20261124165333';
+         shareText, MAX_DAY, STAT_MAX } from './game.js?v=20261124205438';
 
 /* ---------- scene coordinates ----------
    The scene is scaled by a transform (see the stage), so a native
@@ -2353,11 +2353,11 @@ const TS = (document.getElementById('scene').offsetWidth || 375) / 375;
 const ALLAWEE_NOTE = 'Allawee ₦77,000 — e never enter.';
 import { initNet, joinCamp, syncPlayer, platoonBoard, recentChat, postChat,
          postSuggestion, reportMessage, awardBoard, myAwards, laughChat,
-         setPresence, campRoster, renameMe, setAvatar, online, prizeBoard, myPrize, platoonWar, claimPlatoonWin } from './net.js?v=20261124165333';
-import { startMusic, stopMusic, musicOn, audioState, audioSupported, setRain, whenSilenced, wakeAudio, audible, say, sfx, BEAT, BAR } from './audio.js?v=20261124165333';
+         setPresence, campRoster, renameMe, setAvatar, online, prizeBoard, myPrize, platoonWar, claimPlatoonWin } from './net.js?v=20261124205438';
+import { startMusic, stopMusic, musicOn, audioState, audioSupported, setRain, whenSilenced, wakeAudio, audible, say, sfx, BEAT, BAR } from './audio.js?v=20261124205438';
 import { playHoop, playPenalty, playQuiz, playRegister, playParade,
          playMami, playHustle, playManOWar, playSaed, playSocial,
-         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261124165333';
+         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261124205438';
 
 /* Every dance animation is expressed in beats, so the steps are on-tempo
    whether or not the sound is playing — and genuinely on the beat when it is. */
@@ -5674,7 +5674,7 @@ const GUTTER_SVG = `<svg viewBox="0 0 80 48" aria-hidden="true" overflow="visibl
   </g>
   <text class="potName" font-size="8" font-weight="900" letter-spacing="0.55"
         font-family="system-ui,sans-serif" text-anchor="middle">
-    <textPath href="#potArc" startOffset="50%">OPEN GUTTER</textPath>
+    <textPath href="#potArc" startOffset="50%">GUTTER</textPath>
   </text>
 </svg>`;
 /* A car parked on the kerb, front wheel down a gutter (2026-11-16, from the
@@ -6172,7 +6172,7 @@ const OBSTACLE = {
   puddle:  { svg: PUDDLE_SVG, tag: 'Splash through!', cost: 2, miss: 5, start: 30, edge: 28,
              jumped: 'You waded through the puddle!', fell: 'Splash! You slipped in the puddle. Tap next time.' },
   gutter:  { svg: GUTTER_SVG, tag: 'Jump am!', cost: 3, miss: 7, start: 44, edge: 42,   /* 72 open: a long leap */
-             jumped: 'You jumped the open gutter!', fell: 'Straight into the gutter! Tap JUMP next time.' },
+             jumped: 'You jumped the gutter!', fell: 'Straight into the gutter! Tap JUMP next time.' },
   car:     { svg: CAR_SVG, tag: 'Dodge am!', cost: 2, miss: 5, start: 104, edge: 100, warn: 560, tagBottom: 104,
              jumped: 'You went round the car!', fell: 'You walked into the car! Tap to go round.' },
   bin:     { svg: BIN_SVG, tag: 'Waka round!', cost: 2, miss: 4, start: 62, edge: 58, warn: 480, tagBottom: 92,
@@ -6624,7 +6624,7 @@ function settleLove(wreck){
     } else {
       s.energy = Math.max(0, s.energy - LOVE_CHASE);
       say2('Commot for here!', 'fine');
-      tell('Her boyfriend chase you commot! Na wa for you o!');
+      tell('Her boyfriend chase you commot! No number this time. 📞 Call Me O! card: she drops it 1 time in 3.');   // (2026-11-24) user wrecked, saw no card tick, did not know it was a gamble
       setTimeout(() => { if (who.isConnected) who.animate([{ transform: 'translateX(0)' }, { transform: 'translateX(26px)', offset: .45 }, { transform: 'translateX(0)' }],
                                                           { duration: 900, easing: 'ease-out', composite: 'add' }); }, 250);
     }
@@ -6822,7 +6822,7 @@ const CARDS = [
   { id: 'convoy',    evt: 'dash',      r: 'rare',      ico: '🚙', name: 'Odogwu Convoy',   line: 'Siren, sunroof, cash.',             hint: 'Grab cash from Odogwu’s convoy' },
   { id: 'lastprice', evt: 'lastprice', r: 'legendary', ico: '👑', name: 'Last Price King', line: 'Conductor don surrender.',          hint: 'Haggle a danfo all the way to its last price' },
   { id: 'magnet',    evt: 'spray3k',   r: 'legendary', ico: '🧲', name: 'Money Magnet',    line: 'Odogwu money dey follow you.',      hint: 'Pack ₦3,000 in one Odogwu spray' },
-  { id: 'callme',    evt: 'number',    r: 'legendary', ico: '📞', name: 'Call Me O!',      line: 'Her boyfriend still dey vex.',      hint: 'Wreck a love, and get her number' },
+  { id: 'callme',    evt: 'number',    r: 'legendary', ico: '📞', name: 'Call Me O!',      line: 'Her boyfriend still dey vex.',      hint: 'Wreck a love: 1 in 3, she drops her number' },
 ];
 const CARD_PAY = { common: { money: 200 }, rare: { cred: 2 }, legendary: { cred: 5, money: 1000 } };
 const CARD_SET_BONUS = { cred: 25, money: 5000 };
@@ -6852,7 +6852,7 @@ function earnCard(c){
   d.className = 'cardDrop ' + c.r;
   d.innerHTML = `<span class="cdNew">NEW CARD · ${n}/${CARDS.length}</span>` + cardHtml(c, false);
   sceneEl.appendChild(d);
-  d.onclick = () => { d.remove(); openCards(); };
+  d.style.pointerEvents = 'none';   // (2026-11-24) display only: it sits where fires and prompts appear, and a tap meant for them yanked you to Awards and scrolled the street away. The 📒 chip opens the cards.
   setTimeout(() => d.isConnected && d.animate([{ opacity: 1 }, { opacity: 0, transform: 'translateY(-10px)' }], { duration: 400, fill: 'forwards' }).finished.then(() => d.remove()), 3200);
   sfx('kaching');
   const prize = [pay.money ? `+${naira(pay.money)}` : '', pay.cred ? `+${pay.cred} cred` : ''].filter(Boolean).join(' ');
@@ -6984,7 +6984,7 @@ $('wahChip').onclick = () => {
     <p>${wah.done ? '✅ You don finish am today. New one tomorrow.' : `Progress: <b>${w.money ? `${naira(Math.min(wah.got, w.n))} of ${naira(w.n)}` : `${Math.min(wah.got, w.n)} of ${w.n}`}</b> · ${left} left`}</p>
     <p style="font-size:13.5px">Pay: <b>+${naira(pay.money)} +${pay.cred} cred</b>. Finish am every day and the pay go climb, up to ${naira(5000)}.${wah.streak > 0 ? ` 🔥 Wahala streak: ${wah.streak}` : ''}</p>`);
 };
-$('cardsChip').onclick = openCards;
+$('cardsChip').onclick = () => $('tabAwards').getAttribute('aria-selected') === 'true' ? closeTabs() : openCards();   // a second tap closes it (2026-11-24, user)
 /* the signboard announces it, once a session, soon after you start */
 if (WAHALA_ON && !calm()) setTimeout(() => {
   if (!s || !shoutSign) return;
