@@ -1463,7 +1463,7 @@ const BANK = [
   ['Which Nigerian city is famous for its film industry, Nollywood?', ['Lagos','Jos','Enugu','Benin City'], 0],
   ['Which festival is celebrated by the Osun people in Osogbo?', ['Osun-Osogbo','Eyo','Argungu','Calabar Carnival'], 0],
   ['What does "danfo" refer to?', ['A yellow minibus','A motorcycle taxi','A market','A type of soup'], 0],
-  ['Which state is known as the Centre of Commerce?', ['Aba, Abia State','Kano State','Rivers State','Oyo State'], 0],
+  ['Which state is known as the Centre of Commerce?', ['Kano State','Abia State','Rivers State','Oyo State'], 0],   // Kano's slogan, on its number plates; Abia's is "God's Own State" (2026-11-25)
   ['Jollof rice is commonly argued over between Nigeria and which country?', ['Ghana','Kenya','Egypt','Senegal'], 0],
   ['What is "suya"?', ['Spiced grilled meat','A fried pastry','A soup','A drink'], 0],
   ['Which language is spoken by the largest group in the south-west?', ['Yoruba','Igbo','Hausa','Tiv'], 0],

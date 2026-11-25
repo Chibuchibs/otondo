@@ -2309,7 +2309,7 @@
        You walk the road as a corps member: dodge Mr. Pothole, step round the broken-down danfo,
        buy pure water and akara from the hawkers, catch the thief and quench the fire.</p>
     <p>The street changes as you walk: Allen Avenue in Ikeja, Broad Street on Lagos Island,
-       Admiralty Way in Lekki Phase 1, Computer Village in Ikeja and Ojuelegba in Yaba, each with
+       Admiralty Way in Lekki Phase 1, Computer Village in Ikeja and Ojuelegba in Surulere, each with
        its own buildings, skyline and sellers.</p>
     <p>Underneath it is 21 days of NYSC camp. You arrive with ₦20,000 and allawee never enter:
        parade, Man O War, Mami market and bad beans. Build your credibility, keep your belle full,
@@ -2330,7 +2330,7 @@
 <script type="module">
 import { newGame, doAction, canDo, unlocked, ACTIONS, phaseOf, nextUnlock, postingOdds, rivalOf,
          computePosting, CHOICES, GOAL, goalStatus,
-         shareText, MAX_DAY, STAT_MAX } from './game.js?v=20261125150334';
+         shareText, MAX_DAY, STAT_MAX } from './game.js?v=20261125153608';
 
 /* ---------- scene coordinates ----------
    The scene is scaled by a transform (see the stage), so a native
@@ -2361,11 +2361,11 @@ const TS = (document.getElementById('scene').offsetWidth || 375) / 375;
 const ALLAWEE_NOTE = 'Allawee ₦77,000 — e never enter.';
 import { initNet, joinCamp, syncPlayer, platoonBoard, recentChat, postChat,
          postSuggestion, reportMessage, awardBoard, myAwards, laughChat,
-         setPresence, campRoster, renameMe, setAvatar, online, prizeBoard, myPrize, platoonWar, claimPlatoonWin } from './net.js?v=20261125150334';
-import { startMusic, stopMusic, musicOn, audioState, audioSupported, setRain, whenSilenced, wakeAudio, audible, say, sfx, BEAT, BAR } from './audio.js?v=20261125150334';
+         setPresence, campRoster, renameMe, setAvatar, online, prizeBoard, myPrize, platoonWar, claimPlatoonWin } from './net.js?v=20261125153608';
+import { startMusic, stopMusic, musicOn, audioState, audioSupported, setRain, whenSilenced, wakeAudio, audible, say, sfx, BEAT, BAR } from './audio.js?v=20261125153608';
 import { playHoop, playPenalty, playQuiz, playRegister, playParade,
          playMami, playHustle, playManOWar, playSaed, playSocial,
-         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261125150334';
+         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261125153608';
 
 /* Every dance animation is expressed in beats, so the steps are on-tempo
    whether or not the sound is playing — and genuinely on the beat when it is. */
@@ -4761,7 +4761,10 @@ const YABA_TOWERS = [
   { name: 'AKOKA',    w: 40, h: 90,  body: '#b8a8a0', win: '#efe6e2' },
   { name: 'SABO',     w: 36, h: 80,  body: '#a8b4c4', win: '#e2e9f1' },
 ];
-DISTRICTS.push({ name: 'OJUELEGBA', area: 'YABA', shops: YABA_SHOPS, towers: YABA_TOWERS });
+/* Ojuelegba is in Surulere, not Yaba (2026-11-25, user: realism sweep). The street runs
+   the Ojuelegba-to-Yaba corridor, so Yaba Market and Yabacon Hub still stand on it, but
+   the junction itself belongs to Surulere and the street card now says so. */
+DISTRICTS.push({ name: 'OJUELEGBA', area: 'SURULERE', shops: YABA_SHOPS, towers: YABA_TOWERS });
 /* The weekly ₦10,000 airtime race (2026-11-19, user; doubled from ₦5,000 on 2026-11-24). Every week until Sunday
    10 January 2027 (supabase/prize.sql's prize_last() says the same; extend
    both together). Its board takes the Skills board's slot on Allen Avenue,
@@ -6327,11 +6330,31 @@ let toutDueAt = performance.now() + TOUT_FIRST, turnN = 0;
 const FLOOD_ON = true;
 let wetUntil = 0, sinceFlood = 3;
 if (FLOOD_ON) setInterval(() => { if (sceneEl.matches('.w-rain, .w-storm')) wetUntil = performance.now() + 25000; }, 1000);
+/* Mr. Pothole was being starved out (2026-11-25, user: "says to jump pothole for
+   daily wahala but have not seen Mr. pothole for a while"). The agbero is due every
+   TOUT_EVERY = 30s but a pass only lasts 18s (narrow) to 28s (wide), so he took about
+   half of every pass, and the rota — which is the only thing that ever yields a
+   pothole — advanced on the other half. Measured over 40 simulated minutes: Mr.
+   Pothole fell to one every 142s on a phone and 228s on a wide screen, worst gap 5
+   minutes, so "Jump Mr. Pothole x3" wanted ~7 minutes of flawless play.
+   The guard below only bites once he is overdue, so it costs the agbero almost
+   nothing (49% of passes -> 42%) and leaves the opening alone: the agbero does not
+   start until TOUT_FIRST, so in the first minute the rota always reaches a pothole
+   inside 3 passes and this never fires. Measured after: one every 73s / 121s,
+   worst gap 99s / 160s, first minute unchanged at 60s. */
+const POT_MAX_WAIT = 4;         // most passes in a row without Mr. Pothole
+let sincePot = 0;
 function nextObstacle(){
   const now = performance.now();
-  if (now >= toutDueAt && potKind !== 'tout'){ toutDueAt = now + TOUT_EVERY; return 'tout'; }
-  if (FLOOD_ON && now < wetUntil && ++sinceFlood >= 5 && potKind !== 'flood'){ sinceFlood = 0; return 'flood'; }
-  return OBSTACLE_TURNS[turnN++ % OBSTACLE_TURNS.length];
+  const pick = () => {
+    if (sincePot >= POT_MAX_WAIT && potKind !== 'pothole') return 'pothole';
+    if (now >= toutDueAt && potKind !== 'tout'){ toutDueAt = now + TOUT_EVERY; return 'tout'; }
+    if (FLOOD_ON && now < wetUntil && ++sinceFlood >= 5 && potKind !== 'flood'){ sinceFlood = 0; return 'flood'; }
+    return OBSTACLE_TURNS[turnN++ % OBSTACLE_TURNS.length];
+  };
+  const kind = pick();
+  sincePot = kind === 'pothole' ? 0 : sincePot + 1;
+  return kind;
 }
 /* Paid, he walks off: the road is clear for the rest of this pass. */
 let toutGone = -1;
