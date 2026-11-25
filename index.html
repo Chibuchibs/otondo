@@ -2330,7 +2330,7 @@
 <script type="module">
 import { newGame, doAction, canDo, unlocked, ACTIONS, phaseOf, nextUnlock, postingOdds, rivalOf,
          computePosting, CHOICES, GOAL, goalStatus,
-         shareText, MAX_DAY, STAT_MAX } from './game.js?v=20261124214502';
+         shareText, MAX_DAY, STAT_MAX } from './game.js?v=20261124215021';
 
 /* ---------- scene coordinates ----------
    The scene is scaled by a transform (see the stage), so a native
@@ -2361,11 +2361,11 @@ const TS = (document.getElementById('scene').offsetWidth || 375) / 375;
 const ALLAWEE_NOTE = 'Allawee ₦77,000 — e never enter.';
 import { initNet, joinCamp, syncPlayer, platoonBoard, recentChat, postChat,
          postSuggestion, reportMessage, awardBoard, myAwards, laughChat,
-         setPresence, campRoster, renameMe, setAvatar, online, prizeBoard, myPrize, platoonWar, claimPlatoonWin } from './net.js?v=20261124214502';
-import { startMusic, stopMusic, musicOn, audioState, audioSupported, setRain, whenSilenced, wakeAudio, audible, say, sfx, BEAT, BAR } from './audio.js?v=20261124214502';
+         setPresence, campRoster, renameMe, setAvatar, online, prizeBoard, myPrize, platoonWar, claimPlatoonWin } from './net.js?v=20261124215021';
+import { startMusic, stopMusic, musicOn, audioState, audioSupported, setRain, whenSilenced, wakeAudio, audible, say, sfx, BEAT, BAR } from './audio.js?v=20261124215021';
 import { playHoop, playPenalty, playQuiz, playRegister, playParade,
          playMami, playHustle, playManOWar, playSaed, playSocial,
-         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261124214502';
+         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261124215021';
 
 /* Every dance animation is expressed in beats, so the steps are on-tempo
    whether or not the sound is playing — and genuinely on the beat when it is. */
@@ -6069,12 +6069,47 @@ const TOUT_LOOKS = [
   ['#1f8a4c', '#2f3e46', '#22303a', '#2a3840', '#f3c53d'],   // Computer Village: green, dark denim, yellow cap
   ['#f77f00', '#6b4a2e', '#56391f', '#5f4128', '#141414'],   // Ojuelegba: orange, brown
 ];
+/* (2026-11-24, user: "the agbero still feels like the same guy, not differentiated enough on
+   each street") Beyond the colours: his own skin, number, headwear and kit, and his own lines.
+   Order is DISTRICTS: Allen (as drawn), Broad, Admiralty Way, Computer Village, Ojuelegba. */
+const TOUT_EXTRA = {
+  shades: '<rect x="38.6" y="-33.6" width="4.8" height="2.9" rx="1" fill="#111"/><rect x="44.2" y="-33.6" width="4.6" height="2.9" rx="1" fill="#111"/><path d="M43.4 -32.3h.8" stroke="#111" stroke-width=".7"/><path d="M39.4 -33h1.6" stroke="#fff" stroke-width=".5" opacity=".5"/>',
+  chain: '<path d="M41.6 -24.2Q47 -14.6 52.4 -24.2" stroke="#e2b33a" stroke-width="1.3" fill="none"/><circle cx="47" cy="-16" r="1.8" fill="#e2b33a" stroke="#fff3b0" stroke-width=".4"/>',
+  whistle: '<path d="M42.6 -23.4Q47 -15 51.4 -23.4" stroke="#e8e8e8" stroke-width=".6" fill="none"/><rect x="45.6" y="-16.8" width="3.6" height="1.8" rx=".7" fill="#cfd3d6"/><circle cx="48.8" cy="-15.9" r=".5" fill="#8d939a"/>',
+  beard: '<path d="M38.8 -28.6q2 5.4 7.4 5.6q4.6 -.2 6.4 -3.4q-1 4.8 -6.4 5.2q-6 -.4 -7.4 -7.4z" fill="#1a1110"/>',
+};
+const TOUT_HATS = {
+  dreads: '<path d="M37 -34q0 -9.6 9 -9.6q9 0 9 9.6q-2 -3 -9 -3.6q-7 .6 -9 3.6z" fill="#1a1110"/>'
+        + '<path d="M38 -34q-1.6 7 -.6 13M40.6 -36.4q-1.4 8 -.4 14M51.8 -36.4q1.4 8 .6 14M54.4 -34q1.6 7 .6 12M48 -38.6q2.4 8 3 13" stroke="#1a1110" stroke-width="1.9" fill="none" stroke-linecap="round"/>'
+        + '<circle cx="37.6" cy="-24" r=".9" fill="#e2b33a"/><circle cx="52.4" cy="-25" r=".9" fill="#e2b33a"/><circle cx="54.8" cy="-24.4" r=".9" fill="#c1272d"/>',
+  bucket: c => `<path d="M38.4 -36.4q.4 -7 7.6 -7.2q7.2 .2 7.6 7.2z" fill="${c}"/><path d="M34.4 -35.4q11.6 -3.6 23.2 0q-.4 1.8 -2 2q-9.6 -2 -19.2 0q-1.6 -.2 -2 -2z" fill="${c}" stroke="rgba(0,0,0,.25)" stroke-width=".5"/><path d="M38.8 -37.6h14.4" stroke="rgba(0,0,0,.2)" stroke-width=".8"/>`,
+  bandana: c => `<path d="M37 -34.6q0 -8.8 9 -9q9 .2 9 9z" fill="${c}"/>${[[40, -38], [44, -41], [48, -39], [51.6, -36.8], [42.4, -35.6]].map(([x, y]) => `<circle cx="${x}" cy="${y}" r=".7" fill="#fff"/>`).join('')}<path d="M54.6 -36l5.4 2.4l-1.4 2zM54.4 -34.4l4.2 4.2l-1.8 1z" fill="${c}"/>`,
+};
+const TOUT_PLUS = [
+  null,
+  { skin: '#3a2416', palm: '#7a4e30', num: 9,  extras: ['shades', 'chain'], paid: 'Oga dey! Pass!',     fine: f => `You wan dodge? ${f}!` },
+  { skin: '#8d5524', palm: '#c48a5a', num: 10, hat: 'dreads',               paid: 'Na so! Enjoy Lekki.', fine: f => `Na ${f} o, no story!` },
+  { skin: '#6b4423', palm: '#b07a50', num: 14, hat: 'bucket', extras: ['whistle'], paid: 'Sharp guy! Go.', fine: f => `Oya drop ${f}!` },
+  { skin: '#4a2e1c', palm: '#8a5a3a', num: 7,  hat: 'bandana', extras: ['beard'], paid: 'Ehen! My guy!',  fine: f => `Shine your eye! ${f}!` },
+];
+const toutLine = (kind, fine) => { const X = DISTRICTS_ON && TOUT_PLUS[shownDistrict];
+  return kind === 'paid' ? (X ? X.paid : 'Correct! Waka pass.') : (X ? X.fine(naira(fine)) : `Bring ${naira(fine)} jare!`); };
 function toutDressed(n){
   const L = TOUT_LOOKS[n];
   if (!L) return TOUT_SVG;
   const [jersey, jeans, shade, dark, cap] = L;
-  return [['#c1272d', jersey], ['#8ea2b6', jeans], ['#6a7d91', shade], ['#74879c', dark], ['#1d1d1f', cap]]
-    .reduce((svg, [from, to]) => svg.split(from).join(to), TOUT_SVG);
+  let svg = [['#c1272d', jersey], ['#8ea2b6', jeans], ['#6a7d91', shade], ['#74879c', dark], ['#1d1d1f', cap]]
+    .reduce((v, [from, to]) => v.split(from).join(to), TOUT_SVG);
+  const X = TOUT_PLUS[n];
+  if (!X) return svg;
+  svg = svg.split(TOUT_SKIN).join(X.skin).split(TOUT_PALM).join(X.palm);
+  svg = svg.replace(/>27<\/text>/g, `>${X.num}</text>`);
+  if (X.hat){
+    const h = TOUT_HATS[X.hat], hat = typeof h === 'function' ? h(cap) : h;
+    svg = svg.replace(/<!-- the cap, on backwards[\s\S]*?<circle cx="46" cy="-43" r="\.9" fill="[^"]+"\/>/, hat);
+  }
+  if (X.extras) svg = svg.replace('<!-- the arm out across the walk, palm up', X.extras.map(k => TOUT_EXTRA[k]).join('') + '<!-- the arm out across the walk, palm up');
+  return svg;
 }
 /* The broken-down danfo (2026-11-18, user), Broad Street's parked vehicle.
    Drawn in the box's own pixels: ground 46.4, front at the left (the walkers
@@ -8481,7 +8516,7 @@ function hopPothole(p, paid){
     delete p.dataset.prepaid;
     handOver(p, 3, true);
     track('agbero');
-    setTimeout(() => toutSay('Correct! Waka pass.', 'paid'), 450);
+    setTimeout(() => toutSay(toutLine('paid'), 'paid'), 450);   // this street's agbero
     return;
   }
   /* Through the flood on foot, unasked, while wearing YOU: still your corper,
@@ -8663,7 +8698,7 @@ function slipOn(p){
     s.money -= ob.fine;
     save(); render();
     floatCost(p, `-${naira(ob.fine)}`);
-    toutSay(`Bring ${naira(ob.fine)} jare!`, 'fine', DUR);
+    toutSay(toutLine('fine', ob.fine), 'fine', DUR);   // this street's agbero
     track('agbero');
     setTimeout(() => { if (p.isConnected) handOver(p, 4, true); }, DUR * .35);
   } else if (s){
@@ -9406,11 +9441,11 @@ function mobCatch(run){
    A danfo that leaves still burning costs 1 a flame left (all 3 if you never touched it);
    a thief who gets away costs 2. Only when you could have acted: the street on screen,
    no popup or camp mini-game over it, the tab in front. Never below zero. */
-const THIEF_ESCAPE = 2;
+const THIEF_ESCAPE = 5, FIRE_PER_FLAME = 2;   // (2026-11-24, user: "nothing moves credibility down once it goes up"): were 2 and 1
 const couldAct = () => !!s && s.phase === 'day' && !document.hidden && !calm()
   && !$('scene').classList.contains('hidden') && $('prizePop').classList.contains('hidden')
   && $('hooray').classList.contains('hidden') && $('mgwrap').classList.contains('hidden');
-function credHit(n, line){
+function credHit(n, line, sign){
   if (!n || !couldAct()) return;
   const was = s.cred || 0;
   s.cred = Math.max(0, was - n);
@@ -9418,6 +9453,7 @@ function credHit(n, line){
   save(); render();
   tell(line);
   if (youFig && youFig.isConnected) floatCost(youFig, `-${was - s.cred} CRED`);
+  if (sign && shoutSign) shoutSign([sign, '#b3261e', '#ffffff', adSub(`-${was - s.cred} CRED`)]);   // in red, on the board: you cannot miss it
 }
 
 /* ---- catching him ----
@@ -9588,7 +9624,7 @@ function agberoChase(){
     wrap.addEventListener('animationend', e => {          // its own drive only: a child's animation (a label's pop-in) bubbles here too
       if (e.target !== wrap) return;
       if (c.thief && !wrap.dataset.caught && wrap.isConnected)
-        credHit(THIEF_ESCAPE, `Thief don escape! The whole street see say you no catch am. -${THIEF_ESCAPE} credibility`);
+        credHit(THIEF_ESCAPE, `Thief don escape! The whole street see say you no catch am. -${THIEF_ESCAPE} credibility`, 'THIEF DON ESCAPE!');
       wrap.remove();
     });
     setTimeout(() => wrap.remove(), 16000 * TS);   // see burningDanfo: frozen tabs
@@ -9633,15 +9669,20 @@ function burningDanfo(){
      it never arrives: a tab that is backgrounded mid-crossing freezes the
      animation, the element never leaves, and the event queue deadlocks behind
      a bus that is no longer going anywhere. */
-  v.addEventListener('animationend', e => {             // its own drive only: a child's animation (a label's pop-in) bubbles here too
-    if (e.target !== v) return;
+  /* It leaves the street either way: at the end of its drive, or by the timer. The timer was a
+     fixed 20s, but the drive is 15s x TS and TS grows with the screen, so on a laptop (TS ~2-3)
+     the bus vanished mid-road and the charge for leaving it burning never ran (2026-11-24). */
+  const leave = () => {
+    if (v.dataset.left) return; v.dataset.left = '1';
     const left = +v.dataset.fire || 0;                    // flames still burning as it leaves
-    if (left && v.isConnected) credHit(left, left >= 3
-      ? `The danfo burn finish and nobody quench am! -${left} credibility`
-      : `You no finish the fire, the danfo still dey burn. -${left} credibility`);
+    const n = left * FIRE_PER_FLAME;
+    if (left && v.isConnected) credHit(n, left >= 3
+      ? `The danfo burn finish and nobody quench am! -${n} credibility`
+      : `You no finish the fire, the danfo still dey burn. -${n} credibility`, 'DANFO BURN FINISH!');
     v.remove();
-  });
-  setTimeout(() => v.remove(), 20000);
+  };
+  v.addEventListener('animationend', e => { if (e.target === v) leave(); });   // its own drive only: a child's animation (a label's pop-in) bubbles here too
+  setTimeout(leave, 15 * TS * 1000 + 4000);
 }
 
 function douse(v){
@@ -10072,7 +10113,7 @@ if (ONCOMING_ON && !calm()) setTimeout(sendOncoming, 7000);
    credibility. Ignored, it gets flattened and nothing happens. At most once
    a minute. WALLET_ON = false and it never drops. */
 const WALLET_ON = true, WALLET_GAP = 60000, WALLET_LIFE = 12000, WALLET_CHOOSE = 8000;
-const WALLET_CASH = 500, WALLET_CRED = 2;
+const WALLET_CASH = 1000, WALLET_CRED = 3, WALLET_SHAME = 6;   // (2026-11-24, user: "the wallet kept does not reduce it enough"): was ₦500 and ±2
 const WALLET_SVG = `<svg viewBox="0 0 11 8" aria-hidden="true"><ellipse cx="5.5" cy="7.8" rx="5.4" ry=".9" fill="rgba(0,0,0,.25)"/><rect x=".5" y=".8" width="10" height="6.6" rx="1.2" fill="#6b3f1f"/>
   <path d="M.5 3.2h10" stroke="#4a2a12" stroke-width=".7"/><rect x="6.6" y="2.6" width="3.4" height="2.2" rx=".6" fill="#8a5a2e"/>
   <circle cx="8.3" cy="3.7" r=".5" fill="#e0c56a"/><rect x="2" y="0" width="4.4" height="1.4" rx=".3" fill="#3f8f4f"/></svg>`;
@@ -10121,9 +10162,11 @@ function settleWallet(w, honest){
     say('welldone');
   } else {
     s.money += WALLET_CASH;
-    s.cred = Math.max(0, (s.cred || 0) - WALLET_CRED);
-    tell(`You pocket ${naira(WALLET_CASH)}. Your conscience dey shout! -${WALLET_CRED} credibility`);
-    floatCost(w.tag, `+${naira(WALLET_CASH)}`);
+    const was = s.cred || 0;
+    s.cred = Math.max(0, was - WALLET_SHAME);
+    tell(`You pocket ${naira(WALLET_CASH)}. The okada man see you! Your conscience dey shout! -${WALLET_SHAME} credibility`);
+    floatCost(w.tag, `+${naira(WALLET_CASH)}  -${was - s.cred} CRED`);
+    if (shoutSign && was > s.cred) shoutSign(['THIEF CORPER!', '#b3261e', '#ffffff', adSub(`-${was - s.cred} CRED · YOU POCKET AM`)]);
     sfx('kaching');
   }
   save(); render();
