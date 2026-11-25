@@ -411,7 +411,7 @@
      Variable reward: the fixed cycle is learned in two minutes, and these are
      what make somebody say "did you see the…" to the next person. */
   .convoy{position:absolute;left:0;right:0;bottom:20px;height:80px;z-index:1;pointer-events:none}   /* a lane nearer: the big men's cars to scale (user, 2026-11-23) */
-  .convoy .car{position:absolute;animation:drive linear both}
+  .convoy .car{position:absolute;animation:driveIn linear both;--lead:100px}   /* (2026-11-24) waits for its delay fully off the left edge: at -22% a 150px SUV poked its nose out and sat there (user) */
   /* Only the Odogwu's cars take a tap — the strip itself stays inert so a
      finger between the cars still reaches the street. */
   .convoy.odogwu .car{pointer-events:auto;cursor:pointer;-webkit-tap-highlight-color:transparent}
@@ -897,6 +897,7 @@
   .shop svg,.posStand svg,.streetPost svg,.genSet svg{display:block;width:100%}
   @keyframes shopDrive{from{left:var(--shopFrom,-134%)}to{left:118%}}
   @keyframes drive{from{left:-22%}to{left:118%}}
+  @keyframes driveIn{from{left:calc(-22% - var(--lead,0px))}to{left:118%}}   /* the same drive, starting a car-length further back */
   /* Oncoming traffic (2026-11-20, user: "a little traffic going the opposite
      direction without overcrowding"). Its own lane at the back of the road,
      in front of the far pavement and behind the main traffic; smaller, since
@@ -930,6 +931,7 @@
   .wheel{animation:spin .5s linear infinite;transform-box:fill-box;
     transform-origin:center}
   @keyframes spin{to{transform:rotate(360deg)}}
+  .vehicle[style*="animation-play-state: paused"] .wheel{animation-play-state:paused}   /* held up behind the goats: wheels stop too */
   /* the bus sways on its springs; the conductor's free hand flags passengers */
   .vehicle .cab{animation:sway .46s ease-in-out infinite alternate}
   @keyframes sway{from{transform:translateY(0)}to{transform:translateY(-.7px)}}
@@ -1824,7 +1826,7 @@
     .shop .note,.shop .smoke,.shop .poleStripes,.shop .peek,.genSet .smoke,.genSet .engine,
     .treeline .tree,.treeline .gHand,.treeline .gNod,.treeline .gTalk,.nepaPole .bird,
     .wireThings .bird,.wireThings .kTail,.wireThings .nylon,.nepaPole .nepaMan .fix,
-    .pothole .ripple,.wheel,.vehicle .cab,.vehicle .cond .wave,.coin .glint){animation:none!important}
+    .pothole .ripple,.vehicle .cab,.vehicle .cond .wave,.coin .glint){animation:none!important}
   .liteNote{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:-4px 2px 12px;padding:9px 12px;
     background:#eef4ef;border:1.5px solid #cfe3d5;border-radius:12px;font-size:13.5px;font-weight:700;color:var(--green-dk)}
   .liteNote.hidden{display:none}
@@ -2320,7 +2322,7 @@
 <script type="module">
 import { newGame, doAction, canDo, unlocked, ACTIONS, phaseOf, nextUnlock, postingOdds, rivalOf,
          computePosting, CHOICES, GOAL, goalStatus,
-         shareText, MAX_DAY, STAT_MAX } from './game.js?v=20261124164642';
+         shareText, MAX_DAY, STAT_MAX } from './game.js?v=20261124165333';
 
 /* ---------- scene coordinates ----------
    The scene is scaled by a transform (see the stage), so a native
@@ -2351,11 +2353,11 @@ const TS = (document.getElementById('scene').offsetWidth || 375) / 375;
 const ALLAWEE_NOTE = 'Allawee ₦77,000 — e never enter.';
 import { initNet, joinCamp, syncPlayer, platoonBoard, recentChat, postChat,
          postSuggestion, reportMessage, awardBoard, myAwards, laughChat,
-         setPresence, campRoster, renameMe, setAvatar, online, prizeBoard, myPrize, platoonWar, claimPlatoonWin } from './net.js?v=20261124164642';
-import { startMusic, stopMusic, musicOn, audioState, audioSupported, setRain, whenSilenced, wakeAudio, audible, say, sfx, BEAT, BAR } from './audio.js?v=20261124164642';
+         setPresence, campRoster, renameMe, setAvatar, online, prizeBoard, myPrize, platoonWar, claimPlatoonWin } from './net.js?v=20261124165333';
+import { startMusic, stopMusic, musicOn, audioState, audioSupported, setRain, whenSilenced, wakeAudio, audible, say, sfx, BEAT, BAR } from './audio.js?v=20261124165333';
 import { playHoop, playPenalty, playQuiz, playRegister, playParade,
          playMami, playHustle, playManOWar, playSaed, playSocial,
-         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261124164642';
+         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261124165333';
 
 /* Every dance animation is expressed in beats, so the steps are on-tempo
    whether or not the sound is playing — and genuinely on the beat when it is. */
@@ -6883,7 +6885,7 @@ function drawCardsBox(){
     <div class="cardsGrid">${CARDS.map(c => cardHtml(c, !cards[c.id])).join('')}</div>`;
   box.classList.remove('hidden');
 }
-function openCards(){ $('tabAwards').click(); setTimeout(() => $('cardsBox').scrollIntoView({ behavior: 'smooth', block: 'start' }), 120); }
+function openCards(){ tab('awards'); setTimeout(() => $('cardsBox').scrollIntoView({ behavior: 'smooth', block: 'start' }), 120); }
 
 /* ---- the daily wahala: one challenge a day, the same for everybody that day ---- */
 const WAHALAS = [
@@ -9827,7 +9829,7 @@ function sendPasser(){
     const el = document.createElement('div');
     el.className = 'vehicle passer' + (v.cls ? ' ' + v.cls : '');
     el.style.cssText = `width:${v.w}px;bottom:${v.bottom}px;`
-      + `animation-duration:${v.speed * TS}s;animation-iteration-count:1`;
+      + `animation-duration:${v.speed * TS}s;animation-iteration-count:1;animation-name:driveIn;--lead:${v.w}px`;   // in from fully off screen, however long it is
     el.innerHTML = v.svg;
     sceneEl.appendChild(el);
     el.addEventListener('animationend', e => { if (e.target === el) el.remove(); });   // its own drive only: a child's animation (a label's pop-in) bubbles here too
@@ -12463,10 +12465,19 @@ function tab(which){
   if (which === 'chat')   loadChat();
   if (which === 'chat')   seenChat();
 }
-$('tabCamp').onclick   = () => tab('camp');
-$('tabAwards').onclick = () => tab('awards');
-$('tabBoard').onclick  = () => tab('board');
-$('tabChat').onclick   = () => tab('chat');
+/* A second click on the open tab closes it (2026-11-24, user: "when you click the tabs to
+   open, you should be able to click the tabs again to close"). Code that wants a panel
+   OPEN calls tab() directly, never .click(), so it can never close one by accident. */
+const TAB_IDS = { camp: 'tabCamp', awards: 'tabAwards', board: 'tabBoard', chat: 'tabChat' };
+function closeTabs(){
+  Object.values(TAB_IDS).forEach(id => $(id).setAttribute('aria-selected', 'false'));
+  ['panelCamp', 'panelAwards', 'panelBoard', 'panelChat'].forEach(id => $(id).classList.add('hidden'));
+}
+const toggleTab = which => $(TAB_IDS[which]).getAttribute('aria-selected') === 'true' ? closeTabs() : tab(which);
+$('tabCamp').onclick   = () => toggleTab('camp');
+$('tabAwards').onclick = () => toggleTab('awards');
+$('tabBoard').onclick  = () => toggleTab('board');
+$('tabChat').onclick   = () => toggleTab('chat');
 
 async function drawBoard(){
   drawWar();
