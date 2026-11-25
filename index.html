@@ -2330,7 +2330,7 @@
 <script type="module">
 import { newGame, doAction, canDo, unlocked, ACTIONS, phaseOf, nextUnlock, postingOdds, rivalOf,
          computePosting, CHOICES, GOAL, goalStatus,
-         shareText, MAX_DAY, STAT_MAX } from './game.js?v=20261124215021';
+         shareText, MAX_DAY, STAT_MAX } from './game.js?v=20261125143913';
 
 /* ---------- scene coordinates ----------
    The scene is scaled by a transform (see the stage), so a native
@@ -2361,11 +2361,11 @@ const TS = (document.getElementById('scene').offsetWidth || 375) / 375;
 const ALLAWEE_NOTE = 'Allawee ₦77,000 — e never enter.';
 import { initNet, joinCamp, syncPlayer, platoonBoard, recentChat, postChat,
          postSuggestion, reportMessage, awardBoard, myAwards, laughChat,
-         setPresence, campRoster, renameMe, setAvatar, online, prizeBoard, myPrize, platoonWar, claimPlatoonWin } from './net.js?v=20261124215021';
-import { startMusic, stopMusic, musicOn, audioState, audioSupported, setRain, whenSilenced, wakeAudio, audible, say, sfx, BEAT, BAR } from './audio.js?v=20261124215021';
+         setPresence, campRoster, renameMe, setAvatar, online, prizeBoard, myPrize, platoonWar, claimPlatoonWin } from './net.js?v=20261125143913';
+import { startMusic, stopMusic, musicOn, audioState, audioSupported, setRain, whenSilenced, wakeAudio, audible, say, sfx, BEAT, BAR } from './audio.js?v=20261125143913';
 import { playHoop, playPenalty, playQuiz, playRegister, playParade,
          playMami, playHustle, playManOWar, playSaed, playSocial,
-         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261124215021';
+         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261125143913';
 
 /* Every dance animation is expressed in beats, so the steps are on-tempo
    whether or not the sound is playing — and genuinely on the beat when it is. */
@@ -11176,6 +11176,9 @@ function cycleWeather(){
    droplets, or a ring if they hit a puddle. The road darkens and the puddles
    fill the longer it rains, and dry off slowly after it stops, so a shower
    leaves the street wet. Nothing runs while it is dry. */
+/* How many drops on a 375px-wide street (2026-11-25, user: "lets reduce the density of the rain, it seems
+   too busy"): was 400 (160 in lite). Raise or lower these two to taste. */
+const RAIN_DROPS = 220, RAIN_DROPS_LITE = 100;
 const rain = (() => {
   const H = 218, KERB = H - 62, GTOP = KERB - 4, GH = H - GTOP;
   const RM = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -11251,7 +11254,7 @@ const rain = (() => {
     wet = on ? Math.min(1, wet + real / 7) : Math.max(0, wet - real / 12);
     /* the wind gusts; the rain leans with it */
     const slope = .1 + .07 * Math.sin(t * .45) + .03 * Math.sin(t * 1.7);
-    const want = RM ? 0 : Math.round(level * (isLite() ? 160 : 400) * W / 375);   // lite: 40% of the drops
+    const want = RM ? 0 : Math.round(level * (isLite() ? RAIN_DROPS_LITE : RAIN_DROPS) * W / 375);   // drops on a 375px street; more on a wider one
     while (drops.length < want) spawn(true);
 
     sx.setTransform(scale, 0, 0, scale, 0, 0); sx.clearRect(0, 0, W, H);
