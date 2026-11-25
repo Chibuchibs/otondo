@@ -2330,7 +2330,7 @@
 <script type="module">
 import { newGame, doAction, canDo, unlocked, ACTIONS, phaseOf, nextUnlock, postingOdds, rivalOf,
          computePosting, CHOICES, GOAL, goalStatus,
-         shareText, MAX_DAY, STAT_MAX } from './game.js?v=20261124213842';
+         shareText, MAX_DAY, STAT_MAX } from './game.js?v=20261124214502';
 
 /* ---------- scene coordinates ----------
    The scene is scaled by a transform (see the stage), so a native
@@ -2361,11 +2361,11 @@ const TS = (document.getElementById('scene').offsetWidth || 375) / 375;
 const ALLAWEE_NOTE = 'Allawee ₦77,000 — e never enter.';
 import { initNet, joinCamp, syncPlayer, platoonBoard, recentChat, postChat,
          postSuggestion, reportMessage, awardBoard, myAwards, laughChat,
-         setPresence, campRoster, renameMe, setAvatar, online, prizeBoard, myPrize, platoonWar, claimPlatoonWin } from './net.js?v=20261124213842';
-import { startMusic, stopMusic, musicOn, audioState, audioSupported, setRain, whenSilenced, wakeAudio, audible, say, sfx, BEAT, BAR } from './audio.js?v=20261124213842';
+         setPresence, campRoster, renameMe, setAvatar, online, prizeBoard, myPrize, platoonWar, claimPlatoonWin } from './net.js?v=20261124214502';
+import { startMusic, stopMusic, musicOn, audioState, audioSupported, setRain, whenSilenced, wakeAudio, audible, say, sfx, BEAT, BAR } from './audio.js?v=20261124214502';
 import { playHoop, playPenalty, playQuiz, playRegister, playParade,
          playMami, playHustle, playManOWar, playSaed, playSocial,
-         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261124213842';
+         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261124214502';
 
 /* Every dance animation is expressed in beats, so the steps are on-tempo
    whether or not the sound is playing — and genuinely on the beat when it is. */
@@ -6946,10 +6946,22 @@ if (HAGGLE_ON && !calm()) haggleDue(HAGGLE_FIRST);
    One tracker, track(evt, n), called wherever the street pays out. It drops a
    card the first time you deal with a character, and moves today's wahala. */
 const CARDS_ON = true, WAHALA_ON = true;
+/* There is no wheelbarrow emoji, and the shopping cart read as a supermarket trolley
+   (2026-11-24, user: "the wheel barrow card should show wheelbarrow not shopping cart"):
+   a Lagos barrow, green tray of sand, black wheel, red handles, drawn to sit like an emoji. */
+const BARROW_ICO = `<svg viewBox="0 0 34 26" width="1.25em" height="1em" aria-hidden="true" style="vertical-align:-.12em;overflow:visible">
+  <path d="M19 15.4 L31.6 9.8" stroke="#c1272d" stroke-width="2" stroke-linecap="round"/><path d="M20.4 16.6 L32.6 12.6" stroke="#a51f25" stroke-width="1.6" stroke-linecap="round"/>
+  <path d="M18.6 16 l2 7" stroke="#55595e" stroke-width="1.6" stroke-linecap="round"/><path d="M19 23.2 h3.4" stroke="#55595e" stroke-width="1.4" stroke-linecap="round"/>
+  <path d="M4.6 6.6 q8 -5 16.6 0z" fill="#d6b06a"/><path d="M8 5 q3 -1.6 6 -.6" stroke="#e8c98a" stroke-width=".8" fill="none"/>
+  <path d="M2.6 6.6 h21.4 l-4 9.4 h-13.4z" fill="#2f8f5b"/><path d="M2.6 6.6 h21.4" stroke="#1f6b42" stroke-width="1.4" stroke-linecap="round"/>
+  <path d="M5.4 9.4 h15.6" stroke="#25744a" stroke-width=".7"/>
+  <path d="M9.4 16 L8.6 18" stroke="#55595e" stroke-width="1.4"/>
+  <circle cx="8.6" cy="20.4" r="4.4" fill="#1d1d1d"/><circle cx="8.6" cy="20.4" r="1.6" fill="#9aa0a6"/>
+</svg>`;
 const CARDS = [
   { id: 'mrpothole', evt: 'jump',      r: 'common',    ico: '🕳️', name: 'Mr. Pothole',     line: 'Him don swallow better corpers.',  hint: 'Jump Mr. Pothole' },
   { id: 'conductor', evt: 'danfo',     r: 'common',    ico: '🚌', name: 'Danfo Conductor', line: 'Shift for back! Change dey.',       hint: 'Enter a danfo' },
-  { id: 'barrow',    evt: 'barrow',    r: 'common',    ico: '🛒', name: 'Barrow Boy',      line: 'Flood water na im office.',      hint: 'Ride the barrow across the flood' },
+  { id: 'barrow',    evt: 'barrow',    r: 'common',    ico: '', art: BARROW_ICO, name: 'Barrow Boy',      line: 'Flood water na im office.',      hint: 'Ride the barrow across the flood' },
   { id: 'agbero',    evt: 'agbero',    r: 'common',    ico: '💪', name: 'Agbero',          line: 'Na my road. Settle!',               hint: 'Settle the agbero' },
   { id: 'officer',   evt: 'checkpoint',r: 'common',    ico: '👮', name: 'The Officer',     line: 'Corper! Where your ID?',            hint: 'Face a police checkpoint' },
   { id: 'lovers',    evt: 'lovers',    r: 'common',    ico: '💕', name: 'Love Nwantiti',   line: 'Dem no dey see anybody.',           hint: 'Meet the couple on the walk' },
@@ -6972,7 +6984,7 @@ const cardsHave = () => CARDS.filter(c => cards[c.id]).length;
 function saveCards(){ try { localStorage.setItem(CARDS_KEY, JSON.stringify(cards)); } catch {} }
 function cardHtml(c, locked){
   return `<div class="sCard ${c.r}${locked ? ' locked' : ''}"><span class="scRar">${c.r === 'common' ? '' : c.r.toUpperCase()}</span>
-    <span class="scIco">${c.ico}</span><span class="scName">${locked ? '???' : c.name}</span><span class="scLine">${locked ? c.hint : '“' + c.line + '”'}</span></div>`;
+    <span class="scIco">${c.art || c.ico}</span><span class="scName">${locked ? '???' : c.name}</span><span class="scLine">${locked ? c.hint : '“' + c.line + '”'}</span></div>`;
 }
 function earnCard(c){
   if (!CARDS_ON || !s || cards[c.id]) return;
@@ -7528,7 +7540,7 @@ function startCheck(p, x){
   p.style.animationPlayState = 'paused';
   sceneEl.classList.add('checkOn');
   const copX = Math.min(W - 60, x + 26), barX = Math.min(W - 78, copX + 34);
-  const cop = document.createElement('div'); cop.className = 'chkCop'; cop.innerHTML = copSvg(COP_LOOKS[DISTRICTS_ON ? shownDistrict : 0] || COP_LOOKS[0]);   // this street's officer (mopol on Admiralty Way) cop.style.left = Math.round(copX) + 'px';
+  const cop = document.createElement('div'); cop.className = 'chkCop'; cop.innerHTML = copSvg(COP_LOOKS[DISTRICTS_ON ? shownDistrict : 0] || COP_LOOKS[0]); cop.style.left = Math.round(copX) + 'px';   // this street's officer (mopol on Admiralty Way), beside his barrier
   const bar = document.createElement('div'); bar.className = 'chkBar'; bar.innerHTML = CHK_BAR; bar.style.left = Math.round(barX) + 'px';
   sceneEl.appendChild(bar); sceneEl.appendChild(cop);
   requestAnimationFrame(() => { cop.classList.add('on'); bar.classList.add('on'); });
