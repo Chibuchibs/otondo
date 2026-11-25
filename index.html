@@ -2324,7 +2324,7 @@
 <script type="module">
 import { newGame, doAction, canDo, unlocked, ACTIONS, phaseOf, nextUnlock, postingOdds, rivalOf,
          computePosting, CHOICES, GOAL, goalStatus,
-         shareText, MAX_DAY, STAT_MAX } from './game.js?v=20261124211041';
+         shareText, MAX_DAY, STAT_MAX } from './game.js?v=20261124213101';
 
 /* ---------- scene coordinates ----------
    The scene is scaled by a transform (see the stage), so a native
@@ -2355,11 +2355,11 @@ const TS = (document.getElementById('scene').offsetWidth || 375) / 375;
 const ALLAWEE_NOTE = 'Allawee ₦77,000 — e never enter.';
 import { initNet, joinCamp, syncPlayer, platoonBoard, recentChat, postChat,
          postSuggestion, reportMessage, awardBoard, myAwards, laughChat,
-         setPresence, campRoster, renameMe, setAvatar, online, prizeBoard, myPrize, platoonWar, claimPlatoonWin } from './net.js?v=20261124211041';
-import { startMusic, stopMusic, musicOn, audioState, audioSupported, setRain, whenSilenced, wakeAudio, audible, say, sfx, BEAT, BAR } from './audio.js?v=20261124211041';
+         setPresence, campRoster, renameMe, setAvatar, online, prizeBoard, myPrize, platoonWar, claimPlatoonWin } from './net.js?v=20261124213101';
+import { startMusic, stopMusic, musicOn, audioState, audioSupported, setRain, whenSilenced, wakeAudio, audible, say, sfx, BEAT, BAR } from './audio.js?v=20261124213101';
 import { playHoop, playPenalty, playQuiz, playRegister, playParade,
          playMami, playHustle, playManOWar, playSaed, playSocial,
-         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261124211041';
+         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261124213101';
 
 /* Every dance animation is expressed in beats, so the steps are on-tempo
    whether or not the sound is playing — and genuinely on the beat when it is. */
@@ -6467,9 +6467,54 @@ function kekeCouple(){
    The same two, drawn from kekeCouple's figures at the walkers' scale, riding
    with the ground across the near pavement every so often. */
 const COUPLE_FIRST = 60000, COUPLE_EVERY = 120000;   // (user: too often at 48s)
+/* A different couple on each street (2026-11-24, user: "lets make couples different on each
+   street by given them new appearance and different cloths"). Colours swapped on the one
+   drawing, plus a few pieces each: her hair or wrap, his cap, tie, shades or fila. Her extras
+   go inside her group and his inside his, so the wreck still plays out on whole people.
+   Order is DISTRICTS: Allen, Broad, Admiralty Way, Computer Village, Ojuelegba. */
+const ANK_DOTS = (x0, y0, w, h, c) => { let o = ''; for (let i = 0; i < 9; i++) o += `<circle cx="${(x0 + .8 + (i % 3) * (w - 1.6) / 2).toFixed(1)}" cy="${(y0 + .7 + Math.floor(i / 3) * (h - 1.4) / 2).toFixed(1)}" r=".45" fill="${c}"/>`; return o; };
+const COUPLE_LOOKS = [
+  { },                                                                              // Allen: braids, pink crop top, denim skirt; white tee, jeans
+  { herSkin: '#6b4423', herTop: '#f7f5ee', herSkirt: '#1e2f5c', herSkirt2: '#2b3f73', bag: '#2b2b2b', noBraids: true,
+    herBehind: '<circle cx="82.8" cy="13.9" r="1.7" fill="#1a1110"/>',
+    herFront: '<path d="M81 22.2 l1.8 1.6 l1.8 -1.6" stroke="#d9d4c7" stroke-width=".6" fill="none"/>',
+    himSkin: '#4a2e1c', himTop: '#a9c4e8', himLeg1: '#5b6067', himLeg2: '#52575d', shoes: '#1a1a1a',
+    himExtra: '<path d="M93.3 22.6 h1.4 l-.2 1 l.6 4.8 l-1.1 1 l-1.1 -1 l.6 -4.8z" fill="#b3261e"/>' },
+  { herSkin: '#a0673f', herTop: '#c1272d', herSkirt: '#c1272d', herSkirt2: '#a51f25', bag: '#d4a017', noBraids: true,
+    herBehind: '<circle cx="82.6" cy="14.6" r="3.9" fill="#1a1110"/>',
+    himSkin: '#8d5524', himTop: '#141414', himLeg1: '#9bb3cf', himLeg2: '#8ea7c4', shoes: '#f4f4f2',
+    himExtra: '<path d="M90.4 15 q.2 -3.6 3.6 -3.7 q3.4 .1 3.6 3.7z" fill="#e8e2d0"/><path d="M89.6 15 h8.8" stroke="#d6cfba" stroke-width="1" stroke-linecap="round"/>'
+            + '<rect x="91" y="15.9" width="3.4" height="1.3" rx=".6" fill="#111"/><path d="M92.2 34.6 l1 .6 M95.2 36.8 l1 .4" stroke="#e8eef5" stroke-width=".5"/>' },
+  { herSkin: '#4a2e1c', herTop: '#e8702a', herSkirt: '#1d1d1d', herSkirt2: '#2b2b2b', bag: '#2f8f5b', noBraids: true,
+    herFront: '<path d="M79.3 16.8 q-.6 -5 3.5 -5.2 q4.1 .2 3.5 5.2 q-3.5 -1.6 -7 0z" fill="#1e6b45"/><path d="M85.4 13.2 q1.8 -.8 2 -2.8 q-1.8 .2 -2.6 1.6z" fill="#1e6b45"/>'
+            + ANK_DOTS(79.4, 22, 7, 5.6, '#1d3f8a'),
+    himSkin: '#6b4423', himTop: '#0f8a4a', himLeg1: '#1a1a1a', himLeg2: '#151515', shoes: '#2b2b2b',
+    himExtra: '<path d="M90.4 15.8 q.3 -3.8 3.6 -3.9 q3.3 .1 3.6 3.9z" fill="#c1272d"/><path d="M97 15.2 h2.4 q.5 0 .2 .6 l-2.6 .3z" fill="#a51f25"/>'
+            + '<path d="M90.6 26.4 h6.8" stroke="#fff" stroke-width=".7"/><text x="94" y="30.6" font-size="2.6" font-weight="900" text-anchor="middle" fill="#fff" font-family="system-ui,sans-serif">10</text>' },
+  { herSkin: '#8d5524', herTop: '#b39ddb', herSkirt: '#6a2c91', herSkirt2: '#4e1f6d', bag: '#f2c200', noBraids: true,
+    herFront: '<path d="M79.3 16.8 q-.6 -5 3.5 -5.2 q4.1 .2 3.5 5.2 q-3.5 -1.6 -7 0z" fill="#f2b705"/><path d="M85.4 13.2 q1.8 -.8 2 -2.8 q-1.8 .2 -2.6 1.6z" fill="#f2b705"/>'
+            + ANK_DOTS(79.2, 29.6, 9.2, 4.8, '#f2c200'),
+    himSkin: '#4a2e1c', himTop: '#7a4a24', himLeg1: '#7a4a24', himLeg2: '#6b4120', shoes: '#3a2414',
+    himExtra: '<path d="M90.4 31.6 h7 l.4 4.6 h-7.8z" fill="#7a4a24"/><path d="M92.4 22.6 q1.6 1.8 3.2 0 M94 23.4 v4" stroke="#d4a017" stroke-width=".5" fill="none"/>'
+            + '<path d="M90.6 15.4 q-.3 -4 3.6 -4.4 q3.7 .2 3.9 3.6 l-.9 1.1z" fill="#6a2c91"/><path d="M91 14.6 q3 -1.2 6.4 -.2" stroke="#4e1f6d" stroke-width=".6" fill="none"/>' },
+];
+function coupleLook(figs){
+  const L = COUPLE_LOOKS[DISTRICTS_ON ? shownDistrict : 0] || {};
+  const swap = [['#8d5524', L.herSkin], ['#6b4423', L.himSkin], ['#ff5d8f', L.herTop], ['#4a7ab8', L.herSkirt], ['#6d98cf', L.herSkirt2],
+                ['#ffd166', L.bag], ['#f7f7f5', L.himTop], ['#2f4e7a', L.himLeg1], ['#2a4570', L.himLeg2], ['#f4f4f2', L.shoes]];
+  let f = figs;
+  /* skins first, through a placeholder, so a swap never re-swaps another */
+  swap.forEach(([from, to], i) => { if (to) f = f.split(from).join(`@@${i}@@`); });
+  swap.forEach(([, to], i) => { if (to) f = f.split(`@@${i}@@`).join(to); });
+  if (L.noBraids) f = f.replace(/<path d="M79\.8 16\.6 q-1\.2 4 -\.6 8\.6[^>]*\/>/, '');
+  if (L.herBehind) f = f.replace(/(<circle cx="82\.8" cy="17\.6" r="3\.1")/, L.herBehind + '$1');
+  if (L.herFront) f = f.replace('<!-- him:', L.herFront + '<!-- him:');
+  if (L.himExtra) f += L.himExtra;
+  return f;
+}
 function nearCoupleSvg(){
   const svg = kekeCouple();
-  const figs = svg.slice(svg.indexOf('<!-- the couple at the corner -->'), svg.lastIndexOf('</svg>'));
+  const figs = coupleLook(svg.slice(svg.indexOf('<!-- the couple at the corner -->'), svg.lastIndexOf('</svg>')));   // this street's couple
   /* Her, his arms, his face: separate pieces, so a wreck can play out on
      them (user, 2026-11-22: "the guy ... hands on head and lady walks away to
      the left"). */
@@ -6537,7 +6582,6 @@ const LOVE_NUMBER_ODDS = .35, LOVE_CHASE = 3, LOVE_CHOP_ODDS = .3, LOVE_CHOP = 3
 let love = null;
 function loveCheck(el, cx, box){
   if (el.dataset.loveDone) return;
-  const you = youFig;
   if (love && love.el === el){
     /* Held by the corper it was offered to, until HE walks past them. Tied to
        whoever wore YOU at the moment, it closed in 0.6s whenever the marker
@@ -6547,10 +6591,19 @@ function loveCheck(el, cx, box){
     pinInside(love.tag, box, cx);
     return;
   }
-  if (love || haggle || spray || check || !you || !s || jumpTag.style.display !== 'none' || wallet) return;
-  const gap = cx - figX(you, box);
-  if (gap < 60 || gap > 340 || cx > box.width * .84 || cx < box.width * .15) return;   // far enough in that the pin sits right over their heart, not squeezed off the edge
-  if (!freeFig(you) || you.matches('.detour, .bumped') || you.style.animationPlayState === 'paused') return;
+  if (love || haggle || spray || check || !s || jumpTag.style.display !== 'none' || wallet || mineSpray) return;
+  /* (2026-11-24, user: "the two love couple appears to be missing their directives in some
+     street or it does not stay on long") Two fixes. Room: the couple drift left with the
+     ground and the ask closes at the left edge, so it opened late (at 15% across) with under
+     a second left on a phone. Now it only opens with ROOM for at least 3.5s of the 5, and it
+     may open sooner (92% across, the tag is pinned inside anyway). Who: it waited for the YOU
+     walker alone, so whenever he was busy the couple went by with no ask at all. Now the
+     other free walker coming up behind them gets it (the YOU marker follows him: aimPointer). */
+  if (cx > box.width * .92 || cx < box.width * .04 + ROAD_SPEED * 3.5) return;
+  const ok = p => p && p.isConnected && freeFig(p) && !p.matches('.detour, .bumped') && p.style.animationPlayState !== 'paused'
+    && cx - figX(p, box) >= 50 && cx - figX(p, box) <= 360;
+  const you = [youFig, ...sceneEl.querySelectorAll(':scope > .corper')].find(ok);
+  if (!you) return;
   const tag = document.createElement('div');
   tag.className = 'walletTag choose loveTag';
   /* Just the two choices, right over their heart; what it costs shows on the
@@ -7347,26 +7400,52 @@ setInterval(() => {
    anti-bribe week it is a sting. Ignore him and he holds you and fines N400. */
 const CHECKPOINT_ON = true, CHK_FIRST = 100000, CHK_EVERY = [190000, 250000], CHK_WAIT = 8000;
 let check = null;
-const copSvg = mopol => {
-  const shirt = mopol ? '#4a5a3a' : '#22222a', beret = mopol ? '#a8302c' : '#14203a';
+/* A different officer on each street (2026-11-24, user: "different police man in slightly
+   different police outfit, maybe gun sling to right, slight variations in uniforms on all the
+   street to show that they are different persons"). Order is DISTRICTS: Allen, Broad,
+   Admiralty Way (the mobile police, as before), Computer Village, Ojuelegba. */
+const COP_LOOKS = [
+  { skin: '#5c3317', shirt: '#22222a', legs: '#1b1b22', hat: 'beret', hatC: '#14203a', gun: 'left',  stache: true, stripes: 2 },
+  { skin: '#4a2e1c', shirt: '#6f93bf', legs: '#1b1b22', hat: 'cap',   hatC: '#1b1b22', gun: 'right', shades: true, stripes: 3 },
+  { skin: '#3a2416', shirt: '#4a5a3a', legs: '#3a4530', hat: 'beret', hatC: '#a8302c', gun: 'right', camo: true, beard: true },
+  { skin: '#6b4423', shirt: '#22222a', legs: '#1b1b22', hat: 'beret', hatC: '#111111', gun: 'left',  belly: true, vest: true, whistle: true },
+  { skin: '#8d5524', shirt: '#1e2a44', legs: '#161e33', hat: 'beret', hatC: '#2f4a2a', gun: 'right', shades: true, stache: true, stripes: 1 },
+];
+const copSvg = (L = COP_LOOKS[0]) => {
+  const { skin, shirt, legs, hatC } = L, G = '#c9a227';
+  const torso = L.belly ? 'M13.4 30.6 q9.6-4 19.2 0 q4.6 12 1.2 23.4 h-21.6 q-1.6-11.6 1.2-23.4z' : 'M13.4 30.6 q9.6-4 19.2 0 l1 23.4 h-21.2z';
+  const gun = L.gun === 'right'
+    ? `<path d="M38 70 L15.4 31.4" stroke="#2b2b2b" stroke-width="3" stroke-linecap="round"/><path d="M35.6 66.2 l2.6 -1.6" stroke="#5a4630" stroke-width="3.4" stroke-linecap="round"/>`
+    : `<path d="M8 70 L30.6 31.4" stroke="#2b2b2b" stroke-width="3" stroke-linecap="round"/><path d="M10.4 66.2 l-2.6 -1.6" stroke="#5a4630" stroke-width="3.4" stroke-linecap="round"/>`;
+  const hat = L.hat === 'cap'
+    ? `<path d="M15.4 14.6 q7.6 -7.4 15.2 0 l.4 1.4 h-16z" fill="${hatC}"/><path d="M15.6 14.6 h14.8" stroke="${G}" stroke-width="1"/>
+       <path d="M14 16 h18 q-1 1.8 -3.2 1.8 h-11.6 q-2.2 0 -3.2 -1.8z" fill="#0d0d0d"/><circle cx="23" cy="11.6" r="1.3" fill="${G}"/>`
+    : `<path d="M15.2 15.6 Q16 8 25 8.6 Q32.2 9.6 31.4 14 Q24 11.6 15.2 15.6z" fill="${hatC}"/><circle cx="18.6" cy="13.2" r="1.3" fill="${G}"/>`;
   return `<svg viewBox="0 0 46 90" aria-hidden="true">
   <ellipse cx="23" cy="88.6" rx="13" ry="1.6" fill="rgba(0,0,0,.22)"/>
   <ellipse cx="18" cy="87" rx="3.6" ry="1.6" fill="#0d0d0d"/><ellipse cx="28" cy="87" rx="3.6" ry="1.6" fill="#0d0d0d"/>
-  <rect x="15" y="52" width="6" height="34" rx="1.4" fill="#1b1b22"/><rect x="25" y="52" width="6" height="34" rx="1.4" fill="#1b1b22"/>
-  <path d="M13.4 30.6 q9.6-4 19.2 0 l1 23.4 h-21.2z" fill="${shirt}"/>
-  ${mopol ? `<g fill="#2f3b25" opacity=".85"><circle cx="17" cy="36" r="2.2"/><circle cx="27" cy="40" r="2.6"/><circle cx="20" cy="46" r="2"/><circle cx="29" cy="33" r="1.6"/><circle cx="16" cy="50" r="1.8"/></g>
-    <path d="M14.4 31.2 l3.4 22.6 M31.6 31.2 l-3.4 22.6" stroke="#2a3320" stroke-width="2.4"/>` : `<rect x="16" y="36" width="5" height="4" rx=".6" fill="#2e2e38"/><rect x="25" y="36" width="5" height="4" rx=".6" fill="#2e2e38"/>`}
-  <rect x="13" y="50.6" width="20.4" height="2.6" fill="#3a3a3a"/><rect x="21.4" y="50.4" width="3.4" height="3" rx=".5" fill="#c9a227"/>
-  <path d="M12.6 31.4 h5 M28.4 31.4 h5" stroke="#c9a227" stroke-width="1.2"/>
-  <circle cx="29" cy="35.4" r="1.3" fill="#c9a227"/>
-  <path d="M8 70 L30.6 31.4" stroke="#2b2b2b" stroke-width="3" stroke-linecap="round"/><path d="M10.4 66.2 l-2.6 -1.6" stroke="#5a4630" stroke-width="3.4" stroke-linecap="round"/>
-  <path d="M14 33 Q9 44 14 52" stroke="${shirt}" stroke-width="4.2" fill="none" stroke-linecap="round"/><circle cx="14.4" cy="52.6" r="2.1" fill="#5c3317"/>
+  <rect x="15" y="52" width="6" height="34" rx="1.4" fill="${legs}"/><rect x="25" y="52" width="6" height="34" rx="1.4" fill="${legs}"/>
+  ${L.camo ? `<rect x="15" y="78" width="6" height="8" rx="1" fill="#141414"/><rect x="25" y="78" width="6" height="8" rx="1" fill="#141414"/>` : ''}
+  <path d="${torso}" fill="${shirt}"/>
+  ${L.camo ? `<g fill="#2f3b25" opacity=".85"><circle cx="17" cy="36" r="2.2"/><circle cx="27" cy="40" r="2.6"/><circle cx="20" cy="46" r="2"/><circle cx="29" cy="33" r="1.6"/><circle cx="16" cy="50" r="1.8"/></g>
+    <path d="M14.4 31.2 l3.4 22.6 M31.6 31.2 l-3.4 22.6" stroke="#2a3320" stroke-width="2.4"/>` : `<rect x="16" y="36" width="5" height="4" rx=".6" fill="rgba(0,0,0,.18)"/><rect x="25" y="36" width="5" height="4" rx=".6" fill="rgba(0,0,0,.18)"/>`}
+  ${L.vest ? `<path d="M15 31.8 h16 q2.4 9 .6 18 h-17.2 q-1.4-9 .6-18z" fill="#c6ff3d" opacity=".92"/><path d="M14.6 40 h17.4 M14.6 44.4 h17.6" stroke="#eef1f4" stroke-width="1.1"/>` : ''}
+  <rect x="${L.belly ? 12 : 13}" y="50.6" width="${L.belly ? 22.4 : 20.4}" height="2.6" fill="#3a3a3a"/><rect x="21.4" y="50.4" width="3.4" height="3" rx=".5" fill="${G}"/>
+  <path d="M12.6 31.4 h5 M28.4 31.4 h5" stroke="${G}" stroke-width="1.2"/>
+  <circle cx="29" cy="35.4" r="1.3" fill="${G}"/>
+  ${L.whistle ? `<path d="M24.6 31 q2.6 4.4 5.4 5.8" stroke="${G}" stroke-width=".55" fill="none"/><rect x="29.4" y="36" width="2.6" height="1.4" rx=".6" fill="#d9dde1"/>` : ''}
+  ${gun}
+  <path d="M14 33 Q9 44 14 52" stroke="${shirt}" stroke-width="4.2" fill="none" stroke-linecap="round"/><circle cx="14.4" cy="52.6" r="2.1" fill="${skin}"/>
+  ${L.stripes ? [0, 1, 2].slice(0, L.stripes).map(k => `<path d="M10.2 ${38.4 + k * 2} l2.2 1.4 l2.2 -1.4" stroke="${G}" stroke-width=".75" fill="none"/>`).join('') : ''}
   <g class="copHand"><path d="M32 33 Q38.6 26 39 15.4" stroke="${shirt}" stroke-width="4.2" fill="none" stroke-linecap="round"/>
-    <rect x="36.4" y="9" width="5.4" height="6.6" rx="2" fill="#5c3317"/><path d="M37.4 9.4 v-1.8 M38.9 9 v-2.2 M40.4 9.4 v-1.8" stroke="#5c3317" stroke-width="1" stroke-linecap="round"/></g>
-  <rect x="20.6" y="25.8" width="4.8" height="5" fill="#5c3317"/>
-  <circle cx="23" cy="19" r="7.2" fill="#5c3317"/>
-  <path d="M15.2 15.6 Q16 8 25 8.6 Q32.2 9.6 31.4 14 Q24 11.6 15.2 15.6z" fill="${beret}"/><circle cx="18.6" cy="13.2" r="1.3" fill="#c9a227"/>
+    <rect x="36.4" y="9" width="5.4" height="6.6" rx="2" fill="${skin}"/><path d="M37.4 9.4 v-1.8 M38.9 9 v-2.2 M40.4 9.4 v-1.8" stroke="${skin}" stroke-width="1" stroke-linecap="round"/></g>
+  <rect x="20.6" y="25.8" width="4.8" height="5" fill="${skin}"/>
+  <circle cx="23" cy="19" r="7.2" fill="${skin}"/>
+  ${L.beard ? `<path d="M16.2 20.6 q6.8 9.4 13.6 0 q-.8 6.4 -6.8 6.8 q-6 -.4 -6.8 -6.8z" fill="#1d1812"/>` : ''}
+  ${hat}
   ${faceOf(23, 19, 7.2)}
+  ${L.shades ? `<rect x="17.4" y="16.6" width="4.6" height="2.6" rx="1" fill="#111"/><rect x="24" y="16.6" width="4.6" height="2.6" rx="1" fill="#111"/><path d="M22 17.6 h2" stroke="#111" stroke-width=".7"/><path d="M18.2 17.2 h1.6" stroke="#fff" stroke-width=".5" opacity=".5"/>` : ''}
+  ${L.stache ? `<path d="M19.8 21.4 q3.2 -1.6 6.4 0 q-3.2 1 -6.4 0z" fill="#1d1812"/>` : ''}
   <path d="M19.6 22.6 q3.4 -1.2 6.8 0" stroke="#1d1812" stroke-width="1.1" fill="none" stroke-linecap="round"/>
   </svg>`;
 };
@@ -7399,7 +7478,7 @@ function startCheck(p, x){
   p.style.animationPlayState = 'paused';
   sceneEl.classList.add('checkOn');
   const copX = Math.min(W - 60, x + 26), barX = Math.min(W - 78, copX + 34);
-  const cop = document.createElement('div'); cop.className = 'chkCop'; cop.innerHTML = copSvg(mopol); cop.style.left = Math.round(copX) + 'px';
+  const cop = document.createElement('div'); cop.className = 'chkCop'; cop.innerHTML = copSvg(COP_LOOKS[DISTRICTS_ON ? shownDistrict : 0] || COP_LOOKS[0]);   // this street's officer (mopol on Admiralty Way) cop.style.left = Math.round(copX) + 'px';
   const bar = document.createElement('div'); bar.className = 'chkBar'; bar.innerHTML = CHK_BAR; bar.style.left = Math.round(barX) + 'px';
   sceneEl.appendChild(bar); sceneEl.appendChild(cop);
   requestAnimationFrame(() => { cop.classList.add('on'); bar.classList.add('on'); });
