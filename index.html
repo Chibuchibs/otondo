@@ -2330,7 +2330,7 @@
 <script type="module">
 import { newGame, doAction, canDo, unlocked, ACTIONS, phaseOf, nextUnlock, postingOdds, rivalOf,
          computePosting, CHOICES, GOAL, goalStatus,
-         shareText, MAX_DAY, STAT_MAX } from './game.js?v=20261125143913';
+         shareText, MAX_DAY, STAT_MAX } from './game.js?v=20261125150334';
 
 /* ---------- scene coordinates ----------
    The scene is scaled by a transform (see the stage), so a native
@@ -2361,11 +2361,11 @@ const TS = (document.getElementById('scene').offsetWidth || 375) / 375;
 const ALLAWEE_NOTE = 'Allawee ₦77,000 — e never enter.';
 import { initNet, joinCamp, syncPlayer, platoonBoard, recentChat, postChat,
          postSuggestion, reportMessage, awardBoard, myAwards, laughChat,
-         setPresence, campRoster, renameMe, setAvatar, online, prizeBoard, myPrize, platoonWar, claimPlatoonWin } from './net.js?v=20261125143913';
-import { startMusic, stopMusic, musicOn, audioState, audioSupported, setRain, whenSilenced, wakeAudio, audible, say, sfx, BEAT, BAR } from './audio.js?v=20261125143913';
+         setPresence, campRoster, renameMe, setAvatar, online, prizeBoard, myPrize, platoonWar, claimPlatoonWin } from './net.js?v=20261125150334';
+import { startMusic, stopMusic, musicOn, audioState, audioSupported, setRain, whenSilenced, wakeAudio, audible, say, sfx, BEAT, BAR } from './audio.js?v=20261125150334';
 import { playHoop, playPenalty, playQuiz, playRegister, playParade,
          playMami, playHustle, playManOWar, playSaed, playSocial,
-         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261125143913';
+         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261125150334';
 
 /* Every dance animation is expressed in beats, so the steps are on-tempo
    whether or not the sound is playing — and genuinely on the beat when it is. */
@@ -9441,7 +9441,8 @@ function mobCatch(run){
    A danfo that leaves still burning costs 1 a flame left (all 3 if you never touched it);
    a thief who gets away costs 2. Only when you could have acted: the street on screen,
    no popup or camp mini-game over it, the tab in front. Never below zero. */
-const THIEF_ESCAPE = 5, FIRE_PER_FLAME = 2;   // (2026-11-24, user: "nothing moves credibility down once it goes up"): were 2 and 1
+const THIEF_ESCAPE = 5, FIRE_PER_FLAME = 2;
+const THIEF_CATCH = 5, FIRE_PER_TAP = 2, FIRE_HERO = 2;   // the rewards (2026-11-25): a caught thief +5, a whole fire +8   // (2026-11-24, user: "nothing moves credibility down once it goes up"): were 2 and 1
 const couldAct = () => !!s && s.phase === 'day' && !document.hidden && !calm()
   && !$('scene').classList.contains('hidden') && $('prizePop').classList.contains('hidden')
   && $('hooray').classList.contains('hidden') && $('mgwrap').classList.contains('hidden');
@@ -9490,12 +9491,13 @@ function catchThief(run){
        ending is scored on. One point: the chase comes round every ~32s, and
        the activities meant to carry the game have to stay worth more than a
        street scuffle. */
-    s.cred = (s.cred || 0) + 1;
+    s.cred = (s.cred || 0) + THIEF_CATCH;               // (2026-11-25, user) was 1: as much as letting him go costs
     s.thieves = (s.thieves || 0) + 1;
     track('thief');
-    tell('You caught the thief. The whole street saw it.');
+    tell(`You caught the thief. The whole street saw it! +${THIEF_CATCH} credibility`);
+    if (shoutSign) shoutSign(['THIEF DON CATCH!', '#0a7a43', '#ffffff', adSub(`+${THIEF_CATCH} CRED · WELL DONE`)]);
     render();
-    floatCost(fig, `+₦${back.toLocaleString()}  +1 CRED`);
+    floatCost(fig, `+₦${back.toLocaleString()}  +${THIEF_CATCH} CRED`);
     titleCheck();
     celebrate();
   }
@@ -9623,7 +9625,7 @@ function agberoChase(){
     }
     wrap.addEventListener('animationend', e => {          // its own drive only: a child's animation (a label's pop-in) bubbles here too
       if (e.target !== wrap) return;
-      if (c.thief && !wrap.dataset.caught && wrap.isConnected)
+      if (c.thief && !wrap.dataset.caught && !wrap.dataset.charged && wrap.isConnected && (wrap.dataset.charged = '1'))   // once per thief, whatever fires twice
         credHit(THIEF_ESCAPE, `Thief don escape! The whole street see say you no catch am. -${THIEF_ESCAPE} credibility`, 'THIEF DON ESCAPE!');
       wrap.remove();
     });
@@ -9692,16 +9694,21 @@ function douse(v){
      taps, three points. Paying only at the end made the first two taps feel
      like nothing happened. Still bounded — the queue runs one event at a
      time, so a fire comes round only every ~32s. */
+  /* (2026-11-25, user: "catching thief and putting out fire should be worth more on
+     credibility"): +2 a flame and +2 more for the last one, 8 for a whole fire. Leaving it
+     burning costs 2 a flame (credHit), so saving it is worth more than ignoring it costs. */
+  const pay = FIRE_PER_TAP + (left === 0 ? FIRE_HERO : 0);
   if (s){
-    s.cred = (s.cred || 0) + 1;
+    s.cred = (s.cred || 0) + pay;
     s.fires = (s.fires || 0) + 1;
     track('fire');
     render();
-    floatCost(v, '+1 CRED');
+    floatCost(v, `+${pay} CRED`);
     titleCheck();
   }
   if (left > 0) return;
-  tell('You put out the fire. Hero of the junction.');
+  tell(`You put out the fire. Hero of the junction! +${FIRE_PER_TAP * 2 + pay} credibility`);
+  if (shoutSign) shoutSign(['HERO OF THE JUNCTION!', '#0a7a43', '#ffffff', adSub(`+${FIRE_PER_TAP * 2 + pay} CRED · FIRE DON QUENCH`)]);
   celebrate();                                     // the last flame is out
   v.querySelectorAll('.flame, .fireSmoke').forEach(f => f.remove());
   v.querySelector('.tapTag')?.remove();
@@ -11287,7 +11294,10 @@ const rain = (() => {
         gx.strokeStyle = `rgba(240,244,248,${.55 * a})`; gx.lineWidth = .8;
         gx.beginPath(); gx.moveTo(cx - p.rx * .5, p.y - p.ry * .25); gx.lineTo(cx + p.rx * .15, p.y - p.ry * .25); gx.stroke();
         gx.restore();
-        if (!RM && Math.random() < level * dt * 9)
+        /* thinned with RAIN_DROPS (2026-11-25): the ripple rate is keyed to level, not to
+           how many drops are actually falling, so it kept its old rate while the rain above
+           it lost 44%. Measured: ground sparkle was only down 27% against the rain's 44%. */
+        if (!RM && Math.random() < level * dt * 5)
           rings.push({ x: cx + (Math.random() - .5) * p.rx * 1.4, y: p.y + (Math.random() - .5) * p.ry, r: .5, max: 3 + Math.random() * 3, life: 0, dur: .6 });
       }
     }
