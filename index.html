@@ -2129,7 +2129,7 @@
        allawee never enter. 21 days of parade, bad beans, Man O War and Mami
        market. Build credibility, keep your belle full, make the money last.
        Then find out where dem post you.</p>
-    <button class="prizeHook hidden" id="prizeHook" type="button">
+    <button class="prizeHook" id="prizeHook" type="button">
       <span class="pzT">🏆 Top the board this week, win <b>₦10,000 airtime</b></span>
       <span class="pzS"><span id="prizeLead">New race every Monday. Free to play.</span> <u>Rules</u></span>
     </button>
@@ -2320,7 +2320,7 @@
 <script type="module">
 import { newGame, doAction, canDo, unlocked, ACTIONS, phaseOf, nextUnlock, postingOdds, rivalOf,
          computePosting, CHOICES, GOAL, goalStatus,
-         shareText, MAX_DAY, STAT_MAX } from './game.js?v=20261124163706';
+         shareText, MAX_DAY, STAT_MAX } from './game.js?v=20261124164642';
 
 /* ---------- scene coordinates ----------
    The scene is scaled by a transform (see the stage), so a native
@@ -2351,11 +2351,11 @@ const TS = (document.getElementById('scene').offsetWidth || 375) / 375;
 const ALLAWEE_NOTE = 'Allawee ₦77,000 — e never enter.';
 import { initNet, joinCamp, syncPlayer, platoonBoard, recentChat, postChat,
          postSuggestion, reportMessage, awardBoard, myAwards, laughChat,
-         setPresence, campRoster, renameMe, setAvatar, online, prizeBoard, myPrize, platoonWar, claimPlatoonWin } from './net.js?v=20261124163706';
-import { startMusic, stopMusic, musicOn, audioState, audioSupported, setRain, whenSilenced, wakeAudio, audible, say, sfx, BEAT, BAR } from './audio.js?v=20261124163706';
+         setPresence, campRoster, renameMe, setAvatar, online, prizeBoard, myPrize, platoonWar, claimPlatoonWin } from './net.js?v=20261124164642';
+import { startMusic, stopMusic, musicOn, audioState, audioSupported, setRain, whenSilenced, wakeAudio, audible, say, sfx, BEAT, BAR } from './audio.js?v=20261124164642';
 import { playHoop, playPenalty, playQuiz, playRegister, playParade,
          playMami, playHustle, playManOWar, playSaed, playSocial,
-         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261124163706';
+         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261124164642';
 
 /* Every dance animation is expressed in beats, so the steps are on-tempo
    whether or not the sound is playing — and genuinely on the beat when it is. */
@@ -9221,6 +9221,26 @@ function mobCatch(run){
   }, 2800);
 }
 
+/* ---- what letting it go costs (2026-11-24, user: "the credibility needs to be impacted
+   for every fire you don't quench or thief you don't catch" ... "credibilty just seems to
+   go up without impact") ----
+   A danfo that leaves still burning costs 1 a flame left (all 3 if you never touched it);
+   a thief who gets away costs 2. Only when you could have acted: the street on screen,
+   no popup or camp mini-game over it, the tab in front. Never below zero. */
+const THIEF_ESCAPE = 2;
+const couldAct = () => !!s && s.phase === 'day' && !document.hidden && !calm()
+  && !$('scene').classList.contains('hidden') && $('prizePop').classList.contains('hidden')
+  && $('hooray').classList.contains('hidden') && $('mgwrap').classList.contains('hidden');
+function credHit(n, line){
+  if (!n || !couldAct()) return;
+  const was = s.cred || 0;
+  s.cred = Math.max(0, was - n);
+  if (s.cred === was) return;
+  save(); render();
+  tell(line);
+  if (youFig && youFig.isConnected) floatCost(youFig, `-${was - s.cred} CRED`);
+}
+
 /* ---- catching him ----
    Everything stops where it stands, the label turns, and the whole chase
    clears a beat later. Whatever he took comes back to you — the errands take
@@ -9386,7 +9406,12 @@ function agberoChase(){
       };
       follow();
     }
-    wrap.addEventListener('animationend', e => { if (e.target === wrap) wrap.remove(); });   // its own drive only: a child's animation (a label's pop-in) bubbles here too
+    wrap.addEventListener('animationend', e => {          // its own drive only: a child's animation (a label's pop-in) bubbles here too
+      if (e.target !== wrap) return;
+      if (c.thief && !wrap.dataset.caught && wrap.isConnected)
+        credHit(THIEF_ESCAPE, `Thief don escape! The whole street see say you no catch am. -${THIEF_ESCAPE} credibility`);
+      wrap.remove();
+    });
     setTimeout(() => wrap.remove(), 16000 * TS);   // see burningDanfo: frozen tabs
   });
 }
@@ -9429,7 +9454,14 @@ function burningDanfo(){
      it never arrives: a tab that is backgrounded mid-crossing freezes the
      animation, the element never leaves, and the event queue deadlocks behind
      a bus that is no longer going anywhere. */
-  v.addEventListener('animationend', e => { if (e.target === v) v.remove(); });   // its own drive only: a child's animation (a label's pop-in) bubbles here too
+  v.addEventListener('animationend', e => {             // its own drive only: a child's animation (a label's pop-in) bubbles here too
+    if (e.target !== v) return;
+    const left = +v.dataset.fire || 0;                    // flames still burning as it leaves
+    if (left && v.isConnected) credHit(left, left >= 3
+      ? `The danfo burn finish and nobody quench am! -${left} credibility`
+      : `You no finish the fire, the danfo still dey burn. -${left} credibility`);
+    v.remove();
+  });
   setTimeout(() => v.remove(), 20000);
 }
 
@@ -12650,12 +12682,14 @@ $('prizeHook').onclick = showPrize;
 
 /* The start card: the hook, and who is leading right now. */
 async function drawPrizeHook(){
-  if (!PRIZE_ON) return;
-  /* Shown only once the server answers: no race is ever promised on a
-     database that is not counting it. */
+  /* In the page from the first paint (2026-11-24, user: "there is a slight delay in this
+     notification appearing when you first get to the otondo.ng"): it used to wait for the
+     module and then the server round trip before showing. The race itself is on until
+     PRIZE_END whatever one fetch does; only the leader line waits for the server. */
+  if (!PRIZE_ON){ $('prizeHook').classList.add('hidden'); return; }
+  $('prizeHook').classList.remove('hidden');
   const b = await prizeBoard();
   if (!b) return;
-  $('prizeHook').classList.remove('hidden');
   const top = b.top && b.top[0];
   if (top) $('prizeLead').textContent = `Leading now: ${top.nickname} · +${top.cred} cred this week. You fit pass am.`;
 }
@@ -12842,10 +12876,10 @@ initNet({
   if (!ok){ setLive(0); console.info('[otondo] single-player mode'); return; }
   /* Show any badge you are already wearing without making you open the tab —
      a returning winner should see it the second the camp screen loads. */
+  drawPrizeHook();         // first: the leader line on the start card should not wait behind the awards (2026-11-24)
   mine = await myAwards();
   drawBadges();
   pushPresence();          // a resumed save is already in camp
-  drawPrizeHook();
   checkMyPrize();
   setTimeout(checkPlatoonWin, 1500);      // after the airtime check has had its say
 });
