@@ -2,7 +2,7 @@
    Every function is failure-tolerant on purpose: if Supabase is unset, slow,
    or down, the game must still be playable. Nothing here throws upward. */
 
-import { SUPABASE_URL, SUPABASE_ANON_KEY } from './config.js?v=20261126110508';
+import { SUPABASE_URL, SUPABASE_ANON_KEY } from './config.js?v=20261126111410';
 
 const TOKEN_KEY = 'otondo:token';
 let sb = null, token = null, channel = null;
@@ -322,4 +322,30 @@ export async function logAd(views = [], taps = []) {
     if (error) throw error;
     return true;
   } catch (e) { console.warn('[otondo] ad log failed:', e.message); return false; }
+}
+
+/* ---- push subscriptions (2026-11-26) ----
+   The list of phones to remind about the daily wahala. Returns true only when
+   the row is actually saved, so the caller can avoid telling a player they
+   are subscribed when they are not. */
+export async function savePushSub(sub) {
+  if (!sb || !token || !sub) return false;
+  try {
+    const j = typeof sub.toJSON === 'function' ? sub.toJSON() : sub;
+    const k = j.keys || {};
+    if (!j.endpoint || !k.p256dh || !k.auth) return false;
+    const { error } = await sb.rpc('save_push_sub',
+      { p_token: token, p_endpoint: j.endpoint, p_p256dh: k.p256dh, p_auth: k.auth });
+    if (error) throw error;
+    return true;
+  } catch (e) { console.warn('[otondo] push sub save failed:', e.message); return false; }
+}
+
+export async function dropPushSub(endpoint) {
+  if (!sb || !endpoint) return false;
+  try {
+    const { error } = await sb.rpc('drop_push_sub', { p_endpoint: endpoint });
+    if (error) throw error;
+    return true;
+  } catch (e) { console.warn('[otondo] push sub drop failed:', e.message); return false; }
 }

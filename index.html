@@ -2292,6 +2292,7 @@
       <div class="streakWeek" id="streakWeek"></div>
       <p id="streakMsg"></p>
       <button class="primary" type="button" id="streakOk">Oya, continue</button>
+      <button class="primary ghost hidden" type="button" id="remindMe" style="margin-top:8px">🔔 Remind me tomorrow</button>
       <button class="primary ghost" type="button" id="streakShare" style="margin-top:8px">📸 Share my card</button>
     </div>
   </div>
@@ -2341,7 +2342,7 @@
 <script type="module">
 import { newGame, doAction, canDo, unlocked, ACTIONS, phaseOf, nextUnlock, postingOdds, rivalOf,
          computePosting, CHOICES, GOAL, goalStatus,
-         shareText, MAX_DAY, STAT_MAX } from './game.js?v=20261126110508';
+         shareText, MAX_DAY, STAT_MAX } from './game.js?v=20261126111410';
 
 /* ---------- scene coordinates ----------
    The scene is scaled by a transform (see the stage), so a native
@@ -2372,11 +2373,11 @@ const TS = (document.getElementById('scene').offsetWidth || 375) / 375;
 const ALLAWEE_NOTE = 'Allawee ₦77,000 — e never enter.';
 import { initNet, joinCamp, syncPlayer, platoonBoard, recentChat, postChat,
          postSuggestion, reportMessage, awardBoard, myAwards, laughChat,
-         setPresence, campRoster, renameMe, setAvatar, online, prizeBoard, myPrize, platoonWar, claimPlatoonWin, logAd } from './net.js?v=20261126110508';
-import { startMusic, stopMusic, musicOn, audioState, audioSupported, setRain, whenSilenced, wakeAudio, audible, say, sfx, BEAT, BAR } from './audio.js?v=20261126110508';
+         setPresence, campRoster, renameMe, setAvatar, online, prizeBoard, myPrize, platoonWar, claimPlatoonWin, logAd, savePushSub } from './net.js?v=20261126111410';
+import { startMusic, stopMusic, musicOn, audioState, audioSupported, setRain, whenSilenced, wakeAudio, audible, say, sfx, BEAT, BAR } from './audio.js?v=20261126111410';
 import { playHoop, playPenalty, playQuiz, playRegister, playParade,
          playMami, playHustle, playManOWar, playSaed, playSocial,
-         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261126110508';
+         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261126111410';
 
 /* Every dance animation is expressed in beats, so the steps are on-tempo
    whether or not the sound is playing — and genuinely on the beat when it is. */
@@ -11801,7 +11802,55 @@ function showStreak(pay, lost){
     + (n < ALLAWEE_DAYS ? `Come back tomorrow for <b>+${naira(next)}</b>.` : `Come back tomorrow to keep it going.`);
   $('streakPop').classList.remove('hidden');
   $('streakOk').focus();
+  const rm = $('remindMe');
+  rm.classList.add('hidden'); rm.textContent = '🔔 Remind me tomorrow'; rm.disabled = false;
+  remindAvailable().then(ok => { if (ok) rm.classList.remove('hidden'); });
 }
+/* ---------- the reminder opt-in (2026-11-26, user) ----------
+   Asked here and nowhere else. This popup has just told the player their
+   allawee went up and that tomorrow pays more — it is the one moment in the
+   game where "shall I remind you?" is a favour rather than an interruption,
+   and the browser only grants a permission prompt off a real tap anyway.
+   Shown once: a player who says no is never asked again by us, because a
+   refused Notification permission is close to unrecoverable and nagging only
+   spends it faster. */
+const VAPID_PUBLIC = 'BOEwmx0xD8TZCQ1VBYFPn3w2YDSv82yWVntYslny8pNcUaUZwN9oLSuE36smfW7d7ZPy2VGTJh27Eg_Er8nQr_c';
+const REMIND_ASKED = 'otondo:remindAsked';
+const b64url = s => { const pad = '='.repeat((4 - s.length % 4) % 4);
+  const raw = atob((s + pad).replace(/-/g, '+').replace(/_/g, '/'));
+  return Uint8Array.from(raw, c => c.charCodeAt(0)); };
+
+async function remindAvailable(){
+  if (!('Notification' in window) || !('serviceWorker' in navigator) || !('PushManager' in window)) return false;
+  if (Notification.permission !== 'default') return false;        // already decided, either way
+  try { if (localStorage.getItem(REMIND_ASKED)) return false; } catch {}
+  if (!online()) return false;                                     // nowhere to save it
+  const reg = await navigator.serviceWorker.getRegistration();
+  if (!reg) return false;
+  return !(await reg.pushManager.getSubscription());
+}
+
+$('remindMe').onclick = async () => {
+  const btn = $('remindMe');
+  btn.disabled = true; btn.textContent = 'Asking…';
+  try { localStorage.setItem(REMIND_ASKED, '1'); } catch {}
+  try {
+    const perm = await Notification.requestPermission();
+    if (perm !== 'granted'){ btn.classList.add('hidden'); return; }
+    const reg = await navigator.serviceWorker.ready;
+    const sub = await reg.pushManager.subscribe({
+      userVisibleOnly: true,                       // required by Chrome
+      applicationServerKey: b64url(VAPID_PUBLIC),
+    });
+    const ok = await savePushSub(sub);
+    btn.textContent = ok ? '✅ I go remind you' : '✅ Reminders on';
+    if (!ok) console.warn('[otondo] subscribed but not saved');
+  } catch (e) {
+    console.warn('[otondo] reminder sign-up failed:', e && e.message);
+    btn.classList.add('hidden');
+  } finally { btn.disabled = false; }
+};
+
 $('streakOk').onclick = () => $('streakPop').classList.add('hidden');
 $('streakShare').onclick = () => { $('streakPop').classList.add('hidden'); openCard(); };
 $('streakChip').onclick = () => showStreak(allaweeFor(streak.days), 0);

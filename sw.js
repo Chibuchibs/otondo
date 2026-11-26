@@ -24,7 +24,7 @@
  * only ever used when the network fails, which is what makes the game open at
  * all on a dead connection.
  */
-const BUILD   = '20261126110508';            // replaced by build.sh
+const BUILD   = '20261126111410';            // replaced by build.sh
 const APP     = 'otondo-app-' + BUILD;
 const MEDIA_V = 'v1';                   // bump by hand when audio or icons change
 const MEDIA   = 'otondo-media-' + MEDIA_V;
