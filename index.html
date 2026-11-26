@@ -2330,7 +2330,7 @@
 <script type="module">
 import { newGame, doAction, canDo, unlocked, ACTIONS, phaseOf, nextUnlock, postingOdds, rivalOf,
          computePosting, CHOICES, GOAL, goalStatus,
-         shareText, MAX_DAY, STAT_MAX } from './game.js?v=20261125153608';
+         shareText, MAX_DAY, STAT_MAX } from './game.js?v=20261125165253';
 
 /* ---------- scene coordinates ----------
    The scene is scaled by a transform (see the stage), so a native
@@ -2361,11 +2361,11 @@ const TS = (document.getElementById('scene').offsetWidth || 375) / 375;
 const ALLAWEE_NOTE = 'Allawee ₦77,000 — e never enter.';
 import { initNet, joinCamp, syncPlayer, platoonBoard, recentChat, postChat,
          postSuggestion, reportMessage, awardBoard, myAwards, laughChat,
-         setPresence, campRoster, renameMe, setAvatar, online, prizeBoard, myPrize, platoonWar, claimPlatoonWin } from './net.js?v=20261125153608';
-import { startMusic, stopMusic, musicOn, audioState, audioSupported, setRain, whenSilenced, wakeAudio, audible, say, sfx, BEAT, BAR } from './audio.js?v=20261125153608';
+         setPresence, campRoster, renameMe, setAvatar, online, prizeBoard, myPrize, platoonWar, claimPlatoonWin, logAd } from './net.js?v=20261125165253';
+import { startMusic, stopMusic, musicOn, audioState, audioSupported, setRain, whenSilenced, wakeAudio, audible, say, sfx, BEAT, BAR } from './audio.js?v=20261125165253';
 import { playHoop, playPenalty, playQuiz, playRegister, playParade,
          playMami, playHustle, playManOWar, playSaed, playSocial,
-         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261125153608';
+         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261125165253';
 
 /* Every dance animation is expressed in beats, so the steps are on-tempo
    whether or not the sound is playing — and genuinely on the beat when it is. */
@@ -3608,6 +3608,79 @@ function prizeBillboard(cfg){
 const SKILLS_USD = 49, NGN_PER_USD = 1390;                       // rate checked 2026-11-12
 const SKILLS_NGN = Math.round(SKILLS_USD * NGN_PER_USD / 1000) * 1000;
 const SKILLS_LINK = 'https://solofounderskills.com/?ref=otondo';
+
+/* ---------- sold boards, and the numbers that sell them (2026-11-25, user) ----------
+   Every roadside board was already tappable, but an unsold one only opened the
+   "your advert here" card and nothing anywhere counted who saw it. That is the
+   whole reason the inventory could not be priced: no reach, no proof of
+   delivery, nothing to put on an invoice.
+
+   To sell a board, add its slot here. The slot names are the `ad:` values in
+   the shop lists — tower, cyber, tea, papers, brazil, bdc, shine, exchange,
+   fabric, bus stop's 'advertise', and so on. `until` is a Lagos date; past it
+   the board quietly goes back to asking for advertisers, so a lapsed sponsor
+   never keeps free space. Leave this empty and the street behaves exactly as
+   it did, still counting. */
+const ADVERTISERS = {
+  // 'tower': { name: 'Example POS', href: 'https://example.com/?ref=otondo', until: '2026-12-31' },
+};
+const lagosToday = () => new Date(Date.now() + 3600e3).toISOString().slice(0, 10);
+function soldAd(slot){
+  const a = ADVERTISERS[slot];
+  if (!a || !a.href) return null;
+  return (!a.until || a.until >= lagosToday()) ? a : null;
+}
+
+/* Reach and taps. Counted in the browser and flushed in batches: the street
+   scrolls constantly, and one write per appearance would burn the shared
+   Supabase egress for numbers nobody reads live.
+   `views` is one entry per slot per SESSION — a board crossing the screen
+   forty times in one sitting is still one. That is the honest figure to sell
+   (see supabase/adstats.sql); taps are every tap. */
+const adSeen = new Set();          // slots already counted this session
+let adViewQ = [], adTapQ = [], adFlushAt = 0;
+function flushAd(force = false){
+  if (!adViewQ.length && !adTapQ.length) return;
+  const now = Date.now();
+  if (!force && now - adFlushAt < 60000) return;
+  adFlushAt = now;
+  const v = adViewQ, t = adTapQ;
+  adViewQ = []; adTapQ = [];
+  try { logAd(v, t); } catch {}
+}
+function adView(slot){
+  if (!slot || adSeen.has(slot)) return;
+  adSeen.add(slot);
+  adViewQ.push(slot);
+  flushAd();
+}
+function adTap(slot){
+  if (!slot) return;
+  adTapQ.push(slot);
+  flushAd(true);                   // a tap is rare and worth money: send it now
+}
+/* A board counts as seen once it is actually on screen, not merely sitting in
+   the DOM off to the right. Every shop is watched, not just the ones carrying
+   a board right now: repaintShop reuses the same elements as the street
+   changes district and rewrites data-ad on them, so which shop is an advert
+   is only known at the moment it crosses. */
+let adIO = null;
+function watchAds(scene){
+  /* No calm() or sceneEl in here: roadside() runs while both are still in the
+     temporal dead zone (they are consts further down the file), and touching
+     either threw a ReferenceError that aborted the rest of the module.
+     Reduced motion needs no special case anyway — the street stops scrolling
+     but the boards are still drawn and still on screen, so they should still
+     count, and a static street simply fires each one once. */
+  if (!scene || !window.IntersectionObserver) return;
+  if (!adIO) adIO = new IntersectionObserver(es => {
+    for (const e of es) if (e.isIntersecting) adView(e.target.dataset.ad);
+  }, { threshold: 0.5 });
+  scene.querySelectorAll(':scope > .shop').forEach(el => adIO.observe(el));
+}
+/* Nothing is worth losing a batch over, but a closed tab is the common case. */
+addEventListener('visibilitychange', () => { if (document.hidden) flushAd(true); });
+addEventListener('pagehide', () => flushAd(true));
 function skillsBillboard(cfg){
   const naira = SKILLS_NGN.toLocaleString('en-NG');
   return `<svg viewBox="0 0 100 60" aria-hidden="true" overflow="visible">
@@ -4809,6 +4882,7 @@ function roadside(el){
        animation-delay:${-(i * CYCLE / SHOPS.length)}s">${shopBody(cfg)}</div>`);
   el.insertAdjacentHTML('beforeend', strip.join(''));
   if (DISTRICTS_ON) startDistricts(el);
+  watchAds(el);                      // the boards are inventory now: count who sees them
 }
 
 /* a danfo loaded past all reason — bags, jerrycans, a mattress */
@@ -9351,9 +9425,12 @@ sceneEl.addEventListener('click', e => {
      "your ad here" panel opens an email to us. */
   const adSpot = at.closest('.shop[data-ad]');
   if (adSpot){
-    if (adSpot.dataset.ad === 'hagglebuddy') window.open(adLink(), '_blank', 'noopener');
-    else if (adSpot.dataset.ad === 'skills') window.open(SKILLS_LINK, '_blank', 'noopener');
-    else if (adSpot.dataset.ad === 'prize') showPrize();
+    const slot = adSpot.dataset.ad, sold = soldAd(slot);
+    adTap(slot);                                      // counted whether or not it is sold: a tap on an empty board is a lead
+    if (sold) window.open(sold.href, '_blank', 'noopener');
+    else if (slot === 'hagglebuddy') window.open(adLink(), '_blank', 'noopener');
+    else if (slot === 'skills') window.open(SKILLS_LINK, '_blank', 'noopener');
+    else if (slot === 'prize') showPrize();
     else $('adPop').classList.remove('hidden');       // asks first: a stray tap used to open a mail draft
     return;
   }

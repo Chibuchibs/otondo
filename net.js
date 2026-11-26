@@ -2,7 +2,7 @@
    Every function is failure-tolerant on purpose: if Supabase is unset, slow,
    or down, the game must still be playable. Nothing here throws upward. */
 
-import { SUPABASE_URL, SUPABASE_ANON_KEY } from './config.js?v=20261125153608';
+import { SUPABASE_URL, SUPABASE_ANON_KEY } from './config.js?v=20261125165253';
 
 const TOKEN_KEY = 'otondo:token';
 let sb = null, token = null, channel = null;
@@ -302,4 +302,24 @@ export async function myPrize() {
     if (error) throw error;
     return data;
   } catch (e) { console.warn('[otondo] my prize failed:', e.message); return null; }
+}
+
+/* ---- ad board reach and taps (2026-11-25) ----
+   What makes the roadside boards sellable: a count of the sessions a board
+   was seen in and the taps it got. Fire-and-forget — an advert's bookkeeping
+   must never cost the player a frame or block anything on screen, so a
+   failure is swallowed and the batch is simply lost.
+
+   Called with whole batches, not single events: the street scrolls all the
+   time and one write per appearance would burn the shared Supabase egress
+   for numbers nobody reads live. See supabase/adstats.sql for what the two
+   figures do and do not mean. */
+export async function logAd(views = [], taps = []) {
+  if (!sb || !token || (!views.length && !taps.length)) return false;
+  try {
+    const { error } = await sb.rpc('log_ad',
+      { p_token: token, p_views: views, p_taps: taps });
+    if (error) throw error;
+    return true;
+  } catch (e) { console.warn('[otondo] ad log failed:', e.message); return false; }
 }
