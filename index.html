@@ -2330,7 +2330,7 @@
 <script type="module">
 import { newGame, doAction, canDo, unlocked, ACTIONS, phaseOf, nextUnlock, postingOdds, rivalOf,
          computePosting, CHOICES, GOAL, goalStatus,
-         shareText, MAX_DAY, STAT_MAX } from './game.js?v=20261125165253';
+         shareText, MAX_DAY, STAT_MAX } from './game.js?v=20261125165615';
 
 /* ---------- scene coordinates ----------
    The scene is scaled by a transform (see the stage), so a native
@@ -2361,11 +2361,11 @@ const TS = (document.getElementById('scene').offsetWidth || 375) / 375;
 const ALLAWEE_NOTE = 'Allawee ₦77,000 — e never enter.';
 import { initNet, joinCamp, syncPlayer, platoonBoard, recentChat, postChat,
          postSuggestion, reportMessage, awardBoard, myAwards, laughChat,
-         setPresence, campRoster, renameMe, setAvatar, online, prizeBoard, myPrize, platoonWar, claimPlatoonWin, logAd } from './net.js?v=20261125165253';
-import { startMusic, stopMusic, musicOn, audioState, audioSupported, setRain, whenSilenced, wakeAudio, audible, say, sfx, BEAT, BAR } from './audio.js?v=20261125165253';
+         setPresence, campRoster, renameMe, setAvatar, online, prizeBoard, myPrize, platoonWar, claimPlatoonWin, logAd } from './net.js?v=20261125165615';
+import { startMusic, stopMusic, musicOn, audioState, audioSupported, setRain, whenSilenced, wakeAudio, audible, say, sfx, BEAT, BAR } from './audio.js?v=20261125165615';
 import { playHoop, playPenalty, playQuiz, playRegister, playParade,
          playMami, playHustle, playManOWar, playSaed, playSocial,
-         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261125165253';
+         playDodge, playSocialise, playRehearse } from './minigames.js?v=20261125165615';
 
 /* Every dance animation is expressed in beats, so the steps are on-tempo
    whether or not the sound is playing — and genuinely on the beat when it is. */
@@ -3639,6 +3639,7 @@ function soldAd(slot){
    (see supabase/adstats.sql); taps are every tap. */
 const adSeen = new Set();          // slots already counted this session
 let adViewQ = [], adTapQ = [], adFlushAt = 0;
+const AD_QUEUE_MAX = 40;        // the server drops a batch bigger than this anyway
 function flushAd(force = false){
   if (!adViewQ.length && !adTapQ.length) return;
   const now = Date.now();
@@ -3646,7 +3647,20 @@ function flushAd(force = false){
   adFlushAt = now;
   const v = adViewQ, t = adTapQ;
   adViewQ = []; adTapQ = [];
-  try { logAd(v, t); } catch {}
+  /* Put them back if the send did not land. Supabase is imported from a CDN
+     and takes a second or two to come up, while the first boards cross almost
+     at once, so emptying the queue before knowing the result quietly lost the
+     earliest views of every session — an undercount on exactly the number an
+     advertiser is invoiced for (measured 2026-11-25: a live tap logged fine,
+     its view did not). Capped so a player who never gets a connection does
+     not grow the arrays all session. */
+  const back = () => {
+    adViewQ = v.concat(adViewQ).slice(0, AD_QUEUE_MAX);
+    adTapQ  = t.concat(adTapQ).slice(0, AD_QUEUE_MAX);
+  };
+  try {
+    Promise.resolve(logAd(v, t)).then(ok => { if (!ok) back(); }, back);
+  } catch { back(); }
 }
 function adView(slot){
   if (!slot || adSeen.has(slot)) return;
