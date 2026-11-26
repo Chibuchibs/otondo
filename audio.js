@@ -218,7 +218,13 @@ function loadTrack() {
   })().catch(e => { console.warn('[otondo] track unavailable, using the synth groove:', e.message); return null; });
   return trackTried;
 }
-loadTrack();
+/* Not fetched on load any more (2026-11-26). groove.mp3 is 635KB and was
+   pulled on every single page load, music on or not — the largest thing the
+   game asked of a Nigerian phone's data before the player had pressed
+   anything, and re-pulled on every return because Pages caches for only ten
+   minutes. startMusic() calls loadTrack() itself and the result is memoised
+   in trackTried, so the track now arrives the first time music actually
+   plays, and the synth groove covers the gap if it is slow. */
 
 /* THE iOS FIX. Web Audio defaults to the ambient category, which on iPhone
    means the ringer channel: the context reports itself running, the scheduler
